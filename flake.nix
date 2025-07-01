@@ -71,9 +71,9 @@
     };
 
     homeConfigurations = {
-      "dan@gravity" = lib.homeManagerConfiguration {
-        modules = [./home/dan/gravity.nix ./home/dan/nixpkgs.nix];
-        pkgs = pkgsFor.x86_64-darvin;
+      "daniel.kressner@J6G6Y9JK7L" = lib.homeManagerConfiguration {
+        modules = [./home/dan/J6G6Y9JK7L.nix ./home/dan/nixpkgs.nix];
+        pkgs = pkgsFor.aarch64-darwin;
         extraSpecialArgs = {inherit inputs outputs;};
       };
     };
