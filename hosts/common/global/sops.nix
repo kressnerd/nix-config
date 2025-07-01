@@ -13,6 +13,6 @@ in {
     defaultSopsFile = ./secrets/secrets.yaml;
     defaultSopsFormat = "yaml";
     age.sshKeyPaths = map getKeyPath keys;
-    sops.age.keyFile = "/persist/system/var/lib/sops-nix/key.txt";
+    age.keyFile = "/persist/system/var/lib/sops-nix/key.txt";
   };
 }

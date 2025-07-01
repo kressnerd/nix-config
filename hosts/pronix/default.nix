@@ -8,7 +8,7 @@
   imports = [
     inputs.hardware.nixosModules.lenovo-thinkpad-x270
 
-    # ./common/optional/ephermal-btrfs.nix
+    ./common/optional/ephermal-btrfs.nix
     ./hardware-configuration.nix
 
     ../common/global
