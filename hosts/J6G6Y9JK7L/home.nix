@@ -26,5 +26,6 @@
   home.packages = with pkgs; [
     htop
     ripgrep
+    keepassxc
   ];
 }
