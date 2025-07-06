@@ -10,14 +10,26 @@
 
     home-manager.url = "github:nix-community/home-manager/release-25.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+    mac-app-util.url = "github:hraban/mac-app-util";
+
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, ... }@inputs: {
+  outputs = { self, nixpkgs, darwin, home-manager, mac-app-util, ... }@inputs: {
     darwinConfigurations."J6G6Y9JK7L" = darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       modules = [
+        mac-app-util.darwinModules.default
         ./hosts/J6G6Y9JK7L
         home-manager.darwinModules.home-manager
+        (
+          { pkgs, config, inputs, ... }:
+          {
+            home-manager.sharedModules = [
+              mac-app-util.homeManagerModules.default
+            ];
+          }
+        )
       ];
     };
   };
