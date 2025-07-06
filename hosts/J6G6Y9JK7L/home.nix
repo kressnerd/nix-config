@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   home.stateVersion = "25.05";
@@ -28,4 +28,15 @@
     ripgrep
     keepassxc
   ];
+
+  # Enable macOS application linking
+  home.activation = {
+    copyApplications = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      apps_source="${config.home.homeDirectory}/Applications/Home Manager Apps"
+      if [ -d "$apps_source" ]; then
+        echo "Linking Home Manager applications..."
+        find "$apps_source" -name "*.app" -exec ln -sf {} "${config.home.homeDirectory}/Applications/" \;
+      fi
+    '';
+  };
 }
