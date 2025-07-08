@@ -65,7 +65,7 @@
 
     # Cask packages (GUI apps)
     casks = [
-      # "crossover"
+      "crossover"
       # Add other GUI apps not available in nixpkgs
       # "microsoft-teams" # if needed
       # "zoom"
