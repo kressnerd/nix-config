@@ -24,9 +24,16 @@
 
   programs.keepassxc.enable = true;
 
+  programs.vscode = {
+    enable = true;
+  };
+
   # Add some useful packages
   home.packages = with pkgs; [
     htop
     ripgrep
+
+    # GUI
+    jetbrains-toolbox
   ];
 }
