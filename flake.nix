@@ -13,23 +13,33 @@
 
     mac-app-util.url = "github:hraban/mac-app-util";
 
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    # Declarative tap management
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, mac-app-util, ... }@inputs: {
+  outputs = { self, nixpkgs, darwin, home-manager, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: {
     darwinConfigurations."J6G6Y9JK7L" = darwin.lib.darwinSystem {
       system = "aarch64-darwin";
+      specialArgs = { inherit inputs; }; # Pass inputs to modules
       modules = [
         mac-app-util.darwinModules.default
+        nix-homebrew.darwinModules.nix-homebrew
         ./hosts/J6G6Y9JK7L
         home-manager.darwinModules.home-manager
-        (
-          { pkgs, config, inputs, ... }:
-          {
-            home-manager.sharedModules = [
-              mac-app-util.homeManagerModules.default
-            ];
-          }
-        )
+        {
+          home-manager.sharedModules = [
+            mac-app-util.homeManagerModules.default
+          ];
+        }
       ];
     };
   };
