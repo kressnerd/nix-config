@@ -24,6 +24,8 @@
 
   programs.keepassxc.enable = true;
 
+  programs.librewolf.enable = true;
+
   programs.vscode = {
     enable = true;
   };
