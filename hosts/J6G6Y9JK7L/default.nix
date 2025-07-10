@@ -53,6 +53,8 @@
   homebrew = {
     enable = true;
 
+    taps = builtins.attrNames config.nix-homebrew.taps;
+
     # Fully declarative
     onActivation = {
       cleanup = "zap"; # Remove unlisted packages
