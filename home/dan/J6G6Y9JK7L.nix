@@ -5,6 +5,7 @@
     ./global
     ./features/cli/git.nix
     ./features/cli/ssh.nix
+    ./features/cli/vim.nix
     ./features/cli/zsh.nix
     ./features/productivity/vscode.nix
     ./features/productivity/tools.nix
