@@ -52,7 +52,7 @@
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
         github.copilot
-        pkgs-unstable.vscode-extension.github.copilot-chat
+        pkgs-unstable.vscode-extensions.github.copilot-chat
       ];
       userSettings = {
         "telemetry.telemetryLevel" = "off";
