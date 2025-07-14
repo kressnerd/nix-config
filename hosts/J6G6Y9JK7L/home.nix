@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, pkgs-unstable, ... }:
 
 {
   home.stateVersion = "25.05";
@@ -52,7 +52,7 @@
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
         github.copilot
-        github.copilot-chat
+        pkgs-unstable.vscode-extension.github.copilot-chat
       ];
       userSettings = {
         "telemetry.telemetryLevel" = "off";

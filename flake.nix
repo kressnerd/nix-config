@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";
     darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
@@ -31,7 +32,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, sops-nix, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: {
+  outputs = { self, nixpkgs, nixpkgs-unstable, darwin, home-manager, sops-nix, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: {
     darwinConfigurations."J6G6Y9JK7L" = darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       specialArgs = { inherit inputs; }; # Pass inputs to modules
@@ -45,6 +46,12 @@
             mac-app-util.homeManagerModules.default
             sops-nix.homeManagerModules.sops
           ];
+          home-manager.extraSpecialArgs = {
+            pkgs-unstable = import nixpkgs-unstable {
+              system = "aarch64-darwin";
+              config.allowUnfree = true;
+            };
+          };
         }
       ];
     };
