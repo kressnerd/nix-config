@@ -38,8 +38,48 @@
 
   programs.bat = {
     enable = true;
-    config = {
-      theme = "Catppuccin Latte";
+        config = {
+      theme = "catppuccin-latte";
+    };
+
+    # Add Catppuccin themes
+    themes = {
+      catppuccin-latte = {
+        src = pkgs.fetchFromGitHub {
+          owner = "catppuccin";
+          repo = "bat";
+          rev = "main";
+          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+        };
+        file = "Catppuccin-latte.tmTheme";
+      };
+      catppuccin-frappe = {
+        src = pkgs.fetchFromGitHub {
+          owner = "catppuccin";
+          repo = "bat";
+          rev = "main";
+          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+        };
+        file = "Catppuccin-frappe.tmTheme";
+      };
+      catppuccin-macchiato = {
+        src = pkgs.fetchFromGitHub {
+          owner = "catppuccin";
+          repo = "bat";
+          rev = "main";
+          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+        };
+        file = "Catppuccin-macchiato.tmTheme";
+      };
+      catppuccin-mocha = {
+        src = pkgs.fetchFromGitHub {
+          owner = "catppuccin";
+          repo = "bat";
+          rev = "main";
+          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+        };
+        file = "Catppuccin-mocha.tmTheme";
+      };
     };
   };
 

@@ -10,6 +10,7 @@
     ./features/cli/starship.nix
     ./features/cli/vim.nix
     ./features/cli/zsh.nix
+    ./features/productivity/browser.nix
     ./features/productivity/vscode.nix
     ./features/productivity/tools.nix
   ];
