@@ -5,6 +5,6 @@
   programs.librewolf.enable = true;
 
   home.packages = with pkgs; [
-    jetbrains-toolbox
+    jetbrains-toolbox # install IntelliJ Idea manually
   ];
 }
