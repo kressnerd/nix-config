@@ -2,6 +2,7 @@
   config,
   pkgs,
   pkgs-unstable,
+  lib,
   ...
 }: {
   programs.vscode = {
@@ -12,12 +13,12 @@
       extensions = with pkgs.vscode-extensions;
         [
           catppuccin.catppuccin-vsc
+          catppuccin.catppuccin-vsc-icons
 
           dbaeumer.vscode-eslint
           esbenp.prettier-vscode
           github.copilot
           kamadorueda.alejandra
-          vscodevim.vim
         ]
         ++ (with pkgs-unstable.vscode-extensions; [
           github.copilot-chat
