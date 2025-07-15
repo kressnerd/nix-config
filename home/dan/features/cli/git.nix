@@ -1,7 +1,10 @@
-{ config, pkgs, lib, ... }:
-
 {
-  home.packages = [ pkgs.git ];
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
+  home.packages = [pkgs.git];
 
   sops.templates = {
     "gitconfig" = {

@@ -1,6 +1,9 @@
-{ config, pkgs, inputs, ... }:
-
 {
+  config,
+  pkgs,
+  inputs,
+  ...
+}: {
   # Disable nix-darwin's Nix management (required for Determinate Nix)
   nix.enable = false;
 

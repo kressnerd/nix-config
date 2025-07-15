@@ -1,6 +1,9 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   programs.kitty = {
     enable = true;
 
@@ -16,7 +19,10 @@
 
       # Window settings
       window_padding_width = 10;
-      hide_window_decorations = if pkgs.stdenv.isDarwin then "titlebar-only" else "no";
+      hide_window_decorations =
+        if pkgs.stdenv.isDarwin
+        then "titlebar-only"
+        else "no";
       confirm_os_window_close = 0;
 
       # Tab bar

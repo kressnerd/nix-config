@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   programs.keepassxc.enable = true;
 
   home.packages = with pkgs; [

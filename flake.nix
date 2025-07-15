@@ -31,15 +31,25 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, darwin, home-manager, sops-nix, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: 
-  let
+  outputs = {
+    self,
+    nixpkgs,
+    nixpkgs-unstable,
+    darwin,
+    home-manager,
+    sops-nix,
+    mac-app-util,
+    nix-homebrew,
+    homebrew-core,
+    homebrew-cask,
+    ...
+  } @ inputs: let
     inherit (self) outputs;
-  in
-  {
+  in {
     darwinConfigurations = {
       J6G6Y9JK7L = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
-        specialArgs = { inherit inputs outputs; };
+        specialArgs = {inherit inputs outputs;};
         modules = [
           mac-app-util.darwinModules.default
           nix-homebrew.darwinModules.nix-homebrew

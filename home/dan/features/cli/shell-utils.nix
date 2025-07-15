@@ -1,31 +1,29 @@
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   home.packages = with pkgs; [
     # Modern replacements for common commands
-    eza           # Better ls
-    bat           # Better cat
-    fd            # Better find
-    ripgrep       # Better grep
-    fzf           # Fuzzy finder
-    zoxide        # Better cd
-    delta         # Better git diff
-    duf           # Better df
-    dust          # Better du
-    procs         # Better ps
-    bottom        # Better top
+    eza # Better ls
+    bat # Better cat
+    fd # Better find
+    ripgrep # Better grep
+    fzf # Fuzzy finder
+    zoxide # Better cd
+    delta # Better git diff
+    duf # Better df
+    dust # Better du
+    procs # Better ps
+    bottom # Better top
 
     # Useful utilities
-    jq            # JSON processor
-    yq            # YAML processor
-    httpie        # Better curl
-    tldr          # Simplified man pages
-    tree          # Directory tree
-    ncdu          # Disk usage analyzer
+    jq # JSON processor
+    yq # YAML processor
+    httpie # Better curl
+    tldr # Simplified man pages
+    tree # Directory tree
+    ncdu # Disk usage analyzer
 
     # Development tools
-    direnv        # Per-directory environments
-    lazygit       # Terminal UI for git
+    direnv # Per-directory environments
+    lazygit # Terminal UI for git
   ];
 
   # Configure some of these tools
@@ -38,7 +36,7 @@
 
   programs.bat = {
     enable = true;
-        config = {
+    config = {
       theme = "catppuccin-latte";
     };
 
@@ -109,6 +107,6 @@
     top = "btm";
     du = "dust";
     df = "duf";
-    cd = "z";  # From zoxide
+    cd = "z"; # From zoxide
   };
 }

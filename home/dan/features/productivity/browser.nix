@@ -1,6 +1,9 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   programs.firefox = {
     enable = true;
     package = pkgs.librewolf;
@@ -25,15 +28,20 @@
 
           engines = {
             "Kagi" = {
-              urls = [{
-                template = "https://kagi.com/search";
-                params = [
-                  { name = "q"; value = "{searchTerms}"; }
-                ];
-              }];
+              urls = [
+                {
+                  template = "https://kagi.com/search";
+                  params = [
+                    {
+                      name = "q";
+                      value = "{searchTerms}";
+                    }
+                  ];
+                }
+              ];
               icon = "https://kagi.com/favicon.ico";
               updateInterval = 24 * 60 * 60 * 1000;
-              definedAliases = [ "@k" ];
+              definedAliases = ["@k"];
             };
           };
         };
@@ -106,9 +114,10 @@
     # On macOS, LibreWolf is installed as an app bundle
     librewolfBin = "/Applications/LibreWolf.app/Contents/MacOS/librewolf";
 
-    makeProfileLauncher = name: profile: pkgs.writeShellScriptBin "lw-${name}" ''
-      exec ${librewolfBin} -P "${profile}" "$@"
-    '';
+    makeProfileLauncher = name: profile:
+      pkgs.writeShellScriptBin "lw-${name}" ''
+        exec ${librewolfBin} -P "${profile}" "$@"
+      '';
   in [
     # Main librewolf command
     (pkgs.writeShellScriptBin "librewolf" ''
