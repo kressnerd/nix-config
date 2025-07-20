@@ -14,6 +14,8 @@
 
     mac-app-util.url = "github:hraban/mac-app-util";
 
+    nur.url = "github:nix-community/NUR";
+
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
     homebrew-core = {
@@ -42,6 +44,7 @@
     nix-homebrew,
     homebrew-core,
     homebrew-cask,
+    nur,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -51,6 +54,11 @@
         system = "aarch64-darwin";
         specialArgs = {inherit inputs outputs;};
         modules = [
+          # Add NUR overlay here at the system level
+          {
+            nixpkgs.overlays = [nur.overlay];
+            nixpkgs.config.allowUnfree = true;
+          }
           mac-app-util.darwinModules.default
           nix-homebrew.darwinModules.nix-homebrew
           ./hosts/J6G6Y9JK7L

@@ -3,28 +3,87 @@
   pkgs,
   lib,
   ...
-}: {
+}: let
+  addons = pkgs.nur.repos.rycee.firefox-addons;
+
+  # Common extensions for all profiles
+  commonExtensions = with addons; [
+    ublock-origin # Ad blocker
+    keepassxc-browser # Password manager
+    darkreader # Dark mode for websites
+    consent-o-matic
+  ];
+
+  # Development extensions
+  devExtensions = with addons; [
+    # react-devtools
+    refined-github
+    octotree # GitHub code tree
+    wappalyzer # Technology profiler
+  ];
+
+  # Privacy extensions
+  privacyExtensions = with addons; [
+    privacy-badger
+    decentraleyes
+    clearurls
+    temporary-containers
+  ];
+
+  # Productivity extensions
+  productivityExtensions = with addons; [
+    tridactyl
+    # vimium                 # Vim keybindings
+    tree-style-tab # Vertical tabs
+    sidebery # Alternative vertical tabs
+    # onepassword-password-manager
+    languagetool # Grammar checker
+    single-file # Save complete web pages
+  ];
+
+  convinienceExtensions = with addons; [
+    sponsorblock # Skip YouTube sponsors
+    return-youtube-dislikes
+    youtube-shorts-block
+    reddit-enhancement-suite
+    old-reddit-redirect
+    bypass-paywalls-clean
+  ];
+in {
   programs.firefox = {
     enable = true;
     package = pkgs.librewolf;
 
     profiles = {
-      personal = {
+      company = {
         id = 0;
-        name = "personal";
-        isDefault = false;
+        name = "company";
+        isDefault = true;
+
+        extensions =
+          commonExtensions
+          ++ devExtensions
+          ++ convinienceExtensions
+          ++ (with addons; [
+            multi-account-containers
+            aws-sso-container
+            link-cleaner
+            markdown-viewer-webext
+          ]);
 
         settings = {
           "privacy.clearOnShutdown.history" = false;
           "privacy.clearOnShutdown.downloads" = false;
           "browser.startup.page" = 3;
           "browser.toolbars.bookmarks.visibility" = "always";
-          "browser.tabs.firefox-view" = false;
+
+          # Extension-specific settings
+          "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
         };
 
         search = {
           force = true;
-          default = "ddg";
+          default = "Kagi";
 
           engines = {
             "Kagi" = {
@@ -47,39 +106,51 @@
         };
       };
 
-      company = {
-        id = 1;
-        name = "company";
-        isDefault = true;
-
-        settings = {
-          "privacy.clearOnShutdown.history" = false;
-          "privacy.clearOnShutdown.downloads" = false;
-          "browser.startup.page" = 3;
-          "browser.toolbars.bookmarks.visibility" = "always";
-        };
-
-        search = {
-          force = true;
-          default = "google";
-        };
-      };
-
       client001 = {
-        id = 2;
+        id = 1;
         name = "client001";
         isDefault = false;
 
+        extensions =
+          commonExtensions
+          ++ convinienceExtensions
+          ++ (with addons; [
+            multi-account-containers
+            foxyproxy
+          ]);
+
         settings = {
           "privacy.clearOnShutdown.history" = false;
           "privacy.clearOnShutdown.downloads" = false;
           "browser.startup.page" = 3;
           "browser.toolbars.bookmarks.visibility" = "always";
+
+          # Extension-specific settings
+          "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
         };
 
         search = {
           force = true;
-          default = "ddg";
+          default = "Kagi"; # Changed to use your Kagi engine
+
+          engines = {
+            "Kagi" = {
+              urls = [
+                {
+                  template = "https://kagi.com/search";
+                  params = [
+                    {
+                      name = "q";
+                      value = "{searchTerms}";
+                    }
+                  ];
+                }
+              ];
+              icon = "https://kagi.com/favicon.ico";
+              updateInterval = 24 * 60 * 60 * 1000;
+              definedAliases = ["@k"];
+            };
+          };
         };
       };
     };
