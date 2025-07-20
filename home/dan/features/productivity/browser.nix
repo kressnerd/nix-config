@@ -47,7 +47,7 @@
     youtube-shorts-block
     reddit-enhancement-suite
     old-reddit-redirect
-    bypass-paywalls-clean
+    # bypass-paywalls-clean
   ];
 in {
   programs.firefox = {
@@ -66,9 +66,9 @@ in {
           ++ convinienceExtensions
           ++ (with addons; [
             multi-account-containers
-            aws-sso-container
+            # aws-sso-container
             link-cleaner
-            markdown-viewer-webext
+            # markdown-viewer-webext
           ]);
 
         settings = {
@@ -116,7 +116,7 @@ in {
           ++ convinienceExtensions
           ++ (with addons; [
             multi-account-containers
-            foxyproxy
+            # foxyproxy
           ]);
 
         settings = {

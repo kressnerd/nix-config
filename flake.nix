@@ -54,9 +54,8 @@
         system = "aarch64-darwin";
         specialArgs = {inherit inputs outputs;};
         modules = [
-          # Add NUR overlay here at the system level
           {
-            nixpkgs.overlays = [nur.overlay];
+            nixpkgs.overlays = [nur.overlays.default];
             nixpkgs.config.allowUnfree = true;
           }
           mac-app-util.darwinModules.default
