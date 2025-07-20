@@ -72,10 +72,18 @@ in {
           ]);
 
         settings = {
+          "privacy.clearOnShutdown.cookies" = true;
+          "privacy.clearOnShutdown.offlineApps" = true;
+          "privacy.clearOnShutdown.sessions" = true;
+
           "privacy.clearOnShutdown.history" = false;
           "privacy.clearOnShutdown.downloads" = false;
+          "privacy.clearOnShutdown.cache" = false;
+          "privacy.clearOnShutdown.formdata" = false;
           "browser.startup.page" = 3;
           "browser.toolbars.bookmarks.visibility" = "always";
+
+          "privacy.clearOnShutdown.siteSettings" = false;
 
           # Extension-specific settings
           "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
@@ -120,10 +128,18 @@ in {
           ]);
 
         settings = {
+          "privacy.clearOnShutdown.cookies" = true;
+          "privacy.clearOnShutdown.offlineApps" = true;
+          "privacy.clearOnShutdown.sessions" = true;
+
           "privacy.clearOnShutdown.history" = false;
           "privacy.clearOnShutdown.downloads" = false;
+          "privacy.clearOnShutdown.cache" = false;
+          "privacy.clearOnShutdown.formdata" = false;
           "browser.startup.page" = 3;
           "browser.toolbars.bookmarks.visibility" = "always";
+
+          "privacy.clearOnShutdown.siteSettings" = false;
 
           # Extension-specific settings
           "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
