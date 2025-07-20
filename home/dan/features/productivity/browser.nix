@@ -111,26 +111,20 @@
   };
 
   home.packages = let
-    # On macOS, LibreWolf is installed as an app bundle
-    librewolfBin = "/Applications/LibreWolf.app/Contents/MacOS/librewolf";
+    librewolfBin = "${pkgs.librewolf}/bin/librewolf";
 
     makeProfileLauncher = name: profile:
       pkgs.writeShellScriptBin "lw-${name}" ''
         exec ${librewolfBin} -P "${profile}" "$@"
       '';
   in [
-    # Main librewolf command
-    (pkgs.writeShellScriptBin "librewolf" ''
-      exec ${librewolfBin} "$@"
-    '')
-    # Profile launchers
     (makeProfileLauncher "personal" "personal")
     (makeProfileLauncher "company" "company")
     (makeProfileLauncher "client" "client001")
   ];
 
   programs.zsh.shellAliases = {
-    lw = "librewolf";
-    lw-profiles = "librewolf -ProfileManager";
+    lw = "${pkgs.librewolf}/bin/librewolf";
+    lw-profiles = "${pkgs.librewolf}/bin/librewolf -ProfileManager";
   };
 }
