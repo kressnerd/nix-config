@@ -60,7 +60,7 @@ in {
         name = "company";
         isDefault = true;
 
-        extensions =
+        extensions.packages =
           commonExtensions
           ++ devExtensions
           ++ convinienceExtensions
@@ -119,7 +119,7 @@ in {
         name = "client001";
         isDefault = false;
 
-        extensions =
+        extensions.packages =
           commonExtensions
           ++ convinienceExtensions
           ++ (with addons; [
