@@ -17,10 +17,10 @@
         identitiesOnly = true;
       };
 
-      "github-client" = {
+      "github-client001" = {
         hostname = "github.com";
         user = "git";
-        identityFile = "~/.ssh/id_ed25519";
+        identityFile = "~/.ssh/id_ed25519_2025-07-22-temp";
         identitiesOnly = true;
       };
     };

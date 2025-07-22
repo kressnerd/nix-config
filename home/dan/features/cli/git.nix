@@ -76,7 +76,9 @@
             gpgsign = false
 
         [core]
-            sshCommand = ssh -i ~/.ssh/id_ed25519 -F /dev/null
+            sshCommand = ssh
+        [url "git@github-client001:"]
+            insteadOf = git@github.com:
       '';
       path = "${config.home.homeDirectory}/.config/git/client001";
     };
