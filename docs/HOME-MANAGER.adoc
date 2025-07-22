@@ -1,0 +1,526 @@
+= Home Manager Feature Documentation
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+
+This document provides detailed documentation for all Home Manager features and configurations in the nix-config repository.
+
+== Overview
+
+Home Manager configurations are organized into feature modules that can be composed per host. Each feature module encapsulates related functionality and follows consistent patterns for configuration and integration.
+
+== Global Configuration
+
+=== Base Configuration (link:../home/dan/global/default.nix[`global/default.nix`])
+
+The global configuration provides the foundation for all Home Manager setups.
+
+==== Core Settings
+
+[cols="1,3",options="header"]
+|===
+|Setting |Purpose
+
+|**State Version**
+|Sets Home Manager compatibility version (`25.05`)
+
+|**Home Manager Management**
+|Enables Home Manager self-management
+
+|**Common Packages**
+|Installs essential tools available across all hosts
+|===
+
+==== SOPS Integration
+
+Centralized secrets management for all Home Manager features:
+
+[source,nix]
+----
+sops = {
+  defaultSopsFile = ../../../hosts/J6G6Y9JK7L/secrets.yaml;
+  age.keyFile = "${config.home.homeDirectory}/Library/Application Support/sops/age/keys.txt";
+  secrets = {
+    # Git identity management
+    "git/personal/name" = {};
+    "git/personal/email" = {};
+    "git/personal/folder" = {};
+    "git/company/name" = {};
+    "git/company/email" = {};
+    "git/company/folder" = {};
+    "git/client001/name" = {};
+    "git/client001/email" = {};
+    "git/client001/folder" = {};
+  };
+};
+----
+
+**SOPS Features:**
+
+* **Age Encryption**: Uses modern age encryption for security
+* **Centralized Secrets**: All secrets defined in one location
+* **Template Integration**: Supports dynamic configuration generation
+* **Cross-Feature Access**: Secrets available to all feature modules
+
+== CLI Tools Features
+
+=== Git Configuration (link:../home/dan/features/cli/git.nix[`features/cli/git.nix`])
+
+Advanced Git configuration with conditional identity management and SOPS integration.
+
+==== Identity Management
+
+The Git configuration uses conditional includes to automatically switch identities based on project directory:
+
+[source,nix]
+----
+# Main .gitconfig with conditional includes
+sops.templates."gitconfig" = {
+  content = ''
+    [user]
+        name = ${config.sops.placeholder."git/personal/name"}
+        email = ${config.sops.placeholder."git/personal/email"}
+
+    [includeIf "gitdir:~/dev/${config.sops.placeholder."git/personal/folder"}/"]
+        path = ~/.config/git/personal
+
+    [includeIf "gitdir:~/dev/${config.sops.placeholder."git/company/folder"}/"]
+        path = ~/.config/git/company
+
+    [includeIf "gitdir:~/dev/${config.sops.placeholder."git/client001/folder"}/"]
+        path = ~/.config/git/client001
+  '';
+};
+----
+
+**Identity Features:**
+
+* **Automatic Switching**: Identity changes based on project directory
+* **Multiple Identities**: Support for personal, company, and client work
+* **SOPS Integration**: All identity information encrypted
+* **SSH Key Management**: Different SSH keys per identity
+
+==== Configuration Highlights
+
+[cols="1,3",options="header"]
+|===
+|Feature |Configuration
+
+|**Default Settings**
+|`defaultBranch = main`, `editor = vim`, `autocrlf = input`
+
+|**Custom Aliases**
+|Pretty log format (`lg`), identity verification (`whoami`)
+
+|**GPG Signing**
+|Disabled by default, configurable per identity
+
+|**SSH Integration**
+|Custom SSH commands per identity for key management
+|===
+
+=== Shell Configuration (link:../home/dan/features/cli/zsh.nix[`features/cli/zsh.nix`])
+
+Comprehensive Zsh setup with Oh My Zsh, plugins, and custom configurations.
+
+==== Core Features
+
+[source,nix]
+----
+programs.zsh = {
+  enable = true;
+  enableCompletion = true;
+  autosuggestion.enable = true;
+  syntaxHighlighting.enable = true;
+  
+  oh-my-zsh = {
+    enable = true;
+    plugins = [
+      "git"
+      "macos"
+      "sudo"
+      "command-not-found"
+      "dirhistory"
+    ];
+  };
+};
+----
+
+**Shell Features:**
+
+* **Auto-completion**: Enhanced completion with case-insensitive matching
+* **History Management**: 100k entries with deduplication and sharing
+* **Plugin Integration**: Oh My Zsh plugins for enhanced functionality
+* **Custom Bindings**: Ctrl+Arrow for word navigation, history search
+
+==== Aliases and Shortcuts
+
+[cols="1,2,3",options="header"]
+|===
+|Category |Aliases |Purpose
+
+|**File Operations**
+|`ll`, `la`, `l`, `..`, `...`
+|Directory listing and navigation
+
+|**Git Shortcuts**
+|`g`, `gs`, `ga`, `gc`, `gp`, `gl`
+|Common Git operations
+
+|**Safety Nets**
+|`cp -i`, `mv -i`, `rm -i`
+|Prevent accidental file operations
+
+|**Nix Tools**
+|`ns`, `nb`, `ne`, `nsu`
+|Nix development shortcuts
+
+|**Terminal Integration**
+|`icat`, `ssh` (Kitty kittens)
+|Enhanced terminal functionality
+|===
+
+==== Advanced Configuration
+
+[source,nix]
+----
+initContent = ''
+  # Better history search
+  bindkey '^[[A' history-substring-search-up
+  bindkey '^[[B' history-substring-search-down
+  
+  # Kitty shell integration
+  if [[ -n "$KITTY_INSTALLATION_DIR" ]]; then
+    export KITTY_SHELL_INTEGRATION="enabled"
+    autoload -Uz -- "$KITTY_INSTALLATION_DIR"/shell-integration/zsh/kitty-integration
+    kitty-integration
+    unfunction kitty-integration
+  fi
+  
+  # Directory navigation enhancements
+  setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT
+  setopt EXTENDED_GLOB GLOB_DOTS
+  unsetopt BEEP
+'';
+----
+
+=== Terminal Configuration (link:../home/dan/features/cli/kitty.nix[`features/cli/kitty.nix`])
+
+Kitty terminal emulator with shell integration and custom settings.
+
+**Configuration highlights documented in the actual module.**
+
+=== Prompt Configuration (link:../home/dan/features/cli/starship.nix[`features/cli/starship.nix`])
+
+Modern shell prompt with Git integration and customization.
+
+**Configuration highlights documented in the actual module.**
+
+=== SSH Configuration (link:../home/dan/features/cli/ssh.nix[`features/cli/ssh.nix`])
+
+SSH client configuration with host-specific settings.
+
+**Configuration highlights documented in the actual module.**
+
+=== Text Editor (link:../home/dan/features/cli/vim.nix[`features/cli/vim.nix`])
+
+Basic Vim configuration for system-wide text editing.
+
+**Configuration highlights documented in the actual module.**
+
+=== Utility Tools (link:../home/dan/features/cli/shell-utils.nix[`features/cli/shell-utils.nix`])
+
+Essential command-line utilities for development and system administration.
+
+**Tool list documented in the actual module.**
+
+== macOS Integration Features
+
+=== System Preferences (link:../home/dan/features/macos/defaults.nix[`features/macos/defaults.nix`])
+
+macOS system preferences automation using Home Manager's Darwin targets.
+
+==== Appearance Settings
+
+[source,nix]
+----
+targets.darwin.defaults = {
+  NSGlobalDomain = {
+    AppleAccentColor = -1;  # Graphite accent color
+    AppleHighlightColor = "0.847059 0.847059 0.862745 Graphite";
+  };
+};
+----
+
+==== Dock Configuration
+
+[cols="1,3",options="header"]
+|===
+|Setting |Value
+
+|**Position**
+|Bottom of screen
+
+|**Auto-hide**
+|Enabled with 0.0s delay and 0.5s animation
+
+|**Tile Size**
+|48 pixels
+
+|**Show Recents**
+|Disabled
+
+|**Minimize Effect**
+|Scale animation
+
+|**Space Management**
+|Don't rearrange spaces based on use
+|===
+
+==== Finder Preferences
+
+[source,nix]
+----
+"com.apple.finder" = {
+  AppleShowAllExtensions = true;    # Show all file extensions
+  ShowPathbar = true;               # Show path bar
+  FXPreferredViewStyle = "Nlsv";    # Default to list view
+};
+----
+
+==== Control Center Customization
+
+[source,nix]
+----
+currentHostDefaults = {
+  "com.apple.controlcenter" = {
+    "NSStatusItem Visible WiFi" = true;
+    "NSStatusItem Visible Bluetooth" = true;
+    "NSStatusItem Visible Sound" = true;
+  };
+};
+----
+
+**Features:**
+
+* **Declarative Configuration**: All settings defined in code
+* **Immediate Application**: Settings apply on Home Manager activation
+* **Consistent Experience**: Same settings across different machines
+* **Version Control**: Preferences tracked in Git
+
+== Productivity Features
+
+=== Code Editor (link:../home/dan/features/productivity/vscode.nix[`features/cli/vscode.nix`])
+
+Visual Studio Code with declarative extension management and settings.
+
+==== Extension Management
+
+[source,nix]
+----
+programs.vscode = {
+  enable = true;
+  mutableExtensionsDir = false;  # Fully declarative
+
+  profiles.default = {
+    extensions = with pkgs.vscode-extensions; [
+      # Stable extensions
+      catppuccin.catppuccin-vsc
+      catppuccin.catppuccin-vsc-icons
+      dbaeumer.vscode-eslint
+      esbenp.prettier-vscode
+      github.copilot
+      kamadorueda.alejandra
+    ] ++ (with pkgs-unstable.vscode-extensions; [
+      # Unstable extensions for latest features
+      github.copilot-chat
+      jnoortheen.nix-ide
+      rooveterinaryinc.roo-cline
+    ]);
+  };
+};
+----
+
+**Extension Strategy:**
+
+* **Mixed Sources**: Combines stable and unstable package sources
+* **Immutable Management**: Extensions managed declaratively
+* **Automatic Updates**: Controlled through Nix updates
+* **Theme Integration**: Catppuccin theme with consistent styling
+
+==== Settings Configuration
+
+[cols="1,2,3",options="header"]
+|===
+|Category |Setting |Value
+
+|**Editor**
+|Font Family
+|JetBrainsMono Nerd Font
+
+|**Editor**
+|Font Size
+|12
+
+|**Editor**
+|Format on Save
+|Enabled
+
+|**Theme**
+|Color Theme
+|Catppuccin Latte
+
+|**Theme**
+|Icon Theme
+|Catppuccin Latte
+
+|**Privacy**
+|Telemetry Level
+|Off
+
+|**Updates**
+|Update Mode
+|None (managed by Nix)
+|===
+
+==== Development Tools Integration
+
+[source,nix]
+----
+userSettings = {
+  "roo-cline.allowedCommands" = [
+    "npm test"
+    "npm install"
+    "tsc"
+    "git log"
+    "git diff"
+    "git show"
+  ];
+  "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
+};
+----
+
+=== Web Browser (link:../home/dan/features/productivity/browser.nix[`features/productivity/browser.nix`])
+
+Web browser configuration and preferences.
+
+**Configuration details documented in the actual module.**
+
+=== Productivity Tools (link:../home/dan/features/productivity/tools.nix[`features/productivity/tools.nix`])
+
+General productivity applications and utilities.
+
+**Tool list documented in the actual module.**
+
+== Feature Development Patterns
+
+=== Standard Module Structure
+
+Each feature module follows a consistent structure:
+
+[source,nix]
+----
+{ config, pkgs, lib, ... }: {
+  # Package installation
+  home.packages = with pkgs; [
+    package-name
+  ];
+  
+  # Program configuration
+  programs.package-name = {
+    enable = true;
+    # program-specific options
+  };
+  
+  # Optional: File management
+  home.file.".config/app/config.yaml".text = ''
+    # configuration content
+  '';
+  
+  # Optional: Service configuration
+  services.package-name = {
+    enable = true;
+    # service-specific options
+  };
+  
+  # Optional: SOPS integration
+  sops.secrets."app/secret" = {};
+  
+  # Optional: Environment variables
+  home.sessionVariables = {
+    APP_CONFIG = "value";
+  };
+}
+----
+
+=== SOPS Integration Pattern
+
+For features requiring secrets:
+
+[source,nix]
+----
+{ config, pkgs, lib, ... }: {
+  # Reference secrets defined in global configuration
+  programs.app = {
+    settings = {
+      apiKey = config.sops.secrets."app/api-key".path;
+    };
+  };
+  
+  # Or use SOPS templates for complex configurations
+  sops.templates."app-config" = {
+    content = ''
+      api_key: ${config.sops.placeholder."app/api-key"}
+      username: ${config.sops.placeholder."app/username"}
+    '';
+    path = "${config.home.homeDirectory}/.config/app/config.yaml";
+  };
+}
+----
+
+=== Cross-Feature Dependencies
+
+When features depend on each other:
+
+[source,nix]
+----
+{ config, pkgs, lib, ... }: {
+  # Conditional configuration based on other features
+  programs.app = lib.mkIf config.programs.other-app.enable {
+    enable = true;
+    integrations.other-app = true;
+  };
+  
+  # Shared configuration patterns
+  home.sessionVariables = lib.mkIf config.programs.shell.enable {
+    APP_SHELL_INTEGRATION = "true";
+  };
+}
+----
+
+== Adding New Features
+
+=== Feature Module Creation
+
+. **Create module file**: `home/dan/features/category/feature-name.nix`
+. **Follow standard structure**: Use the established pattern
+. **Document configuration**: Add inline comments for complex settings
+. **Test integration**: Verify the feature works with existing setup
+
+=== Integration Steps
+
+. **Import in host config**: Add to `home/dan/hostname.nix` imports
+. **Handle dependencies**: Ensure required packages and services are available
+. **Configure secrets**: Add any required secrets to SOPS configuration
+. **Update documentation**: Document the feature in this file
+
+=== Best Practices
+
+* **Modularity**: Keep features independent when possible
+* **Configuration**: Use Home Manager options when available
+* **Secrets**: Use SOPS for any sensitive information
+* **Testing**: Test features individually and in combination
+* **Documentation**: Document purpose, dependencies, and configuration options
+
+This Home Manager configuration provides a solid foundation for user environment management while maintaining flexibility for future enhancements and additional features.
