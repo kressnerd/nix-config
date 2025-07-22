@@ -16,7 +16,6 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
-    # Declarative tap management
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
@@ -32,28 +31,40 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, darwin, home-manager, sops-nix, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: {
-    darwinConfigurations."J6G6Y9JK7L" = darwin.lib.darwinSystem {
-      system = "aarch64-darwin";
-      specialArgs = { inherit inputs; }; # Pass inputs to modules
-      modules = [
-        mac-app-util.darwinModules.default
-        nix-homebrew.darwinModules.nix-homebrew
-        ./hosts/J6G6Y9JK7L
-        home-manager.darwinModules.home-manager
-        {
-          home-manager.sharedModules = [
-            mac-app-util.homeManagerModules.default
-            sops-nix.homeManagerModules.sops
-          ];
-          home-manager.extraSpecialArgs = {
-            pkgs-unstable = import nixpkgs-unstable {
-              system = "aarch64-darwin";
-              config.allowUnfree = true;
+  outputs = { self, nixpkgs, nixpkgs-unstable, darwin, home-manager, sops-nix, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: 
+  let
+    inherit (self) outputs;
+  in
+  {
+    darwinConfigurations = {
+      J6G6Y9JK7L = darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        specialArgs = { inherit inputs outputs; };
+        modules = [
+          mac-app-util.darwinModules.default
+          nix-homebrew.darwinModules.nix-homebrew
+          ./hosts/J6G6Y9JK7L
+          home-manager.darwinModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs outputs;
+                pkgs-unstable = import nixpkgs-unstable {
+                  system = "aarch64-darwin";
+                  config.allowUnfree = true;
+                };
+              };
+              users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
+              sharedModules = [
+                mac-app-util.homeManagerModules.default
+                sops-nix.homeManagerModules.sops
+              ];
             };
-          };
-        }
-      ];
+          }
+        ];
+      };
     };
   };
 }

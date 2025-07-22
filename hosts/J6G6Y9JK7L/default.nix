@@ -31,55 +31,28 @@
   # Fully declarative Homebrew configuration
   nix-homebrew = {
     enable = true;
-
-    # Apple Silicon: Also install Homebrew for Intel (Rosetta 2)
-    # Important for CrossOver and other x86-only apps
     enableRosetta = true;
-
-    # User owning the Homebrew prefix
     user = "daniel.kressner";
-
-    # Declarative tap management
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
     };
-
-    # Fully immutable - taps can only be managed through this config
     mutableTaps = false;
   };
 
   # Declarative Homebrew packages
   homebrew = {
     enable = true;
-
     taps = builtins.attrNames config.nix-homebrew.taps;
-
-    # Fully declarative
     onActivation = {
-      cleanup = "zap"; # Remove unlisted packages
-      autoUpdate = false; # update through flake inputs
-      upgrade = true; # Apply updates when switching
+      cleanup = "zap";
+      autoUpdate = false;
+      upgrade = true;
     };
-
-    # Brew packages (CLI tools as fallback)
-    brews = [
-      # Example: tools not in nixpkgs
-      # "mas" # Mac App Store CLI
-    ];
-
-    # Cask packages (GUI apps)
+    brews = [];
     casks = [
       "crossover"
-      # Add other GUI apps not available in nixpkgs
-      # "microsoft-teams" # if needed
-      # "zoom"
     ];
-
-    # Mac App Store apps (requires 'mas' brew)
-    # masApps = {
-    #   "Keynote" = 409183694;
-    # };
   };
 
   # Add activation script to check Xcode CLT at runtime
@@ -104,11 +77,4 @@
   environment.systemPackages = with pkgs; [
     # Only system-wide essentials
   ];
-
-  # Home Manager configuration
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    users."daniel.kressner" = import ./home.nix;
-  };
 }

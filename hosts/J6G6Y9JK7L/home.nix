@@ -24,13 +24,6 @@
   # Let Home Manager manage itself
   programs.home-manager.enable = true;
 
-  # Basic git configuration
-  programs.git = {
-    enable = true;
-    userName = "User Name";
-    userEmail = "me@example.com";
-  };
-
   # Configure zsh
   programs.zsh = {
     enable = true;
