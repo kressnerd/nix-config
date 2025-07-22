@@ -34,18 +34,6 @@
         "extensions.autoCheckUpdates" = false;
         "extensions.autoUpdate" = false;
         "npm.fetchOnlinePackageInfo" = false;
-        "telemetry.telemetryLevel" = "off";
-        "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
-        "update.mode" = "none";
-        "vim.handleKeys" = {
-          "<C-d>" = true;
-          "<C-s>" = false;
-          "<C-z>" = false;
-        };
-        "workbench.colorTheme" = "Catppuccin Latte";
-        "workbench.enableExperiments" = false;
-        "workbench.iconTheme" = "catppuccin-latte";
-        "workbench.settings.enableNaturalLanguageSearch" = false;
         "roo-cline.allowedCommands" = [
           "npm test"
           "npm install"
@@ -54,6 +42,13 @@
           "git diff"
           "git show"
         ];
+        "telemetry.telemetryLevel" = "off";
+        "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
+        "update.mode" = "none";
+        "workbench.colorTheme" = "Catppuccin Latte";
+        "workbench.enableExperiments" = false;
+        "workbench.iconTheme" = "catppuccin-latte";
+        "workbench.settings.enableNaturalLanguageSearch" = false;
       };
     };
   };
