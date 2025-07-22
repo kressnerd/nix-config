@@ -1,19 +1,22 @@
-{ config, lib, pkgs, ... }:
-
 {
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   # macOS user-specific settings
   targets.darwin = {
     defaults = {
       # Graphite accent color
       NSGlobalDomain = {
-        AppleAccentColor = -1;  # -1 for Graphite
+        AppleAccentColor = -1; # -1 for Graphite
         AppleHighlightColor = "0.847059 0.847059 0.862745 Graphite";
       };
 
       # Dock settings
       "com.apple.dock" = {
         # Position
-        orientation = "bottom";
+        orientation = "left";
 
         # Auto-hide
         autohide = true;
@@ -26,7 +29,7 @@
         minimize-to-application = true;
 
         # Minimize effect
-        mineffect = "scale";  # or "genie"
+        mineffect = "scale"; # or "genie"
 
         # Don't rearrange spaces based on use
         mru-spaces = false;
