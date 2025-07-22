@@ -1,9 +1,13 @@
-{ config, pkgs, lib, pkgs-unstable, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  pkgs-unstable,
+  ...
+}: {
   home.stateVersion = "25.05";
 
-  imports = [ ./git.nix ];
+  imports = [./git.nix];
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
@@ -34,8 +38,6 @@
   };
 
   programs.keepassxc.enable = true;
-
-  programs.librewolf.enable = true;
 
   programs.vscode = {
     enable = true;
