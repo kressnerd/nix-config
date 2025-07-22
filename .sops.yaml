@@ -1,0 +1,9 @@
+keys:
+  - &users:
+    - &dan age1myvl9jg57tsllw4um80m4l55qlc904ces2jmqat2zn6nvdpc2dgqjpxju9
+
+creation_rules:
+  - path_regex: hosts\/J6G6Y9JK7L\/secrets\.ya?ml$
+    key_groups:
+      - age:
+          - *dan

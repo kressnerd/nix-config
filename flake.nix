@@ -24,9 +24,14 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: {
+  outputs = { self, nixpkgs, darwin, home-manager, sops-nix, mac-app-util, nix-homebrew, homebrew-core, homebrew-cask, ... }@inputs: {
     darwinConfigurations."J6G6Y9JK7L" = darwin.lib.darwinSystem {
       system = "aarch64-darwin";
       specialArgs = { inherit inputs; }; # Pass inputs to modules
@@ -38,6 +43,7 @@
         {
           home-manager.sharedModules = [
             mac-app-util.homeManagerModules.default
+            sops-nix.homeManagerModules.sops
           ];
         }
       ];
