@@ -12,6 +12,7 @@
     profiles.default = {
       extensions = with pkgs.vscode-extensions;
         [
+          asciidoctor.asciidoctor-vscode
           catppuccin.catppuccin-vsc
           catppuccin.catppuccin-vsc-icons
 
@@ -27,6 +28,55 @@
         ]);
 
       userSettings = {
+        # AsciiDoc Configuration
+        "asciidoc.extensions.enableKroki" = true;
+        "asciidoc.preview.attributes" = {
+          "experimental" = "";
+          "icons" = "font";
+          "linkattrs" = "";
+          "sectanchors" = "";
+          "toc" = "left";
+          "toclevels" = "3";
+        };
+        "asciidoc.preview.breaks" = false;
+        "asciidoc.preview.doubleClickToSwitchTab" = true;
+        "asciidoc.preview.fontFamily" = "JetBrainsMono Nerd Font, -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', sans-serif";
+        "asciidoc.preview.fontSize" = 14;
+        "asciidoc.preview.lineHeight" = 1.6;
+        "asciidoc.preview.markEditorSelection" = true;
+        "asciidoc.preview.openMarkdownLinks" = true;
+        "asciidoc.preview.refreshInterval" = 2000;
+        "asciidoc.preview.scrollEditorWithPreview" = true;
+        "asciidoc.preview.scrollPreviewWithEditor" = true;
+        "asciidoc.preview.style" = ""; # Uses default styling that integrates with theme
+        "asciidoc.preview.useEditorStyle" = false;
+        "asciidoc.useWorkspaceRoot" = true;
+        "asciidoc.wkhtmltopdf.executablePath" = "";
+
+        # File associations for AsciiDoc
+        "files.associations" = {
+          "*.adoc" = "asciidoc";
+          "*.asciidoc" = "asciidoc";
+          "*.asc" = "asciidoc";
+        };
+
+        # Editor settings for AsciiDoc files
+        "[asciidoc]" = {
+          "editor.quickSuggestions" = {
+            "comments" = false;
+            "other" = true;
+            "strings" = false;
+          };
+          "editor.snippetSuggestions" = "top";
+          "editor.suggest.showSnippets" = true;
+          "editor.wordWrap" = "on";
+          "editor.rulers" = [80 120];
+          "editor.tabSize" = 2;
+          "editor.insertSpaces" = true;
+          "editor.formatOnSave" = false; # AsciiDoc doesn't need auto-formatting
+        };
+
+        # General VS Code settings
         "catppuccin.accentColor" = "blue";
         "editor.fontFamily" = "JetBrainsMono Nerd Font";
         "editor.fontSize" = 12;
