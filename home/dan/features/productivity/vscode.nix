@@ -28,7 +28,21 @@
         ]);
 
       userSettings = {
-        # AsciiDoc Configuration
+        # Editor settings for AsciiDoc files
+        "[asciidoc]" = {
+          "editor.formatOnSave" = false; # AsciiDoc doesn't need auto-formatting
+          "editor.insertSpaces" = true;
+          "editor.quickSuggestions" = {
+            "comments" = false;
+            "other" = true;
+            "strings" = false;
+          };
+          "editor.rulers" = [80 120];
+          "editor.snippetSuggestions" = "top";
+          "editor.suggest.showSnippets" = true;
+          "editor.tabSize" = 2;
+          "editor.wordWrap" = "on";
+        };
         "asciidoc.extensions.enableKroki" = true;
         "asciidoc.preview.attributes" = {
           "experimental" = "";
@@ -53,29 +67,6 @@
         "asciidoc.useWorkspaceRoot" = true;
         "asciidoc.wkhtmltopdf.executablePath" = "";
 
-        # File associations for AsciiDoc
-        "files.associations" = {
-          "*.adoc" = "asciidoc";
-          "*.asciidoc" = "asciidoc";
-          "*.asc" = "asciidoc";
-        };
-
-        # Editor settings for AsciiDoc files
-        "[asciidoc]" = {
-          "editor.quickSuggestions" = {
-            "comments" = false;
-            "other" = true;
-            "strings" = false;
-          };
-          "editor.snippetSuggestions" = "top";
-          "editor.suggest.showSnippets" = true;
-          "editor.wordWrap" = "on";
-          "editor.rulers" = [80 120];
-          "editor.tabSize" = 2;
-          "editor.insertSpaces" = true;
-          "editor.formatOnSave" = false; # AsciiDoc doesn't need auto-formatting
-        };
-
         # General VS Code settings
         "catppuccin.accentColor" = "blue";
         "editor.fontFamily" = "JetBrainsMono Nerd Font";
@@ -83,6 +74,14 @@
         "editor.formatOnSave" = true;
         "extensions.autoCheckUpdates" = false;
         "extensions.autoUpdate" = false;
+
+        # File associations for AsciiDoc
+        "files.associations" = {
+          "*.adoc" = "asciidoc";
+          "*.asciidoc" = "asciidoc";
+          "*.asc" = "asciidoc";
+        };
+
         "npm.fetchOnlinePackageInfo" = false;
         "roo-cline.allowedCommands" = [
           "npm test"
@@ -99,6 +98,7 @@
         "workbench.enableExperiments" = false;
         "workbench.iconTheme" = "catppuccin-latte";
         "workbench.settings.enableNaturalLanguageSearch" = false;
+        "roo-cline.deniedCommands"= [];
       };
     };
   };
