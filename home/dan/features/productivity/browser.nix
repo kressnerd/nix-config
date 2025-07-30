@@ -50,9 +50,8 @@
     # bypass-paywalls-clean
   ];
 in {
-  programs.firefox = {
+  programs.librewolf = {
     enable = true;
-    package = pkgs.librewolf;
 
     profiles = {
       company = {
@@ -92,7 +91,6 @@ in {
         search = {
           force = true;
           default = "Kagi";
-
           engines = {
             "Kagi" = {
               urls = [
@@ -147,8 +145,7 @@ in {
 
         search = {
           force = true;
-          default = "Kagi"; # Changed to use your Kagi engine
-
+          default = "Kagi";
           engines = {
             "Kagi" = {
               urls = [
@@ -171,21 +168,4 @@ in {
       };
     };
   };
-
-  home.activation.linkLibrewolfProfiles = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    LIBREWOLF_DIR="$HOME/Library/Application Support/LibreWolf"
-    FIREFOX_DIR="$HOME/Library/Application Support/Firefox"
-
-    mkdir -p "$LIBREWOLF_DIR"
-
-    # Link profiles.ini
-    rm -f "$LIBREWOLF_DIR/profiles.ini"
-    ln -sf "$FIREFOX_DIR/profiles.ini" "$LIBREWOLF_DIR/profiles.ini"
-
-    # Link Profiles directory
-    if [ ! -L "$LIBREWOLF_DIR/Profiles" ]; then
-      rm -rf "$LIBREWOLF_DIR/Profiles"
-      ln -sf "$FIREFOX_DIR/Profiles" "$LIBREWOLF_DIR/Profiles"
-    fi
-  '';
 }
