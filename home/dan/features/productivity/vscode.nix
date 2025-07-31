@@ -2,6 +2,7 @@
   config,
   pkgs,
   pkgs-unstable,
+  pkgs-dan-testing,
   lib,
   ...
 }: {
@@ -10,20 +11,22 @@
     mutableExtensionsDir = false;
 
     profiles.default = {
-      extensions = with pkgs.vscode-extensions;
-        [
+      # Standard extensions from stable and unstable
+      extensions =
+        (with pkgs.vscode-extensions; [
           asciidoctor.asciidoctor-vscode
           catppuccin.catppuccin-vsc
           catppuccin.catppuccin-vsc-icons
-
           dbaeumer.vscode-eslint
           esbenp.prettier-vscode
           github.copilot
           kamadorueda.alejandra
-        ]
+        ])
         ++ (with pkgs-unstable.vscode-extensions; [
           github.copilot-chat
           jnoortheen.nix-ide
+        ])
+        ++ (with pkgs-dan-testing.vscode-extensions; [
           rooveterinaryinc.roo-cline
         ]);
 
@@ -98,7 +101,7 @@
         "workbench.enableExperiments" = false;
         "workbench.iconTheme" = "catppuccin-latte";
         "workbench.settings.enableNaturalLanguageSearch" = false;
-        "roo-cline.deniedCommands"= [];
+        "roo-cline.deniedCommands" = [];
       };
     };
   };
