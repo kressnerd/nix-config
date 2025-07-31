@@ -8,36 +8,7 @@ A comprehensive and modular Nix configuration repository for macOS using nix-dar
 
 == 🏗️ Repository Structure
 
-[source,text]
-----
-nix-config/                    # macOS/nix-darwin configuration
-├── flake.nix                  # Main flake definition for nix-darwin
-├── home/                      # Home Manager configurations
-│   └── dan/                   # User-specific configurations
-│       ├── global/            # Global home-manager settings
-│       │   └── default.nix    # Base configuration and SOPS setup
-│       ├── features/          # Modular feature configurations
-│       │   ├── cli/           # Command-line tools and shell setup
-│       │   │   ├── git.nix    # Git with conditional identity management
-│       │   │   ├── kitty.nix  # Terminal emulator configuration
-│       │   │   ├── shell-utils.nix # Shell utilities and tools
-│       │   │   ├── ssh.nix    # SSH client configuration
-│       │   │   ├── starship.nix # Modern shell prompt
-│       │   │   ├── vim.nix    # Vim editor setup
-│       │   │   └── zsh.nix    # Zsh with Oh My Zsh and completions
-│       │   ├── macos/         # macOS-specific settings
-│       │   │   └── defaults.nix # System preferences and Dock settings
-│       │   └── productivity/  # Productivity tools and applications
-│       │       ├── browser.nix # Web browser configuration
-│       │       ├── tools.nix   # General productivity applications
-│       │       └── vscode.nix  # VS Code with extensions and settings
-│       └── J6G6Y9JK7L.nix     # Host-specific home configuration
-└── hosts/                     # System-level host configurations
-    └── J6G6Y9JK7L/            # macOS host configuration
-        ├── default.nix        # nix-darwin system configuration
-        └── secrets.yaml       # SOPS encrypted secrets
-----
-
+For a detailed overview of the repository’s architecture, modularity, and layering, see link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc].
 == 🚀 Quick Start
 
 === Prerequisites
@@ -105,225 +76,22 @@ drs  # Shortcut for darwin-rebuild switch
 
 === Adding New Features
 
-. **Create feature module**:
-+
-[source,bash]
-----
-# For CLI tools
-touch home/dan/features/cli/new-tool.nix
-
-# For productivity apps
-touch home/dan/features/productivity/new-app.nix
-
-# For macOS-specific settings
-touch home/dan/features/macos/new-setting.nix
-----
-
-. **Implement the feature**:
-+
-[source,nix]
-----
-# home/dan/features/cli/new-tool.nix
-{ config, pkgs, lib, ... }: {
-  home.packages = [ pkgs.new-tool ];
-  
-  programs.new-tool = {
-    enable = true;
-    # configuration options
-  };
-}
-----
-
-. **Import in host configuration**:
-+
-[source,nix]
-----
-# In home/dan/J6G6Y9JK7L.nix
-imports = [
-  ./features/cli/new-tool.nix
-  # ... other imports
-];
-----
-
+To add new features, create a new module in the appropriate directory and import it in your host configuration. See link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc] and link:docs/HOME-MANAGER.adoc[docs/HOME-MANAGER.adoc] for patterns and examples.
 === Managing Secrets
 
-. **Add new secrets to SOPS file**:
-+
-[source,bash]
-----
-sops hosts/J6G6Y9JK7L/secrets.yaml
-----
-
-. **Define secrets in global configuration**:
-+
-[source,nix]
-----
-# In home/dan/global/default.nix
-sops.secrets = {
-  "service/api-key" = {};
-  "git/personal/email" = {};
-};
-----
-
-. **Reference in feature modules**:
-+
-[source,nix]
-----
-# Use with: config.sops.secrets."service/api-key".path
-# Or with SOPS templates: config.sops.placeholder."service/api-key"
-----
-
+Secrets are managed centrally using SOPS and referenced in modules as needed. See link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc] for details.
 === Host-Specific Customization
 
-The host configuration file defines which features to enable:
-
-[source,nix]
-----
-# home/dan/J6G6Y9JK7L.nix
-{
-  imports = [
-    ./global                           # Always imported (base config + SOPS)
-    ./features/cli/git.nix            # Git with conditional identity
-    ./features/cli/kitty.nix          # Terminal emulator
-    ./features/cli/shell-utils.nix    # Shell utilities
-    ./features/cli/ssh.nix            # SSH configuration
-    ./features/cli/starship.nix       # Shell prompt
-    ./features/cli/vim.nix            # Vim editor
-    ./features/cli/zsh.nix            # Zsh shell
-    ./features/macos/defaults.nix     # macOS system preferences
-    ./features/productivity/browser.nix # Web browser
-    ./features/productivity/vscode.nix  # VS Code editor
-    ./features/productivity/tools.nix   # Productivity tools
-  ];
-  
-  # Host-specific overrides
-  home = {
-    username = "daniel.kressner";
-    homeDirectory = "/Users/daniel.kressner";
-  };
-  
-  # Host-specific shell aliases
-  programs.zsh.shellAliases = {
-    drs = "sudo darwin-rebuild switch --flake <config-directory>";
-  };
-}
-----
-
-== 🏠 Home Manager Features
-
-=== CLI Tools (link:home/dan/features/cli/[`home/dan/features/cli/`])
-
-[cols="1,2,3",options="header"]
-|===
-|Module |Description |Key Features
-
-|**link:home/dan/features/cli/git.nix[`git.nix`]**
-|Git configuration
-|Conditional identity management, SOPS-templated configs, custom aliases
-
-|**link:home/dan/features/cli/zsh.nix[`zsh.nix`]**
-|Zsh shell setup
-|Oh My Zsh, autosuggestions, syntax highlighting, custom bindings
-
-|**link:home/dan/features/cli/starship.nix[`starship.nix`]**
-|Modern shell prompt
-|Cross-shell prompt with Git integration
-
-|**link:home/dan/features/cli/kitty.nix[`kitty.nix`]**
-|Terminal emulator
-|Shell integration, custom keybindings
-
-|**link:home/dan/features/cli/ssh.nix[`ssh.nix`]**
-|SSH client config
-|Host-specific settings, key management
-
-|**link:home/dan/features/cli/vim.nix[`vim.nix`]**
-|Vim editor
-|Basic configuration and plugins
-
-|**link:home/dan/features/cli/shell-utils.nix[`shell-utils.nix`]**
-|CLI utilities
-|Essential command-line tools
-|===
-
-=== macOS Specific (link:home/dan/features/macos/[`home/dan/features/macos/`])
-
-[cols="1,2,3",options="header"]
-|===
-|Module |Description |Key Features
-
-|**link:home/dan/features/macos/defaults.nix[`defaults.nix`]**
-|macOS preferences
-|Dock settings, Finder preferences, system colors
-|===
-
-=== Productivity (link:home/dan/features/productivity/[`home/dan/features/productivity/`])
-
-[cols="1,2,3",options="header"]
-|===
-|Module |Description |Key Features
-
-|**link:home/dan/features/productivity/vscode.nix[`vscode.nix`]**
-|VS Code editor
-|Extensions, settings, themes, immutable configuration
-
-|**link:home/dan/features/productivity/browser.nix[`browser.nix`]**
-|Web browser setup
-|Browser configuration and preferences
-
-|**link:home/dan/features/productivity/tools.nix[`tools.nix`]**
-|Productivity apps
-|General productivity applications
-|===
-
-=== Global Configuration (link:home/dan/global/[`home/dan/global/`])
-
-[cols="1,2,3",options="header"]
-|===
-|Module |Description |Key Features
-
-|**link:home/dan/global/default.nix[`default.nix`]**
-|Base configuration
-|SOPS setup, common packages, Home Manager settings
-|===
+Each host can enable or override features as needed. See link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc] for the layering and import structure.
 
 == 🖥️ System Configuration
 
-=== macOS Host (link:hosts/J6G6Y9JK7L/[`hosts/J6G6Y9JK7L/`])
-
-The system-level configuration includes:
-
-* **nix-darwin integration**: System-wide Nix management (disabled for Determinate Nix compatibility)
-* **Homebrew management**: Declarative Homebrew with automatic cleanup
-* **User account setup**: Primary user configuration for Home Manager
-* **System packages**: Minimal system-wide package installation
-* **Activation scripts**: Runtime checks for dependencies (Xcode CLT)
-
-Key features:
-
-[source,nix]
-----
-# Homebrew configuration
-homebrew = {
-  enable = true;
-  onActivation = {
-    cleanup = "zap";        # Remove unlisted packages
-    autoUpdate = false;     # Disable automatic updates
-    upgrade = true;         # Upgrade existing packages
-  };
-  casks = [ "crossover" ];  # macOS applications
-};
-----
-
 == 📚 Documentation Structure
 
-* **link:README.adoc[README.adoc]**: This overview document
-* **link:docs/FLAKE.adoc[docs/FLAKE.adoc]**: Flake structure and entry points
-* **link:docs/MODULES.adoc[docs/MODULES.adoc]**: Module organization and relationships  
-* **link:docs/HOSTS.adoc[docs/HOSTS.adoc]**: Host configuration details
+* **link:README.adoc[README.adoc]**: This overview and quick start document
+* **link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc]**: Architectural overview, structure, and modularity
 * **link:docs/HOME-MANAGER.adoc[docs/HOME-MANAGER.adoc]**: Home Manager feature documentation
 * **link:docs/DEVELOPMENT.adoc[docs/DEVELOPMENT.adoc]**: Development workflow and guidelines
-
 == 🔄 Evolution Path
 
 This configuration is designed to grow incrementally:

@@ -18,51 +18,11 @@ The global configuration provides the foundation for all Home Manager setups.
 
 ==== Core Settings
 
-[cols="1,3",options="header"]
-|===
-|Setting |Purpose
-
-|**State Version**
-|Sets Home Manager compatibility version (`25.05`)
-
-|**Home Manager Management**
-|Enables Home Manager self-management
-
-|**Common Packages**
-|Installs essential tools available across all hosts
-|===
+The global configuration sets foundational options such as the Home Manager state version, enables Home Manager self-management, and provides a base set of packages and secrets integration for all hosts.
 
 ==== SOPS Integration
 
-Centralized secrets management for all Home Manager features:
-
-[source,nix]
-----
-sops = {
-  defaultSopsFile = ../../../hosts/J6G6Y9JK7L/secrets.yaml;
-  age.keyFile = "${config.home.homeDirectory}/Library/Application Support/sops/age/keys.txt";
-  secrets = {
-    # Git identity management
-    "git/personal/name" = {};
-    "git/personal/email" = {};
-    "git/personal/folder" = {};
-    "git/company/name" = {};
-    "git/company/email" = {};
-    "git/company/folder" = {};
-    "git/client001/name" = {};
-    "git/client001/email" = {};
-    "git/client001/folder" = {};
-  };
-};
-----
-
-**SOPS Features:**
-
-* **Age Encryption**: Uses modern age encryption for security
-* **Centralized Secrets**: All secrets defined in one location
-* **Template Integration**: Supports dynamic configuration generation
-* **Cross-Feature Access**: Secrets available to all feature modules
-
+Secrets management is handled centrally and declaratively, making secrets available to all feature modules through SOPS and age encryption.
 == CLI Tools Features
 
 === Git Configuration (link:../home/dan/features/cli/git.nix[`features/cli/git.nix`])
@@ -94,325 +54,30 @@ sops.templates."gitconfig" = {
 };
 ----
 
-**Identity Features:**
-
-* **Automatic Switching**: Identity changes based on project directory
-* **Multiple Identities**: Support for personal, company, and client work
-* **SOPS Integration**: All identity information encrypted
-* **SSH Key Management**: Different SSH keys per identity
-
-==== Configuration Highlights
-
-[cols="1,3",options="header"]
-|===
-|Feature |Configuration
-
-|**Default Settings**
-|`defaultBranch = main`, `editor = vim`, `autocrlf = input`
-
-|**Custom Aliases**
-|Pretty log format (`lg`), identity verification (`whoami`)
-
-|**GPG Signing**
-|Disabled by default, configurable per identity
-
-|**SSH Integration**
-|Custom SSH commands per identity for key management
-|===
-
+The Git feature demonstrates advanced identity management and SOPS integration, supporting multiple identities and secure credential handling.
 === Shell Configuration (link:../home/dan/features/cli/zsh.nix[`features/cli/zsh.nix`])
 
 Comprehensive Zsh setup with Oh My Zsh, plugins, and custom configurations.
 
 ==== Core Features
 
-[source,nix]
-----
-programs.zsh = {
-  enable = true;
-  enableCompletion = true;
-  autosuggestion.enable = true;
-  syntaxHighlighting.enable = true;
-  
-  oh-my-zsh = {
-    enable = true;
-    plugins = [
-      "git"
-      "macos"
-      "sudo"
-      "command-not-found"
-      "dirhistory"
-    ];
-  };
-};
-----
-
-**Shell Features:**
-
-* **Auto-completion**: Enhanced completion with case-insensitive matching
-* **History Management**: 100k entries with deduplication and sharing
-* **Plugin Integration**: Oh My Zsh plugins for enhanced functionality
-* **Custom Bindings**: Ctrl+Arrow for word navigation, history search
-
+The Zsh feature provides a modern shell environment with plugins, completion, and usability enhancements.
 ==== Aliases and Shortcuts
-
-[cols="1,2,3",options="header"]
-|===
-|Category |Aliases |Purpose
-
-|**File Operations**
-|`ll`, `la`, `l`, `..`, `...`
-|Directory listing and navigation
-
-|**Git Shortcuts**
-|`g`, `gs`, `ga`, `gc`, `gp`, `gl`
-|Common Git operations
-
-|**Safety Nets**
-|`cp -i`, `mv -i`, `rm -i`
-|Prevent accidental file operations
-
-|**Nix Tools**
-|`ns`, `nb`, `ne`, `nsu`
-|Nix development shortcuts
-
-|**Terminal Integration**
-|`icat`, `ssh` (Kitty kittens)
-|Enhanced terminal functionality
-|===
+Common aliases and shortcuts are provided for improved productivity and safety.
 
 ==== Advanced Configuration
 
-[source,nix]
-----
-initContent = ''
-  # Better history search
-  bindkey '^[[A' history-substring-search-up
-  bindkey '^[[B' history-substring-search-down
-  
-  # Kitty shell integration
-  if [[ -n "$KITTY_INSTALLATION_DIR" ]]; then
-    export KITTY_SHELL_INTEGRATION="enabled"
-    autoload -Uz -- "$KITTY_INSTALLATION_DIR"/shell-integration/zsh/kitty-integration
-    kitty-integration
-    unfunction kitty-integration
-  fi
-  
-  # Directory navigation enhancements
-  setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT
-  setopt EXTENDED_GLOB GLOB_DOTS
-  unsetopt BEEP
-'';
-----
-
 === Terminal Configuration (link:../home/dan/features/cli/kitty.nix[`features/cli/kitty.nix`])
 
-Kitty terminal emulator with shell integration and custom settings.
-
-**Configuration highlights documented in the actual module.**
-
-=== Prompt Configuration (link:../home/dan/features/cli/starship.nix[`features/cli/starship.nix`])
-
-Modern shell prompt with Git integration and customization.
-
-**Configuration highlights documented in the actual module.**
-
-=== SSH Configuration (link:../home/dan/features/cli/ssh.nix[`features/cli/ssh.nix`])
-
-SSH client configuration with host-specific settings.
-
-**Configuration highlights documented in the actual module.**
-
-=== Text Editor (link:../home/dan/features/cli/vim.nix[`features/cli/vim.nix`])
-
-Basic Vim configuration for system-wide text editing.
-
-**Configuration highlights documented in the actual module.**
-
-=== Utility Tools (link:../home/dan/features/cli/shell-utils.nix[`features/cli/shell-utils.nix`])
-
-Essential command-line utilities for development and system administration.
-
-**Tool list documented in the actual module.**
-
+Kitty terminal emulator, Starship prompt, SSH, Vim, and utility tools are all configured as feature modules, following the same modular pattern. See the respective module files for details.
 == macOS Integration Features
 
-=== System Preferences (link:../home/dan/features/macos/defaults.nix[`features/macos/defaults.nix`])
-
-macOS system preferences automation using Home Manager's Darwin targets.
-
-==== Appearance Settings
-
-[source,nix]
-----
-targets.darwin.defaults = {
-  NSGlobalDomain = {
-    AppleAccentColor = -1;  # Graphite accent color
-    AppleHighlightColor = "0.847059 0.847059 0.862745 Graphite";
-  };
-};
-----
-
-==== Dock Configuration
-
-[cols="1,3",options="header"]
-|===
-|Setting |Value
-
-|**Position**
-|Bottom of screen
-
-|**Auto-hide**
-|Enabled with 0.0s delay and 0.5s animation
-
-|**Tile Size**
-|48 pixels
-
-|**Show Recents**
-|Disabled
-
-|**Minimize Effect**
-|Scale animation
-
-|**Space Management**
-|Don't rearrange spaces based on use
-|===
-
-==== Finder Preferences
-
-[source,nix]
-----
-"com.apple.finder" = {
-  AppleShowAllExtensions = true;    # Show all file extensions
-  ShowPathbar = true;               # Show path bar
-  FXPreferredViewStyle = "Nlsv";    # Default to list view
-};
-----
-
-==== Control Center Customization
-
-[source,nix]
-----
-currentHostDefaults = {
-  "com.apple.controlcenter" = {
-    "NSStatusItem Visible WiFi" = true;
-    "NSStatusItem Visible Bluetooth" = true;
-    "NSStatusItem Visible Sound" = true;
-  };
-};
-----
-
-**Features:**
-
-* **Declarative Configuration**: All settings defined in code
-* **Immediate Application**: Settings apply on Home Manager activation
-* **Consistent Experience**: Same settings across different machines
-* **Version Control**: Preferences tracked in Git
+macOS system preferences and platform integration are managed declaratively through feature modules, ensuring consistent and reproducible settings across machines.
+== Productivity Features
 
 == Productivity Features
 
-=== Code Editor (link:../home/dan/features/productivity/vscode.nix[`features/cli/vscode.nix`])
-
-Visual Studio Code with declarative extension management and settings.
-
-==== Extension Management
-
-[source,nix]
-----
-programs.vscode = {
-  enable = true;
-  mutableExtensionsDir = false;  # Fully declarative
-
-  profiles.default = {
-    extensions = with pkgs.vscode-extensions; [
-      # Stable extensions
-      catppuccin.catppuccin-vsc
-      catppuccin.catppuccin-vsc-icons
-      dbaeumer.vscode-eslint
-      esbenp.prettier-vscode
-      github.copilot
-      kamadorueda.alejandra
-    ] ++ (with pkgs-unstable.vscode-extensions; [
-      # Unstable extensions for latest features
-      github.copilot-chat
-      jnoortheen.nix-ide
-      rooveterinaryinc.roo-cline
-    ]);
-  };
-};
-----
-
-**Extension Strategy:**
-
-* **Mixed Sources**: Combines stable and unstable package sources
-* **Immutable Management**: Extensions managed declaratively
-* **Automatic Updates**: Controlled through Nix updates
-* **Theme Integration**: Catppuccin theme with consistent styling
-
-==== Settings Configuration
-
-[cols="1,2,3",options="header"]
-|===
-|Category |Setting |Value
-
-|**Editor**
-|Font Family
-|JetBrainsMono Nerd Font
-
-|**Editor**
-|Font Size
-|12
-
-|**Editor**
-|Format on Save
-|Enabled
-
-|**Theme**
-|Color Theme
-|Catppuccin Latte
-
-|**Theme**
-|Icon Theme
-|Catppuccin Latte
-
-|**Privacy**
-|Telemetry Level
-|Off
-
-|**Updates**
-|Update Mode
-|None (managed by Nix)
-|===
-
-==== Development Tools Integration
-
-[source,nix]
-----
-userSettings = {
-  "roo-cline.allowedCommands" = [
-    "npm test"
-    "npm install"
-    "tsc"
-    "git log"
-    "git diff"
-    "git show"
-  ];
-  "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
-};
-----
-
-=== Web Browser (link:../home/dan/features/productivity/browser.nix[`features/productivity/browser.nix`])
-
-Web browser configuration and preferences.
-
-**Configuration details documented in the actual module.**
-
-=== Productivity Tools (link:../home/dan/features/productivity/tools.nix[`features/productivity/tools.nix`])
-
-General productivity applications and utilities.
-
-**Tool list documented in the actual module.**
-
+Productivity applications such as code editors, browsers, and general tools are managed as feature modules. Their configuration is fully declarative and reproducible, with details available in the respective module files.
 == Feature Development Patterns
 
 === Standard Module Structure

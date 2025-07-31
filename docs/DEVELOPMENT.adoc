@@ -62,101 +62,17 @@ sudo darwin-rebuild --switch-generation <number>
 
 ==== Feature Module Template
 
-[source,nix]
-----
-# home/dan/features/category/feature-name.nix
-{ config, pkgs, lib, ... }: {
-  # Package installation (prefer Home Manager packages)
-  home.packages = with pkgs; [
-    package-name
-  ];
-  
-  # Program configuration using Home Manager options
-  programs.package-name = {
-    enable = true;
-    
-    # Basic configuration
-    settings = {
-      option1 = "value1";
-      option2 = true;
-    };
-    
-    # Integration with other tools
-    integrations = lib.mkIf config.programs.other-tool.enable {
-      other-tool = true;
-    };
-  };
-  
-  # File management (when Home Manager options aren't available)
-  home.file.".config/app/config.yaml" = {
-    text = ''
-      # Configuration content
-      key: value
-    '';
-  };
-  
-  # SOPS integration for secrets
-  programs.package-name.settings = lib.mkIf (config.sops.secrets ? "app/secret") {
-    secretFile = config.sops.secrets."app/secret".path;
-  };
-  
-  # Environment variables
-  home.sessionVariables = {
-    APP_CONFIG_DIR = "${config.home.homeDirectory}/.config/app";
-  };
-  
-  # Service configuration (if applicable)
-  services.package-name = {
-    enable = true;
-    # service-specific options
-  };
-}
-----
+Feature modules follow a standard pattern: they declare packages, configure programs, manage files, integrate secrets, set environment variables, and optionally define services. See existing modules for concrete examples.
 
 ==== Integration Patterns
 
 ===== SOPS Secrets Integration
 
-[source,nix]
-----
-# 1. Define secrets in global configuration
-# home/dan/global/default.nix
-sops.secrets = {
-  "app/api-key" = {};
-  "app/username" = {};
-};
-
-# 2. Use secrets in feature modules
-# Option A: Direct file path reference
-programs.app.settings = {
-  apiKeyFile = config.sops.secrets."app/api-key".path;
-};
-
-# Option B: SOPS templates for complex configs
-sops.templates."app-config" = {
-  content = ''
-    api_key: ${config.sops.placeholder."app/api-key"}
-    username: ${config.sops.placeholder."app/username"}
-  '';
-  path = "${config.home.homeDirectory}/.config/app/config.yaml";
-};
-----
+SOPS secrets are defined globally and referenced in feature modules as needed, supporting both direct file references and template-based integration.
 
 ===== Cross-Feature Dependencies
 
-[source,nix]
-----
-# Conditional configuration based on other features
-programs.feature-a = lib.mkIf config.programs.feature-b.enable {
-  enable = true;
-  integration.feature-b = true;
-};
-
-# Shared configuration
-home.sessionVariables = {
-  SHARED_CONFIG = lib.mkIf config.programs.shell.enable "shell-integrated";
-};
-----
+Feature modules can conditionally integrate with each other using `lib.mkIf` and shared configuration patterns.
 
 === Host Configuration
 
@@ -170,74 +86,7 @@ home.sessionVariables = {
 
 ==== Host Configuration Guidelines
 
-[source,nix]
-----
-# hosts/hostname/default.nix - System-level configuration
-{
-  # Standard nix-darwin setup
-  nix.enable = false;  # For Determinate Nix compatibility
-  nixpkgs.config.allowUnfree = true;
-  programs.zsh.enable = true;
-  
-  # Platform and version
-  system.stateVersion = 6;
-  nixpkgs.hostPlatform = "aarch64-darwin";  # or x86_64-darwin
-  
-  # User account (required for Home Manager)
-  system.primaryUser = "username";
-  users.users."username" = {
-    name = "username";
-    home = "/Users/username";
-  };
-  
-  # Host-specific Homebrew packages
-  homebrew = {
-    enable = true;
-    onActivation.cleanup = "zap";
-    casks = [
-      # host-specific applications
-    ];
-  };
-  
-  # Minimal system packages (prefer Home Manager)
-  environment.systemPackages = with pkgs; [
-    # only essential system tools
-  ];
-}
-----
-
-[source,nix]
-----
-# home/dan/hostname.nix - User configuration
-{
-  imports = [
-    ./global                    # Always include
-    
-    # Feature selection for this host
-    ./features/cli/git.nix
-    ./features/cli/zsh.nix
-    ./features/productivity/vscode.nix
-    # ... other features based on host purpose
-  ];
-  
-  # Host-specific user settings
-  home = {
-    username = "username";
-    homeDirectory = "/Users/username";
-  };
-  
-  # Host-specific overrides and aliases
-  programs.zsh.shellAliases = {
-    drs = "sudo darwin-rebuild switch --flake .#hostname";
-    # other host-specific aliases
-  };
-  
-  # Host-specific application settings
-  programs.vscode.userSettings = {
-    "workbench.colorTheme" = "host-specific-theme";
-  };
-}
-----
+Host and user configuration files follow a modular pattern, importing global settings and selecting features as needed. See the codebase for up-to-date templates.
 
 == Code Quality Guidelines
 
@@ -269,13 +118,11 @@ alejandra .
     enable = true;
     userName = "user";
     userEmail = "user@example.com";
-    
     aliases = {
       co = "checkout";
       br = "branch";
       ci = "commit";
     };
-    
     extraConfig = {
       init.defaultBranch = "main";
       core.editor = "vim";
@@ -301,14 +148,13 @@ alejandra .
   # Feature description and purpose
   programs.feature = {
     enable = true;
-    
     # Explanation of complex configuration
     settings = {
       # Why this specific value is chosen
       complexOption = "specific-value";
     };
   };
-  
+
   # SOPS integration for sensitive data
   sops.templates."config-file" = {
     content = ''
@@ -392,11 +238,9 @@ sops.secrets = {
   "git/personal/email" = {};
   "git/company/name" = {};
   "git/company/email" = {};
-  
   # Development services
   "services/github/token" = {};
   "services/npm/token" = {};
-  
   # Infrastructure
   "infrastructure/aws/access-key" = {};
   "infrastructure/aws/secret-key" = {};
@@ -622,23 +466,6 @@ When reviewing changes:
 * **Link references**: Cross-reference related configurations
 * **Explain decisions**: Document why specific choices were made
 
-== Future Development
+== Roadmap
 
-=== Planned Enhancements
-
-* **Multi-host support**: Extend to multiple macOS machines
-* **Linux integration**: Add NixOS configurations
-* **Custom packages**: Create local package definitions
-* **Service management**: Add user service configurations
-* **CI/CD pipeline**: Automated testing and deployment
-
-=== Extension Points
-
-The configuration is designed to support future enhancements:
-
-* **Module framework**: Easy addition of new feature modules
-* **Platform abstraction**: Preparation for cross-platform support
-* **Configuration options**: Extensible option definitions
-* **Integration patterns**: Consistent approaches for tool integration
-
-This development workflow ensures consistent, maintainable, and reliable configuration management while supporting the repository's evolution toward increased complexity and functionality.
+include::TODO.adoc[]
