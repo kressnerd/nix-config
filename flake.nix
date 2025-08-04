@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-dan-testing.url = "github:kressnerd/nixpkgs/roo-code-update";
+#    nixpkgs-dan-testing.url = "github:kressnerd/nixpkgs/roo-code-update";
 
     darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";
     darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
@@ -38,7 +38,7 @@
     self,
     nixpkgs,
     nixpkgs-unstable,
-    nixpkgs-dan-testing,
+    # nixpkgs-dan-testing,
     darwin,
     home-manager,
     sops-nix,
@@ -74,10 +74,10 @@
                   system = "aarch64-darwin";
                   config.allowUnfree = true;
                 };
-                pkgs-dan-testing = import nixpkgs-dan-testing {
-                  system = "aarch64-darwin";
-                  config.allowUnfree = true;
-                };
+                #pkgs-dan-testing = import nixpkgs-dan-testing {
+                #  system = "aarch64-darwin";
+                #  config.allowUnfree = true;
+                #};
               };
               users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
               sharedModules = [
