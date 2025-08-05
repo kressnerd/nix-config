@@ -18,7 +18,7 @@
     ./features/productivity/browser.nix
     ./features/productivity/vscode.nix
     ./features/productivity/tools.nix
-    ./features/productivity/emacs.nix
+    ./features/productivity/emacs-doom.nix
   ];
 
   # Host-specific overrides

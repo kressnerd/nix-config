@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-#    nixpkgs-dan-testing.url = "github:kressnerd/nixpkgs/roo-code-update";
+    #    nixpkgs-dan-testing.url = "github:kressnerd/nixpkgs/roo-code-update";
 
     darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";
     darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
@@ -18,6 +18,12 @@
     nur.url = "github:nix-community/NUR";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    # Doom Emacs integration
+    nix-doom-emacs-unstraightened = {
+      url = "github:marienz/nix-doom-emacs-unstraightened";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -47,6 +53,7 @@
     homebrew-core,
     homebrew-cask,
     nur,
+    nix-doom-emacs-unstraightened,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -83,6 +90,7 @@
               sharedModules = [
                 mac-app-util.homeManagerModules.default
                 sops-nix.homeManagerModules.sops
+                inputs.nix-doom-emacs-unstraightened.homeModule
               ];
             };
           }
