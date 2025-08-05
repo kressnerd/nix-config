@@ -206,7 +206,7 @@ programs.zsh = {
     ll = "ls -la";
     la = "ls -A";
   };
-  initExtra = ''
+  initContent = ''
     setopt AUTO_CD
   '';
 };

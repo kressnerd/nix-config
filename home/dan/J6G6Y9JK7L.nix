@@ -13,6 +13,7 @@
     ./features/cli/starship.nix
     ./features/cli/vim.nix
     ./features/cli/zsh.nix
+    ./features/development/containers.nix
     ./features/development/nodejs.nix
     ./features/macos/defaults.nix
     ./features/productivity/browser.nix
