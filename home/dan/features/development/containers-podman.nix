@@ -95,37 +95,34 @@
     [storage.options.overlay]
     mountopt = "nodev,metacopy=on"
 
-    [storage.options.thinpool]
-    use_deferred_removal = "true"
-    use_deferred_deletion = "true"
-    basesize = "10G"
   '';
 
   # Registries configuration
   home.file.".config/containers/registries.conf".text = ''
-    [registries.search]
-    registries = ["docker.io", "quay.io", "ghcr.io"]
-
-    [registries.insecure]
-    registries = []
-
-    [registries.block]
-    registries = []
-
+    # v2 format for registries.conf
+    # Search registries
     [[registry]]
-    prefix = "docker.io"
     location = "docker.io"
+    [[registry]]
+    location = "quay.io"
+    [[registry]]
+    location = "ghcr.io"
 
+    # Insecure registries (none by default)
+    # [[registry]]
+    # location = "my.insecure.registry:5000"
+    # insecure = true
+
+    # Blocked registries (none by default)
+    # [[registry]]
+    # location = "bad.registry.com"
+    # blocked = true
+
+    # Mirror for docker.io
+    [[registry]]
+    location = "docker.io"
     [[registry.mirror]]
     location = "mirror.gcr.io"
-
-    [[registry]]
-    prefix = "quay.io"
-    location = "quay.io"
-
-    [[registry]]
-    prefix = "ghcr.io"
-    location = "ghcr.io"
   '';
 
   # Shell integration and aliases
