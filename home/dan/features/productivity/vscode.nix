@@ -2,7 +2,7 @@
   config,
   pkgs,
   pkgs-unstable,
-#  pkgs-dan-testing,
+  #  pkgs-dan-testing,
   lib,
   ...
 }: {
@@ -26,9 +26,9 @@
           github.copilot-chat
           jnoortheen.nix-ide
           rooveterinaryinc.roo-cline
-        #])
-        #++ (with pkgs-dan-testing.vscode-extensions; [
-        #  rooveterinaryinc.roo-cline
+          #])
+          #++ (with pkgs-dan-testing.vscode-extensions; [
+          #  rooveterinaryinc.roo-cline
         ]);
 
       userSettings = {
@@ -68,7 +68,7 @@
         "asciidoc.preview.scrollPreviewWithEditor" = true;
         "asciidoc.preview.style" = ""; # Uses default styling that integrates with theme
         "asciidoc.preview.useEditorStyle" = false;
-        "asciidoc.useWorkspaceRoot" = true;
+        "asciidoc.useWorkspaceRootAsBaseDirectory" = true;
         "asciidoc.wkhtmltopdf.executablePath" = "";
 
         # General VS Code settings
@@ -94,7 +94,9 @@
           "git log"
           "git diff"
           "git show"
+          "darwin-rebuild build --flake ."
         ];
+        "roo-cline.deniedCommands" = [];
         "telemetry.telemetryLevel" = "off";
         "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
         "update.mode" = "none";
@@ -102,7 +104,6 @@
         "workbench.enableExperiments" = false;
         "workbench.iconTheme" = "catppuccin-latte";
         "workbench.settings.enableNaturalLanguageSearch" = false;
-        "roo-cline.deniedCommands" = [];
       };
     };
   };
