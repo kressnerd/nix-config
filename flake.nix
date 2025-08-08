@@ -58,6 +58,41 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
+    # NixOS Configurations
+    nixosConfigurations = {
+      nixos-vm-minimal = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = {inherit inputs outputs;};
+        modules = [
+          {
+            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.config.allowUnfree = true;
+          }
+          ./hosts/nixos-vm-minimal
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs outputs;
+                pkgs-unstable = import nixpkgs-unstable {
+                  system = "aarch64-linux";
+                  config.allowUnfree = true;
+                };
+              };
+              users.dan = import ./home/dan/nixos-vm-minimal.nix;
+              sharedModules = [
+                sops-nix.homeManagerModules.sops
+                inputs.nix-doom-emacs-unstraightened.homeModule
+              ];
+            };
+          }
+        ];
+      };
+    };
+
+    # Darwin Configurations
     darwinConfigurations = {
       J6G6Y9JK7L = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
