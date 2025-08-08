@@ -41,5 +41,6 @@
 
   home.packages = with pkgs; [
     jetbrains-toolbox # install IntelliJ Idea manually
+    utm # Virtual machine host for macOS - excellent for running Linux/Windows VMs on Apple Silicon
   ];
 }
