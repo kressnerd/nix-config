@@ -157,11 +157,6 @@
         source <(podman completion zsh)
       fi
 
-      # Podman-compose completion
-      if command -v podman-compose &> /dev/null; then
-        source <(podman-compose completion zsh)
-      fi
-
       # Development container shortcuts
       dev-enter() {
         local container_name=''${1:-dev-ubuntu}
