@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  pkgs-unstable, # Add pkgs-unstable here
   inputs,
   ...
 }: {
@@ -14,8 +15,7 @@
 
   # Nix settings
   nix.settings = {
-    substituters = ["https://hyprland.cachix.org"];
-    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
+    # Removed hyprland.cachix.org as hyprland is now from nixpkgs-unstable
     experimental-features = ["nix-command" "flakes"];
   };
 
@@ -261,8 +261,8 @@
 
   # Hyprland
   programs.hyprland.enable = true;
-  programs.hyprland.package = inputs.hyprland.packages."${pkgs.system}".hyprland;
-  programs.hyprland.portalPackage = inputs.hyprland.packages."${pkgs.system}".xdg-desktop-portal-hyprland;
+  programs.hyprland.package = pkgs-unstable.hyprland;
+  # programs.hyprland.portalPackage is typically not needed when using pkgs-unstable.hyprland
 
   # State version
   system.stateVersion = "25.05";

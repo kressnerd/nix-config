@@ -46,8 +46,6 @@
       url = "github:nix-community/impermanence";
     };
 
-    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
-
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
   };
 
@@ -67,7 +65,6 @@
     nix-doom-emacs-unstraightened,
     nixos-hardware,
     impermanence,
-    hyprland,
     firefox-addons,
     ...
   } @ inputs: let
@@ -77,7 +74,13 @@
     nixosConfigurations = {
       nixos-vm-minimal = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
-        specialArgs = {inherit inputs outputs;};
+        specialArgs = {
+          inherit inputs outputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+          };
+        };
         modules = [
           {
             nixpkgs.overlays = [nur.overlays.default];
@@ -105,10 +108,15 @@
           }
         ];
       };
-
       thiniel = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = {inherit inputs outputs;};
+        specialArgs = {
+          inherit inputs outputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "x86_64-linux";
+            config.allowUnfree = true;
+          };
+        };
         modules = [
           {
             nixpkgs.overlays = [nur.overlays.default];
@@ -142,7 +150,13 @@
     darwinConfigurations = {
       J6G6Y9JK7L = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
-        specialArgs = {inherit inputs outputs;};
+        specialArgs = {
+          inherit inputs outputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-darwin";
+            config.allowUnfree = true;
+          };
+        };
         modules = [
           {
             nixpkgs.overlays = [nur.overlays.default];
