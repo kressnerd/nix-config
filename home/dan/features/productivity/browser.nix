@@ -74,6 +74,7 @@ in {
           "privacy.clearOnShutdown.cookies" = true;
           "privacy.clearOnShutdown.offlineApps" = true;
           "privacy.clearOnShutdown.sessions" = true;
+          "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
 
           "privacy.clearOnShutdown.history" = false;
           "privacy.clearOnShutdown.downloads" = false;
@@ -129,6 +130,7 @@ in {
           "privacy.clearOnShutdown.cookies" = true;
           "privacy.clearOnShutdown.offlineApps" = true;
           "privacy.clearOnShutdown.sessions" = true;
+          "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
 
           "privacy.clearOnShutdown.history" = false;
           "privacy.clearOnShutdown.downloads" = false;
