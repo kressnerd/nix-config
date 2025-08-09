@@ -1,9 +1,14 @@
 keys:
   - &users:
     - &dan age1myvl9jg57tsllw4um80m4l55qlc904ces2jmqat2zn6nvdpc2dgqjpxju9
+    - &dan_linux age1hyrw8gfdaqhqaw56zum8eq23c30vn3a9xfav7npa9nsuc0v9xfcsjx9w5v
 
 creation_rules:
   - path_regex: hosts\/J6G6Y9JK7L\/secrets\.ya?ml$
     key_groups:
       - age:
           - *dan
+  - path_regex: hosts\/thiniel\/secrets\.ya?ml$
+    key_groups:
+      - age:
+          - *dan_linux

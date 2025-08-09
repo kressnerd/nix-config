@@ -38,6 +38,17 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Linux-specific inputs
+    nixos-hardware.url = "github:NixOs/nixos-hardware/master";
+
+    impermanence = {
+      url = "github:nix-community/impermanence";
+    };
+
+    hyprland.url = "git+https://github.com/hyprwm/Hyprland?submodules=1";
+
+    firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
   };
 
   outputs = {
@@ -54,6 +65,10 @@
     homebrew-cask,
     nur,
     nix-doom-emacs-unstraightened,
+    nixos-hardware,
+    impermanence,
+    hyprland,
+    firefox-addons,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -82,6 +97,37 @@
                 };
               };
               users.dan = import ./home/dan/nixos-vm-minimal.nix;
+              sharedModules = [
+                sops-nix.homeManagerModules.sops
+                inputs.nix-doom-emacs-unstraightened.homeModule
+              ];
+            };
+          }
+        ];
+      };
+
+      thiniel = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {inherit inputs outputs;};
+        modules = [
+          {
+            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.config.allowUnfree = true;
+          }
+          ./hosts/thiniel
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs outputs;
+                pkgs-unstable = import nixpkgs-unstable {
+                  system = "x86_64-linux";
+                  config.allowUnfree = true;
+                };
+              };
+              users.dan = import ./home/dan/thiniel.nix;
               sharedModules = [
                 sops-nix.homeManagerModules.sops
                 inputs.nix-doom-emacs-unstraightened.homeModule
