@@ -194,11 +194,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1754735018,
-        "narHash": "sha256-3ns9I0OXs9jxmcDhKnvJrOT6dE75rxm7H4S7YH6aVDc=",
+        "lastModified": 1754737442,
+        "narHash": "sha256-t0oUe/2bFS7961s4pu+PxHwUlafhwJ6uTQIlL/mLwaY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "4fc48ef9d124753015e44a0399dcf9a8537fa188",
+        "rev": "700f1a3e5462740c4c4468d18462121df629d8fa",
         "type": "github"
       },
       "original": {
@@ -210,11 +210,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1754734133,
-        "narHash": "sha256-DV9ALSGx0pxmnVmqYZ+e6cqwXo2w6IGizenejMFLXZs=",
+        "lastModified": 1754738556,
+        "narHash": "sha256-g6ZUpFwhP8w5EI1ZT5fnaHsTqN7pU5zUvNvWvbIMp/A=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "4e9b7232f7760aac3d05001944251fa054b2afe4",
+        "rev": "ae1ba5b0caff02da0d4dca1dce786404209b8649",
         "type": "github"
       },
       "original": {
@@ -333,6 +333,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-dan-testing": {
+      "locked": {
+        "lastModified": 1754723782,
+        "narHash": "sha256-g9H2XmnQqcCw30vgLF3QMl4OrD6Bx91TLNEwML+OXO4=",
+        "owner": "r-ryantm",
+        "repo": "nixpkgs",
+        "rev": "0705be868cc30b5577ad2053b5714301938e10e2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "r-ryantm",
+        "ref": "auto-update/vscode-extensions.rooveterinaryinc.roo-cline",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-darwin": {
       "locked": {
         "lastModified": 1754689972,
@@ -419,11 +435,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1754735325,
-        "narHash": "sha256-NFg7B5A2AnfYGgIDn2xtomcVTQFssmDCKEkrkm1Y1sw=",
+        "lastModified": 1754739988,
+        "narHash": "sha256-FP2WeatTTACTVp/2hiqi3zBAPoyVPoldu9KrI+IvpVI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "bee139fd18b2d40a7de2e5d59f445ffda76ff3d9",
+        "rev": "c27c35e0f6952710c5efb29b2bdfba82b768c667",
         "type": "github"
       },
       "original": {
@@ -445,6 +461,7 @@
         "nix-homebrew": "nix-homebrew",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_3",
+        "nixpkgs-dan-testing": "nixpkgs-dan-testing",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
