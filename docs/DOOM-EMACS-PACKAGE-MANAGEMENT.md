@@ -322,7 +322,6 @@ home.packages = with pkgs; [
 home.packages = with pkgs; [
   black           # Python formatter
   rustfmt         # Rust formatter
-  nixfmt          # Nix formatter
   prettier        # JS/CSS/HTML formatter
 ];
 ```
