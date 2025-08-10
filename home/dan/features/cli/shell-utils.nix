@@ -8,10 +8,16 @@
     fzf # Fuzzy finder
     zoxide # Better cd
     delta # Better git diff
+    sd # Better sed
     duf # Better df
     dust # Better du
     procs # Better ps
     bottom # Better top
+    #    coreutils
+    #    findutils
+    #    gnugrep
+    #    gnused
+    #    gawk
 
     # Useful utilities
     jq # JSON processor
@@ -24,6 +30,33 @@
     # Development tools
     direnv # Per-directory environments
     lazygit # Terminal UI for git
+    #git
+    #gh
+    #delta # Better git diff
+    #neovim
+    #tmux
+    #curl
+    #wget
+    #watch
+
+    # Build tools
+    #gnumake
+    #cmake
+    #pkg-config
+
+    # Container tools
+    #colima        # Docker Desktop alternative
+
+    # Language tools
+    #nodejs_20
+    #python312
+    #go
+    #rustup
+
+    # Cloud tools (add as needed)
+    #awscli2
+    #google-cloud-sdk
+    #terraform
   ];
 
   # Configure some of these tools

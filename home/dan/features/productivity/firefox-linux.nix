@@ -80,6 +80,7 @@
         search = {
           force = true;
           default = "Kagi";
+          # order = [ "Kagi" "DuckDuckGo" ];
 
           engines = {
             google.metaData.hidden = true;

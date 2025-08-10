@@ -1,11 +1,11 @@
 {
-  description = "Dan's nix-darwin configuration";
+  description = "Dan's Nix configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-25.05-darwin";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-#    nixpkgs-dan-testing.url = "github:kressnerd/nixpkgs/roo-code-update";
+    #    nixpkgs-dan-testing.url = "github:kressnerd/nixpkgs/roo-code-update";
     nixpkgs-dan-testing.url = "github:r-ryantm/nixpkgs/auto-update/vscode-extensions.rooveterinaryinc.roo-cline";
 
     darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.05";

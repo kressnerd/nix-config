@@ -11,6 +11,8 @@
     ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store # Stores only image data
     sleep 1
   '';
+  #      ${pkgs.hyprpaper}/bin/hyprpaper &
+  #      ${pkgs.hyprpanel}/bin/hyprpanel &
 in {
   # Install required packages
   home.packages = with pkgs; [
@@ -26,12 +28,18 @@ in {
   wayland.windowManager.hyprland = {
     enable = true;
 
+    #    plugins = [
+    #      inputs.hyprland-plugins.packages."${pkgs.system}".borders-plus-plus
+    #    ];
+
     settings = {
       input = {
         kb_options = "compose:ralt";
       };
 
       exec-once = "${startupScript}/bin/start";
+      #       "[workspace 1 silent] firefox"
+      #       "[workspace 5 silent] kitty btm"
 
       monitor = [
         ", preferred, auto, 1"
@@ -105,6 +113,14 @@ in {
         ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
         ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
       ];
+      #      "plugin:borders-plus-plus" = {
+      #        add_borders = 1;
+      #        "col.border_1" = "rgb(ffffff)";
+      #        "col.border_2" = "rgb(2222ff)";
+      #        border_size_1 = 10;
+      #        border_size_2 = -1;
+      #        natural_rounding = "yes";
+      #      };
     };
   };
 }

@@ -32,6 +32,9 @@
       " Enable mouse support
       set mouse=a
 
+      "Use system clipboard
+      set clipboard=unnamedplus
+
       " Centralize undo files instead of cluttering directories
       set undodir=~/.vim/undodir
       " Also centralize backup and swap files

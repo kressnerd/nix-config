@@ -36,6 +36,12 @@
   sops.secrets."myservice/user_dir/my_secret" = {
     mode = "0440";
     group = config.users.users.dan.group;
+
+    # restart/reload systemd unit on secret change
+    #    restartUnits = [ "home-assistant.service" ]; # there is also a reloadUnit
+
+    # Symlinks to other directories
+    #    path = "/var/lib/hass/secrets.yaml";
   };
   sops.secrets."myservice/my_subdir/my_secret" = {
     owner = config.users.users.dan.name;
@@ -57,6 +63,7 @@
       isNormalUser = true;
       description = "Non-sudo account for testing new config options that could break login.";
       hashedPasswordFile = config.sops.secrets."users/test/hashed_pwd".path;
+      # initialHashedPassword = "$6$HzSnxWKrApkhTofZ$oLQL5ibjJWYR9ur4Bf56Ln5/bYZyETa526cESY2X.quTXYg4cMaJ.oLeG1ihV2LdYOPdX13IZ.O1ysfjV8gj2/";
       extraGroups = ["wheel" "networkmanager"];
     };
   };
@@ -93,6 +100,7 @@
     "/persist".options = ["compress=zstd" "noatime"];
     "/nix".options = ["compress=zstd" "noatime"];
   };
+
   fileSystems."/persist".neededForBoot = true;
 
   # Impermanence system directories
@@ -101,18 +109,32 @@
     directories = [
       "/etc/nixos"
       "/var/log"
-      "/var/lib/nixos"
+      #      "/var/lib/bluetooth"
+      "/var/lib/nixos" # contains important state
       "/var/lib/systemd/coredump"
       "/etc/NetworkManager/system-connections"
+      #      "/etc/mullvad-vpn"
+      #      "/var/cache/libvirt"
+      #      "/var/cache/mullvad-vpn"
+      #      "/var/cache/tuigreet"
+      #      "/var/lib/OpenRGB"
+      #      "/var/lib/alsa"
+      #      "/var/lib/docker"
+      #      "/var/lib/libvirt"
+      #      "/var/lib/systemd"
+      #      { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "u=rwx,g=rx,o="; }
     ];
     files = [
       "/etc/machine-id"
+      #      "/var/lib/logrotate.status"
       "/var/lib/sops-nix/key.txt"
+      #      { file = "/var/keys/secret_file"; parentDirectory = { mode = "u=rwx,g=,o="; }; }
     ];
   };
 
   # Virtualization
   programs.virt-manager.enable = true;
+
   virtualisation.libvirtd = {
     enable = true;
     qemu = {
@@ -136,6 +158,10 @@
   networking.hostName = "thiniel";
   networking.networkmanager.enable = true;
 
+  # Configure network proxy if necessary
+  # networking.proxy.default = "http://user:password@proxy:port/";
+  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
+
   # Localization
   time.timeZone = "Europe/Berlin";
   time.hardwareClockInLocalTime = true; # For Windows dual boot
@@ -143,6 +169,12 @@
   i18n.extraLocaleSettings = {
     LC_TIME = "de_DE.UTF-8";
   };
+
+  # console = {
+  #   font = "Lat2-Terminus16";
+  #   keyMap = "us";
+  #   useXkbConfig = true; # use xkb.options in tty.
+  # };
 
   # File system maintenance
   services.btrfs.autoScrub = {
@@ -167,12 +199,41 @@
     };
   };
 
+  # Enable the X11 windowing system.
+  # services.xserver.enable = true;
+
+  # Configure keymap in X11
+  # services.xserver.xkb.layout = "us";
+  # services.xserver.xkb.options = "eurosign:e,caps:escape";
+
+  # Enable CUPS to print documents.
+  # services.printing.enable = true;
+
+  # Enable sound.
+  # hardware.pulseaudio.enable = true;
+  # OR
+
   # Audio
   services.pipewire = {
     enable = true;
     pulse.enable = true;
   };
 
+  # Enable touchpad support (enabled default in most desktopManager).
+  # services.libinput.enable = true;
+
+  # Define a user account. Don't forget to set a password with ‘passwd’.
+  # users.users.alice = {
+  #   isNormalUser = true;
+  #   extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+  #   packages = with pkgs; [
+  #     firefox
+  #     tree
+  #   ];
+  # };
+
+  # List packages installed in system profile. To search, run:
+  # $ nix search wget
   # System packages
   environment.systemPackages = with pkgs; [
     # System utilities
@@ -183,8 +244,8 @@
     kitty
     rofi-wayland
 
-    # Rust-based CLI tools (from original config)
-    fzf
+    # Rust-based CLI tools
+    fzf # actually written in go
     eza # fancy ls like lsd
     fd # modern find
     ripgrep # modern grep
@@ -199,6 +260,7 @@
     procs # modern ps clone
     xcp # extended cp
     rm-improved # rm clone
+    #rargs # deprecated:  awk and xargs clone with pattern matching
     runiq # remove duplicate lines from input
     zoxide # better cd
 
@@ -231,8 +293,13 @@
 
     # Data handling
     jql # JSON
+    # xsv # deprecated CSV
     xan # CSV
     hexyl # HEX viewer
+
+    #   wget
+    #   alacrity
+    #   sl
   ];
 
   # Programs
@@ -242,6 +309,14 @@
   };
   programs.git.enable = true;
   programs.fuse.userAllowOther = true;
+
+  # Some programs need SUID wrappers, can be configured further or are
+  # started in user sessions.
+  # programs.mtr.enable = true;
+  # programs.gnupg.agent = {
+  #   enable = true;
+  #   enableSSHSupport = true;
+  # };
 
   # Services
   services.openssh.enable = true;
@@ -264,6 +339,11 @@
   programs.hyprland.package = pkgs-unstable.hyprland;
   # programs.hyprland.portalPackage is typically not needed when using pkgs-unstable.hyprland
 
-  # State version
+  # Open ports in the firewall.
+  # networking.firewall.allowedTCPPorts = [ ... ];
+  # networking.firewall.allowedUDPPorts = [ ... ];
+  # Or disable the firewall altogether.
+  # networking.firewall.enable = false;
+
   system.stateVersion = "25.05";
 }

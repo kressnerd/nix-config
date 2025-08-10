@@ -11,5 +11,7 @@
     nerd-fonts.droid-sans-mono
     nerd-fonts.symbols-only
     nerd-fonts.fira-code
+    wl-clipboard
+    cliphist
   ];
 }
