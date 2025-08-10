@@ -18,6 +18,7 @@
       ll = "ls -la";
       la = "ls -A";
       l = "ls -CF";
+      lt = "eza --tree";
 
       # Git shortcuts
       g = "git";
