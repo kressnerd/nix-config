@@ -1,40 +1,43 @@
-= Home Manager Feature Documentation
-:toc: left
-:toclevels: 3
-:sectnums:
-:icons: font
+This document provides detailed documentation for all Home Manager
+features and configurations in the nix-config repository.
 
-This document provides detailed documentation for all Home Manager features and configurations in the nix-config repository.
+# Overview
 
-== Overview
+Home Manager configurations are organized into feature modules that can
+be composed per host. Each feature module encapsulates related
+functionality and follows consistent patterns for configuration and
+integration.
 
-Home Manager configurations are organized into feature modules that can be composed per host. Each feature module encapsulates related functionality and follows consistent patterns for configuration and integration.
+# Global Configuration
 
-== Global Configuration
+## Base Configuration ([`global/default.nix`](../home/dan/global/default.nix))
 
-=== Base Configuration (link:../home/dan/global/default.nix[`global/default.nix`])
+The global configuration provides the foundation for all Home Manager
+setups.
 
-The global configuration provides the foundation for all Home Manager setups.
+### Core Settings
 
-==== Core Settings
+The global configuration sets foundational options such as the Home
+Manager state version, enables Home Manager self-management, and
+provides a base set of packages and secrets integration for all hosts.
 
-The global configuration sets foundational options such as the Home Manager state version, enables Home Manager self-management, and provides a base set of packages and secrets integration for all hosts.
+### SOPS Integration
 
-==== SOPS Integration
+Secrets management is handled centrally and declaratively, making
+secrets available to all feature modules through SOPS and age
+encryption. == CLI Tools Features
 
-Secrets management is handled centrally and declaratively, making secrets available to all feature modules through SOPS and age encryption.
-== CLI Tools Features
+## Git Configuration ([`features/cli/git.nix`](../home/dan/features/cli/git.nix))
 
-=== Git Configuration (link:../home/dan/features/cli/git.nix[`features/cli/git.nix`])
+Advanced Git configuration with conditional identity management and SOPS
+integration.
 
-Advanced Git configuration with conditional identity management and SOPS integration.
+### Identity Management
 
-==== Identity Management
+The Git configuration uses conditional includes to automatically switch
+identities based on project directory:
 
-The Git configuration uses conditional includes to automatically switch identities based on project directory:
-
-[source,nix]
-----
+``` nix
 # Main .gitconfig with conditional includes
 sops.templates."gitconfig" = {
   content = ''
@@ -52,79 +55,86 @@ sops.templates."gitconfig" = {
         path = ~/.config/git/client001
   '';
 };
-----
+```
 
-The Git feature demonstrates advanced identity management and SOPS integration, supporting multiple identities and secure credential handling.
-=== Shell Configuration (link:../home/dan/features/cli/zsh.nix[`features/cli/zsh.nix`])
+The Git feature demonstrates advanced identity management and SOPS
+integration, supporting multiple identities and secure credential
+handling. === Shell Configuration
+([`features/cli/zsh.nix`](../home/dan/features/cli/zsh.nix))
 
-Comprehensive Zsh setup with Oh My Zsh, plugins, and custom configurations.
+Comprehensive Zsh setup with Oh My Zsh, plugins, and custom
+configurations.
 
-==== Core Features
+### Core Features
 
-The Zsh feature provides a modern shell environment with plugins, completion, and usability enhancements.
-==== Aliases and Shortcuts
-Common aliases and shortcuts are provided for improved productivity and safety.
+The Zsh feature provides a modern shell environment with plugins,
+completion, and usability enhancements. ==== Aliases and Shortcuts
+Common aliases and shortcuts are provided for improved productivity and
+safety.
 
-==== Advanced Configuration
+### Advanced Configuration
 
-=== Terminal Configuration (link:../home/dan/features/cli/kitty.nix[`features/cli/kitty.nix`])
+## Terminal Configuration ([`features/cli/kitty.nix`](../home/dan/features/cli/kitty.nix))
 
-Kitty terminal emulator, Starship prompt, SSH, Vim, and utility tools are all configured as feature modules, following the same modular pattern. See the respective module files for details.
-== macOS Integration Features
+Kitty terminal emulator, Starship prompt, SSH, Vim, and utility tools
+are all configured as feature modules, following the same modular
+pattern. See the respective module files for details. == macOS
+Integration Features
 
-macOS system preferences and platform integration are managed declaratively through feature modules, ensuring consistent and reproducible settings across machines.
-== Productivity Features
+macOS system preferences and platform integration are managed
+declaratively through feature modules, ensuring consistent and
+reproducible settings across machines. == Productivity Features
 
-== Productivity Features
+# Productivity Features
 
-Productivity applications such as code editors, browsers, and general tools are managed as feature modules. Their configuration is fully declarative and reproducible, with details available in the respective module files.
-== Feature Development Patterns
+Productivity applications such as code editors, browsers, and general
+tools are managed as feature modules. Their configuration is fully
+declarative and reproducible, with details available in the respective
+module files. == Feature Development Patterns
 
-=== Standard Module Structure
+## Standard Module Structure
 
 Each feature module follows a consistent structure:
 
-[source,nix]
-----
+``` nix
 { config, pkgs, lib, ... }: {
   # Package installation
   home.packages = with pkgs; [
     package-name
   ];
-  
+
   # Program configuration
   programs.package-name = {
     enable = true;
     # program-specific options
   };
-  
+
   # Optional: File management
   home.file.".config/app/config.yaml".text = ''
     # configuration content
   '';
-  
+
   # Optional: Service configuration
   services.package-name = {
     enable = true;
     # service-specific options
   };
-  
+
   # Optional: SOPS integration
   sops.secrets."app/secret" = {};
-  
+
   # Optional: Environment variables
   home.sessionVariables = {
     APP_CONFIG = "value";
   };
 }
-----
+```
 
-=== SOPS Integration Pattern
+## SOPS Integration Pattern
 
 For features requiring secrets:
 
-[source,nix]
-----
+``` nix
 { config, pkgs, lib, ... }: {
   # Reference secrets defined in global configuration
   programs.app = {
@@ -132,7 +142,7 @@ For features requiring secrets:
       apiKey = config.sops.secrets."app/api-key".path;
     };
   };
-  
+
   # Or use SOPS templates for complex configurations
   sops.templates."app-config" = {
     content = ''
@@ -142,50 +152,65 @@ For features requiring secrets:
     path = "${config.home.homeDirectory}/.config/app/config.yaml";
   };
 }
-----
+```
 
-=== Cross-Feature Dependencies
+## Cross-Feature Dependencies
 
 When features depend on each other:
 
-[source,nix]
-----
+``` nix
 { config, pkgs, lib, ... }: {
   # Conditional configuration based on other features
   programs.app = lib.mkIf config.programs.other-app.enable {
     enable = true;
     integrations.other-app = true;
   };
-  
+
   # Shared configuration patterns
   home.sessionVariables = lib.mkIf config.programs.shell.enable {
     APP_SHELL_INTEGRATION = "true";
   };
 }
-----
+```
 
-== Adding New Features
+# Adding New Features
 
-=== Feature Module Creation
+## Feature Module Creation
 
-. **Create module file**: `home/dan/features/category/feature-name.nix`
-. **Follow standard structure**: Use the established pattern
-. **Document configuration**: Add inline comments for complex settings
-. **Test integration**: Verify the feature works with existing setup
+1.  **Create module file**:
+    `home/dan/features/category/feature-name.nix`
 
-=== Integration Steps
+2.  **Follow standard structure**: Use the established pattern
 
-. **Import in host config**: Add to `home/dan/hostname.nix` imports
-. **Handle dependencies**: Ensure required packages and services are available
-. **Configure secrets**: Add any required secrets to SOPS configuration
-. **Update documentation**: Document the feature in this file
+3.  **Document configuration**: Add inline comments for complex settings
 
-=== Best Practices
+4.  **Test integration**: Verify the feature works with existing setup
 
-* **Modularity**: Keep features independent when possible
-* **Configuration**: Use Home Manager options when available
-* **Secrets**: Use SOPS for any sensitive information
-* **Testing**: Test features individually and in combination
-* **Documentation**: Document purpose, dependencies, and configuration options
+## Integration Steps
 
-This Home Manager configuration provides a solid foundation for user environment management while maintaining flexibility for future enhancements and additional features.
+1.  **Import in host config**: Add to `home/dan/hostname.nix` imports
+
+2.  **Handle dependencies**: Ensure required packages and services are
+    available
+
+3.  **Configure secrets**: Add any required secrets to SOPS
+    configuration
+
+4.  **Update documentation**: Document the feature in this file
+
+## Best Practices
+
+- **Modularity**: Keep features independent when possible
+
+- **Configuration**: Use Home Manager options when available
+
+- **Secrets**: Use SOPS for any sensitive information
+
+- **Testing**: Test features individually and in combination
+
+- **Documentation**: Document purpose, dependencies, and configuration
+  options
+
+This Home Manager configuration provides a solid foundation for user
+environment management while maintaining flexibility for future
+enhancements and additional features.

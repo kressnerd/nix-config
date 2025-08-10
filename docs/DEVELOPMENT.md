@@ -1,27 +1,27 @@
-= Development Workflow and Guidelines
-:toc: left
-:toclevels: 3
-:sectnums:
-:icons: font
+This document describes the development workflow, best practices, and
+guidelines for maintaining and extending the nix-config repository.
 
-This document describes the development workflow, best practices, and guidelines for maintaining and extending the nix-config repository.
+# Development Workflow
 
-== Development Workflow
+## Daily Development Cycle
 
-=== Daily Development Cycle
+### Making Changes
 
-==== Making Changes
+1.  **Edit configuration files**: Modify feature modules or host
+    configurations
 
-. **Edit configuration files**: Modify feature modules or host configurations
-. **Test locally**: Apply changes with `darwin-rebuild build` (test without activation)
-. **Apply changes**: Use `darwin-rebuild switch` or the `drs` alias
-. **Verify functionality**: Test that new features work as expected
-. **Commit changes**: Use conventional commit messages
+2.  **Test locally**: Apply changes with `darwin-rebuild build` (test
+    without activation)
 
-==== Testing Strategy
+3.  **Apply changes**: Use `darwin-rebuild switch` or the `drs` alias
 
-[source,bash]
-----
+4.  **Verify functionality**: Test that new features work as expected
+
+5.  **Commit changes**: Use conventional commit messages
+
+### Testing Strategy
+
+``` bash
 # Test configuration without applying
 darwin-rebuild build --flake .#J6G6Y9JK7L
 
@@ -33,12 +33,11 @@ darwin-rebuild switch --flake .#J6G6Y9JK7L --show-trace
 
 # Verify flake structure
 nix flake check
-----
+```
 
-==== Rollback Strategy
+### Rollback Strategy
 
-[source,bash]
-----
+``` bash
 # List available generations
 darwin-rebuild --list-generations
 
@@ -47,71 +46,91 @@ sudo darwin-rebuild rollback
 
 # Rollback to specific generation
 sudo darwin-rebuild --switch-generation <number>
-----
+```
 
-=== Feature Development
+## Feature Development
 
-==== Creating New Features
+### Creating New Features
 
-. **Identify feature scope**: Determine what the feature should accomplish
-. **Choose appropriate category**: CLI tools, macOS integration, or productivity
-. **Create module file**: Follow the standard naming convention
-. **Implement functionality**: Use Home Manager options when available
-. **Test integration**: Verify compatibility with existing features
-. **Document the feature**: Add to relevant documentation
+1.  **Identify feature scope**: Determine what the feature should
+    accomplish
 
-==== Feature Module Template
+2.  **Choose appropriate category**: CLI tools, macOS integration, or
+    productivity
 
-Feature modules follow a standard pattern: they declare packages, configure programs, manage files, integrate secrets, set environment variables, and optionally define services. See existing modules for concrete examples.
+3.  **Create module file**: Follow the standard naming convention
 
-==== Integration Patterns
+4.  **Implement functionality**: Use Home Manager options when available
 
-===== SOPS Secrets Integration
+5.  **Test integration**: Verify compatibility with existing features
 
-SOPS secrets are defined globally and referenced in feature modules as needed, supporting both direct file references and template-based integration.
+6.  **Document the feature**: Add to relevant documentation
 
-===== Cross-Feature Dependencies
+### Feature Module Template
 
-Feature modules can conditionally integrate with each other using `lib.mkIf` and shared configuration patterns.
+Feature modules follow a standard pattern: they declare packages,
+configure programs, manage files, integrate secrets, set environment
+variables, and optionally define services. See existing modules for
+concrete examples.
 
-=== Host Configuration
+### Integration Patterns
 
-==== Adding New Hosts
+#### SOPS Secrets Integration
 
-. **Create host directory**: `hosts/new-hostname/`
-. **System configuration**: Create `hosts/new-hostname/default.nix`
-. **Secrets file**: Create `hosts/new-hostname/secrets.yaml`
-. **User configuration**: Create `home/dan/new-hostname.nix`
-. **Update flake**: Add to `darwinConfigurations`
+SOPS secrets are defined globally and referenced in feature modules as
+needed, supporting both direct file references and template-based
+integration.
 
-==== Host Configuration Guidelines
+#### Cross-Feature Dependencies
 
-Host and user configuration files follow a modular pattern, importing global settings and selecting features as needed. See the codebase for up-to-date templates.
+Feature modules can conditionally integrate with each other using
+`lib.mkIf` and shared configuration patterns.
 
-== Code Quality Guidelines
+## Host Configuration
 
-=== Nix Code Style
+### Adding New Hosts
 
-==== Formatting
+1.  **Create host directory**: `hosts/new-hostname/`
 
-* **Use nixpkgs-fmt**: Consistent formatting across all files
-* **Indentation**: 2 spaces, no tabs
-* **Line length**: Prefer 80-100 characters when practical
-* **Attribute alignment**: Align equals signs in attribute sets
+2.  **System configuration**: Create `hosts/new-hostname/default.nix`
 
-[source,bash]
-----
+3.  **Secrets file**: Create `hosts/new-hostname/secrets.yaml`
+
+4.  **User configuration**: Create `home/dan/new-hostname.nix`
+
+5.  **Update flake**: Add to `darwinConfigurations`
+
+### Host Configuration Guidelines
+
+Host and user configuration files follow a modular pattern, importing
+global settings and selecting features as needed. See the codebase for
+up-to-date templates.
+
+# Code Quality Guidelines
+
+## Nix Code Style
+
+### Formatting
+
+- **Use nixpkgs-fmt**: Consistent formatting across all files
+
+- **Indentation**: 2 spaces, no tabs
+
+- **Line length**: Prefer 80-100 characters when practical
+
+- **Attribute alignment**: Align equals signs in attribute sets
+
+``` bash
 # Format all Nix files
 find . -name "*.nix" -exec nixpkgs-fmt {} \;
 
 # Or use alejandra formatter
 alejandra .
-----
+```
 
-==== Code Organization
+### Code Organization
 
-[source,nix]
-----
+``` nix
 # Good: Organized attribute set
 {
   programs.git = {
@@ -138,12 +157,11 @@ alejandra .
   programs.git.aliases.co = "checkout";
   programs.git.userEmail = "user@example.com";
 }
-----
+```
 
-==== Comments and Documentation
+### Comments and Documentation
 
-[source,nix]
-----
+``` nix
 {
   # Feature description and purpose
   programs.feature = {
@@ -164,23 +182,23 @@ alejandra .
     path = "${config.home.homeDirectory}/.config/app/config.yaml";
   };
 }
-----
+```
 
-=== Module Design Principles
+## Module Design Principles
 
-==== Single Responsibility
+### Single Responsibility
 
 Each module should have one clear purpose:
 
-* **Good**: `features/cli/git.nix` - Git configuration only
-* **Avoid**: `features/cli/dev-tools.nix` - Mixed development tools
+- **Good**: `features/cli/git.nix` - Git configuration only
 
-==== Minimal Coupling
+- **Avoid**: `features/cli/dev-tools.nix` - Mixed development tools
+
+### Minimal Coupling
 
 Modules should be as independent as possible:
 
-[source,nix]
-----
+``` nix
 # Good: Optional integration
 programs.app-a = {
   enable = true;
@@ -191,14 +209,13 @@ programs.app-a = {
 programs.app-a = {
   enable = config.programs.app-b.enable;  # Forces app-b to be enabled
 };
-----
+```
 
-==== Configuration Over Code
+### Configuration Over Code
 
 Prefer declarative configuration:
 
-[source,nix]
-----
+``` nix
 # Good: Declarative configuration
 programs.zsh = {
   enable = true;
@@ -218,19 +235,24 @@ home.file.".zshrc".text = ''
     alias ll='ls -la'
   fi
 '';
-----
+```
 
-=== Secret Management
+## Secret Management
 
-==== SOPS Best Practices
+### SOPS Best Practices
 
-. **Centralize secret definitions**: Define all secrets in global configuration
-. **Use descriptive names**: Clear hierarchy like `service/environment/key`
-. **Template complex configs**: Use SOPS templates for multi-secret configurations
-. **Document secret usage**: Comment on how secrets are used
+1.  **Centralize secret definitions**: Define all secrets in global
+    configuration
 
-[source,nix]
-----
+2.  **Use descriptive names**: Clear hierarchy like
+    `service/environment/key`
+
+3.  **Template complex configs**: Use SOPS templates for multi-secret
+    configurations
+
+4.  **Document secret usage**: Comment on how secrets are used
+
+``` nix
 # Good: Well-organized secret schema
 sops.secrets = {
   # Git identity management
@@ -245,12 +267,11 @@ sops.secrets = {
   "infrastructure/aws/access-key" = {};
   "infrastructure/aws/secret-key" = {};
 };
-----
+```
 
-==== Secret Usage Patterns
+### Secret Usage Patterns
 
-[source,nix]
-----
+``` nix
 # Pattern 1: Direct file reference
 programs.gh = {
   settings = {
@@ -269,16 +290,15 @@ sops.templates."aws-credentials" = {
   path = "${config.home.homeDirectory}/.aws/credentials";
   mode = "0600";
 };
-----
+```
 
-== Testing and Validation
+# Testing and Validation
 
-=== Local Testing
+## Local Testing
 
-==== Build Testing
+### Build Testing
 
-[source,bash]
-----
+``` bash
 # Test without applying changes
 darwin-rebuild build --flake .#J6G6Y9JK7L
 
@@ -287,12 +307,11 @@ nix flake check
 
 # Validate specific configuration
 nix build .#darwinConfigurations.J6G6Y9JK7L.system --dry-run
-----
+```
 
-==== Configuration Validation
+### Configuration Validation
 
-[source,bash]
-----
+``` bash
 # Test SOPS secrets access
 sops -d hosts/J6G6Y9JK7L/secrets.yaml
 
@@ -301,14 +320,13 @@ home-manager build --flake .
 
 # Check for syntax errors
 find . -name "*.nix" -exec nix-instantiate --parse {} \; > /dev/null
-----
+```
 
-=== Debugging Techniques
+## Debugging Techniques
 
-==== Common Debug Commands
+### Common Debug Commands
 
-[source,bash]
-----
+``` bash
 # Verbose build output
 darwin-rebuild switch --flake .#J6G6Y9JK7L --show-trace
 
@@ -319,26 +337,24 @@ nix repl
 
 # Check package availability
 nix search nixpkgs package-name
-----
+```
 
-==== Troubleshooting Common Issues
+### Troubleshooting Common Issues
 
-===== Package Not Found
+#### Package Not Found
 
-[source,bash]
-----
+``` bash
 # Search in different package sets
 nix search nixpkgs package-name
 nix search nixpkgs-unstable package-name
 
 # Check package attributes
 nix eval nixpkgs#package-name.pname
-----
+```
 
-===== SOPS Issues
+#### SOPS Issues
 
-[source,bash]
-----
+``` bash
 # Verify age key exists and is readable
 ls -la ~/Library/Application\ Support/sops/age/keys.txt
 
@@ -347,12 +363,11 @@ sops -d hosts/J6G6Y9JK7L/secrets.yaml
 
 # Check SOPS configuration
 sops -d --extract '["key"]' hosts/J6G6Y9JK7L/secrets.yaml
-----
+```
 
-===== Build Failures
+#### Build Failures
 
-[source,bash]
-----
+``` bash
 # Clean build cache
 sudo nix-collect-garbage -d
 
@@ -361,16 +376,15 @@ nix flake update
 
 # Check for conflicting options
 darwin-rebuild switch --flake .#J6G6Y9JK7L --show-trace 2>&1 | grep -i error
-----
+```
 
-== Maintenance and Updates
+# Maintenance and Updates
 
-=== Regular Maintenance Tasks
+## Regular Maintenance Tasks
 
-==== Weekly Tasks
+### Weekly Tasks
 
-[source,bash]
-----
+``` bash
 # Update flake inputs
 nix flake update
 
@@ -379,12 +393,11 @@ darwin-rebuild switch --flake .#J6G6Y9JK7L
 
 # Clean old generations
 sudo nix-collect-garbage --delete-older-than 7d
-----
+```
 
-==== Monthly Tasks
+### Monthly Tasks
 
-[source,bash]
-----
+``` bash
 # Review and update pinned versions
 nix flake update --commit-lock-file
 
@@ -393,14 +406,13 @@ grep -r "enable = false" home/dan/features/
 
 # Update documentation
 # Review and update docs/ files
-----
+```
 
-=== Version Management
+## Version Management
 
-==== Flake Input Updates
+### Flake Input Updates
 
-[source,bash]
-----
+``` bash
 # Update all inputs
 nix flake update
 
@@ -409,12 +421,11 @@ nix flake update nixpkgs
 
 # Pin to specific commit
 nix flake update nixpkgs --override-input nixpkgs github:NixOS/nixpkgs/commit-hash
-----
+```
 
-==== Rollback Procedures
+### Rollback Procedures
 
-[source,bash]
-----
+``` bash
 # List available generations
 darwin-rebuild --list-generations
 
@@ -423,49 +434,314 @@ sudo darwin-rebuild rollback
 
 # Test rollback before committing
 darwin-rebuild build --flake .#J6G6Y9JK7L --rollback
-----
+```
 
-== Collaboration Guidelines
+# Collaboration Guidelines
 
-=== Git Workflow
+## Git Workflow
 
-==== Commit Message Format
+### Commit Message Format
 
 Use conventional commit format:
 
-[source,text]
-----
+``` text
 feat(cli): add new shell utility configuration
 fix(vscode): resolve extension compatibility issue
 docs(readme): update installation instructions
 refactor(modules): reorganize feature module structure
-----
+```
 
-==== Branch Strategy
+### Branch Strategy
 
-* **main**: Stable, working configurations
-* **feature/**: New feature development
-* **fix/**: Bug fixes and corrections
-* **docs/**: Documentation updates
+- **main**: Stable, working configurations
 
-=== Code Review Checklist
+- **feature/**: New feature development
+
+- **fix/**: Bug fixes and corrections
+
+- **docs/**: Documentation updates
+
+## Code Review Checklist
 
 When reviewing changes:
 
-- [ ] Configuration follows established patterns
-- [ ] No hardcoded paths or sensitive data
-- [ ] Appropriate use of SOPS for secrets
-- [ ] Documentation updated if needed
-- [ ] Changes tested locally
-- [ ] Commit messages follow convention
+- \[ \] Configuration follows established patterns
 
-=== Documentation Maintenance
+- \[ \] No hardcoded paths or sensitive data
 
-* **Keep docs current**: Update documentation with configuration changes
-* **Include examples**: Provide usage examples for complex features
-* **Link references**: Cross-reference related configurations
-* **Explain decisions**: Document why specific choices were made
+- \[ \] Appropriate use of SOPS for secrets
 
-== Roadmap
+- \[ \] Documentation updated if needed
 
-include::TODO.adoc[]
+- \[ \] Changes tested locally
+
+- \[ \] Commit messages follow convention
+
+## Documentation Maintenance
+
+- **Keep docs current**: Update documentation with configuration changes
+
+- **Include examples**: Provide usage examples for complex features
+
+- **Link references**: Cross-reference related configurations
+
+- **Explain decisions**: Document why specific choices were made
+
+# Roadmap
+
+# Nix Configuration Improvement Todo List
+
+Based on the comprehensive configuration review, here’s a prioritized
+action plan for enhancing the nix-darwin setup.
+
+## 🚨 High Priority - Fix Anti-patterns
+
+### Remove imperative package management aliases
+
+- \[ \] **Remove imperative package management aliases** from
+  [`zsh.nix`](../home/dan/features/cli/zsh.nix)
+
+  - Remove or comment out `ne = "nix-env"` alias (line 54)
+
+  - Add warning comment about avoiding `nix-env -i` for permanent
+    installations
+
+  - Update documentation to emphasize declarative alternatives
+
+- \[ \] **Add declarative alternatives documentation**
+
+  - Create examples showing how to add packages via `home.packages`
+    instead of `nix-env`
+
+  - Document how to use `nix shell` for temporary tool access
+
+  - Add section on why imperative package management breaks
+    reproducibility
+
+## 🔧 Short-term Enhancements (1-2 weeks)
+
+## Security Improvements
+
+- \[ \] **Implement GPG signing for Git commits**
+
+  - Add GPG key management to SOPS secrets
+
+  - Configure conditional GPG signing per identity
+
+  - Document key generation and management procedures
+
+- \[ \] **Document SOPS key backup procedures**
+
+  - Create backup strategy for age keys
+
+  - Document key rotation procedures
+
+  - Add recovery instructions for lost keys
+
+## Configuration Enhancements
+
+- \[ \] **Create package overlays for customizations**
+
+  - Add `overlays/` directory structure
+
+  - Create example overlay for package modifications
+
+  - Document overlay usage patterns
+
+- \[ \] **Add user-level service management**
+
+  - Identify candidates for Home Manager services
+
+  - Implement background services (e.g., backup scripts, sync tools)
+
+  - Document service management patterns
+
+### Development Workflow
+
+- \[ \] **Add configuration validation scripts**
+
+  - Create pre-commit hooks for `nix flake check`
+
+  - Add CI/CD pipeline for testing configurations
+
+  - Document testing procedures for new features
+
+## 📊 Medium-term Goals (1-2 months)
+
+### Multi-host Support
+
+- \[ \] **Prepare for additional macOS machines**
+
+  - Abstract host-specific configurations
+
+  - Create shared module library
+
+  - Document host addition procedures
+
+- \[ \] **Create reusable module templates**
+
+  - Standardize feature module patterns
+
+  - Create scaffolding for new features
+
+  - Document module development guidelines
+
+### Enhanced Functionality
+
+- \[ \] **Implement custom derivations**
+
+  - Identify packages that need customization
+
+  - Create `pkgs/` directory for custom packages
+
+  - Document package creation workflow
+
+- \[ \] **Add development environment automation**
+
+  - Create project-specific `shell.nix` templates
+
+  - Implement `direnv` integration for automatic environments
+
+  - Document development workflow patterns
+
+### Documentation Expansion
+
+- \[ \] **Create troubleshooting guides**
+
+  - Common build failures and solutions
+
+  - SOPS troubleshooting procedures
+
+  - Performance optimization tips
+
+- \[ \] **Add migration guides**
+
+  - From imperative to declarative package management
+
+  - Upgrading between NixOS versions
+
+  - Adding new features safely
+
+## 🚀 Long-term Vision (3-6 months)
+
+### Cross-platform Preparation
+
+- \[ \] **Structure for Linux compatibility**
+
+  - Abstract platform-specific configurations
+
+  - Create shared cross-platform modules
+
+  - Plan NixOS integration strategy
+
+- \[ \] **Infrastructure as Code integration**
+
+  - Evaluate cloud resource management needs
+
+  - Plan integration with deployment tools
+
+  - Document infrastructure patterns
+
+### Advanced Features
+
+- \[ \] **Custom NixOS modules development**
+
+  - Identify reusable system patterns
+
+  - Create custom options and modules
+
+  - Contribute back to community
+
+- \[ \] **Automated backup and sync**
+
+  - Implement configuration backup automation
+
+  - Create sync strategies for multiple machines
+
+  - Document disaster recovery procedures
+
+## 📝 Documentation Tasks
+
+### Immediate Updates
+
+- \[ \] **Update README with anti-pattern warnings**
+
+  - Add section on avoiding imperative package management
+
+  - Include troubleshooting for common mistakes
+
+  - Document best practices clearly
+
+- \[ \] **Create feature addition workflow guide**
+
+  - Step-by-step module creation process
+
+  - Testing and validation procedures
+
+  - Integration best practices
+
+### Content Expansion
+
+- \[ \] **Add real-world usage examples**
+
+  - Common development scenarios
+
+  - Multi-project identity management
+
+  - Tool integration patterns
+
+- \[ \] **Create video or interactive tutorials**
+
+  - Configuration walkthrough
+
+  - Feature demonstration
+
+  - Troubleshooting sessions
+
+## 🔍 Monitoring and Maintenance
+
+### Regular Tasks
+
+- \[ \] **Set up automated dependency updates**
+
+  - Weekly `flake.lock` update checks
+
+  - Automated testing of updates
+
+  - Rollback procedures for failures
+
+- \[ \] **Performance monitoring**
+
+  - Build time tracking
+
+  - Configuration size monitoring
+
+  - System resource usage analysis
+
+### Quality Assurance
+
+- \[ \] **Implement configuration testing**
+
+  - Automated build verification
+
+  - Feature functionality testing
+
+  - Documentation accuracy checks
+
+- \[ \] **Code review processes**
+
+  - Peer review for significant changes
+
+  - Security review for secrets handling
+
+  - Performance impact assessment
+
+## 📅 Priority Ranking
+
+| Timeframe | Focus Areas |
+|----|----|
+| **Week 1** | Fix anti-patterns, add GPG signing, create overlays structure |
+| **Week 2** | Implement user services, add validation scripts, update documentation |
+| **Month 1** | Multi-host preparation, custom derivations, troubleshooting guides |
+| **Month 2-3** | Cross-platform preparation, advanced features, automation |
+| **Ongoing** | Regular maintenance, monitoring, quality assurance |

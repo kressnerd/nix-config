@@ -1,136 +1,183 @@
-= Nix Configuration Repository
-:toc: left
-:toclevels: 3
-:sectnums:
-:icons: font
+A comprehensive and modular Nix configuration repository for macOS using
+nix-darwin and Home Manager. This repository follows organizational
+patterns inspired by the nix-config ecosystem while maintaining a
+gradual evolution toward increased modularity.
 
-A comprehensive and modular Nix configuration repository for macOS using nix-darwin and Home Manager. This repository follows organizational patterns inspired by the nix-config ecosystem while maintaining a gradual evolution toward increased modularity.
+# 🏗️ Repository Structure
 
-== 🏗️ Repository Structure
+For a detailed overview of the repository’s architecture, modularity,
+and layering, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). ==
+🚀 Quick Start
 
-For a detailed overview of the repository’s architecture, modularity, and layering, see link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc].
-== 🚀 Quick Start
+## Prerequisites
 
-=== Prerequisites
+1.  **Install Nix** (if not already installed):
 
-. **Install Nix** (if not already installed):
-+
-[source,bash]
-----
-curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-----
+    ``` bash
+    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+    ```
 
-NOTE: Xcode Command Line Tools installation is automatically handled by the nix-darwin configuration activation script.
+> [!NOTE]
+> Xcode Command Line Tools installation is automatically handled by the
+> nix-darwin configuration activation script.
 
-=== Deployment
+## Deployment
 
-. **Clone configuration**:
-+
-[source,bash]
-----
-git clone <repository-url> <config-directory>
-cd <config-directory>
-----
+1.  **Clone configuration**:
 
-. **Apply system configuration**:
-+
-[source,bash]
-----
-sudo darwin-rebuild switch --flake .#J6G6Y9JK7L
-----
+    ``` bash
+    git clone <repository-url> <config-directory>
+    cd <config-directory>
+    ```
 
-. **Use the convenient alias** (after first successful build):
-+
-[source,bash]
-----
-drs  # Shortcut for darwin-rebuild switch
-----
+2.  **Apply system configuration**:
 
-== 📋 Key Features
+    ``` bash
+    sudo darwin-rebuild switch --flake .#J6G6Y9JK7L
+    ```
 
-=== macOS Integration
-* **nix-darwin** system management
-* **Homebrew** declarative package management
-* **macOS system preferences** automation
-* **User environment** consistency
+3.  **Use the convenient alias** (after first successful build):
 
-=== Security & Secrets Management
-* **SOPS-nix** integration for encrypted secrets
-* **Age** key-based encryption
-* **Git identity management** with conditional includes per project folder
-* **SSH configuration** management
+    ``` bash
+    drs  # Shortcut for darwin-rebuild switch
+    ```
 
-=== Modular Architecture
-* **Feature-based organization** for easy composition
-* **Platform-specific features** with shared base configurations
-* **Incremental adoption** of new tools and configurations
-* **Clear separation** between system and user configurations
+# 📋 Key Features
 
-=== Development Environment
-* **Shell integration** (Zsh with Oh My Zsh, Starship prompt)
-* **Editor configurations** (VS Code with extensions, Vim)
-* **Terminal setup** (Kitty with shell integration)
-* **CLI tooling** (Git, SSH, various utilities)
+## macOS Integration
 
-== 🔧 Configuration Management
+- **nix-darwin** system management
 
-=== Adding New Features
+- **Homebrew** declarative package management
 
-To add new features, create a new module in the appropriate directory and import it in your host configuration. See link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc] and link:docs/HOME-MANAGER.adoc[docs/HOME-MANAGER.adoc] for patterns and examples.
-=== Managing Secrets
+- **macOS system preferences** automation
 
-Secrets are managed centrally using SOPS and referenced in modules as needed. See link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc] for details.
-=== Host-Specific Customization
+- **User environment** consistency
 
-Each host can enable or override features as needed. See link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc] for the layering and import structure.
+## Security & Secrets Management
 
-== 🖥️ System Configuration
+- **SOPS-nix** integration for encrypted secrets
 
-== 📚 Documentation Structure
+- **Age** key-based encryption
 
-* **link:README.adoc[README.adoc]**: This overview and quick start document
-* **link:docs/ARCHITECTURE.adoc[docs/ARCHITECTURE.adoc]**: Architectural overview, structure, and modularity
-* **link:docs/HOME-MANAGER.adoc[docs/HOME-MANAGER.adoc]**: Home Manager feature documentation
-* **link:docs/DEVELOPMENT.adoc[docs/DEVELOPMENT.adoc]**: Development workflow and guidelines
-== 🔄 Evolution Path
+- **Git identity management** with conditional includes per project
+  folder
+
+- **SSH configuration** management
+
+## Modular Architecture
+
+- **Feature-based organization** for easy composition
+
+- **Platform-specific features** with shared base configurations
+
+- **Incremental adoption** of new tools and configurations
+
+- **Clear separation** between system and user configurations
+
+## Development Environment
+
+- **Shell integration** (Zsh with Oh My Zsh, Starship prompt)
+
+- **Editor configurations** (VS Code with extensions, Vim)
+
+- **Terminal setup** (Kitty with shell integration)
+
+- **CLI tooling** (Git, SSH, various utilities)
+
+# 🔧 Configuration Management
+
+## Adding New Features
+
+To add new features, create a new module in the appropriate directory
+and import it in your host configuration. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
+[docs/HOME-MANAGER.md](docs/HOME-MANAGER.md) for patterns and
+examples. === Managing Secrets
+
+Secrets are managed centrally using SOPS and referenced in modules as
+needed. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for
+details. === Host-Specific Customization
+
+Each host can enable or override features as needed. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layering and
+import structure.
+
+# 🖥️ System Configuration
+
+# 📚 Documentation Structure
+
+- **[README.md](README.md)**: This overview and quick start document
+
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Architectural
+  overview, structure, and modularity
+
+- **[docs/HOME-MANAGER.md](docs/HOME-MANAGER.md)**: Home Manager
+  feature documentation
+
+- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: Development
+  workflow and guidelines == 🔄 Evolution Path
 
 This configuration is designed to grow incrementally:
 
-=== Current State
-* ✅ **Basic nix-darwin setup** with Home Manager integration
-* ✅ **Feature-based organization** for easy composition
-* ✅ **SOPS secrets management** for sensitive data
-* ✅ **Homebrew integration** for macOS applications
-* ✅ **Development environment** setup
+## Current State
 
-=== Near Term Goals
-* 🔄 **Enhanced module organization** with better abstractions
-* 🔄 **Cross-platform compatibility** patterns (preparation for future Linux support)
-* 🔄 **Custom package overlays** for modified packages
-* 🔄 **Service management** for user-level services
+- ✅ **Basic nix-darwin setup** with Home Manager integration
 
-=== Long Term Vision
-* 🚀 **Advanced NixOS integration** (when dual-booting or Linux machines are added)
-* 🚀 **Custom packages and derivations** for specialized tools
-* 🚀 **Multi-host deployment** coordination
-* 🚀 **Infrastructure as Code** for cloud resources
+- ✅ **Feature-based organization** for easy composition
 
-The structure supports this evolution while maintaining backwards compatibility and clear upgrade paths.
+- ✅ **SOPS secrets management** for sensitive data
 
-== 🤝 Contributing
+- ✅ **Homebrew integration** for macOS applications
+
+- ✅ **Development environment** setup
+
+## Near Term Goals
+
+- 🔄 **Enhanced module organization** with better abstractions
+
+- 🔄 **Cross-platform compatibility** patterns (preparation for future
+  Linux support)
+
+- 🔄 **Custom package overlays** for modified packages
+
+- 🔄 **Service management** for user-level services
+
+## Long Term Vision
+
+- 🚀 **Advanced NixOS integration** (when dual-booting or Linux machines
+  are added)
+
+- 🚀 **Custom packages and derivations** for specialized tools
+
+- 🚀 **Multi-host deployment** coordination
+
+- 🚀 **Infrastructure as Code** for cloud resources
+
+The structure supports this evolution while maintaining backwards
+compatibility and clear upgrade paths.
+
+# 🤝 Contributing
 
 When adding new features or modifying configurations:
 
-. **Follow existing patterns**: Use the established module structure and naming conventions
-. **Document changes**: Update relevant documentation and add inline comments
-. **Test thoroughly**: Verify changes work with `darwin-rebuild switch`
-. **Use feature flags**: Make new features optional and composable
-. **Maintain backwards compatibility**: Avoid breaking existing functionality
+1.  **Follow existing patterns**: Use the established module structure
+    and naming conventions
 
-=== Example Workflow
+2.  **Document changes**: Update relevant documentation and add inline
+    comments
 
-[source,bash]
-----
+3.  **Test thoroughly**: Verify changes work with
+    `darwin-rebuild switch`
+
+4.  **Use feature flags**: Make new features optional and composable
+
+5.  **Maintain backwards compatibility**: Avoid breaking existing
+    functionality
+
+## Example Workflow
+
+``` bash
 # Create new feature
 touch home/dan/features/cli/new-tool.nix
 
@@ -144,22 +191,27 @@ $EDITOR home/dan/J6G6Y9JK7L.nix
 sudo darwin-rebuild switch --flake .#J6G6Y9JK7L
 
 # Document the feature
-$EDITOR docs/HOME-MANAGER.adoc
-----
+$EDITOR docs/HOME-MANAGER.md
+```
 
-== 🛠️ Troubleshooting
+# 🛠️ Troubleshooting
 
-=== Common Issues
+## Common Issues
 
-. **Homebrew failures**: The configuration automatically checks for and warns about missing Xcode Command Line Tools
-. **SOPS errors**: Verify age key exists and is properly configured
-. **Build failures**: Check flake inputs are up to date with `nix flake update`
-. **Permission issues**: Ensure user has proper sudo access for system changes
+1.  **Homebrew failures**: The configuration automatically checks for
+    and warns about missing Xcode Command Line Tools
 
-=== Debug Commands
+2.  **SOPS errors**: Verify age key exists and is properly configured
 
-[source,bash]
-----
+3.  **Build failures**: Check flake inputs are up to date with
+    `nix flake update`
+
+4.  **Permission issues**: Ensure user has proper sudo access for system
+    changes
+
+## Debug Commands
+
+``` bash
 # Check flake structure
 nix flake show
 
@@ -171,12 +223,16 @@ darwin-rebuild build --flake .#J6G6Y9JK7L
 
 # View current configuration
 darwin-rebuild --list-generations
-----
+```
 
-== 📖 Additional Resources
+# 📖 Additional Resources
 
-* https://nixos.org/manual/nix/stable/[Nix Reference Manual]
-* https://nix-community.github.io/home-manager/[Home Manager Manual]
-* https://github.com/nix-darwin/nix-darwin[nix-darwin Manual]
-* https://github.com/Mic92/sops-nix[SOPS-nix Documentation]
-* https://install.determinate.systems/[Determinate Nix Installer]
+- [Nix Reference Manual](https://nixos.org/manual/nix/stable/)
+
+- [Home Manager Manual](https://nix-community.github.io/home-manager/)
+
+- [nix-darwin Manual](https://github.com/nix-darwin/nix-darwin)
+
+- [SOPS-nix Documentation](https://github.com/Mic92/sops-nix)
+
+- [Determinate Nix Installer](https://install.determinate.systems/)
