@@ -4,7 +4,23 @@
   lib,
   ...
 }: {
-  home.packages = [pkgs.git];
+  home.packages = [pkgs.git pkgs.delta];
+
+  # Git program configuration with Delta integration
+  programs.git = {
+    enable = true;
+    delta = {
+      enable = true;
+      options = {
+        theme = "Dracula";
+        line-numbers = true;
+        side-by-side = true;
+        navigate = true;
+        hyperlinks = true;
+        light = false;
+      };
+    };
+  };
 
   sops.templates = {
     "gitconfig" = {
