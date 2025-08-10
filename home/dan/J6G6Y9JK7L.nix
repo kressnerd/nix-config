@@ -14,6 +14,7 @@
     ./features/cli/vim.nix
     ./features/cli/zsh.nix
     ./features/development/containers.nix
+    ./features/development/formatters.nix
     ./features/development/jdk.nix
     ./features/development/nodejs.nix
     ./features/macos/defaults.nix

@@ -51,7 +51,6 @@
 
     # Language-specific tools
     nodePackages.js-beautify # For web-mode formatting
-    black # Python formatter (used by format module)
 
     # Markdown and document processing
     pandoc # Universal document converter
