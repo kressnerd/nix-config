@@ -145,6 +145,42 @@
           }
         ];
       };
+
+      thiniel-vm = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux"; # Default to Apple Silicon, can be overridden
+        specialArgs = {
+          inherit inputs outputs;
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-linux";
+            config.allowUnfree = true;
+          };
+        };
+        modules = [
+          {
+            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.config.allowUnfree = true;
+          }
+          ./hosts/thiniel-vm
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs outputs;
+                pkgs-unstable = import nixpkgs-unstable {
+                  system = "aarch64-linux";
+                  config.allowUnfree = true;
+                };
+              };
+              users.dan = import ./home/dan/thiniel-vm.nix;
+              sharedModules = [
+                sops-nix.homeManagerModules.sops
+              ];
+            };
+          }
+        ];
+      };
     };
 
     # Darwin Configurations
