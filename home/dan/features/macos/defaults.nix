@@ -7,10 +7,15 @@
   # macOS user-specific settings
   targets.darwin = {
     defaults = {
-      # Graphite accent color
       NSGlobalDomain = {
+        # Graphite accent color
         AppleAccentColor = -1; # -1 for Graphite
         AppleHighlightColor = "0.847059 0.847059 0.862745 Graphite";
+
+        # Interface and interaction
+        # AppleInterfaceStyle = "Dark";
+        AppleKeyboardUIMode = 3; # Full keyboard access
+        ApplePressAndHoldEnabled = false; # Key repeat instead of accents
       };
 
       # Dock settings
@@ -18,30 +23,29 @@
         # Position
         orientation = "left";
 
-        # Auto-hide
+        # Auto-hide behavior
         autohide = true;
         autohide-delay = 0.0;
         autohide-time-modifier = 0.5;
 
-        # Other useful Dock settings
+        # Dock content and appearance
         show-recents = false;
         tilesize = 48;
         minimize-to-application = true;
-
-        # Minimize effect
         mineffect = "scale"; # or "genie"
 
         # Don't rearrange spaces based on use
         mru-spaces = false;
       };
 
-      # Optional: Other useful macOS settings
+      # Finder settings
       "com.apple.finder" = {
         # Show all file extensions
         AppleShowAllExtensions = true;
 
-        # Show path bar
+        # Show path and status bars
         ShowPathbar = true;
+        ShowStatusBar = true;
 
         # Default to list view
         FXPreferredViewStyle = "Nlsv";
