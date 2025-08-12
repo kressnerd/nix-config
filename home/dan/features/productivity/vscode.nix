@@ -2,7 +2,7 @@
   config,
   pkgs,
   pkgs-unstable,
-  pkgs-dan-testing,
+  #pkgs-dan-testing,
   lib,
   ...
 }: {
@@ -25,10 +25,10 @@
         ++ (with pkgs-unstable.vscode-extensions; [
           github.copilot-chat
           jnoortheen.nix-ide
-          #rooveterinaryinc.roo-cline
-        ])
-        ++ (with pkgs-dan-testing.vscode-extensions; [
           rooveterinaryinc.roo-cline
+        #])
+        #++ (with pkgs-dan-testing.vscode-extensions; [
+        #  rooveterinaryinc.roo-cline
         ]);
 
       userSettings = {
