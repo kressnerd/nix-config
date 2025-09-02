@@ -334,22 +334,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-dan-testing": {
-      "locked": {
-        "lastModified": 1755110372,
-        "narHash": "sha256-zEdEiHJCP+weXQBnqwzVcY9E/UQnaMT2jK9zJQbICik=",
-        "owner": "kressnerd",
-        "repo": "nixpkgs",
-        "rev": "3c9fc2fee70851e8b28cd1da12cab1fa08ab2fdd",
-        "type": "github"
-      },
-      "original": {
-        "owner": "kressnerd",
-        "ref": "roo-code-update",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-darwin": {
       "locked": {
         "lastModified": 1756601055,
@@ -478,7 +462,6 @@
         "nix-homebrew": "nix-homebrew",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
-        "nixpkgs-dan-testing": "nixpkgs-dan-testing",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
