@@ -42,6 +42,7 @@ Commands:
     build-iso       - Build NixOS installation ISO (requires remote builder)
     build-vm        - Build VM system configuration (requires remote builder)
     generate-utm    - Generate UTM VM configuration template
+    deploy          - Deploy using nixos-anywhere (runs deploy-vm.sh)
     help           - Show this help message
 
 VM Names (optional, defaults to nixos-vm-minimal):
@@ -57,6 +58,7 @@ Examples:
     $0 build-iso thiniel-vm           # Build thiniel-vm installation ISO
     $0 build-vm thiniel-vm            # Build thiniel-vm system
     $0 generate-utm thiniel-vm        # Create UTM config for thiniel-vm
+    $0 deploy nixos-vm-minimal        # Deploy using nixos-anywhere
 
 Available configurations:
     nixos-vm-minimal  - Basic VM with essential CLI tools
@@ -225,6 +227,10 @@ main() {
             ;;
         generate-utm)
             generate_utm_config "$vm_name"
+            ;;
+        deploy)
+            log_info "Starting nixos-anywhere deployment for $vm_name..."
+            exec "$SCRIPT_DIR/deploy-vm.sh" deploy "$vm_name"
             ;;
         help|--help|-h)
             show_help

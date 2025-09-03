@@ -41,18 +41,7 @@
     };
   };
 
-  # File systems configuration for UTM VM
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    fsType = "ext4";
-  };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
-    fsType = "vfat";
-    options = ["fmask=0022" "dmask=0022"];
-  };
-
+  # Filesystem configuration is handled by disko.nix
   # No swap for VM
   swapDevices = [];
 

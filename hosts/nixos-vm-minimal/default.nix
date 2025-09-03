@@ -6,6 +6,7 @@
 }: {
   imports = [
     ./hardware.nix
+    ./disko.nix
     ./home.nix
   ];
 

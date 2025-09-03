@@ -46,6 +46,18 @@
     };
 
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+
+    # Declarative disk management and automated deployment
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.disko.follows = "disko";
+    };
   };
 
   outputs = {
@@ -64,6 +76,8 @@
     nixos-hardware,
     impermanence,
     firefox-addons,
+    disko,
+    nixos-anywhere,
     ...
   } @ inputs: let
     inherit (self) outputs;
@@ -85,6 +99,7 @@
             nixpkgs.config.allowUnfree = true;
           }
           ./hosts/nixos-vm-minimal
+          disko.nixosModules.disko
           home-manager.nixosModules.home-manager
           {
             home-manager = {
