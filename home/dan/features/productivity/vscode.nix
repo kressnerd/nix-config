@@ -7,7 +7,7 @@
 }: {
   programs.vscode = {
     enable = true;
-    mutableExtensionsDir = false;
+    mutableExtensionsDir = true;
 
     profiles.default = {
       # Standard extensions from stable and unstable
