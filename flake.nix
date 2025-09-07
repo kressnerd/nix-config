@@ -173,6 +173,7 @@
             nixpkgs.config.allowUnfree = true;
           }
           ./hosts/thiniel-vm
+          disko.nixosModules.disko
           home-manager.nixosModules.home-manager
           {
             home-manager = {

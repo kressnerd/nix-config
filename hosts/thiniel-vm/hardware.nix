@@ -48,19 +48,6 @@
     };
   };
 
-  # File systems configuration - using ext4 for simplicity (no btrfs/impermanence)
-  fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
-    fsType = "ext4";
-    options = ["noatime"];
-  };
-
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
-    fsType = "vfat";
-    options = ["fmask=0022" "dmask=0022"];
-  };
-
   # No swap for VM (can be added if needed)
   swapDevices = [];
 
