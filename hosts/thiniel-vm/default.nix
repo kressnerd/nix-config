@@ -8,6 +8,7 @@
 }: {
   imports = [
     ./hardware.nix
+    ./disko.nix
     ./home.nix
     inputs.sops-nix.nixosModules.sops
     # Note: No nixos-hardware import as this is VM-generic
