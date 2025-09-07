@@ -17,7 +17,7 @@
               priority = 1;
               name = "ESP";
               label = "boot";
-              size = "512M";
+              size = "1G";
               type = "EF00"; # EFI System Partition
               content = {
                 type = "filesystem";

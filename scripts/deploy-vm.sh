@@ -52,7 +52,7 @@ Arguments:
 
 Options:
     --user USER    - SSH user for deployment (default: nixos)
-    --key PATH     - Path to SSH private key (default: ~/.ssh/id_rsa)
+    --key PATH     - Path to SSH private key (default: ~/.ssh/id_ed25519)
     --dry-run      - Show what would be deployed without executing
     -h, --help     - Show help message
 
@@ -86,7 +86,7 @@ EOF
 prepare_ssh() {
     log_info "Preparing SSH keys for nixos-anywhere deployment..."
     
-    local ssh_key_path="$HOME/.ssh/id_rsa"
+    local ssh_key_path="$HOME/.ssh/id_ed25519"
     
     if [[ ! -f "$ssh_key_path" ]]; then
         log_warning "SSH key not found at $ssh_key_path"
@@ -117,7 +117,7 @@ prepare_ssh() {
 check_ssh_connectivity() {
     local vm_ip="${1:-$DEFAULT_VM_IP}"
     local ssh_user="${2:-nixos}"
-    local ssh_key="${3:-$HOME/.ssh/id_rsa}"
+    local ssh_key="${3:-$HOME/.ssh/id_ed25519}"
     
     log_info "Testing SSH connectivity to $ssh_user@$vm_ip..."
     
@@ -138,13 +138,13 @@ deploy_nixos() {
     local vm_name="${1:-$DEFAULT_VM_NAME}"
     local vm_ip="${2:-$DEFAULT_VM_IP}"
     local ssh_user="${3:-nixos}"
-    local ssh_key="${4:-$HOME/.ssh/id_rsa}"
+    local ssh_key="${4:-$HOME/.ssh/id_ed25519}"
     local dry_run="${5:-false}"
     
     log_info "Deploying $vm_name to $vm_ip using nixos-anywhere..."
     
     # Verify flake configuration exists
-    if ! nix flake show "$REPO_ROOT" | grep -q "nixosConfigurations.$vm_name"; then
+    if ! nix flake show "$REPO_ROOT" | rg "$vm_name"; then
         log_error "Configuration $vm_name not found in flake"
         return 1
     fi
@@ -162,7 +162,7 @@ deploy_nixos() {
         "--ssh-option" "UserKnownHostsFile=/dev/null"  
     )
     
-    if [[ "$ssh_key" != "$HOME/.ssh/id_rsa" ]]; then
+    if [[ "$ssh_key" != "$HOME/.ssh/id_ed25519" ]]; then
         nixos_anywhere_cmd+=("--ssh-option" "IdentityFile=$ssh_key")
     fi
     
@@ -260,7 +260,7 @@ main() {
     local vm_name="${2:-$DEFAULT_VM_NAME}"
     local vm_ip="${3:-$DEFAULT_VM_IP}"
     local ssh_user="nixos"
-    local ssh_key="$HOME/.ssh/id_rsa"
+    local ssh_key="$HOME/.ssh/id_ed25519"
     local dry_run="false"
     
     # Parse additional options
