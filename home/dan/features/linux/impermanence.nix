@@ -17,6 +17,8 @@
       #     ".cargo"
       ".cache/mozilla"
       ".mozilla" # Firefox
+      ".ssh"
+      "dev"
       "Projects"
       #      { directory = ".gnupg"; mode = "0700"; }
       #      { directory = ".ssh"; mode = "0700"; }
