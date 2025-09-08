@@ -21,19 +21,13 @@
     homeDirectory = "/home/dan";
   };
 
-  # SOPS configuration for thiniel
+  # SOPS configuration for thiniel - only personal secrets for security
   sops = {
     defaultSopsFile = ../../hosts/thiniel/secrets.yaml;
     secrets = {
       "git/personal/name" = {};
       "git/personal/email" = {};
       "git/personal/folder" = {};
-      "git/company/name" = {};
-      "git/company/email" = {};
-      "git/company/folder" = {};
-      "git/client001/name" = {};
-      "git/client001/email" = {};
-      "git/client001/folder" = {};
     };
   };
 
