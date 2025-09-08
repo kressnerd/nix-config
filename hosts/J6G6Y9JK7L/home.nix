@@ -7,8 +7,6 @@
 }: {
   home.stateVersion = "25.05";
 
-  imports = [./git.nix];
-
   sops = {
     defaultSopsFile = ./secrets.yaml;
     age.keyFile = "${config.home.homeDirectory}/Library/Application Support/sops/age/keys.txt";
