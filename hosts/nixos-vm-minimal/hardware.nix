@@ -19,6 +19,10 @@
         "usb_storage"
         "sr_mod"
         "virtio_blk"
+        # LUKS encryption modules
+        "dm_crypt"
+        "aes"
+        "cryptd"
       ];
       kernelModules = [];
     };
