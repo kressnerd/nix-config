@@ -65,6 +65,8 @@
     tree
     unzip
     gnumake
+    # LUKS utilities
+    cryptsetup
   ];
 
   # Essential services
