@@ -72,6 +72,7 @@ Notes:
     - SSH must be enabled in the installer (systemctl start sshd)
     - The deployment will partition disks according to disko configuration
     - Existing data on target disk will be DESTROYED
+    - For LUKS-encrypted configurations, you'll be prompted for a password
 
 For UTM setup:
     1. Create VM with generated UTM config
@@ -80,6 +81,7 @@ For UTM setup:
     4. Set password: sudo passwd nixos
     5. Find VM IP: ip addr show
     6. Run: $0 deploy nixos-vm-minimal <VM_IP>
+    7. If using LUKS encryption, enter a strong password when prompted
 EOF
 }
 
@@ -154,6 +156,37 @@ deploy_nixos() {
         return 1
     fi
     
+    # Check if configuration uses LUKS encryption
+    if nix eval "$REPO_ROOT#nixosConfigurations.$vm_name.config.disko.devices.disk" --apply 'disks: builtins.any (disk: builtins.any (part: part.content.type or "" == "luks") (builtins.attrValues (disk.content.partitions or {}))) (builtins.attrValues disks)' 2>/dev/null | grep -q true; then
+        log_info "LUKS encryption detected in configuration"
+        
+        # Prompt for LUKS password
+        echo -n "Enter LUKS encryption password: "
+        read -s luks_password
+        echo
+        echo -n "Confirm LUKS encryption password: "
+        read -s luks_password_confirm
+        echo
+        
+        if [[ "$luks_password" != "$luks_password_confirm" ]]; then
+            log_error "Passwords do not match"
+            return 1
+        fi
+        
+        if [[ -z "$luks_password" ]]; then
+            log_error "Password cannot be empty"
+            return 1
+        fi
+        
+        log_info "Creating LUKS password file on target machine..."
+        if ! ssh -i "$ssh_key" -o StrictHostKeyChecking=no "$ssh_user@$vm_ip" "echo '$luks_password' | sudo tee /tmp/secret.key > /dev/null && sudo chmod 600 /tmp/secret.key"; then
+            log_error "Failed to create LUKS password file"
+            return 1
+        fi
+        
+        log_success "LUKS password file created successfully"
+    fi
+    
     # Prepare nixos-anywhere command
     local nixos_anywhere_cmd=(
         "nix" "run" "github:nix-community/nixos-anywhere" "--"
@@ -193,8 +226,21 @@ deploy_nixos() {
         log_success "Deployment completed successfully!"
         log_info "VM should reboot into your NixOS configuration"
         log_info "You can now SSH directly: ssh $ssh_user@$vm_ip"
+        
+        # Clean up LUKS password file if it was created
+        if [[ -n "${luks_password:-}" ]]; then
+            log_info "Cleaning up LUKS password file..."
+            ssh -i "$ssh_key" -o StrictHostKeyChecking=no "$ssh_user@$vm_ip" "sudo rm -f /tmp/secret.key" 2>/dev/null || true
+        fi
     else
         log_error "Deployment failed!"
+        
+        # Clean up LUKS password file even on failure
+        if [[ -n "${luks_password:-}" ]]; then
+            log_info "Cleaning up LUKS password file..."
+            ssh -i "$ssh_key" -o StrictHostKeyChecking=no "$ssh_user@$vm_ip" "sudo rm -f /tmp/secret.key" 2>/dev/null || true
+        fi
+        
         return 1
     fi
 }

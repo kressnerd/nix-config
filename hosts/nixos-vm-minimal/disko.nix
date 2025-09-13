@@ -31,19 +31,28 @@
               };
             };
 
-            # Root partition
+            # Root partition (encrypted)
             root = {
               priority = 2;
               name = "root";
-              label = "nixos";
+              label = "crypted";
               size = "100%"; # Use remaining space
               content = {
-                type = "filesystem";
-                format = "ext4";
-                mountpoint = "/";
-                mountOptions = [
-                  "defaults"
-                ];
+                type = "luks";
+                name = "crypted";
+                passwordFile = "/tmp/secret.key"; # Will be prompted during installation
+                settings = {
+                  allowDiscards = true;
+                  bypassWorkqueues = true;
+                };
+                content = {
+                  type = "filesystem";
+                  format = "ext4";
+                  mountpoint = "/";
+                  mountOptions = [
+                    "defaults"
+                  ];
+                };
               };
             };
           };
@@ -58,14 +67,25 @@
     "virtio_scsi"
     "virtio_blk"
     "virtio_net"
+    # LUKS encryption support
+    "aes"
+    "dm_crypt"
+    "cryptd"
   ];
+
+  # LUKS configuration
+  boot.initrd.luks.devices."crypted" = {
+    device = "/dev/disk/by-partlabel/crypted";
+    allowDiscards = true;
+    bypassWorkqueues = true;
+  };
 
   # Ensure proper disk labels are available during boot
   boot.initrd.postDeviceCommands = lib.mkAfter ''
     # Wait for disk labels to be available
     echo "Waiting for disk labels..."
     for i in $(seq 1 10); do
-      if [ -e /dev/disk/by-label/nixos ] && [ -e /dev/disk/by-label/boot ]; then
+      if [ -e /dev/disk/by-partlabel/crypted ] && [ -e /dev/disk/by-label/boot ]; then
         echo "Disk labels found!"
         break
       fi
