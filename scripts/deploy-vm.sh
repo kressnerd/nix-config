@@ -41,6 +41,7 @@ Usage: $0 [COMMAND] [VM_NAME] [VM_IP] [OPTIONS]
 Commands:
     prepare         - Setup SSH keys and prepare for deployment
     check-ssh       - Test SSH connectivity to target VM
+    check-initrd    - Test initrd SSH connectivity (port 2222) for LUKS unlock
     deploy          - Deploy NixOS configuration using nixos-anywhere
     deploy-local    - Deploy to local VM (assumes VM is accessible)
     generate-iso    - Generate a nixos-anywhere compatible ISO
@@ -114,6 +115,24 @@ prepare_ssh() {
     echo "  sudo systemctl start sshd"
     echo "  sudo passwd nixos"
     echo "  # Then optionally add your public key to ~/.ssh/authorized_keys"
+}
+
+# Function to check initrd SSH connectivity
+check_initrd_ssh() {
+    local vm_ip="${1:-$DEFAULT_VM_IP}"
+    
+    log_info "Checking initrd SSH connectivity on port 2222..."
+    
+    if ssh -p 2222 -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@"$vm_ip" echo "initrd SSH ready" 2>/dev/null; then
+        log_success "initrd SSH is responding on port 2222!"
+        log_info "You can now connect with: ssh -p 2222 root@$vm_ip"
+        log_info "Then run 'unlock-luks' to unlock the encrypted disk"
+        return 0
+    else
+        log_warning "initrd SSH not responding on port 2222"
+        log_info "This is normal if the VM has already booted past initrd"
+        return 1
+    fi
 }
 
 check_ssh_connectivity() {
@@ -346,6 +365,9 @@ main() {
             ;;
         check-ssh)
             check_ssh_connectivity "$vm_ip" "$ssh_user" "$ssh_key"
+            ;;
+        check-initrd)
+            check_initrd_ssh "$vm_ip"
             ;;
         deploy)
             deploy_nixos "$vm_name" "$vm_ip" "$ssh_user" "$ssh_key" "$dry_run"

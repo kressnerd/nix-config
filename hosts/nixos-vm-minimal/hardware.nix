@@ -23,8 +23,35 @@
         "dm_crypt"
         "aes"
         "cryptd"
+        # Network modules for remote unlocking
+        "virtio_net"
       ];
       kernelModules = [];
+
+      # Enable network in initrd for remote LUKS unlocking
+      network = {
+        enable = true;
+
+        # Enable SSH server in initrd
+        ssh = {
+          enable = true;
+          port = 2222; # Use different port to avoid conflicts
+
+          # Use cryptsetup-askpass as shell for automatic LUKS prompting
+          shell = "/bin/cryptsetup-askpass";
+
+          # SSH host keys for initrd (these will be generated)
+          hostKeys = [
+            "/etc/secrets/initrd/ssh_host_rsa_key"
+            "/etc/secrets/initrd/ssh_host_ed25519_key"
+          ];
+
+          # Authorized keys for root user in initrd
+          authorizedKeys = [
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEWvGgnlCq6l+ObGMVLLs34CP0vEX+Edf7sx6/3BvDpQ dan"
+          ];
+        };
+      };
     };
 
     kernelModules = [];
