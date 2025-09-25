@@ -55,6 +55,7 @@
     brews = [];
     casks = [
       "crossover"
+      "parallels"
     ];
   };
 
