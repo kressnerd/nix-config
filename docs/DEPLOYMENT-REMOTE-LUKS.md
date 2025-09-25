@@ -24,7 +24,7 @@ The configuration uses:
 
 ### 1. Initial Deployment
 
-Deploy the VM configuration (initrd SSH won't work yet):
+Deploy the VM configuration (initrd SSH is disabled initially):
 
 ```bash
 # Deploy to your VM
@@ -34,7 +34,10 @@ Deploy the VM configuration (initrd SSH won't work yet):
 ./scripts/deploy-vm.sh deploy-local
 ```
 
-**Note**: The first deployment will complete but initrd SSH won't work yet because SSH host keys don't exist.
+**Notes**:
+
+- The first deployment completes successfully. initrd SSH is disabled (`ssh.enable = false`) to avoid the missing key error.
+- **macOS users**: The script automatically enables cross-compilation support when deploying from macOS to Linux VMs.
 
 ### 2. Generate SSH Host Keys
 
@@ -46,12 +49,29 @@ ssh dan@<VM_IP>
 
 # Generate initrd SSH host keys
 sudo /path/to/nix-config/scripts/generate-initrd-keys.sh
+```
 
-# Rebuild to include the generated keys in initrd
+### 3. Enable initrd SSH
+
+Enable SSH in the configuration and rebuild:
+
+```bash
+# Edit hardware.nix: change ssh.enable from false to true
+# Then rebuild to include the generated keys in initrd
 sudo nixos-rebuild switch --flake /path/to/nix-config#nixos-vm-minimal
 ```
 
-### 3. Test Remote Unlocking
+**Configuration change needed:**
+
+```nix
+# In hosts/nixos-vm-minimal/hardware.nix
+ssh = {
+  enable = true; # Change from false to true
+  # ... rest of config
+};
+```
+
+### 4. Test Remote Unlocking
 
 After rebuild and reboot, test the remote unlocking:
 
@@ -63,7 +83,7 @@ ssh -p 2222 root@<VM_IP>
 # Connection closes automatically, boot continues
 ```
 
-### 4. Verify Normal Boot
+### 5. Verify Normal Boot
 
 After successful unlock, verify normal SSH access:
 

@@ -7,6 +7,7 @@
   users.users.dan = {
     isNormalUser = true;
     description = "Dan";
+    initialHashedPassword = "$6$.tIb37hYTPJeB13w$RSDaCkfYIEcxNn7Isct6XxeIS8mENfhx15XjDCuSlA4xrsCwAjZZuP7vp0xTmGBOAAZoGESsG4GT8eecpTASn/";
     extraGroups = ["networkmanager" "wheel" "sudo"];
     shell = pkgs.zsh;
 

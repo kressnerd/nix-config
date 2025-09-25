@@ -33,11 +33,11 @@ boot.initrd = {
     enable = true;
 
     ssh = {
-      enable = true;
+      enable = false;  # Disabled initially, enable after key generation
       port = 2222;
       shell = "/bin/cryptsetup-askpass";  # Direct LUKS unlock
 
-      # Auto-generated during NixOS build
+      # Generated manually after deployment
       hostKeys = [
         "/etc/secrets/initrd/ssh_host_rsa_key"
         "/etc/secrets/initrd/ssh_host_ed25519_key"
@@ -80,13 +80,13 @@ boot.initrd.luks.devices."crypted" = {
 
 ## SSH Key Management
 
-### Automatic Key Generation
+### Manual Key Generation
 
-SSH host keys for initrd are **automatically generated** during the NixOS build process:
+SSH host keys for initrd require **manual generation** after deployment:
 
-- Keys are created in `/etc/secrets/initrd/` by the build system
-- No manual generation required before deployment
-- Keys are stored in the Nix store (not secret)
+- Keys are created in `/etc/secrets/initrd/` by the `generate-initrd-keys.sh` script
+- Manual generation required after initial deployment
+- Keys are stored in the Nix store (not secret) after rebuild
 
 ### Key Security Model
 
@@ -107,10 +107,11 @@ Security Boundary:
 
 ### Correct Deployment Sequence
 
-1. **Initial deployment**: NixOS builds without initrd SSH (keys don't exist)
+1. **Initial deployment**: NixOS builds with initrd SSH disabled (`ssh.enable = false`)
 2. **Generate keys**: Run `generate-initrd-keys.sh` on deployed system
-3. **Rebuild**: `nixos-rebuild` copies keys into initrd
-4. **Reboot**: initrd SSH now works with generated keys
+3. **Enable SSH**: Edit `hardware.nix` to set `ssh.enable = true`
+4. **Rebuild**: `nixos-rebuild` copies keys into initrd and enables SSH
+5. **Reboot**: initrd SSH now works with generated keys
 
 ## Network and Firewall
 

@@ -84,12 +84,21 @@
   boot.initrd.postDeviceCommands = lib.mkAfter ''
     # Wait for disk labels to be available
     echo "Waiting for disk labels..."
-    for i in $(seq 1 10); do
-      if [ -e /dev/disk/by-partlabel/crypted ] && [ -e /dev/disk/by-label/boot ]; then
-        echo "Disk labels found!"
+    for i in $(seq 1 30); do
+      if [ -e /dev/disk/by-partlabel/crypted ]; then
+        echo "LUKS device found: /dev/disk/by-partlabel/crypted"
+        ls -la /dev/disk/by-partlabel/crypted
         break
       fi
+      echo "Waiting for LUKS device... ($i/30)"
       sleep 1
     done
+
+    # Debug: Show all available devices
+    echo "=== Available devices ==="
+    ls -la /dev/vd* 2>/dev/null || echo "No /dev/vd* devices"
+    ls -la /dev/sd* 2>/dev/null || echo "No /dev/sd* devices"
+    echo "=== Partition labels ==="
+    ls -la /dev/disk/by-partlabel/ 2>/dev/null || echo "No by-partlabel directory"
   '';
 }

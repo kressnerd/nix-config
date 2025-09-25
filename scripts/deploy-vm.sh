@@ -211,8 +211,15 @@ deploy_nixos() {
         "nix" "run" "github:nix-community/nixos-anywhere" "--"
         "--flake" "$REPO_ROOT#$vm_name"
         "--ssh-option" "StrictHostKeyChecking=no"
-        "--ssh-option" "UserKnownHostsFile=/dev/null"  
+        "--ssh-option" "UserKnownHostsFile=/dev/null"
     )
+    
+    # Enable cross-compilation when running on macOS
+    if [[ "$(uname)" == "Darwin" ]]; then
+        log_info "Detected macOS - enabling cross-compilation support"
+        export NIX_CONFIG="extra-platforms = aarch64-linux x86_64-linux"
+        nixos_anywhere_cmd+=("--extra-experimental-features" "nix-command flakes")
+    fi
     
     if [[ "$ssh_key" != "$HOME/.ssh/id_ed25519" ]]; then
         nixos_anywhere_cmd+=("--ssh-option" "IdentityFile=$ssh_key")

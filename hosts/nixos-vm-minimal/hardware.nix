@@ -32,15 +32,81 @@
       network = {
         enable = true;
 
-        # Enable SSH server in initrd
+        # Enable DHCP client explicitly
+        udhcpc.enable = true;
+
+        # Explicit network initialization and debugging
+        postCommands = ''
+          echo "=== initrd Network Setup Debug ==="
+
+          # Wait for network modules to load
+          sleep 2
+
+          # Force network interface up and DHCP with retries
+          echo "Initializing network..."
+          network_configured=false
+
+          for iface in enp0s1 eth0 ens3 enp1s0; do
+            if ip link show "$iface" 2>/dev/null; then
+              echo "Found network interface: $iface"
+
+              # Bring interface up
+              ip link set "$iface" up
+              sleep 1
+
+              # Try DHCP multiple times
+              for attempt in 1 2 3; do
+                echo "DHCP attempt $attempt on $iface..."
+                if udhcpc -i "$iface" -t 10 -T 3 -A 1; then
+                  echo "DHCP successful on attempt $attempt"
+                  network_configured=true
+                  break
+                fi
+                sleep 2
+              done
+
+              # Check if we got an IP
+              if ip addr show "$iface" | grep "inet "; then
+                echo "Network configured successfully:"
+                ip addr show "$iface"
+                ip route show
+                echo "Testing connectivity..."
+                ping -c 1 8.8.8.8 || echo "No internet connectivity"
+                network_configured=true
+                break
+              fi
+            fi
+          done
+
+          if [ "$network_configured" = "false" ]; then
+            echo "WARNING: Network configuration failed!"
+            echo "Available interfaces:"
+            ip link show
+          fi
+
+          echo "Available LUKS devices:"
+          ls -la /dev/disk/by-partlabel/ 2>/dev/null || echo "No by-partlabel directory"
+          echo "Available block devices:"
+          ls -la /dev/vd* /dev/sd* 2>/dev/null || echo "No block devices found"
+
+          echo "Checking if LUKS device is already unlocked:"
+          ls -la /dev/mapper/ 2>/dev/null || echo "No /dev/mapper directory"
+
+          # Verify cryptsetup-askpass is available
+          echo "cryptsetup-askpass location:"
+          which cryptsetup-askpass || echo "cryptsetup-askpass not found"
+          ls -la /bin/cryptsetup-askpass || echo "/bin/cryptsetup-askpass not found"
+        '';
+
+        # SSH server in initrd - enable after key generation
         ssh = {
-          enable = true;
+          enable = true; # Enable SSH for testing
           port = 2222; # Use different port to avoid conflicts
 
           # Use cryptsetup-askpass as shell for automatic LUKS prompting
           shell = "/bin/cryptsetup-askpass";
 
-          # SSH host keys for initrd (these will be generated)
+          # SSH host keys for initrd (generate with scripts/generate-initrd-keys.sh)
           hostKeys = [
             "/etc/secrets/initrd/ssh_host_rsa_key"
             "/etc/secrets/initrd/ssh_host_ed25519_key"
