@@ -74,12 +74,12 @@
           "ms-vscode.vscode-json"
           "ms-vscode-remote.remote-containers"
         ];
-        "dev.containers.dockerComposePath" = "/nix/store/9b5xnjgx8v0pxgh9rkydfkx171jzhdyd-podman-compose-1.3.0/bin/podman-compose";
-        "dev.containers.dockerPath" = "/nix/store/s4i30jajriqhzp1a46m7d8hjdinzqvzr-podman-5.4.1/bin/podman";
-        "dev.containers.dockerSocketPath" = "/run/user/1000/podman/podman.sock";
-        "dev.containers.executeInWSL" = false;
-        "dev.containers.forwardPorts" = true;
-        "dev.containers.gitCredentialHelperConfigLocation" = "system";
+        #"dev.containers.dockerComposePath" = "/nix/store/9b5xnjgx8v0pxgh9rkydfkx171jzhdyd-podman-compose-1.3.0/bin/podman-compose";
+        #"dev.containers.dockerPath" = "/nix/store/s4i30jajriqhzp1a46m7d8hjdinzqvzr-podman-5.4.1/bin/podman";
+        #"dev.containers.dockerSocketPath" = "/run/user/1000/podman/podman.sock";
+        #"dev.containers.executeInWSL" = false;
+        #"dev.containers.forwardPorts" = true;
+        #"dev.containers.gitCredentialHelperConfigLocation" = "system";
         "editor.fontFamily" = "JetBrainsMono Nerd Font";
         "editor.fontSize" = 12;
         "editor.formatOnSave" = true;
