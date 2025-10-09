@@ -6,6 +6,7 @@
 }: {
   imports = [
     ./global
+    ./features/cli/cloud-tools.nix
     ./features/cli/git.nix
     ./features/cli/kitty.nix
     ./features/cli/shell-utils.nix
@@ -21,7 +22,7 @@
     ./features/productivity/browser.nix
     ./features/productivity/vscode.nix
     ./features/productivity/tools.nix
-#    ./features/productivity/emacs-doom.nix
+    #    ./features/productivity/emacs-doom.nix
   ];
 
   # Host-specific overrides
