@@ -53,10 +53,8 @@
     #go
     #rustup
 
-    # Cloud tools (add as needed)
-    #awscli2
-    #google-cloud-sdk
-    #terraform
+    # Cloud tools (moved to cloud-tools.nix module)
+    # See features/cli/cloud-tools.nix for cloud CLI tools
   ];
 
   # Configure some of these tools
