@@ -1,546 +1,502 @@
-# Doom Emacs Setup and Maintenance Guide
+# Doom Emacs Setup Guide
 
 ## Overview
 
-This comprehensive guide covers setup, package management, usage, and maintenance of the declarative Doom Emacs configuration integrated with Nix and Home Manager using `nix-doom-emacs-unstraightened`.
+This configuration implements **Henrik Lissner's recommended approach** for integrating Doom Emacs with Nix and Home Manager. This approach provides a clean separation of concerns:
 
-## Key Features
+- **Nix manages**: Emacs binary and external system tools (LSP servers, formatters, etc.)
+- **Doom Emacs manages**: All Emacs Lisp packages via straight.el
 
-- **Fully Declarative**: All packages managed through Nix, no `package.el` or `straight.el` conflicts
-- **Zero Package Conflicts**: Single package manager (Nix) eliminates traditional Emacs package management issues
-- **Reproducible**: Consistent builds across systems through flake.lock pinning
-- **Emacs v30.1**: Latest Emacs version with native compilation support
-- **Complete Integration**: Seamless Home Manager integration with proper shell environment setup
-- **macOS Optimized**: Native macOS keybindings and file associations
-- **Rollback Safety**: Instant rollback to previous configurations via Nix generations
+This separation avoids the complexity and conflicts that arise from trying to manage Emacs packages declaratively through Nix.
+
+## Philosophy
+
+Henrik Lissner's approach (from his [dotfiles](https://github.com/hlissner/dotfiles)) treats Doom Emacs as a **self-contained package management system**:
+
+1. Nix provides system-level stability (Emacs binary, fonts, LSP servers)
+2. Doom's straight.el provides Emacs package flexibility and disaster recovery
+3. No overlap between the two systems - each manages its own domain
+
+**Why this approach?**
+
+- Emacs package ecosystem is highly dynamic and frequently breaks
+- Straight.el provides better disaster recovery than Nix for Emacs packages
+- Simpler to maintain - follows Doom's standard workflow
+- Better compatibility with upstream Doom documentation
 
 ## Architecture
 
-### Core Components
-
-1. **[`flake.nix`](../flake.nix:1)**: Flake input configuration for `nix-doom-emacs-unstraightened`
-2. **[`home/dan/features/productivity/emacs-doom.nix`](../home/dan/features/productivity/emacs-doom.nix:1)**: Main Home Manager module
-3. **[`home/dan/doom.d/`](../home/dan/doom.d/)**: Doom configuration directory
-   - **[`init.el`](../home/dan/doom.d/init.el:1)**: Module selection and feature configuration
-   - **[`config.el`](../home/dan/doom.d/config.el:1)**: Personal configuration and customizations
-   - **[`packages.el`](../home/dan/doom.d/packages.el:1)**: Additional package declarations
-
-### Package Management Flow
+### Components
 
 ```
-Nix Store → Doom Profile → Emacs with Doom → User Environment
-     ↑            ↑              ↑               ↑
-nixpkgs    doom modules    emacs-with-doom    shell integration
+┌─────────────────────────────────────────────────────────────┐
+│ Nix/Home Manager Layer                                       │
+│ • Emacs 30.1 binary                                          │
+│ • System tools (ripgrep, fd, git)                           │
+│ • LSP servers (nixd, pyright, rust-analyzer)                │
+│ • Formatters (nixpkgs-fmt, black, prettier)                 │
+│ • Fonts (JetBrains Mono, Fira Code)                         │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│ Doom Emacs Layer (straight.el)                              │
+│ • All Emacs Lisp packages                                   │
+│ • Doom modules and their dependencies                       │
+│ • Third-party packages from MELPA/ELPA                      │
+│ • Custom configurations                                      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Setup Process
+### File Structure
 
-### Prerequisites
-
-- Nix with flakes enabled
-- Home Manager configured
-- macOS (Darwin) system
-
-### Installation Steps
-
-1. **Apply Configuration**
-
-   ```bash
-   # Build and switch to new configuration
-   darwin-rebuild switch --flake .#J6G6Y9JK7L
-   ```
-
-2. **Verify Installation**
-
-   ```bash
-   # Check Doom Emacs availability
-   which emacs
-   emacs --version
-
-   # Verify Doom modules
-   emacs --batch --eval "(require 'doom-start)" 2>/dev/null && echo "Doom loaded successfully"
-   ```
-
-3. **Shell Integration**
-   The configuration automatically sets up:
-   - `EDITOR=emacs` environment variable
-   - Emacs server daemon via launchd
-   - File type associations for macOS
-
-## Package Management
-
-### Architecture Overview
-
-The `nix-doom-emacs-unstraightened` solution completely eliminates package.el and straight.el conflicts by managing all packages through Nix.
-
-**Traditional Doom Approach Issues:**
-
-- Multiple package managers (straight.el, package.el)
-- Version conflicts between dependencies
-- Non-reproducible builds
-- Configuration drift between machines
-- Manual package synchronization via `doom sync`
-
-**Nix-Managed Doom Benefits:**
-
-- Single package manager (Nix)
-- Complete dependency resolution
-- Reproducible builds via flake.lock
-- No version conflicts
-- Automatic synchronization via rebuild
-- Rollback capability
-
-### Package Declaration Methods
-
-#### 1. Doom Module-Based Packages
-
-Most packages are enabled through Doom modules in [`init.el`](../home/dan/doom.d/init.el):
-
-```elisp
-(doom! :lang
-       nix                 ; Automatically includes nix-mode
-       (python +lsp)       ; Includes python-mode, lsp-pyright
-       (org +roam2)        ; Includes org-roam v2
-
-       :tools
-       (lsp +peek)         ; Includes lsp-mode, lsp-ui
-       (magit +forge))     ; Includes magit, forge
+```
+~/.config/
+├── emacs/              # Doom Emacs installation (managed by straight.el)
+│   ├── bin/doom        # Doom CLI tool
+│   └── ...
+├── doom/               # Symlink to our managed doom.d
+│   ├── init.el         # Module configuration
+│   ├── config.el       # Personal settings
+│   ├── packages.el     # Package declarations
+│   └── local.el        # Machine-specific config (optional)
+└── nix-config/
+    └── home/dan/doom.d/  # Actual doom.d (version controlled)
 ```
 
-**Advantages:**
+## Installation
 
-- Curated package selections
-- Pre-configured integrations
-- Tested combinations
-- Minimal configuration required
+### First-Time Setup
 
-#### 2. Explicit Package Declarations
-
-Additional packages are declared in [`doom.d/packages.el`](../home/dan/doom.d/packages.el):
-
-```elisp
-;; Nix-specific packages
-(package! nixos-options)
-(package! company-nixos-options)
-
-;; Additional productivity packages
-(package! restclient)
-(package! org-super-agenda)
-(package! vlf)  ; View Large Files
-```
-
-**Use Cases:**
-
-- Packages not included in Doom modules
-- Specialized workflow tools
-- Experimental packages
-- Personal preferences
-
-#### 3. System-Level Tool Integration
-
-Development tools and LSP servers are managed at the Nix system level in [`emacs-doom.nix`](../home/dan/features/productivity/emacs-doom.nix):
-
-```nix
-home.packages = with pkgs; [
-  # LSP servers
-  nixd                    # Nix LSP
-  pyright                 # Python LSP
-  rust-analyzer           # Rust LSP
-
-  # Command-line tools used by Doom
-  ripgrep                 # Search backend
-  fd                      # File finder
-  silver-searcher         # Alternative search (ag)
-
-  # Language tools
-  black                   # Python formatter
-  nodePackages.js-beautify # JS formatter
-];
-```
-
-**Benefits:**
-
-- System-wide availability
-- Consistent tool versions
-- Better performance (native binaries)
-- Integration with shell environment
-
-### Adding and Managing Packages
-
-#### Adding New Packages
-
-1. **For Doom Module Packages**:
-
-   ```elisp
-   ;; Edit doom.d/init.el
-   (doom! :lang
-          new-language-mode  ; Add new module
-          ;; ... rest of config
-   ```
-
-2. **For Individual Packages**:
-
-   ```elisp
-   ;; Edit doom.d/packages.el
-   (package! new-package-name)
-   ```
-
-3. **For System Tools**:
-
-   ```nix
-   # Edit emacs-doom.nix
-   home.packages = with pkgs; [
-     new-tool
-     # ... existing packages
-   ];
-   ```
-
-4. **Apply Changes**:
-   ```bash
-   darwin-rebuild switch --flake .#J6G6Y9JK7L
-   ```
-
-#### Updating Packages
-
-**Update All Packages**:
+The configuration automatically handles Doom installation via Home Manager activation:
 
 ```bash
-# Update flake inputs (includes Doom and emacs-overlay)
-nix flake update
+# For macOS
 darwin-rebuild switch --flake .#J6G6Y9JK7L
+
+# For NixOS
+sudo nixos-rebuild switch --flake .#hostname
 ```
 
-**Update Specific Input**:
+This will:
+
+1. Install Emacs and system dependencies via Nix
+2. Clone Doom Emacs to `~/.config/emacs`
+3. Create symlink from `~/.config/doom` to your managed `doom.d`
+4. Run `doom install` and `doom sync`
+
+### Verification
+
+After installation, verify everything is working:
 
 ```bash
-# Update only Doom Emacs
-nix flake update nix-doom-emacs-unstraightened
-darwin-rebuild switch --flake .#J6G6Y9JK7L
+# Check Doom installation
+~/.config/emacs/bin/doom doctor
+
+# Start Emacs
+emacs
+
+# Or use the daemon
+emacsclient -c
 ```
-
-#### Removing Packages
-
-1. **Remove from Configuration**:
-
-   - Remove from `init.el` (modules)
-   - Remove from `packages.el` (individual packages)
-   - Remove from `emacs-doom.nix` (system tools)
-
-2. **Apply Changes**:
-
-   ```bash
-   darwin-rebuild switch --flake .#J6G6Y9JK7L
-   ```
-
-3. **Clean Up** (optional):
-   ```bash
-   nix-collect-garbage -d
-   ```
-
-### Package Debugging
-
-**Check Package Availability**:
-
-```bash
-nix search nixpkgs emacs
-nix search nixpkgs.emacsPackages package-name
-```
-
-**Doom Doctor**:
-
-```bash
-doom doctor  # Check for common issues
-```
-
-**Check Package Loading in Emacs**:
-
-```elisp
-(require 'package-name)  ; Test if package loads
-load-path                ; Check if package directory is included
-```
-
-**Common Issues:**
-
-- **Package Not Found**: Check emacs-overlay, verify package name, update nix-doom-emacs-unstraightened
-- **Version Issues**: Run `nix flake update`, check emacs-overlay compatibility
-- **Configuration Not Applied**: Verify declarations, check module enables package, rebuild
 
 ## Configuration Management
 
 ### Modifying Doom Modules
 
-Edit [`home/dan/doom.d/init.el`](../home/dan/doom.d/init.el:1) to enable/disable modules:
+Edit [`init.el`](../home/dan/doom.d/init.el) to enable/disable Doom modules:
 
 ```elisp
-(doom! :input
-       ;;chinese
-       ;;kkc
+(doom! :completion
+       (company +childframe)
+       (ivy +prescient +fuzzy +icons)
 
-       :completion
-       company           ; the ultimate code completion backend
-       ;;helm              ; the *other* search engine for love and life
-       ;;ido               ; the other *other* search engine...
-       (ivy +prescient)  ; a search engine for love and life)
+       :lang
+       nix
+       (python +lsp)
+       (org +roam2))
 ```
 
-**Important**: After modifying `init.el`, rebuild your system:
+After changes:
 
 ```bash
-darwin-rebuild switch --flake .#J6G6Y9JK7L
+doom sync
 ```
 
 ### Adding Packages
 
-Add packages to [`home/dan/doom.d/packages.el`](../home/dan/doom.d/packages.el:1):
+Add packages in [`packages.el`](../home/dan/doom.d/packages.el):
 
 ```elisp
-;; Nix-specific packages
-(package! nixos-options)
-(package! company-nixos-options)
+;; From MELPA
+(package! some-package)
 
-;; Additional packages
-(package! restclient)
-(package! org-super-agenda)
+;; From GitHub
+(package! my-package
+  :recipe (:host github :repo "user/repo"))
+```
+
+After changes:
+
+```bash
+doom sync
 ```
 
 ### Personal Configuration
 
-Customize behavior in [`home/dan/doom.d/config.el`](../home/dan/doom.d/config.el:1):
+Edit [`config.el`](../home/dan/doom.d/config.el) for personal settings:
 
 ```elisp
-;; Font configuration
-(setq doom-font (font-spec :family "SF Mono" :size 13)
-      doom-variable-pitch-font (font-spec :family "SF Pro Text" :size 14))
+;; Customize appearance
+(setq doom-theme 'doom-one
+      doom-font (font-spec :family "JetBrains Mono" :size 14))
 
-;; macOS specific settings
+;; macOS keybindings
 (when IS-MAC
-  (setq mac-option-modifier 'meta
-        mac-command-modifier 'super))
+  (setq mac-command-modifier 'super))
 ```
 
-## Maintenance Procedures
+No sync needed - changes take effect after restarting Emacs.
 
-### Regular Updates
+## Doom Commands
 
-1. **Update Flake Inputs**
-
-   ```bash
-   # Update all inputs
-   nix flake update
-
-   # Update specific input
-   nix flake lock --update-input nix-doom-emacs-unstraightened
-   ```
-
-2. **Apply Updates**
-
-   ```bash
-   darwin-rebuild switch --flake .#J6G6Y9JK7L
-   ```
-
-3. **Verify Updates**
-   ```bash
-   # Check for any build issues
-   nix build '.#darwinConfigurations.J6G6Y9JK7L.system' --dry-run
-   ```
-
-### Configuration Validation
-
-Before applying changes, always validate:
+### Essential Doom CLI Commands
 
 ```bash
-# Dry run to check for issues
-nix build '.#darwinConfigurations.J6G6Y9JK7L.system' --dry-run
+# Update Doom and packages
+doom upgrade
 
-# Check for syntax errors in Doom config
-emacs --batch --load ~/.config/doom/init.el --eval "(message \"Config validated\")"
+# Sync package state with config
+doom sync
+
+# Health check
+doom doctor
+
+# Clean build artifacts
+doom clean
+
+# Compile config for better performance
+doom compile
 ```
 
-### Rollback Procedures
+### Using Doom Sync
 
-If issues occur:
+After modifying `init.el` or `packages.el`, always run:
 
-1. **System Rollback**
+```bash
+doom sync
+```
 
-   ```bash
-   # List available generations
-   darwin-rebuild --list-generations
+This:
 
-   # Rollback to previous generation
-   darwin-rebuild rollback
-   ```
+1. Installs new packages
+2. Removes unused packages
+3. Rebuilds autoloads
+4. Recompiles config
 
-2. **Flake Rollback**
-   ```bash
-   # Restore previous flake.lock
-   git checkout HEAD~1 -- flake.lock
-   darwin-rebuild switch --flake .#J6G6Y9JK7L
-   ```
+## Package Management
+
+### Adding Packages
+
+**For Doom Module Packages:**
+
+Most packages are available through Doom modules. Enable them in `init.el`:
+
+```elisp
+(doom! :lang
+       (python +lsp)    ; Includes python-mode, lsp-pyright
+       (org +roam2))    ; Includes org-roam v2
+```
+
+**For Individual Packages:**
+
+Declare in `packages.el`:
+
+```elisp
+(package! restclient)
+(package! org-super-agenda)
+```
+
+**For System Tools:**
+
+Edit [`emacs-doom.nix`](../home/dan/features/productivity/emacs-doom.nix) to add LSP servers or formatters:
+
+```nix
+home.packages = with pkgs; [
+  # LSP servers
+  rust-analyzer
+
+  # Formatters
+  rustfmt
+];
+```
+
+### Updating Packages
+
+**Update Doom and all packages:**
+
+```bash
+doom upgrade
+```
+
+**Update specific package:**
+
+```bash
+doom sync -u package-name
+```
+
+**Rollback after bad update:**
+
+```bash
+doom rollback
+```
+
+### Removing Packages
+
+1. Remove from `init.el` (modules) or `packages.el` (individual)
+2. Run `doom sync`
+3. Doom will automatically remove unused packages
+
+## System Updates
+
+### Updating Nix Components
+
+Update Emacs and system tools:
+
+```bash
+# Update flake inputs
+nix flake update
+
+# Rebuild system
+darwin-rebuild switch --flake .#J6G6Y9JK7L  # macOS
+# or
+sudo nixos-rebuild switch --flake .#hostname  # NixOS
+```
+
+### Update Workflow
+
+Recommended update sequence:
+
+```bash
+# 1. Update Nix components
+nix flake update
+darwin-rebuild switch --flake .#J6G6Y9JK7L
+
+# 2. Update Doom
+doom upgrade
+
+# 3. Verify health
+doom doctor
+```
 
 ## Troubleshooting
 
-### Common Issues
+### Doom Issues
 
-#### Build Failures
+**Package not found:**
 
-**Symptom**: Nix build fails with package conflicts
-
+```bash
+doom sync    # Refresh package list
+doom clean   # Clean build artifacts
 ```
-error: collision between `/nix/store/...-package-a` and `/nix/store/...-package-b`
+
+**Build errors:**
+
+```bash
+doom doctor              # Check for issues
+doom sync -p package-name  # Reinstall specific package
 ```
 
-**Solution**: Check for duplicate package declarations in `packages.el` and ensure Doom modules don't conflict.
+**Performance issues:**
 
-#### Missing Packages
-
-**Symptom**: Doom complains about missing packages
-
+```bash
+doom compile            # Recompile for better performance
 ```
-Error: Package 'some-package' is not available
+
+### Nix Issues
+
+**Emacs binary not found:**
+
+```bash
+# Rebuild Home Manager configuration
+home-manager switch --flake .#hostname
 ```
+
+**LSP server not working:**
+
+Verify LSP server is installed:
+
+```bash
+which nixd    # Should show Nix store path
+```
+
+If missing, add to `emacs-doom.nix` and rebuild.
+
+### Common Problems
+
+**Problem**: Doom complains about missing packages
+
+**Solution**: Run `doom sync` to install declared packages
+
+---
+
+**Problem**: LSP not working
 
 **Solution**:
 
-1. Add package to [`packages.el`](../home/dan/doom.d/packages.el:1)
-2. Rebuild system configuration
-3. Restart Emacs
+1. Check LSP server is installed via Nix: `which language-server`
+2. Verify Doom LSP module is enabled in `init.el`
+3. Check LSP config in `config.el`
 
-#### Performance Issues
+---
 
-**Symptom**: Slow Emacs startup or operation
+**Problem**: Font not displaying correctly
 
-**Solutions**:
+**Solution**:
 
-1. Check for unnecessary modules in [`init.el`](../home/dan/doom.d/init.el:1)
-2. Verify native compilation is working:
-   ```elisp
-   (native-comp-available-p)  ; Should return t
-   ```
-3. Clear Emacs cache:
-   ```bash
-   rm -rf ~/.config/emacs/.local/
-   ```
+1. Verify font is installed: Check `emacs-doom.nix` packages
+2. Rebuild system to install fonts
+3. Update font config in `config.el`
 
-#### macOS Integration Issues
+---
 
-**Symptom**: File associations or key bindings not working
+**Problem**: Activation hook fails
 
-**Solutions**:
+**Solution**:
 
-1. Verify launchd agent is running:
-   ```bash
-   launchctl list | grep emacs
-   ```
-2. Check file associations:
-   ```bash
-   duti -l | grep emacs
-   ```
-3. Restart the Home Manager activation:
-   ```bash
-   /nix/store/*-activation-script/activate
-   ```
+1. Check `~/.config/emacs` exists
+2. Manually run: `~/.config/emacs/bin/doom sync`
+3. Check for error messages in activation output
 
-### Debug Mode
+## Integration with Development Tools
 
-Enable verbose logging for troubleshooting:
+### LSP Servers
+
+LSP servers are managed by Nix, not Doom:
+
+```nix
+# In emacs-doom.nix
+home.packages = with pkgs; [
+  nixd                    # Nix
+  pyright                 # Python
+  rust-analyzer           # Rust
+  typescript-language-server  # TypeScript
+];
+```
+
+Doom automatically discovers these via PATH.
+
+### Git Integration
+
+Magit uses git from Nix:
+
+```nix
+home.packages = with pkgs; [
+  git
+  git-crypt
+];
+```
+
+### Terminal Integration
+
+Shell aliases for Emacs:
 
 ```bash
-# Verbose Nix build
-nix build '.#darwinConfigurations.J6G6Y9JK7L.system' --verbose
-
-# Doom debug mode
-emacs --debug-init
-
-# Home Manager debug
-home-manager switch --show-trace
+e     # emacsclient -t (terminal)
+ec    # emacsclient -c (GUI)
+doom  # Doom CLI
 ```
 
 ## Best Practices
 
-### Development Workflow
+### Workflow
 
-1. **Make Small Changes**: Test individual module changes before large modifications
-2. **Use Version Control**: Commit working configurations before experimenting
-3. **Test Builds**: Always run dry-run builds before applying changes
-4. **Document Changes**: Keep notes on customizations for future reference
+1. **Small Changes**: Test one module at a time
+2. **Version Control**: Commit working configs before experimenting
+3. **Health Checks**: Run `doom doctor` after major changes
+4. **Separation**: Never mix Nix emacsPackages with Doom packages
 
-### Performance Optimization
+### Performance
 
-1. **Selective Modules**: Only enable Doom modules you actually use
-2. **Lazy Loading**: Prefer `after!` and `use-package!` with `:defer` for heavy packages
-3. **Native Compilation**: Ensure all packages benefit from native compilation
-4. **Regular Cleanup**: Periodically clean Nix store with `nix-collect-garbage`
+1. **Lazy Loading**: Use `:defer` in package declarations
+2. **Native Compilation**: Emacs 30 provides this by default
+3. **Startup Optimization**: Run `doom compile` periodically
+4. **Clean Builds**: Run `doom clean` when things feel slow
 
-### Security Considerations
+### Maintenance
 
-1. **GPG Integration**: The configuration includes proper GPG agent setup for commit signing
-2. **Package Sources**: All packages come from trusted nixpkgs or vetted Doom modules
-3. **No External Downloads**: Avoid packages that download code at runtime
-4. **Regular Updates**: Keep flake inputs updated for security patches
+1. **Regular Updates**: Update Doom monthly: `doom upgrade`
+2. **System Updates**: Update Nix inputs monthly: `nix flake update`
+3. **Health Monitoring**: Run `doom doctor` after updates
+4. **Rollback Ready**: Keep working flake.lock in git
 
-## Advanced Configuration
+## macOS Specific
+
+### File Associations
+
+The configuration registers Emacs with macOS Launch Services for text files.
+
+### Keybindings
+
+macOS Command key is mapped to Super:
+
+- `Cmd-=`: Increase font size
+- `Cmd--`: Decrease font size
+- `Cmd-0`: Reset font size
+
+### Notifications
+
+Terminal notifications work via `terminal-notifier` (installed via Nix).
+
+## Advanced Topics
+
+### Machine-Specific Configuration
+
+Create `~/.config/doom/local.el` for machine-specific settings:
+
+```elisp
+;;; local.el --- Machine-specific configuration
+
+;; This file is git-ignored and loaded by config.el
+(setq user-mail-address "machine-specific@email.com")
+```
 
 ### Custom Doom Modules
 
-Create local Doom modules in `~/.config/doom/modules/`:
+Create local modules in `~/.config/doom/modules/`:
 
 ```elisp
 ;; In config.el
 (add-to-list 'doom-module-load-path "~/.config/doom/modules")
 ```
 
-### Integration with Other Tools
+### Disaster Recovery
 
-The configuration integrates well with:
+If Doom breaks:
 
-- **LSP Servers**: Automatically configured for Nix, Python, Rust, JavaScript
-- **Git**: Full Magit integration with GPG signing
-- **Terminal**: Multi-vterm support with proper shell integration
-- **PDF Tools**: Complete PDF viewing and annotation support
+```bash
+# 1. Rollback Doom
+doom rollback
 
-### Customization Examples
-
-```elisp
-;; Custom keybindings
-(map! :leader
-      :prefix "o"
-      :desc "Open terminal" "t" #'multi-vterm)
-
-;; Project-specific settings
-(dir-locals-set-class-variables 'nix-project
-  '((nix-mode . ((tab-width . 2)
-                 (nix-indent-function . 'nix-indent-line)))))
-
-;; Custom snippets
-(add-hook 'nix-mode-hook
-          (lambda () (yas-activate-extra-mode 'nix-mode)))
+# 2. Or reinstall from scratch
+rm -rf ~/.config/emacs
+darwin-rebuild switch --flake .#J6G6Y9JK7L
 ```
 
-## Support and Resources
+## Resources
 
-- **Doom Emacs Documentation**: https://github.com/doomemacs/doomemacs
-- **nix-doom-emacs-unstraightened**: https://github.com/marienz/nix-doom-emacs-unstraightened
-- **Home Manager Manual**: https://nix-community.github.io/home-manager/
-- **Nixpkgs Manual**: https://nixos.org/manual/nixpkgs/stable/
+- **Doom Emacs**: https://github.com/doomemacs/doomemacs
+- **Henrik Lissner's dotfiles**: https://github.com/hlissner/dotfiles
+- **Doom Discourse**: https://discourse.doomemacs.org/
+- **NixOS Manual**: https://nixos.org/manual/nixos/stable/
 
-## Appendix
+## Migration from nix-doom-emacs-unstraightened
 
-### Configuration Files Summary
+If you previously used `nix-doom-emacs-unstraightened`:
 
-| File                                                                   | Purpose               | Frequency of Changes |
-| ---------------------------------------------------------------------- | --------------------- | -------------------- |
-| [`init.el`](../home/dan/doom.d/init.el:1)                              | Module selection      | Occasional           |
-| [`config.el`](../home/dan/doom.d/config.el:1)                          | Personal settings     | Frequent             |
-| [`packages.el`](../home/dan/doom.d/packages.el:1)                      | Package additions     | Occasional           |
-| [`emacs-doom.nix`](../home/dan/features/productivity/emacs-doom.nix:1) | System integration    | Rare                 |
-| [`flake.nix`](../flake.nix:1)                                          | Dependency management | Updates only         |
+1. **Backup** your current setup
+2. **Remove** `~/.config/emacs` (Doom installation)
+3. **Apply** this new configuration
+4. **Run** `doom sync` after activation completes
+5. **Verify** with `doom doctor`
 
-### Version Information
-
-- **Emacs**: 30.1 with native compilation
-- **Doom Emacs**: Latest from nix-doom-emacs-unstraightened
-- **nix-doom-emacs-unstraightened**: Pinned via flake.lock
-- **Home Manager**: Configured for macOS Darwin
-- **Nix**: Flakes enabled configuration
-
-This setup provides a robust, maintainable, and fully declarative Doom Emacs environment that integrates seamlessly with your Nix-based system configuration.
+The new approach is simpler and follows upstream Doom's standard workflow.

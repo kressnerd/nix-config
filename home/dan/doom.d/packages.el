@@ -1,76 +1,77 @@
 ;; -*- no-byte-compile: t; -*-
 ;;; packages.el
 
-;; To install a package with Doom you must declare them here and run 'doom sync'
-;; on the command line, then restart Emacs for the changes to take effect -- or
-;; use 'M-x doom/reload'.
+;; Doom Emacs Package Management (via straight.el)
+;;
+;; This file declares additional Emacs packages to install via straight.el.
+;; Following Henrik Lissner's approach: Doom manages ALL Emacs packages,
+;; while Nix only provides the Emacs binary and external system tools.
+;;
+;; After modifying this file, run: doom sync
+;; Then restart Emacs for changes to take effect.
+;;
+;; Note: Most packages are provided by Doom modules in init.el.
+;; Only declare packages here that aren't available through Doom modules.
 
-;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
+;;; Package Declaration Syntax
+
+;; To install a package from MELPA, ELPA or emacsmirror:
 ;(package! some-package)
 
-;; To install a package directly from a remote git repo, you must specify a
-;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
-;; https://github.com/raxod502/straight.el#the-recipe-format
+;; To install a package directly from a remote git repo:
 ;(package! another-package
 ;  :recipe (:host github :repo "username/repo"))
 
-;; If the package you are trying to install does not contain a PACKAGENAME.el
-;; file, or is located in a subdirectory of the repo, you'll need to specify
-;; `:files' in the `:recipe':
+;; If the package is in a subdirectory:
 ;(package! this-package
 ;  :recipe (:host github :repo "username/repo"
 ;           :files ("some-file.el" "src/lisp/*.el")))
 
-;; If you'd like to disable a package included with Doom, you can do so here
-;; with the `:disable' property:
+;; To disable a package included with Doom:
 ;(package! builtin-package :disable t)
 
-;; You can override the recipe of a built in package without having to specify
-;; all the properties for `:recipe'. These will inherit the rest of its recipe
-;; from Doom or MELPA/ELPA/Emacsmirror:
+;; To override a built-in package recipe:
 ;(package! builtin-package :recipe (:nonrecursive t))
 ;(package! builtin-package-2 :recipe (:repo "myfork/package"))
 
-;; Specify a `:branch' to install a package from a particular branch or tag.
-;; This is required for some packages whose default branch isn't 'master' (which
-;; our package manager can't deal with; see raxod502/straight.el#279)
+;; To install from a specific branch or tag:
 ;(package! builtin-package :recipe (:branch "develop"))
 
-;; Use `:pin' to specify a particular commit to install.
+;; To pin a package to a specific commit:
 ;(package! builtin-package :pin "1a2b3c4d5e")
 
-;; Doom's packages are pinned to a specific commit and updated from release to
-;; release. The `unpin!' macro allows you to unpin single packages...
+;; To unpin packages (not recommended):
 ;(unpin! pinned-package)
-;; ...or multiple packages
-;(unpin! pinned-package another-pinned-package)
-;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
-;(unpin! t)
 
-;;; Nix-specific packages
-;; These packages provide better integration with NixOS and Nix ecosystem
+;;; Actual Package Declarations
+
+;; Nix-specific packages for better NixOS/Nix integration
 (package! nixos-options)
 (package! company-nixos-options)
 
-;;; Additional productivity packages
-;; Note: Most packages are already included in Doom modules
-;; Only add packages not available through Doom modules
-
-;; REST client for API testing (similar to Postman)
+;; REST client for API testing (like Postman)
 (package! restclient)
-(package! restclient-helm :disable t) ; We use ivy, not helm
 
-;; Additional org-mode enhancements
+;; Enhanced org-mode functionality
 (package! org-super-agenda)
 (package! org-fancy-priorities)
 
-;; Better handling of large files
+;; Better large file handling
 (package! vlf)
 
-;; Additional terminal improvements beyond vterm
+;; Enhanced terminal support
 (package! multi-vterm)
 
-;; macOS specific enhancements
+;; macOS-specific enhancements
 (when IS-MAC
   (package! osx-trash)
   (package! reveal-in-osx-finder))
+
+;;; Development Tools
+;; Note: LSP servers and external tools are managed by Nix (not Emacs packages)
+;; See home/dan/features/productivity/emacs-doom.nix for system-level tools
+
+;;; Additional Language Support
+;; Most language modes come from Doom modules, but you can add extras here
+;; Example:
+;(package! some-mode)

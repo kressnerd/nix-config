@@ -18,12 +18,6 @@
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
-    # Doom Emacs integration
-    nix-doom-emacs-unstraightened = {
-      url = "github:marienz/nix-doom-emacs-unstraightened";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
       flake = false;
@@ -72,7 +66,6 @@
     homebrew-core,
     homebrew-cask,
     nur,
-    nix-doom-emacs-unstraightened,
     nixos-hardware,
     impermanence,
     firefox-addons,
@@ -115,7 +108,6 @@
               users.dan = import ./home/dan/nixos-vm-minimal.nix;
               sharedModules = [
                 sops-nix.homeManagerModules.sops
-                inputs.nix-doom-emacs-unstraightened.homeModule
               ];
             };
           }
@@ -151,7 +143,6 @@
               users.dan = import ./home/dan/thiniel.nix;
               sharedModules = [
                 sops-nix.homeManagerModules.sops
-                inputs.nix-doom-emacs-unstraightened.homeModule
               ];
             };
           }
@@ -234,7 +225,6 @@
               sharedModules = [
                 mac-app-util.homeManagerModules.default
                 sops-nix.homeManagerModules.sops
-                inputs.nix-doom-emacs-unstraightened.homeModule
               ];
             };
           }

@@ -4,187 +4,209 @@
   lib,
   ...
 }: {
-  # Enable Doom Emacs with declarative configuration via nix-doom-emacs-unstraightened
-  programs.doom-emacs = {
+  # Install Emacs declaratively via Nix (Henrik Lissner's approach)
+  # Doom Emacs will manage its own packages via straight.el
+
+  programs.emacs = {
     enable = true;
-    doomDir = ./../../doom.d; # Point to our Doom configuration (home/dan/doom.d)
-    provideEmacs = true; # Provides both doom-emacs and emacs binaries
+    package = pkgs.emacs; # Emacs 30.2 from nixpkgs
   };
 
-  # Enable Emacs daemon service for faster startup
-  # Note: nix-doom-emacs-unstraightened automatically sets services.emacs.package
-  services.emacs = {
-    enable = true;
-    defaultEditor = true; # Set emacsclient as default editor
-    client.enable = true; # Generate emacsclient desktop file
-    startWithUserSession = "graphical"; # Start with graphical session
+  # Enable font configuration for macOS
+  fonts.fontconfig.enable = true;
 
-    # Additional daemon options for macOS optimization
-    extraOptions = [
-      "--with-ns"
-      "--with-native-compilation"
+  # System-level dependencies and tools for Doom Emacs
+  # These are NOT Emacs packages - they're external binaries
+  home.packages = with pkgs;
+    [
+      # Core Doom dependencies
+      git
+      (ripgrep.override {withPCRE2 = true;})
+      fd
+      fontconfig # Required for nerd-icons font detection
+
+      # Optional but recommended tools
+      imagemagick # For image-dired
+      zstd # For undo-tree compression
+
+      # LSP servers (managed by Nix, used by Doom)
+      nixd # Nix LSP
+      nodePackages.typescript-language-server
+      pyright # Python LSP
+      rust-analyzer # Rust LSP
+      nodePackages.bash-language-server
+      nodePackages.yaml-language-server
+
+      # Language formatters
+      nixpkgs-fmt # Nix formatter
+      nodePackages.prettier
+      black # Python formatter
+
+      # Search tools (used by Doom's search features)
+      silver-searcher # ag command
+
+      # Document processing
+      pandoc # Universal document converter
+
+      # Org-mode tools
+      sqlite # For org-roam
+      graphviz # For org diagrams
+
+      # Git tools (for Magit)
+      git-crypt
+
+      # Fonts for better Doom experience
+      nerd-fonts.fira-code
+      nerd-fonts.jetbrains-mono
+      nerd-fonts.symbols-only # Required for nerd-icons in Doom Emacs
+
+      # macOS specific
+    ]
+    ++ lib.optionals pkgs.stdenv.isDarwin [
+      terminal-notifier # macOS notifications
+      pinentry_mac # GPG pinentry for macOS
     ];
-  };
 
-  # Add essential development tools and LSP servers
-  # These packages are used by Doom modules for various language support
-  home.packages = with pkgs; [
-    # LSP servers for various languages (from original config)
-    nixd # Nix LSP server
-    nodePackages.typescript-language-server
-    pyright # Python LSP
-    rust-analyzer # Rust LSP
+  # Doom Emacs installation and management
+  # Following Henrik Lissner's dotfiles pattern
+  home.activation = {
+    # Remove old doom.d symlink if it exists (cleanup from previous setup)
+    cleanupOldDoomConfig = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+      DOOM_PRIVATE_DIR="${config.home.homeDirectory}/.config/doom"
+      if [ -L "$DOOM_PRIVATE_DIR" ] || [ -e "$DOOM_PRIVATE_DIR" ]; then
+        $VERBOSE_ECHO "Removing old doom.d configuration"
+        $DRY_RUN_CMD rm -rf "$DOOM_PRIVATE_DIR"
+      fi
+    '';
 
-    # Additional tools for development (many already in shell-utils.nix)
-    silver-searcher # Another grep alternative (ag) - used by Doom search
+    # Clone Doom Emacs if it doesn't exist
+    installDoomEmacs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      DOOM_DIR="${config.home.homeDirectory}/.config/emacs"
 
-    # Git tools (git already in git.nix)
-    git-crypt
+      # Clone Doom Emacs if not present
+      if [ ! -d "$DOOM_DIR" ]; then
+        $DRY_RUN_CMD ${pkgs.git}/bin/git clone --depth 1 https://github.com/doomemacs/doomemacs "$DOOM_DIR"
+        $VERBOSE_ECHO "Cloned Doom Emacs to $DOOM_DIR"
+      fi
+    '';
 
-    # Fonts for better Doom Emacs experience (from original config)
-    nerd-fonts.fira-code
-    nerd-fonts.jetbrains-mono
+    # Run doom sync after Home Manager activation
+    # This keeps Doom packages in sync with doom.d configuration
+    doomSync = lib.hm.dag.entryAfter ["installDoomEmacs" "linkGeneration"] ''
+      DOOM_DIR="${config.home.homeDirectory}/.config/emacs"
+      DOOM_BIN="$DOOM_DIR/bin/doom"
 
-    # Additional tools that Doom Emacs modules may use
-    (ripgrep.override {withPCRE2 = true;}) # Enhanced ripgrep for better search
-    fd # Fast find alternative (used by Doom's file search)
-
-    # Language-specific tools
-    nodePackages.js-beautify # For web-mode formatting
-
-    # Markdown and document processing
-    pandoc # Universal document converter
-
-    # Additional productivity tools
-    sqlite # Used by org-roam
-    graphviz # For org-mode diagrams
-
-    # macOS specific tools
-    (lib.mkIf pkgs.stdenv.isDarwin terminal-notifier) # For notifications
-  ];
-
-  # Configure shell environment for better Emacs integration
-  # These aliases work with both vanilla Emacs and Doom Emacs
-  programs.zsh = {
-    shellAliases = {
-      e = "emacsclient -n"; # Quick edit
-      ec = "emacsclient -c"; # New frame
-      et = "emacsclient -t"; # Terminal mode
-      emacs-restart = "pkill -f emacs; emacs --daemon"; # Restart daemon
-
-      # Doom-specific aliases
-      doom = "doom"; # Doom CLI (available through nix-doom-emacs-unstraightened)
-      doom-sync = "echo 'Doom sync not needed with Nix - rebuild instead'"; # Reminder
-      doom-doctor = "doom doctor"; # Health check
-    };
-
-    sessionVariables = {
-      EDITOR = "emacsclient -t";
-      VISUAL = "emacsclient -c";
-
-      # Doom-specific environment variables
-      DOOMDIR = "${config.home.homeDirectory}/.config/nix-config/home/dan/doom.d";
-
-      # Improve Doom performance
-      LSP_USE_PLISTS = "true"; # Better LSP performance
-    };
-  };
-
-  # macOS-specific configuration for better app integration
-  targets.darwin.defaults = lib.mkIf pkgs.stdenv.isDarwin {
-    # Register Emacs with macOS Launch Services
-    "com.apple.LaunchServices" = {
-      LSHandlers = [
-        {
-          LSHandlerContentType = "public.plain-text";
-          LSHandlerRoleAll = "org.gnu.Emacs";
-        }
-        {
-          LSHandlerContentType = "public.unix-executable";
-          LSHandlerRoleAll = "org.gnu.Emacs";
-        }
-        {
-          LSHandlerContentType = "public.data";
-          LSHandlerRoleAll = "org.gnu.Emacs";
-        }
-        # Additional file type associations for development
-        {
-          LSHandlerContentType = "public.source-code";
-          LSHandlerRoleAll = "org.gnu.Emacs";
-        }
-        {
-          LSHandlerContentType = "com.apple.property-list";
-          LSHandlerRoleAll = "org.gnu.Emacs";
-        }
-      ];
-    };
-  };
-
-  # Create necessary directories for Doom Emacs
-  home.file = {
-    # Create org directory if it doesn't exist
-    "org/.keep".text = "";
-
-    # Create org-roam directory
-    "org/roam/.keep".text = "";
-
-    # Create local config file placeholder for machine-specific settings
-    ".config/doom/local.el".text = ''
-      ;;; local.el --- Machine-specific Doom Emacs configuration
-
-      ;; This file is loaded by config.el and can contain machine-specific
-      ;; configuration that shouldn't be committed to version control.
-      ;;
-      ;; Examples:
-      ;; - API keys or tokens
-      ;; - Machine-specific paths
-      ;; - Local network configurations
-      ;; - Personal preferences that vary by machine
-
-      ;; Example machine-specific configuration:
-      ;; (setq user-mail-address "your-specific-email@example.com")
-      ;; (setq org-directory "~/specific/path/to/org/")
-
-      ;;; local.el ends here
+      if [ -x "$DOOM_BIN" ]; then
+        $VERBOSE_ECHO "Running doom sync..."
+        # Use the newly installed Emacs from Nix
+        PATH="${pkgs.emacs}/bin:${pkgs.git}/bin:$PATH" $DRY_RUN_CMD "$DOOM_BIN" sync -e
+      else
+        $VERBOSE_ECHO "Doom binary not found at $DOOM_BIN, skipping sync"
+        $VERBOSE_ECHO "Run 'doom install' manually after activation completes"
+      fi
     '';
   };
 
-  # XDG configuration for proper Doom directory structure
-  xdg.configHome = "${config.home.homeDirectory}/.config";
+  # Shell integration for Doom Emacs
+  programs.zsh = {
+    shellAliases = {
+      # Emacs aliases
+      emacs = "emacsclient -c -a 'emacs'"; # Open in GUI, start daemon if needed
+      e = "emacsclient -t -a 'emacs'"; # Open in terminal
+      ec = "emacsclient -c -a 'emacs'"; # Open in GUI client
 
-  # Additional services for enhanced Doom Emacs experience
-  services = {
-    # Enable GPG agent for signing commits (used by Magit)
-    gpg-agent = lib.mkIf pkgs.stdenv.isDarwin {
-      enable = true;
-      defaultCacheTtl = 1800;
-      enableSshSupport = true;
-      pinentry.package = pkgs.pinentry_mac;
+      # Doom CLI
+      doom = "~/.config/emacs/bin/doom";
+
+      # Restart Emacs daemon
+      emacs-restart = "systemctl --user restart emacs";
+    };
+
+    sessionVariables = {
+      EDITOR = "emacsclient -t -a 'emacs'";
+      VISUAL = "emacsclient -c -a 'emacs'";
+
+      # Point to our managed doom.d
+      DOOMDIR = "${config.home.homeDirectory}/.config/doom";
+
+      # Performance improvements
+      LSP_USE_PLISTS = "true";
+    };
+
+    # Add Doom bin to PATH
+    initContent = ''
+      export PATH="$HOME/.config/emacs/bin:$PATH"
+    '';
+  };
+
+  # Emacs daemon service
+  services.emacs = {
+    enable = true;
+    client.enable = true;
+    defaultEditor = true;
+    startWithUserSession = "graphical";
+
+    # Socket activation for faster startup
+    socketActivation.enable = lib.mkIf (!pkgs.stdenv.isDarwin) true;
+  };
+
+  # Declaratively manage doom.d configuration
+  # Home Manager will symlink this to ~/.config/doom
+  xdg.configFile."doom" = {
+    source = ./../../doom.d;
+    recursive = true;
+  };
+
+  # Create necessary directories
+  home.file = {
+    # Org directory
+    "org/.keep".text = "";
+    "org/roam/.keep".text = "";
+  };
+
+  # macOS-specific configuration
+  targets.darwin = lib.mkIf pkgs.stdenv.isDarwin {
+    defaults = {
+      # Register Emacs with macOS Launch Services
+      "com.apple.LaunchServices" = {
+        LSHandlers = [
+          {
+            LSHandlerContentType = "public.plain-text";
+            LSHandlerRoleAll = "org.gnu.Emacs";
+          }
+          {
+            LSHandlerContentType = "public.unix-executable";
+            LSHandlerRoleAll = "org.gnu.Emacs";
+          }
+          {
+            LSHandlerContentType = "public.data";
+            LSHandlerRoleAll = "org.gnu.Emacs";
+          }
+          {
+            LSHandlerContentType = "public.source-code";
+            LSHandlerRoleAll = "org.gnu.Emacs";
+          }
+        ];
+      };
     };
   };
 
-  # Development environment integration
-  home.sessionPath = [
-    # Add doom binary to PATH (provided by nix-doom-emacs-unstraightened)
-    "${config.home.homeDirectory}/.nix-profile/bin"
-  ];
-
-  # Integration with other tools
-  programs = {
-    # Enhanced Git integration for Magit
-    git = {
-      extraConfig = {
-        # Better Magit integration
-        magit = {
-          hideCursor = false;
-        };
-
-        # Improved diff display in Magit
-        diff = {
-          algorithm = "histogram";
-          compactionHeuristic = true;
-        };
-      };
+  # Git configuration for better Magit integration
+  programs.git.extraConfig = {
+    magit = {
+      hideCursor = false;
     };
+    diff = {
+      algorithm = "histogram";
+      compactionHeuristic = true;
+    };
+  };
+
+  # GPG agent for commit signing (Magit)
+  services.gpg-agent = lib.mkIf pkgs.stdenv.isDarwin {
+    enable = true;
+    defaultCacheTtl = 1800;
+    enableSshSupport = true;
+    pinentry.package = pkgs.pinentry_mac;
   };
 }
