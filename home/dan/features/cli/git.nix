@@ -66,8 +66,8 @@
           [commit]
               gpgsign = false
 
-          [core]
-              sshCommand = ssh -i ~/.ssh/id_ed25519 -F /dev/null
+          [url "git@github-personal:"]
+              insteadOf = git@github.com:
         '';
         path = "${config.home.homeDirectory}/.config/git/personal";
       };
@@ -82,8 +82,8 @@
           [commit]
               gpgsign = false
 
-          [core]
-              sshCommand = ssh -i ~/.ssh/id_ed25519 -F /dev/null
+          [url "git@github-company:"]
+              insteadOf = git@github.com:
         '';
         path = "${config.home.homeDirectory}/.config/git/company";
       };
@@ -98,8 +98,6 @@
           [commit]
               gpgsign = false
 
-          [core]
-              sshCommand = ssh
           [url "git@github-client001:"]
               insteadOf = git@github.com:
         '';
