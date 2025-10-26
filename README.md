@@ -1,238 +1,175 @@
-A comprehensive and modular Nix configuration repository for macOS using
-nix-darwin and Home Manager. This repository follows organizational
-patterns inspired by the nix-config ecosystem while maintaining a
-gradual evolution toward increased modularity.
+# nix-config
 
-# 🏗️ Repository Structure
+Modular Nix configuration for macOS (nix-darwin) and NixOS (Linux). Started as a basic macOS setup and expanded to include NixOS hosts and VM deployments.
 
-For a detailed overview of the repository’s architecture, modularity,
-and layering, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). ==
-🚀 Quick Start
+## Repository Structure
 
-## Prerequisites
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed structure and module organization.
 
-1.  **Install Nix** (if not already installed):
+## Quick Start
 
-    ``` bash
-    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
-    ```
+### Prerequisites
 
-> [!NOTE]
-> Xcode Command Line Tools installation is automatically handled by the
-> nix-darwin configuration activation script.
+Install Nix using the Determinate Systems installer:
 
-## Deployment
+```bash
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+```
 
-1.  **Clone configuration**:
+Note: Xcode Command Line Tools are handled automatically during nix-darwin activation.
 
-    ``` bash
-    git clone <repository-url> <config-directory>
-    cd <config-directory>
-    ```
+### Deployment
 
-2.  **Apply system configuration**:
+**macOS (nix-darwin):**
 
-    ``` bash
-    sudo darwin-rebuild switch --flake .#J6G6Y9JK7L
-    ```
+```bash
+git clone <repository-url> <config-directory>
+cd <config-directory>
+sudo darwin-rebuild switch --flake .
+```
 
-3.  **Use the convenient alias** (after first successful build):
+After the first successful build, use the `drs` alias for subsequent rebuilds.
 
-    ``` bash
-    drs  # Shortcut for darwin-rebuild switch
-    ```
+**NixOS:**
 
-# 📋 Key Features
+```bash
+git clone <repository-url> /etc/nixos
+cd /etc/nixos
+sudo nixos-rebuild switch --flake .#<hostname>
+```
 
-## macOS Integration
+**NixOS VM (using nixos-anywhere):**
 
-- **nix-darwin** system management
+See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SETUP.md](docs/VM-SETUP.md) for VM deployment.
 
-- **Homebrew** declarative package management
+## What's Included
 
-- **macOS system preferences** automation
+### System Management
 
-- **User environment** consistency
+- nix-darwin for macOS system-level configuration
+- NixOS for Linux hosts (thiniel, VMs)
+- Declarative Homebrew package management (macOS)
+- macOS system preferences automation
+- Home Manager for user environment (cross-platform)
 
-## Security & Secrets Management
+### Security
 
-- **SOPS-nix** integration for encrypted secrets
+- SOPS-nix with age encryption for secrets
+- Per-project Git identity management using conditional includes
+- Centralized SSH configuration
 
-- **Age** key-based encryption
+### Development Setup
 
-- **Git identity management** with conditional includes per project
-  folder
+- Zsh with Oh My Zsh and Starship prompt
+- Kitty terminal with shell integration
+- VS Code with extensions managed declaratively
+- Vim configuration
+- Standard CLI tools (Git, SSH, etc.)
 
-- **SSH configuration** management
+### Organization
 
-## Modular Architecture
+- Feature modules in `home/dan/features/`
+- Host-specific configs in `hosts/` (J6G6Y9JK7L, thiniel, VMs)
+- Platform-specific features (macOS/Linux)
+- Shared base configurations in `home/dan/global/`
 
-- **Feature-based organization** for easy composition
+### VM Deployment
 
-- **Platform-specific features** with shared base configurations
+- nixos-anywhere for remote VM installation
+- Disko for declarative disk partitioning
+- Automated deployment scripts in `scripts/`
 
-- **Incremental adoption** of new tools and configurations
+## Configuration Management
 
-- **Clear separation** between system and user configurations
+### Adding Features
 
-## Development Environment
+Create a module in the appropriate feature directory and import it in your host configuration. Examples and patterns are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/HOME-MANAGER.md](docs/HOME-MANAGER.md).
 
-- **Shell integration** (Zsh with Oh My Zsh, Starship prompt)
+### Secrets
 
-- **Editor configurations** (VS Code with extensions, Vim)
+Managed via SOPS. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for setup details.
 
-- **Terminal setup** (Kitty with shell integration)
+### Host Customization
 
-- **CLI tooling** (Git, SSH, various utilities)
+Each host imports features as needed. Check the layering structure in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-# 🔧 Configuration Management
+## Documentation
 
-## Adding New Features
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Module structure and organization
+- [HOME-MANAGER.md](docs/HOME-MANAGER.md) - Feature module documentation
+- [DEVELOPMENT.md](docs/DEVELOPMENT.md) - Development workflow and guidelines
+- [NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) - VM deployment with nixos-anywhere
+- [VM-SETUP.md](docs/VM-SETUP.md) - VM configuration details
+- [THINIEL-VM-SETUP.md](docs/THINIEL-VM-SETUP.md) - Thiniel VM specific setup
 
-To add new features, create a new module in the appropriate directory
-and import it in your host configuration. See
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
-[docs/HOME-MANAGER.md](docs/HOME-MANAGER.md) for patterns and
-examples. === Managing Secrets
+## Common Tasks
 
-Secrets are managed centrally using SOPS and referenced in modules as
-needed. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for
-details. === Host-Specific Customization
+### Adding a New Feature
 
-Each host can enable or override features as needed. See
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layering and
-import structure.
-
-# 🖥️ System Configuration
-
-# 📚 Documentation Structure
-
-- **[README.md](README.md)**: This overview and quick start document
-
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Architectural
-  overview, structure, and modularity
-
-- **[docs/HOME-MANAGER.md](docs/HOME-MANAGER.md)**: Home Manager
-  feature documentation
-
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**: Development
-  workflow and guidelines == 🔄 Evolution Path
-
-This configuration is designed to grow incrementally:
-
-## Current State
-
-- ✅ **Basic nix-darwin setup** with Home Manager integration
-
-- ✅ **Feature-based organization** for easy composition
-
-- ✅ **SOPS secrets management** for sensitive data
-
-- ✅ **Homebrew integration** for macOS applications
-
-- ✅ **Development environment** setup
-
-## Near Term Goals
-
-- 🔄 **Enhanced module organization** with better abstractions
-
-- 🔄 **Cross-platform compatibility** patterns (preparation for future
-  Linux support)
-
-- 🔄 **Custom package overlays** for modified packages
-
-- 🔄 **Service management** for user-level services
-
-## Long Term Vision
-
-- 🚀 **Advanced NixOS integration** (when dual-booting or Linux machines
-  are added)
-
-- 🚀 **Custom packages and derivations** for specialized tools
-
-- 🚀 **Multi-host deployment** coordination
-
-- 🚀 **Infrastructure as Code** for cloud resources
-
-The structure supports this evolution while maintaining backwards
-compatibility and clear upgrade paths.
-
-# 🤝 Contributing
-
-When adding new features or modifying configurations:
-
-1.  **Follow existing patterns**: Use the established module structure
-    and naming conventions
-
-2.  **Document changes**: Update relevant documentation and add inline
-    comments
-
-3.  **Test thoroughly**: Verify changes work with
-    `darwin-rebuild switch`
-
-4.  **Use feature flags**: Make new features optional and composable
-
-5.  **Maintain backwards compatibility**: Avoid breaking existing
-    functionality
-
-## Example Workflow
-
-``` bash
-# Create new feature
+```bash
+# Create feature module
 touch home/dan/features/cli/new-tool.nix
 
-# Edit feature module
+# Edit module
 $EDITOR home/dan/features/cli/new-tool.nix
 
-# Add to host configuration
+# Add to host config
 $EDITOR home/dan/J6G6Y9JK7L.nix
 
-# Test changes
+# Apply changes
 sudo darwin-rebuild switch --flake .#J6G6Y9JK7L
 
-# Document the feature
+# Update documentation
 $EDITOR docs/HOME-MANAGER.md
 ```
 
-# 🛠️ Troubleshooting
+### Troubleshooting
 
-## Common Issues
+Common issues:
 
-1.  **Homebrew failures**: The configuration automatically checks for
-    and warns about missing Xcode Command Line Tools
+- Homebrew failures: Usually means Xcode Command Line Tools need updating
+- SOPS errors: Check that age key exists and is configured correctly
+- Build failures: Try `nix flake update` to refresh inputs
+- Permission errors: Verify sudo access for system changes
 
-2.  **SOPS errors**: Verify age key exists and is properly configured
+Useful debug commands:
 
-3.  **Build failures**: Check flake inputs are up to date with
-    `nix flake update`
-
-4.  **Permission issues**: Ensure user has proper sudo access for system
-    changes
-
-## Debug Commands
-
-``` bash
-# Check flake structure
-nix flake show
-
-# Validate configuration
-nix flake check
-
-# Build without activation
-darwin-rebuild build --flake .#J6G6Y9JK7L
-
-# View current configuration
-darwin-rebuild --list-generations
+```bash
+nix flake show                                    # Check flake structure
+nix flake check                                   # Validate configuration
+darwin-rebuild build --flake .#J6G6Y9JK7L        # Build without activating
+darwin-rebuild --list-generations                 # View generations
 ```
 
-# 📖 Additional Resources
+## Current Status
+
+Working configurations:
+
+- nix-darwin on macOS (J6G6Y9JK7L)
+- NixOS on thiniel (physical Linux host)
+- NixOS VMs with nixos-anywhere deployment
+- Feature-based module organization
+- SOPS secrets management
+- Homebrew integration (macOS)
+- Cross-platform Home Manager setup
+
+In progress:
+
+- Better module abstractions
+- Custom package overlays
+- User-level service management
+- Hyprland window manager (Linux)
+
+Future additions:
+
+- Custom derivations
+- Multi-host coordination
+- Container orchestration
+
+## References
 
 - [Nix Reference Manual](https://nixos.org/manual/nix/stable/)
-
 - [Home Manager Manual](https://nix-community.github.io/home-manager/)
-
 - [nix-darwin Manual](https://github.com/nix-darwin/nix-darwin)
-
 - [SOPS-nix Documentation](https://github.com/Mic92/sops-nix)
-
 - [Determinate Nix Installer](https://install.determinate.systems/)
