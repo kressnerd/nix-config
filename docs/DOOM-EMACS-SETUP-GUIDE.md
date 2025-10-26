@@ -2,15 +2,17 @@
 
 ## Overview
 
-This guide covers the setup, usage, and maintenance of the declarative Doom Emacs configuration integrated with Nix and Home Manager using `nix-doom-emacs-unstraightened`.
+This comprehensive guide covers setup, package management, usage, and maintenance of the declarative Doom Emacs configuration integrated with Nix and Home Manager using `nix-doom-emacs-unstraightened`.
 
 ## Key Features
 
 - **Fully Declarative**: All packages managed through Nix, no `package.el` or `straight.el` conflicts
+- **Zero Package Conflicts**: Single package manager (Nix) eliminates traditional Emacs package management issues
 - **Reproducible**: Consistent builds across systems through flake.lock pinning
 - **Emacs v30.1**: Latest Emacs version with native compilation support
 - **Complete Integration**: Seamless Home Manager integration with proper shell environment setup
 - **macOS Optimized**: Native macOS keybindings and file associations
+- **Rollback Safety**: Instant rollback to previous configurations via Nix generations
 
 ## Architecture
 
@@ -64,6 +66,204 @@ nixpkgs    doom modules    emacs-with-doom    shell integration
    - `EDITOR=emacs` environment variable
    - Emacs server daemon via launchd
    - File type associations for macOS
+
+## Package Management
+
+### Architecture Overview
+
+The `nix-doom-emacs-unstraightened` solution completely eliminates package.el and straight.el conflicts by managing all packages through Nix.
+
+**Traditional Doom Approach Issues:**
+
+- Multiple package managers (straight.el, package.el)
+- Version conflicts between dependencies
+- Non-reproducible builds
+- Configuration drift between machines
+- Manual package synchronization via `doom sync`
+
+**Nix-Managed Doom Benefits:**
+
+- Single package manager (Nix)
+- Complete dependency resolution
+- Reproducible builds via flake.lock
+- No version conflicts
+- Automatic synchronization via rebuild
+- Rollback capability
+
+### Package Declaration Methods
+
+#### 1. Doom Module-Based Packages
+
+Most packages are enabled through Doom modules in [`init.el`](../home/dan/doom.d/init.el):
+
+```elisp
+(doom! :lang
+       nix                 ; Automatically includes nix-mode
+       (python +lsp)       ; Includes python-mode, lsp-pyright
+       (org +roam2)        ; Includes org-roam v2
+
+       :tools
+       (lsp +peek)         ; Includes lsp-mode, lsp-ui
+       (magit +forge))     ; Includes magit, forge
+```
+
+**Advantages:**
+
+- Curated package selections
+- Pre-configured integrations
+- Tested combinations
+- Minimal configuration required
+
+#### 2. Explicit Package Declarations
+
+Additional packages are declared in [`doom.d/packages.el`](../home/dan/doom.d/packages.el):
+
+```elisp
+;; Nix-specific packages
+(package! nixos-options)
+(package! company-nixos-options)
+
+;; Additional productivity packages
+(package! restclient)
+(package! org-super-agenda)
+(package! vlf)  ; View Large Files
+```
+
+**Use Cases:**
+
+- Packages not included in Doom modules
+- Specialized workflow tools
+- Experimental packages
+- Personal preferences
+
+#### 3. System-Level Tool Integration
+
+Development tools and LSP servers are managed at the Nix system level in [`emacs-doom.nix`](../home/dan/features/productivity/emacs-doom.nix):
+
+```nix
+home.packages = with pkgs; [
+  # LSP servers
+  nixd                    # Nix LSP
+  pyright                 # Python LSP
+  rust-analyzer           # Rust LSP
+
+  # Command-line tools used by Doom
+  ripgrep                 # Search backend
+  fd                      # File finder
+  silver-searcher         # Alternative search (ag)
+
+  # Language tools
+  black                   # Python formatter
+  nodePackages.js-beautify # JS formatter
+];
+```
+
+**Benefits:**
+
+- System-wide availability
+- Consistent tool versions
+- Better performance (native binaries)
+- Integration with shell environment
+
+### Adding and Managing Packages
+
+#### Adding New Packages
+
+1. **For Doom Module Packages**:
+
+   ```elisp
+   ;; Edit doom.d/init.el
+   (doom! :lang
+          new-language-mode  ; Add new module
+          ;; ... rest of config
+   ```
+
+2. **For Individual Packages**:
+
+   ```elisp
+   ;; Edit doom.d/packages.el
+   (package! new-package-name)
+   ```
+
+3. **For System Tools**:
+
+   ```nix
+   # Edit emacs-doom.nix
+   home.packages = with pkgs; [
+     new-tool
+     # ... existing packages
+   ];
+   ```
+
+4. **Apply Changes**:
+   ```bash
+   darwin-rebuild switch --flake .#J6G6Y9JK7L
+   ```
+
+#### Updating Packages
+
+**Update All Packages**:
+
+```bash
+# Update flake inputs (includes Doom and emacs-overlay)
+nix flake update
+darwin-rebuild switch --flake .#J6G6Y9JK7L
+```
+
+**Update Specific Input**:
+
+```bash
+# Update only Doom Emacs
+nix flake update nix-doom-emacs-unstraightened
+darwin-rebuild switch --flake .#J6G6Y9JK7L
+```
+
+#### Removing Packages
+
+1. **Remove from Configuration**:
+
+   - Remove from `init.el` (modules)
+   - Remove from `packages.el` (individual packages)
+   - Remove from `emacs-doom.nix` (system tools)
+
+2. **Apply Changes**:
+
+   ```bash
+   darwin-rebuild switch --flake .#J6G6Y9JK7L
+   ```
+
+3. **Clean Up** (optional):
+   ```bash
+   nix-collect-garbage -d
+   ```
+
+### Package Debugging
+
+**Check Package Availability**:
+
+```bash
+nix search nixpkgs emacs
+nix search nixpkgs.emacsPackages package-name
+```
+
+**Doom Doctor**:
+
+```bash
+doom doctor  # Check for common issues
+```
+
+**Check Package Loading in Emacs**:
+
+```elisp
+(require 'package-name)  ; Test if package loads
+load-path                ; Check if package directory is included
+```
+
+**Common Issues:**
+
+- **Package Not Found**: Check emacs-overlay, verify package name, update nix-doom-emacs-unstraightened
+- **Version Issues**: Run `nix flake update`, check emacs-overlay compatibility
+- **Configuration Not Applied**: Verify declarations, check module enables package, rebuild
 
 ## Configuration Management
 
