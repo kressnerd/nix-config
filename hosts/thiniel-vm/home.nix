@@ -17,7 +17,6 @@
 
     sharedModules = [
       inputs.sops-nix.homeManagerModules.sops
-      inputs.nix-doom-emacs-unstraightened.homeModule
     ];
   };
 

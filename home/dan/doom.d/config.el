@@ -35,11 +35,11 @@
 ;; Dashboard configuration
 (setq doom-dashboard-name "Welcome to Doom Emacs"
       +doom-dashboard-menu-sections
-      '(("Recently opened files" :icon (all-the-icons-octicon "file-text" :face 'doom-dashboard-menu-title) :action recentf-open-files)
-        ("Open project" :icon (all-the-icons-octicon "briefcase" :face 'doom-dashboard-menu-title) :action projectile-switch-project)
-        ("Jump to bookmark" :icon (all-the-icons-octicon "bookmark" :face 'doom-dashboard-menu-title) :action bookmark-jump)
-        ("Open private configuration" :icon (all-the-icons-octicon "tools" :face 'doom-dashboard-menu-title) :action doom/open-private-config)
-        ("Open documentation" :icon (all-the-icons-octicon "book" :face 'doom-dashboard-menu-title) :action doom/help)))
+      '(("Recently opened files" :icon (nerd-icons-faicon "nf-fa-file_text_o" :face 'doom-dashboard-menu-title) :action recentf-open-files)
+        ("Open project" :icon (nerd-icons-codicon "nf-cod-briefcase" :face 'doom-dashboard-menu-title) :action projectile-switch-project)
+        ("Jump to bookmark" :icon (nerd-icons-faicon "nf-fa-bookmark" :face 'doom-dashboard-menu-title) :action bookmark-jump)
+        ("Open private configuration" :icon (nerd-icons-mdicon "nf-md-wrench" :face 'doom-dashboard-menu-title) :action doom/open-private-config)
+        ("Open documentation" :icon (nerd-icons-faicon "nf-fa-book" :face 'doom-dashboard-menu-title) :action doom/help)))
 
 ;;; macOS specific configuration
 (when IS-MAC

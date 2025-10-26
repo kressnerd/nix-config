@@ -62,6 +62,11 @@ See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SE
 
 - Zsh with Oh My Zsh and Starship prompt
 - Kitty terminal with shell integration
+- **Doom Emacs** with Henrik Lissner's recommended Nix integration
+  - Declarative system dependencies via Nix
+  - Emacs packages managed by straight.el
+  - Automatic doom sync on Home Manager activation
+  - Full LSP support (Nix, Python, Rust, TypeScript, etc.)
 - VS Code with extensions managed declaratively
 - Vim configuration
 - Standard CLI tools (Git, SSH, etc.)
@@ -98,6 +103,7 @@ Each host imports features as needed. Check the layering structure in [docs/ARCH
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Module structure and organization
 - [HOME-MANAGER.md](docs/HOME-MANAGER.md) - Feature module documentation
 - [DEVELOPMENT.md](docs/DEVELOPMENT.md) - Development workflow and guidelines
+- [DOOM-EMACS-SETUP-GUIDE.md](docs/DOOM-EMACS-SETUP-GUIDE.md) - Doom Emacs setup and usage
 - [NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) - VM deployment with nixos-anywhere
 - [VM-SETUP.md](docs/VM-SETUP.md) - VM configuration details
 - [THINIEL-VM-SETUP.md](docs/THINIEL-VM-SETUP.md) - Thiniel VM specific setup
@@ -152,6 +158,7 @@ Working configurations:
 - SOPS secrets management
 - Homebrew integration (macOS)
 - Cross-platform Home Manager setup
+- Doom Emacs with Henrik Lissner's recommended approach
 
 In progress:
 
