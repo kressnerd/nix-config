@@ -16,8 +16,8 @@
   # Configure gcloud completion for zsh
   programs.zsh.initContent = ''
     # Google Cloud SDK completion
-    if command -v gcloud >/dev/null 2>&1; then
-      source "$(gcloud info --format="value(installation.sdk_root)")/completion.zsh.inc"
+    if [ -f "${pkgs.google-cloud-sdk}/google-cloud-sdk/completion.zsh.inc" ]; then
+      source "${pkgs.google-cloud-sdk}/google-cloud-sdk/completion.zsh.inc"
     fi
   '';
 
