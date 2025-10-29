@@ -35,8 +35,6 @@
     };
   };
 
-  programs.keepassxc.enable = true;
-
   # Add some useful packages
   home.packages = with pkgs; [
     htop

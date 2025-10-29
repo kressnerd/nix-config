@@ -3,22 +3,6 @@
   lib,
   ...
 }: {
-  programs.keepassxc = {
-    enable = true;
-    settings = {
-      Browser.Enabled = true;
-
-      GUI = {
-        AdvancedSettings = true;
-        ApplicationTheme = "dark";
-        CompactMode = true;
-        HidePasswords = true;
-      };
-
-      SSHAgent.Enabled = true;
-    };
-  };
-
   # Link LibreWolf NativeMessagingHosts to Mozilla directory
   # This allows LibreWolf to use the same native messaging hosts as Firefox
   home.activation.linkLibreWolfNativeMessaging = lib.hm.dag.entryAfter ["writeBoundary"] ''
