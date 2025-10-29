@@ -95,13 +95,13 @@
 
         "npm.fetchOnlinePackageInfo" = false;
         "roo-cline.allowedCommands" = [
-          "npm test"
-          "npm install"
-          "tsc"
           "git log"
           "git diff"
           "git show"
           "darwin-rebuild build --flake ."
+          "npm test"
+          "npm install"
+          "tsc"
         ];
         "roo-cline.deniedCommands" = [];
         "telemetry.telemetryLevel" = "off";
