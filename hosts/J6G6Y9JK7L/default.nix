@@ -52,7 +52,7 @@
       autoUpdate = false;
       upgrade = true;
     };
-    brews = [];
+    brews = ["score-spec/tap/score-compose"];
     casks = [
       "crossover"
       "keepassxc"
