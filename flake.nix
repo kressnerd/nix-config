@@ -27,6 +27,11 @@
       flake = false;
     };
 
+    score-spec-tap = {
+      url = "github:score-spec/homebrew-tap";
+      flake = false;
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";

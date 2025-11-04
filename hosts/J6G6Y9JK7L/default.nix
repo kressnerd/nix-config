@@ -39,6 +39,7 @@
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
       "homebrew/homebrew-cask" = inputs.homebrew-cask;
+      "score-spec/homebrew-tap" = inputs.score-spec-tap;
     };
     mutableTaps = false;
   };
@@ -52,7 +53,7 @@
       autoUpdate = false;
       upgrade = true;
     };
-    brews = ["score-spec/tap/score-compose"];
+    brews = ["score-compose"];
     casks = [
       "crossover"
       "keepassxc"
