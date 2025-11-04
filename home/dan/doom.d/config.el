@@ -93,7 +93,7 @@
 ;;; Org Mode Configuration
 (after! org
   ;; Better org defaults
-  (setq org-directory "~/org/"
+  (setq org-directory "~/dev/PRIVATE/breq/"
         org-agenda-files (list org-directory)
         org-ellipsis " ▾ "
         org-hide-emphasis-markers t
@@ -102,8 +102,8 @@
         org-startup-with-inline-images t)
 
   ;; Org-roam configuration (using roam2 as per init.el)
-  (setq org-roam-directory (file-truename "~/org/roam/")
-        org-roam-dailies-directory "daily/"
+  (setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/")
+        org-roam-dailies-directory "journals/"
         org-roam-completion-everywhere t))
 
 ;;; Development Configuration
