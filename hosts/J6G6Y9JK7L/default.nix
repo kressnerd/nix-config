@@ -56,7 +56,6 @@
     casks = [
       "crossover"
       "keepassxc"
-      "parallels"
     ];
   };
 
