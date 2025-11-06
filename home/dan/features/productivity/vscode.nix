@@ -19,6 +19,7 @@
           dbaeumer.vscode-eslint
           esbenp.prettier-vscode
           github.copilot
+          golang.go
           kamadorueda.alejandra
           rooveterinaryinc.roo-cline
         ])
