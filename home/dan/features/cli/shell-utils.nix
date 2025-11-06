@@ -50,7 +50,7 @@
     # Language tools
     #nodejs_20
     #python312
-    #go
+    go
     #rustup
 
     # Cloud tools (moved to cloud-tools.nix module)
