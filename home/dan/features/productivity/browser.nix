@@ -6,7 +6,6 @@
 }: let
   addons = pkgs.nur.repos.rycee.firefox-addons;
 
-  # Common extensions for all profiles
   commonExtensions = with addons; [
     ublock-origin # Ad blocker
     keepassxc-browser # Password manager
@@ -14,7 +13,6 @@
     consent-o-matic
   ];
 
-  # Development extensions
   devExtensions = with addons; [
     # react-devtools
     refined-github
@@ -22,21 +20,19 @@
     wappalyzer # Technology profiler
   ];
 
-  # Privacy extensions
   privacyExtensions = with addons; [
     privacy-badger
     decentraleyes
     clearurls
+    noscript
     temporary-containers
   ];
 
-  # Productivity extensions
   productivityExtensions = with addons; [
     tridactyl
-    # vimium                 # Vim keybindings
-    tree-style-tab # Vertical tabs
-    sidebery # Alternative vertical tabs
-    # onepassword-password-manager
+    # vimium
+    tree-style-tab
+    # sidebery
     languagetool # Grammar checker
     single-file # Save complete web pages
   ];
@@ -62,6 +58,8 @@ in {
         extensions.packages =
           commonExtensions
           ++ devExtensions
+          ++ privacyExtensions
+          ++ productivityExtensions
           ++ convinienceExtensions
           ++ (with addons; [
             multi-account-containers
@@ -124,6 +122,9 @@ in {
         extensions.packages =
           commonExtensions
           ++ convinienceExtensions
+          ++ devExtensions
+          ++ privacyExtensions
+          ++ productivityExtensions
           ++ (with addons; [
             multi-account-containers
             # foxyproxy
