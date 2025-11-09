@@ -3,9 +3,10 @@
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
-;; Set directories early before any org-mode or org-roam load
+;; Early directories (must precede org/org-roam load to override defaults)
 (setq org-directory "~/dev/PRIVATE/breq/")
-(setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/"))
+(setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/")
+      org-roam-dailies-directory "journals")
 
 ;;; Personal Information
 (setq user-full-name "Daniel Kressner"
@@ -66,9 +67,8 @@
   (global-set-key (kbd "s--") 'text-scale-decrease)
   (global-set-key (kbd "s-0") 'text-scale-adjust)
 
-  ;; PATH integration - Doom handles this better than exec-path-from-shell
-  (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+  ;; PATH integration not needed; Doom env handles shell PATH.
+  )
 
 ;;; Editor Configuration
 ;; Line numbers - Doom enables this by default, but ensure it's configured properly
@@ -80,7 +80,7 @@
                 shell-mode-hook
                 treemacs-mode-hook
                 eshell-mode-hook))
-  (add-hook mode (lambda () (display-line-numbers-mode 0))))
+  (add-hook mode (lambda () (display-line-numbers-mode -1))))
 
 ;; Better defaults matching original configuration
 (setq-default
@@ -95,9 +95,9 @@
       scroll-margin 2)                            ; It's nice to maintain a little margin
 
 ;;; Org Mode Configuration
-(after! org
-  ;; Better org defaults
-  ;; directory is configured above
+(use-package! org
+  :init
+  ;; Defaults (directory set early above)
   (setq org-agenda-files (list org-directory)
         org-ellipsis " ▾ "
         org-hide-emphasis-markers t
@@ -105,12 +105,12 @@
         org-startup-folded 'overview
         org-startup-with-inline-images t))
 
-(after! org-roam
-  ;; Org-roam configuration (using roam2 as per init.el)
-  ;; directory is configured above
-  (setq org-roam-dailies-directory "journals/"
-        org-roam-completion-everywhere t)
-  ;; Daily journal template with Overview / Tasks / Plan / Log skeleton
+(use-package! org-roam
+  :after org
+  :hook (org-mode . org-roam-db-autosync-enable)
+  :init
+  (setq org-roam-completion-everywhere t)
+  :config
   (setq org-roam-dailies-capture-templates
         '(("d" "Daily journal" plain
            ""
@@ -120,53 +120,56 @@
            :unnarrowed t))))
 ;;; Development Configuration
 ;; LSP configuration - enhanced from original
-(after! lsp-mode
-  (setq lsp-keymap-prefix "C-c l"
-        lsp-enable-symbol-highlighting t
-        lsp-ui-doc-enable t
-        lsp-ui-doc-show-with-cursor nil
-        lsp-ui-doc-show-with-mouse t
+(use-package! lsp-mode
+  :commands lsp
+  :hook (nix-mode . lsp)
+  :init
+  (setq lsp-keymap-prefix "C-c l")
+  :config
+  (setq lsp-enable-symbol-highlighting t
         lsp-signature-render-documentation t
-        lsp-completion-provider :company-capf)
-
-  ;; Nix LSP configuration
-  (add-hook 'nix-mode-hook #'lsp)
-  
-  ;; Performance optimizations
-  (setq lsp-log-io nil
+        lsp-completion-provider :company-capf
+        lsp-log-io nil
         lsp-idle-delay 0.500
-        lsp-completion-provider :capf
         lsp-prefer-flymake nil))
 
-;; Company configuration - enhanced from original
-(after! company
+(use-package! lsp-ui
+  :after lsp-mode
+  :init
+  (setq lsp-ui-doc-enable t
+        lsp-ui-doc-show-with-cursor nil
+        lsp-ui-doc-show-with-mouse t))
+
+;; Company configuration - use-package style
+(use-package! company
+  :defer t
+  :init
   (setq company-idle-delay 0.2
         company-minimum-prefix-length 2
         company-tooltip-limit 20
         company-tooltip-align-annotations t
         company-require-match 'never
         company-global-modes '(not erc-mode message-mode help-mode gud-mode eshell-mode shell-mode)
-        company-backends '(company-capf company-files company-keywords)
         company-auto-complete nil
         company-auto-complete-chars nil
         company-dabbrev-downcase nil
         company-dabbrev-ignore-case nil))
 
-;; Projectile configuration - matching original
-(after! projectile
+;; Projectile configuration
+(use-package! projectile
+  :defer t
+  :init
   (setq projectile-completion-system 'ivy
         projectile-enable-caching t
         projectile-indexing-method 'hybrid))
 
 ;;; Nix Integration
-;; Enhanced Nix support building on original configuration
-(after! nix-mode
-  (add-to-list 'company-backends 'company-nixos-options)
-  
-  ;; Better Nix indentation
+(use-package! nix-mode
+  :mode ("\\.nix\\'" . nix-mode)
+  :init
   (setq nix-indent-function 'nix-indent-line)
-  
-  ;; Nix-specific keybindings
+  :config
+  (set-company-backend! 'nix-mode 'company-capf 'company-nixos-options)
   (map! :localleader
         :map nix-mode-map
         "f" #'nix-format-buffer
@@ -175,43 +178,41 @@
         "b" #'nix-build
         "u" #'nix-unpack))
 
-;; Company nixos-options integration
-(after! company-nixos-options
-  (add-to-list 'company-backends 'company-nixos-options))
+;; Removed separate company-nixos-options after! block (merged into nix-mode use-package)
 
 ;;; Git Integration
-;; Magit configuration - enhanced from original
-(after! magit
+(use-package! magit
+  :commands (magit-status magit-branch-checkout)
+  :init
   (setq magit-repository-directories '(("~/dev" . 2))
         magit-save-repository-buffers nil
         magit-inhibit-save-previous-winconf 'user)
-  
-  ;; Better magit performance
+  :config
   (setq magit-diff-refine-hunk t
         magit-revision-show-gravatars '("^Author:     " . "^Commit:     ")))
 
 ;;; Terminal Integration
-;; VTerm configuration - enhanced from original
-(after! vterm
+(use-package! vterm
+  :commands (vterm multi-vterm)
+  :init
   (setq vterm-max-scrollback 10000
         vterm-buffer-name-string "vterm %s"
         vterm-kill-buffer-on-exit t)
-  
-  ;; Better vterm keybindings
+  :config
   (map! :map vterm-mode-map
         "C-c C-t" #'multi-vterm
         "C-c C-n" #'multi-vterm-next
         "C-c C-p" #'multi-vterm-prev))
 
 ;;; File Management
-;; Dired configuration
-(after! dired
+(use-package! dired
+  :commands (dired dired-jump)
+  :init
   (setq dired-dwim-target t
         dired-recursive-copies 'always
         dired-recursive-deletes 'top
         delete-by-moving-to-trash t)
-  
-  ;; macOS specific dired configuration
+  :config
   (when IS-MAC
     (setq dired-use-ls-dired nil
           insert-directory-program "/usr/bin/ls")))
@@ -253,26 +254,33 @@
 
 ;;; Package-specific configurations
 ;; REST client configuration
-(after! restclient
-  (add-to-list 'auto-mode-alist '("\\.http\\'" . restclient-mode)))
+(use-package! restclient
+  :mode ("\\.http\\'" . restclient-mode))
 
 ;; Treemacs configuration
-(after! treemacs
-  (setq treemacs-width 32
-        treemacs-follow-mode t
-        treemacs-filewatch-mode t
-        treemacs-fringe-indicator-mode 'always
-        treemacs-git-mode 'extended))
+(use-package! treemacs
+  :commands (treemacs treemacs-select-window)
+  :init
+  (setq treemacs-width 32)
+  :config
+  (treemacs-follow-mode t)
+  (treemacs-filewatch-mode t)
+  (treemacs-fringe-indicator-mode 'always)
+  (setq treemacs-git-mode 'extended))
 
 ;; Ivy configuration enhancements
-(after! ivy
+(use-package! ivy
+  :after counsel
+  :init
   (setq ivy-use-virtual-buffers t
         ivy-count-format "(%d/%d) "
         ivy-display-style 'fancy
         ivy-initial-inputs-alist nil)) ; Don't start searches with ^
 
 ;; Which-key configuration
-(after! which-key
+(use-package! which-key
+  :defer 1
+  :init
   (setq which-key-idle-delay 0.5
         which-key-popup-type 'side-window
         which-key-side-window-location 'bottom
@@ -280,8 +288,9 @@
         which-key-side-window-max-height 0.25))
 
 ;;; Performance optimizations
-;; Large file handling
-(after! vlf-setup
+(use-package! vlf
+  :defer t
+  :config
   (setq vlf-application 'dont-ask))
 
 ;; Garbage collection optimization
