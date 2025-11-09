@@ -116,7 +116,7 @@
            ""
            :if-new
            (file+head "%<%Y-%m-%d>.org"
-                      "#+title: %<%Y-%m-%d>\n#+filetags: daily journal\n\n* Overview\n** Tasks\n- [ ] \n\n** Plan\n- \n\n** Log\n- %U Session start\n\n* Notes\n")
+                      "%<%d-%m-%Y>\n#+filetags: daily journal\n\n* Overview\n** Tasks\n- [ ] \n\n** Plan\n- \n\n** Log\n- %U Session start\n\n* Notes\n")
            :unnarrowed t))))
 ;;; Development Configuration
 ;; LSP configuration - enhanced from original
