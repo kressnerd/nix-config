@@ -3,6 +3,10 @@
 ;; Place your private configuration here! Remember, you do not need to run 'doom
 ;; sync' after modifying this file!
 
+;; Set directories early before any org-mode or org-roam load
+(setq org-directory "~/dev/PRIVATE/breq/")
+(setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/"))
+
 ;;; Personal Information
 (setq user-full-name "Daniel Kressner"
       user-mail-address "daniel.kressner@example.com") ; Update with actual email
@@ -93,8 +97,8 @@
 ;;; Org Mode Configuration
 (after! org
   ;; Better org defaults
-  (setq org-directory "~/dev/PRIVATE/breq/"
-        org-agenda-files (list org-directory)
+  ;; directory is configured above
+  (setq org-agenda-files (list org-directory)
         org-ellipsis " ▾ "
         org-hide-emphasis-markers t
         org-log-done 'time
@@ -102,8 +106,8 @@
         org-startup-with-inline-images t)
 
   ;; Org-roam configuration (using roam2 as per init.el)
-  (setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/")
-        org-roam-dailies-directory "journals/"
+  ;; directory is configured above
+  (setq org-roam-dailies-directory "journals/"
         org-roam-completion-everywhere t))
 
 ;;; Development Configuration
