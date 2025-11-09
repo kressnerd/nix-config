@@ -86,9 +86,9 @@
         system = "aarch64-linux";
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import nixpkgs-unstable {
+          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+            inherit nixpkgs-unstable;
             system = "aarch64-linux";
-            config.allowUnfree = true;
           };
         };
         modules = [
@@ -105,9 +105,9 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import nixpkgs-unstable {
+                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                  inherit nixpkgs-unstable;
                   system = "aarch64-linux";
-                  config.allowUnfree = true;
                 };
               };
               users.dan = import ./home/dan/nixos-vm-minimal.nix;
@@ -122,9 +122,9 @@
         system = "x86_64-linux";
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import nixpkgs-unstable {
+          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+            inherit nixpkgs-unstable;
             system = "x86_64-linux";
-            config.allowUnfree = true;
           };
         };
         modules = [
@@ -140,9 +140,9 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import nixpkgs-unstable {
+                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                  inherit nixpkgs-unstable;
                   system = "x86_64-linux";
-                  config.allowUnfree = true;
                 };
               };
               users.dan = import ./home/dan/thiniel.nix;
@@ -158,9 +158,9 @@
         system = "aarch64-linux"; # Default to Apple Silicon, can be overridden
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import nixpkgs-unstable {
+          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+            inherit nixpkgs-unstable;
             system = "aarch64-linux";
-            config.allowUnfree = true;
           };
         };
         modules = [
@@ -177,9 +177,9 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import nixpkgs-unstable {
+                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                  inherit nixpkgs-unstable;
                   system = "aarch64-linux";
-                  config.allowUnfree = true;
                 };
               };
               users.dan = import ./home/dan/thiniel-vm.nix;
@@ -198,9 +198,9 @@
         system = "aarch64-darwin";
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import nixpkgs-unstable {
+          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+            inherit nixpkgs-unstable;
             system = "aarch64-darwin";
-            config.allowUnfree = true;
           };
         };
         modules = [
@@ -221,9 +221,9 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import nixpkgs-unstable {
+                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                  inherit nixpkgs-unstable;
                   system = "aarch64-darwin";
-                  config.allowUnfree = true;
                 };
               };
               users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;

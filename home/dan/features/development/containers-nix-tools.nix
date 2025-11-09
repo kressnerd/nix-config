@@ -5,16 +5,7 @@
   lib,
   ...
 }: {
-  # Nix-specific containerization tools and workflows
-  home.packages = with pkgs; [
-    # Container security (Nix-focused)
-    grype # Vulnerability scanner
-    syft # SBOM generation
-    cosign # Container signing
-
-    # Additional container tools
-    nixpacks # App-to-container with auto-detection
-  ];
+  # Nix-specific containerization tools and workflows (packages moved to containers-common.nix)
 
   # Nix flake template for containerized applications
   home.file.".config/nix-containers/templates/webapp-flake.nix".text = ''
@@ -346,17 +337,10 @@
     '';
   };
 
-  # Environment variables
+  # Environment variables (template path unified in containers-common.nix)
   home.sessionVariables = {
-    # Container development
-    NIX_CONTAINER_TEMPLATES = "${config.home.homeDirectory}/.config/nix-containers/templates";
-
-    # Nix configuration for containers
     NIX_CONFIG = "experimental-features = nix-command flakes";
   };
 
-  # Create template directories
-  home.activation.createNixContainerDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${config.home.homeDirectory}/.config/nix-containers/templates"
-  '';
+  # Template directory creation handled by containers-common.nix
 }

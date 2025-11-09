@@ -7,25 +7,14 @@
 }: {
   # Main container development configuration - imports all container features
   imports = [
+    ./containers-common.nix # Consolidated shared tooling/env
     ./containers-podman.nix # Core Podman setup
     ./containers-vscode.nix # VS Code dev container integration
     ./containers-nix-tools.nix # Nix-specific container tools
     ./containers-networking.nix # Networking and volume strategies
   ];
 
-  # Container development meta-configuration - consolidated tools
-  home.packages = with pkgs; [
-    # Essential development tools (not duplicated in other modules)
-    ctop # Container metrics
-    dive # Container layer inspection
-    lazydocker # Container management TUI
-    crane # Fast container operations
-
-    # Kubernetes tools
-    kubectl # Kubernetes CLI
-    k9s # Kubernetes TUI
-    kind # Kubernetes in Docker
-  ];
+  # Packages moved to containers-common.nix (deduplicated)
 
   # Unified container environment script
   home.file.".local/bin/container-dev" = {
@@ -470,20 +459,7 @@
     '';
   };
 
-  # Environment variables
-  home.sessionVariables = {
-    # Container development configuration
-    CONTAINER_DEV_CONFIG = "${config.home.homeDirectory}/.config/containers";
-    CONTAINER_DEV_TEMPLATES = "${config.home.homeDirectory}/.config/containers/templates";
+  # Session variables unified in containers-common.nix
 
-    # Development settings
-    COMPOSE_PROJECT_NAME = "dev-env";
-    COMPOSE_FILE = "docker-compose.yml";
-  };
-
-  # Create all necessary directories
-  home.activation.createContainerDevDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${config.home.homeDirectory}/.local/bin"
-    mkdir -p "${config.home.homeDirectory}/.config/containers"/{environments,networks,volumes,templates,examples}
-  '';
+  # Directory creation handled by containers-common.nix
 }

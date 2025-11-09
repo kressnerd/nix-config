@@ -174,10 +174,5 @@
     '';
   };
 
-  # Create necessary directories
-  home.activation.createDevContainerDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${config.home.homeDirectory}/.config/devcontainers/nodejs"
-    mkdir -p "${config.home.homeDirectory}/.config/devcontainers/python"
-    mkdir -p "${config.home.homeDirectory}/.config/devcontainers/rust"
-  '';
+  # Devcontainer directories now created centrally in containers-common.nix
 }

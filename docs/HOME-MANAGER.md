@@ -37,7 +37,7 @@ integration.
 The Git configuration uses conditional includes to automatically switch
 identities based on project directory:
 
-``` nix
+```nix
 # Main .gitconfig with conditional includes
 sops.templates."gitconfig" = {
   content = ''
@@ -96,7 +96,7 @@ module files. == Feature Development Patterns
 
 Each feature module follows a consistent structure:
 
-``` nix
+```nix
 { config, pkgs, lib, ... }: {
   # Package installation
   home.packages = with pkgs; [
@@ -134,7 +134,7 @@ Each feature module follows a consistent structure:
 
 For features requiring secrets:
 
-``` nix
+```nix
 { config, pkgs, lib, ... }: {
   # Reference secrets defined in global configuration
   programs.app = {
@@ -158,7 +158,7 @@ For features requiring secrets:
 
 When features depend on each other:
 
-``` nix
+```nix
 { config, pkgs, lib, ... }: {
   # Conditional configuration based on other features
   programs.app = lib.mkIf config.programs.other-app.enable {

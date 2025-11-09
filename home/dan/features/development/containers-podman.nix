@@ -5,14 +5,7 @@
   lib,
   ...
 }: {
-  # Podman-based containerized development environment
-  home.packages = with pkgs; [
-    # Core Podman stack only
-    podman # Main container runtime
-    podman-compose # Docker Compose compatibility
-    buildah # OCI image building tool
-    skopeo # Container image operations
-  ];
+  # Podman-based containerized development environment (runtime packages consolidated in containers-common.nix)
 
   # Podman configuration
   home.file.".config/containers/containers.conf".text = ''
@@ -170,24 +163,10 @@
     '';
   };
 
-  # Environment variables for Podman
+  # Environment variable (retain only Docker compatibility; others unified in containers-common.nix)
   home.sessionVariables = {
-    # Podman configuration
-    CONTAINERS_CONF = "${config.home.homeDirectory}/.config/containers/containers.conf";
-    CONTAINERS_STORAGE_CONF = "${config.home.homeDirectory}/.config/containers/storage.conf";
-    CONTAINERS_REGISTRIES_CONF = "${config.home.homeDirectory}/.config/containers/registries.conf";
-
-    # Docker compatibility
     DOCKER_HOST = "unix://${config.home.homeDirectory}/.local/share/containers/podman/machine/podman.sock";
-
-    # Development environment paths
-    CONTAINER_DEV_ROOT = "${config.home.homeDirectory}/containers";
   };
 
-  # Create container development directories
-  home.activation.createContainerDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${config.home.homeDirectory}/containers"
-    mkdir -p "${config.home.homeDirectory}/.local/share/containers/storage"
-    mkdir -p "${config.home.homeDirectory}/.config/containers/networks"
-  '';
+  # Directory creation moved to containers-common.nix
 }

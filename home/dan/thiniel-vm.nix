@@ -7,7 +7,7 @@
   ...
 }: {
   imports = [
-    ./global/linux.nix
+    ./global/default.nix
     ./features/cli/git.nix
     ./features/cli/shell-utils.nix
     ./features/cli/vim.nix
@@ -33,6 +33,7 @@
   # SOPS configuration for thiniel-vm (simplified)
   sops = {
     defaultSopsFile = ../../hosts/thiniel-vm/secrets.yaml;
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
     secrets = {
       # "git/personal/name" = {};
       # "git/personal/email" = {};
@@ -97,9 +98,9 @@
   # Additional shell initialization for VM
   programs.zsh.initContent = ''
     # VM Environment setup
-    echo "🚀 Thiniel VM Environment Ready!"
-    echo "💻 Configuration: ${config.home.homeDirectory}/nix-config"
-    echo "🔧 Use 'vm-rebuild' to apply changes"
+    echo "Thiniel VM Environment Ready!"
+    echo "Configuration: ${config.home.homeDirectory}/nix-config"
+    echo "Use 'vm-rebuild' to apply changes"
 
     # Auto-change to nix-config directory
     if [[ -d "$HOME/nix-config" ]]; then

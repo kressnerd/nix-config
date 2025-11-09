@@ -131,7 +131,7 @@
   # Add aliases for the new tools
   programs.zsh.shellAliases = {
     ls = "eza";
-    cat = "bat";;
+    cat = "bat";
     ps = "procs";
     top = "btm";
     du = "dust";

@@ -5,7 +5,7 @@
   ...
 }: {
   imports = [
-    ./global/linux.nix
+    ./global/default.nix
     ./features/cli/git.nix
     ./features/cli/shell-utils.nix
     ./features/cli/vim.nix
@@ -24,6 +24,7 @@
   # SOPS configuration for thiniel - only personal secrets for security
   sops = {
     defaultSopsFile = ../../hosts/thiniel/secrets.yaml;
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
     secrets = {
       "git/personal/name" = {};
       "git/personal/email" = {};
