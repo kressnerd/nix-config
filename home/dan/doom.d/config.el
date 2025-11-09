@@ -8,6 +8,13 @@
 (setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/")
       org-roam-dailies-directory "journals")
 
+;; Larger initial GUI window (only when a graphical display is used)
+(when (display-graphic-p)
+  (setq frame-resize-pixelwise t)
+  ;; Append preferred size; Doom may set its own later, so we prepend ours
+  (setq initial-frame-alist (append '((width . 180) (height . 55)) initial-frame-alist)
+        default-frame-alist (append '((width . 180) (height . 55)) default-frame-alist)))
+
 ;;; Personal Information
 (setq user-full-name "Daniel Kressner"
       user-mail-address "daniel.kressner@example.com") ; Update with actual email
@@ -107,6 +114,7 @@
 
 (use-package! org-roam
   :after org
+  :defer t
   :hook (org-mode . org-roam-db-autosync-enable)
   :init
   (setq org-roam-completion-everywhere t)
@@ -122,7 +130,8 @@
 ;; LSP configuration - enhanced from original
 (use-package! lsp-mode
   :commands lsp
-  :hook (nix-mode . lsp)
+  ;; Use deferred startup for better responsiveness in large projects
+  :hook (nix-mode . lsp-deferred)
   :init
   (setq lsp-keymap-prefix "C-c l")
   :config
@@ -139,6 +148,15 @@
   (setq lsp-ui-doc-enable t
         lsp-ui-doc-show-with-cursor nil
         lsp-ui-doc-show-with-mouse t))
+ 
+(use-package! lsp-ivy
+  :after lsp-mode
+  :defer t)
+
+;; Treemacs integration for LSP (outline, errors, symbols)
+(use-package! lsp-treemacs
+  :after (lsp-mode treemacs)
+  :defer t)
 
 ;; Company configuration - use-package style
 (use-package! company
@@ -154,6 +172,14 @@
         company-auto-complete-chars nil
         company-dabbrev-downcase nil
         company-dabbrev-ignore-case nil))
+ 
+(use-package! yasnippet
+  :defer t
+  :init
+  (setq yas-triggers-in-field t
+        yas-snippet-dirs (list (concat doom-private-dir "snippets")))
+  :config
+  (yas-global-mode 1))
 
 ;; Projectile configuration
 (use-package! projectile
@@ -263,10 +289,10 @@
   :init
   (setq treemacs-width 32)
   :config
-  (treemacs-follow-mode t)
-  (treemacs-filewatch-mode t)
-  (treemacs-fringe-indicator-mode 'always)
-  (setq treemacs-git-mode 'extended))
+  (treemacs-follow-mode 1)
+  (treemacs-filewatch-mode 1)
+  (treemacs-fringe-indicator-mode 1)
+  (treemacs-git-mode 'extended))
 
 ;; Ivy configuration enhancements
 (use-package! ivy
