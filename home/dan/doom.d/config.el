@@ -119,13 +119,18 @@
   :init
   (setq org-roam-completion-everywhere t)
   :config
-  (setq org-roam-dailies-capture-templates
-        '(("d" "Daily journal" plain
-           ""
-           :if-new
-           (file+head "%<%Y-%m-%d>.org"
-                      "%<%d-%m-%Y>\n#+filetags: daily journal\n\n* Overview\n** Tasks\n- [ ] \n\n** Plan\n- \n\n** Log\n- %U Session start\n\n* Notes\n")
-           :unnarrowed t))))
+  (setq org-roam-file-exclude-regexp "\\.git/.*\\|logseq/.*$"
+        org-roam-capture-templates
+        '(("d" "default" plain
+         "%?"
+         ;; Accomodates for the fact that Logseq uses the "pages" directory
+         :target (file+head "pages/${slug}.org" "#+title: ${title}\n")
+         :unnarrowed t))
+        org-roam-dailies-capture-templates
+        '(("d" "default" entry
+           "* %?"
+           :target (file+head "%<%Y-%m-%d>.org" ;; format matches Logseq
+                            "#+title: %<%a, %d.%m.%Y>\n * Aufgaben\n ** \n * Tagesplan\n ** \n * Log\n ** "))))
 ;;; Development Configuration
 ;; LSP configuration - enhanced from original
 (use-package! lsp-mode
