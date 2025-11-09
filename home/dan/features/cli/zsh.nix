@@ -23,13 +23,6 @@
       # Git shortcuts
       g = "git";
       gs = "git status";
-      ga = "git add";
-      gc = "git commit";
-      gp = "git push";
-      gl = "git pull";
-      gd = "git diff";
-      gco = "git checkout";
-      gb = "git branch";
 
       # Editor shortcuts
       v = "vim";
@@ -48,12 +41,6 @@
       cp = "cp -i";
       mv = "mv -i";
       rm = "rm -i";
-
-      # Nix shortcuts
-      ns = "nix-shell";
-      nb = "nix build";
-      ne = "nix-env";
-      nsu = "nix-shell --run";
     };
 
     # History configuration

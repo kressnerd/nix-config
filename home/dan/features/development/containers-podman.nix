@@ -133,10 +133,6 @@
       "docker-compose" = "podman-compose";
 
       # Podman shortcuts
-      "p" = "podman";
-      "pc" = "podman-compose";
-      "pps" = "podman ps";
-      "pi" = "podman images";
       "prun" = "podman run --rm -it";
       "pexec" = "podman exec -it";
       "plogs" = "podman logs -f";

@@ -43,19 +43,8 @@
 
   # VM-specific shell aliases and configuration
   programs.zsh.shellAliases = {
-    # VM-specific rebuild commands
-    nrs = "sudo nixos-rebuild switch --flake ~/nix-config";
-    nrt = "sudo nixos-rebuild test --flake ~/nix-config";
-    nrb = "sudo nixos-rebuild boot --flake ~/nix-config";
-
     # VM management aliases
     vm-info = "uname -a && free -h && df -h";
-    vm-rebuild = "sudo nixos-rebuild switch --flake ~/nix-config#thiniel-vm";
-    vm-update = "nix flake update ~/nix-config && sudo nixos-rebuild switch --flake ~/nix-config#thiniel-vm";
-
-    # Useful VM development aliases
-    flake-check = "nix flake check ~/nix-config";
-    flake-show = "nix flake show ~/nix-config";
   };
 
   # VM-specific environment variables
