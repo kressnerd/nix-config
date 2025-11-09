@@ -5,7 +5,7 @@
   ...
 }: {
   imports = [
-    ./global
+    ./global/default.nix
     ./features/cli/cloud-tools.nix
     ./features/cli/git.nix
     ./features/cli/kitty.nix
@@ -25,6 +25,23 @@
     ./features/productivity/tools.nix
     ./features/productivity/emacs-doom.nix
   ];
+
+  # Host-specific SOPS (was previously in global/default.nix)
+  sops = {
+    defaultSopsFile = ../../hosts/J6G6Y9JK7L/secrets.yaml;
+    age.keyFile = "${config.home.homeDirectory}/Library/Application Support/sops/age/keys.txt";
+    secrets = {
+      "git/personal/name" = {};
+      "git/personal/email" = {};
+      "git/personal/folder" = {};
+      "git/company/name" = {};
+      "git/company/email" = {};
+      "git/company/folder" = {};
+      "git/client001/name" = {};
+      "git/client001/email" = {};
+      "git/client001/folder" = {};
+    };
+  };
 
   # Host-specific overrides
   home = {

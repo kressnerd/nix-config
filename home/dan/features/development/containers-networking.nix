@@ -5,12 +5,7 @@
   lib,
   ...
 }: {
-  # Container networking and volume mounting strategies
-  home.packages = with pkgs; [
-    # Essential networking tools only
-    nettools # Basic network utilities
-    netcat # Network debugging tool
-  ];
+  # Container networking and volume mounting strategies (network tools consolidated in containers-common.nix)
 
   # Podman network configurations
   home.file.".config/containers/networks/development.json".text = builtins.toJSON {
@@ -566,21 +561,11 @@
     '';
   };
 
-  # Environment variables for networking
+  # Environment variables for networking (paths unified in containers-common.nix; keep only subnet info)
   home.sessionVariables = {
-    # Container networking
-    PODMAN_NETWORK_CONFIG = "${config.home.homeDirectory}/.config/containers/networks";
-    CONTAINER_VOLUME_CONFIG = "${config.home.homeDirectory}/.config/containers/volumes";
-
-    # Development network settings
     DEV_NETWORK_SUBNET = "10.89.0.0/16";
     ISOLATED_NETWORK_SUBNET = "10.90.0.0/16";
   };
 
-  # Create networking directories
-  home.activation.createNetworkingDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    mkdir -p "${config.home.homeDirectory}/.config/containers/networks"
-    mkdir -p "${config.home.homeDirectory}/.config/containers/volumes"
-    mkdir -p "${config.home.homeDirectory}/.config/containers/examples"
-  '';
+  # Networking directories created by containers-common.nix
 }
