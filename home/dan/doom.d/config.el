@@ -103,13 +103,21 @@
         org-hide-emphasis-markers t
         org-log-done 'time
         org-startup-folded 'overview
-        org-startup-with-inline-images t)
+        org-startup-with-inline-images t))
 
+(after! org-roam
   ;; Org-roam configuration (using roam2 as per init.el)
   ;; directory is configured above
   (setq org-roam-dailies-directory "journals/"
-        org-roam-completion-everywhere t))
-
+        org-roam-completion-everywhere t)
+  ;; Daily journal template with Overview / Tasks / Plan / Log skeleton
+  (setq org-roam-dailies-capture-templates
+        '(("d" "Daily journal" plain
+           ""
+           :if-new
+           (file+head "%<%Y-%m-%d>.org"
+                      "#+title: %<%Y-%m-%d>\n#+filetags: daily journal\n\n* Overview\n** Tasks\n- [ ] \n\n** Plan\n- \n\n** Log\n- %U Session start\n\n* Notes\n")
+           :unnarrowed t))))
 ;;; Development Configuration
 ;; LSP configuration - enhanced from original
 (after! lsp-mode
@@ -218,25 +226,30 @@
       ;; File operations
       "f r" #'recentf-open-files
       "f R" #'rename-file-and-buffer
-      
+       
       ;; Buffer operations
       "b r" #'revert-buffer
       "b R" #'rename-buffer
-      
+       
       ;; Project operations
       "p t" #'multi-vterm-project
-      
+       
       ;; Window operations
       "w =" #'balance-windows
-      
+       
       ;; Git operations
       "g s" #'magit-status
       "g b" #'magit-branch-checkout
       "g l" #'magit-log-oneline
-      
+       
       ;; Search operations
       "s p" #'projectile-ag
       "s d" #'ag-dired)
+
+(map! :leader
+      ;; Org-roam dailies
+      "n r j" #'org-roam-dailies-goto-today
+      "n r n" #'org-roam-dailies-capture-today)
 
 ;;; Package-specific configurations
 ;; REST client configuration
