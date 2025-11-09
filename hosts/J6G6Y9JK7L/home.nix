@@ -30,7 +30,6 @@
   programs.zsh = {
     enable = true;
     shellAliases = {
-      drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config";
       ll = "ls -la";
     };
   };

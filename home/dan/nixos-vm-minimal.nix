@@ -28,8 +28,6 @@
   programs.zsh = {
     shellAliases = {
       # VM-specific aliases (no conflicts with existing feature)
-      rebuild = "sudo nixos-rebuild switch --flake ~/nix-config";
-      update = "nix flake update ~/nix-config && sudo nixos-rebuild switch --flake ~/nix-config";
       vm-info = "uname -a && free -h && df -h";
     };
     initContent = ''
