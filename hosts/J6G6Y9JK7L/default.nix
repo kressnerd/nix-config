@@ -9,7 +9,7 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  programs.zsh.enable = true;
+  programs.fish.enable = true;
 
   # Set Git commit hash for darwin-version
   system.configurationRevision = null;
@@ -25,6 +25,7 @@
   users.users."daniel.kressner" = {
     name = "daniel.kressner";
     home = "/Users/daniel.kressner";
+    shell = pkgs.fish;
   };
 
   nix-homebrew = {
