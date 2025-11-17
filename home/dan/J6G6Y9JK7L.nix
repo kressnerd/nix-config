@@ -26,7 +26,6 @@
     ./features/productivity/emacs-doom.nix
   ];
 
-  # Host-specific SOPS (was previously in global/default.nix)
   sops = {
     defaultSopsFile = ../../hosts/J6G6Y9JK7L/secrets.yaml;
     age.keyFile = "${config.home.homeDirectory}/Library/Application Support/sops/age/keys.txt";
@@ -47,10 +46,5 @@
   home = {
     username = "daniel.kressner";
     homeDirectory = "/Users/daniel.kressner";
-  };
-
-  # Host-specific shell aliases
-  programs.zsh.shellAliases = {
-    drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config";
   };
 }
