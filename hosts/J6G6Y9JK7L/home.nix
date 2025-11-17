@@ -26,7 +26,6 @@
   # Let Home Manager manage itself
   programs.home-manager.enable = true;
 
-  # Configure zsh
   programs.zsh = {
     enable = true;
     shellAliases = {
@@ -34,12 +33,10 @@
     };
   };
 
-  # Add some useful packages
   home.packages = with pkgs; [
     htop
     ripgrep
 
-    # GUI
     jetbrains-toolbox
   ];
 }

@@ -46,7 +46,6 @@
 
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
 
-    # Declarative disk management and automated deployment
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -80,7 +79,6 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
-    # NixOS Configurations
     nixosConfigurations = {
       nixos-vm-minimal = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
@@ -192,7 +190,6 @@
       };
     };
 
-    # Darwin Configurations
     darwinConfigurations = {
       J6G6Y9JK7L = darwin.lib.darwinSystem {
         system = "aarch64-darwin";
