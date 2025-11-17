@@ -13,7 +13,7 @@
     ./features/cli/ssh.nix
     ./features/cli/starship.nix
     ./features/cli/vim.nix
-    ./features/cli/zsh.nix
+    ./features/cli/fish.nix
     ./features/development/containers.nix
     ./features/development/formatters.nix
     ./features/development/jdk.nix
@@ -46,5 +46,10 @@
   home = {
     username = "daniel.kressner";
     homeDirectory = "/Users/daniel.kressner";
+  };
+
+  # Host-specific shell aliases
+  programs.fish.shellAliases = {
+    drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config";
   };
 }
