@@ -11,7 +11,7 @@
 
     settings = {
       # Font configuration
-      font_family = "JetBrainsMono Nerd Font";
+      font_family = "JetBrainsMono Nerd Font Mono";
       font_size = "12.0";
       bold_font = "auto";
       italic_font = "auto";
