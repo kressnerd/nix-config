@@ -26,13 +26,6 @@
   # Let Home Manager manage itself
   programs.home-manager.enable = true;
 
-  programs.zsh = {
-    enable = true;
-    shellAliases = {
-      ll = "ls -la";
-    };
-  };
-
   home.packages = with pkgs; [
     htop
     ripgrep

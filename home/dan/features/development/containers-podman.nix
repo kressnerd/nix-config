@@ -119,7 +119,7 @@
   '';
 
   # Shell integration and aliases
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       # Podman aliases with Docker compatibility
       "docker" = "podman";
@@ -140,27 +140,38 @@
       "container-reset" = "podman system reset";
     };
 
-    initContent = ''
+    interactiveShellInit = ''
       # Podman completion
-      if command -v podman &> /dev/null; then
-        source <(podman completion zsh)
-      fi
+      if command -v podman >/dev/null 2>&1
+        podman completion fish | source
+      end
+    '';
 
+    functions = {
       # Development container shortcuts
-      dev-enter() {
-        local container_name=''${1:-dev-ubuntu}
+      dev-enter = ''
+        set container_name $argv[1]
+        if test -z "$container_name"
+          set container_name dev-ubuntu
+        end
         podman exec -it "$container_name" /bin/bash
-      }
+      '';
 
-      dev-create() {
-        local name=''${1:-dev-env}
-        local image=''${2:-ubuntu:22.04}
+      dev-create = ''
+        set name $argv[1]
+        set image $argv[2]
+        if test -z "$name"
+          set name dev-env
+        end
+        if test -z "$image"
+          set image ubuntu:22.04
+        end
         podman run -d --name "$name" \
           --volume "${config.home.homeDirectory}/dev:/host-dev:rw" \
           --volume "${config.home.homeDirectory}/.ssh:/host-ssh:ro" \
           "$image" sleep infinity
-      }
-    '';
+      '';
+    };
   };
 
   # Environment variable (retain only Docker compatibility; others unified in containers-common.nix)

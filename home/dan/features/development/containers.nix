@@ -408,7 +408,7 @@
   };
 
   # Shell integration
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       # Quick container development
       "cdev" = "container-dev";
@@ -423,39 +423,34 @@
       "init-fullstack" = "container-dev init fullstack";
     };
 
-    initContent = ''
-      # Container development completion
-      _container_dev_completion() {
-        local commands="setup init start stop status clean network volume logs shell build deploy help"
-        local templates="nodejs python rust fullstack microservices"
-
-        if [[ $CURRENT -eq 2 ]]; then
-          _describe 'commands' commands
-        elif [[ $CURRENT -eq 3 && $words[2] == "init" ]]; then
-          _describe 'templates' templates
-        fi
-      }
-
-      compdef _container_dev_completion container-dev
-      compdef _container_dev_completion cdev
-
+    functions = {
       # Auto-detect project type and suggest container setup
-      detect_container_project() {
-        if [[ -f "docker-compose.yml" ]] || [[ -f "compose.yaml" ]]; then
+      detect_container_project = ''
+        if test -f "docker-compose.yml"; or test -f "compose.yaml"
           echo "🐳 Docker Compose detected - use 'podman-compose up'"
-        elif [[ -f ".devcontainer/devcontainer.json" ]]; then
+        else if test -f ".devcontainer/devcontainer.json"
           echo "📦 Dev Container detected - open in VS Code Remote-Containers"
-        elif [[ -f "package.json" ]]; then
+        else if test -f "package.json"
           echo "📦 Node.js project - try 'init-node' to containerize"
-        elif [[ -f "requirements.txt" ]] || [[ -f "pyproject.toml" ]]; then
+        else if test -f "requirements.txt"; or test -f "pyproject.toml"
           echo "🐍 Python project - try 'init-python' to containerize"
-        elif [[ -f "Cargo.toml" ]]; then
+        else if test -f "Cargo.toml"
           echo "🦀 Rust project - try 'init-rust' to containerize"
-        fi
-      }
+        end
+      '';
+    };
 
-      # Show container hints when entering directories
-      chpwd_functions+=(detect_container_project)
+    interactiveShellInit = ''
+      # Container development completion
+      complete -c container-dev -f -a "setup init start stop status clean network volume logs shell build deploy help"
+      complete -c container-dev -f -n "__fish_seen_subcommand_from init" -a "nodejs python rust fullstack microservices"
+      complete -c cdev -f -a "setup init start stop status clean network volume logs shell build deploy help"
+      complete -c cdev -f -n "__fish_seen_subcommand_from init" -a "nodejs python rust fullstack microservices"
+
+      # Show container hints when entering directories (on directory change)
+      function __fish_on_pwd_change --on-variable PWD
+        detect_container_project
+      end
     '';
   };
 

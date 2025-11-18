@@ -60,7 +60,7 @@
   # Configure some of these tools
   programs.eza = {
     enable = true;
-    enableZshIntegration = true;
+    enableFishIntegration = true;
     git = true;
     icons = "auto";
   };
@@ -114,22 +114,19 @@
 
   programs.fzf = {
     enable = true;
-    enableZshIntegration = true;
   };
 
   programs.zoxide = {
     enable = true;
-    enableZshIntegration = true;
   };
 
   programs.direnv = {
     enable = true;
-    enableZshIntegration = true;
     nix-direnv.enable = true;
   };
 
   # Add aliases for the new tools
-  programs.zsh.shellAliases = {
+  programs.fish.shellAliases = {
     ls = "eza";
     cat = "bat";
     ps = "procs";

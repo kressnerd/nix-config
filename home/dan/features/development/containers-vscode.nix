@@ -135,43 +135,53 @@
   };
 
   # Shell helper for dev containers
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       "devcontainer-build" = "devcontainer build --workspace-folder";
       "devcontainer-up" = "devcontainer up --workspace-folder";
     };
 
-    initContent = ''
+    functions = {
       # Dev container helper functions
-      devcontainer-create() {
-        local name=''${1:-"devcontainer"}
-        local template=''${2:-"nodejs"}
-        local target_dir="''${3:-.}"
+      devcontainer-create = ''
+        set name $argv[1]
+        set template $argv[2]
+        set target_dir $argv[3]
 
-        if [[ ! -d "$target_dir" ]]; then
+        if test -z "$name"
+          set name "devcontainer"
+        end
+        if test -z "$template"
+          set template "nodejs"
+        end
+        if test -z "$target_dir"
+          set target_dir "."
+        end
+
+        if not test -d "$target_dir"
           echo "Error: Directory $target_dir does not exist"
           return 1
-        fi
+        end
 
-        local template_dir="${config.home.homeDirectory}/.config/devcontainers/$template"
-        if [[ ! -d "$template_dir" ]]; then
+        set template_dir "${config.home.homeDirectory}/.config/devcontainers/$template"
+        if not test -d "$template_dir"
           echo "Error: Template $template not found"
           echo "Available templates:"
           ls "${config.home.homeDirectory}/.config/devcontainers/"
           return 1
-        fi
+        end
 
         mkdir -p "$target_dir/.devcontainer"
         cp "$template_dir/.devcontainer.json" "$target_dir/.devcontainer/"
         echo "Created devcontainer configuration in $target_dir/.devcontainer/"
         echo "Open in VS Code and run 'Dev Containers: Reopen in Container'"
-      }
+      '';
 
-      devcontainer-list-templates() {
+      devcontainer-list-templates = ''
         echo "Available devcontainer templates:"
         ls "${config.home.homeDirectory}/.config/devcontainers/" | sed 's/^/  /'
-      }
-    '';
+      '';
+    };
   };
 
   # Devcontainer directories now created centrally in containers-common.nix

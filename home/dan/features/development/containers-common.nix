@@ -53,8 +53,8 @@
     COMPOSE_FILE = "docker-compose.yml";
   };
 
-  # Shared Zsh aliases (avoid duplication across modules)
-  programs.zsh.shellAliases = {
+  # Shared Fish aliases (avoid duplication across modules)
+  programs.fish.shellAliases = {
     # Podman compatibility
     docker = "podman";
     docker-compose = "podman-compose";
@@ -96,9 +96,9 @@
   '';
 
   # Minimal helper functions (generic only; specialized ones stay in their modules)
-  programs.zsh.initContent = ''
+  programs.fish.functions = {
     # Generic container environment status
-    container-env-status() {
+    container-env-status = ''
       echo "=== Container Environment Status ==="
       echo "Running containers:"
       podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -108,15 +108,15 @@
       echo
       echo "Volumes:"
       podman volume ls
-    }
+    '';
 
     # Generic volume setup (specialized networking remains in networking module)
-    container-common-volumes() {
-      podman volume create node_modules 2>/dev/null || true
-      podman volume create python_cache 2>/dev/null || true
-      podman volume create cargo_registry 2>/dev/null || true
-      podman volume create postgres_data 2>/dev/null || true
-      podman volume create redis_data 2>/dev/null || true
-    }
-  '';
+    container-common-volumes = ''
+      podman volume create node_modules 2>/dev/null; or true
+      podman volume create python_cache 2>/dev/null; or true
+      podman volume create cargo_registry 2>/dev/null; or true
+      podman volume create postgres_data 2>/dev/null; or true
+      podman volume create redis_data 2>/dev/null; or true
+    '';
+  };
 }

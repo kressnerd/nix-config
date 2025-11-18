@@ -11,7 +11,7 @@
   ];
 
   # Shell integration
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       "node20" = "${pkgs.nodejs_20}/bin/node";
       "npm20" = "${pkgs.nodejs_20}/bin/npm";
