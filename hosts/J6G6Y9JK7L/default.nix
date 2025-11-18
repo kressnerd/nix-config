@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  lib,
   inputs,
   ...
 }: {
@@ -10,6 +11,9 @@
   nixpkgs.config.allowUnfree = true;
 
   programs.fish.enable = true;
+
+  # Add fish to /etc/shells for macOS
+  environment.shells = [pkgs.fish];
 
   # Set Git commit hash for darwin-version
   system.configurationRevision = null;
@@ -70,6 +74,21 @@
       echo ""
     else
       echo "✓ Xcode Command Line Tools found at: $(/usr/bin/xcode-select -p)"
+    fi
+  '';
+
+  # Declaratively set user shell - runs after user creation
+  system.activationScripts.users.text = lib.mkAfter ''
+    echo "Setting default shell to fish for ${config.system.primaryUser}..."
+    CURRENT_SHELL=$(dscl . -read /Users/${config.system.primaryUser} UserShell 2>/dev/null | awk '{print $2}')
+    DESIRED_SHELL="${pkgs.fish}/bin/fish"
+
+    if [ "$CURRENT_SHELL" != "$DESIRED_SHELL" ]; then
+      echo "Changing shell from $CURRENT_SHELL to $DESIRED_SHELL"
+      dscl . -create /Users/${config.system.primaryUser} UserShell "$DESIRED_SHELL"
+      echo "✓ Shell updated successfully"
+    else
+      echo "✓ Shell already set to fish"
     fi
   '';
 
