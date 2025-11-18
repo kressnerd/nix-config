@@ -389,7 +389,7 @@
   '';
 
   # Shell helper functions for networking and volumes
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       # Network management
       "pod-net-ls" = "podman network ls";
@@ -408,7 +408,9 @@
       "net-test" = "podman run --rm nicolaka/netshoot";
     };
 
-    initContent = ''
+    interactiveShellInit = ''
+      # Note: Complex bash functions kept for compatibility
+      # Fish will execute these via bash -c when needed
       # Container networking helpers
       container-network-setup() {
         echo "Setting up development networks..."

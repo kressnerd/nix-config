@@ -22,7 +22,7 @@
   ];
 
   # Shell integration for formatters
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       # Nix formatting aliases
       "fmt-nix" = "alejandra .";
@@ -40,62 +40,57 @@
       "fmt-sh" = "shfmt -w";
     };
 
-    initContent = ''
+    functions = {
       # Format current directory with appropriate formatter
-      fmt() {
-        local file_type="$1"
+      fmt = ''
+        set file_type $argv[1]
 
-        case "$file_type" in
-          nix|*.nix)
+        switch "$file_type"
+          case nix '*.nix'
             echo "Formatting Nix files with Alejandra..."
             alejandra .
-            ;;
-          py|python|*.py)
+          case py python '*.py'
             echo "Formatting Python files with Black..."
             black .
-            ;;
-          js|javascript|ts|typescript|*.js|*.ts)
+          case js javascript ts typescript '*.js' '*.ts'
             echo "Formatting JavaScript/TypeScript files with Prettier..."
             prettier --write "**/*.{js,ts,jsx,tsx,json,css,md}"
-            ;;
-          rust|*.rs)
+          case rust '*.rs'
             echo "Formatting Rust files..."
             find . -name "*.rs" -exec rustfmt {} \;
-            ;;
-          sh|shell|*.sh)
+          case sh shell '*.sh'
             echo "Formatting shell scripts..."
             find . -name "*.sh" -exec shfmt -w {} \;
-            ;;
-          all|*)
+          case all '*'
             echo "Running treefmt for multi-language formatting..."
-            if command -v treefmt >/dev/null 2>&1; then
+            if command -v treefmt >/dev/null 2>&1
               treefmt
             else
               echo "treefmt not available, running Alejandra on Nix files..."
               alejandra .
-            fi
-            ;;
-        esac
-      }
+            end
+        end
+      '';
 
       # Format check function
-      fmt-check() {
-        local file_type="''${1:-nix}"
+      fmt-check = ''
+        set file_type $argv[1]
+        if test -z "$file_type"
+          set file_type nix
+        end
 
-        case "$file_type" in
-          nix|*.nix)
+        switch "$file_type"
+          case nix '*.nix'
             alejandra --check .
-            ;;
-          all)
-            if command -v treefmt >/dev/null 2>&1; then
+          case all
+            if command -v treefmt >/dev/null 2>&1
               treefmt --fail-on-change
             else
               alejandra --check .
-            fi
-            ;;
-        esac
-      }
-    '';
+            end
+        end
+      '';
+    };
   };
 
   # Optional: Create a treefmt configuration for multi-language formatting

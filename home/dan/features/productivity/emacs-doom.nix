@@ -108,7 +108,7 @@
   };
 
   # Shell integration for Doom Emacs
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       # Emacs aliases
       emacs = "emacsclient -c -a 'emacs'"; # Open in GUI, start daemon if needed
@@ -122,20 +122,15 @@
       emacs-restart = "systemctl --user restart emacs";
     };
 
-    sessionVariables = {
-      EDITOR = "emacsclient -t -a 'emacs'";
-      VISUAL = "emacsclient -c -a 'emacs'";
+    shellInit = ''
+      # Add Doom bin to PATH
+      set -gx PATH $HOME/.config/emacs/bin $PATH
 
-      # Point to our managed doom.d
-      DOOMDIR = "${config.home.homeDirectory}/.config/doom";
-
-      # Performance improvements
-      LSP_USE_PLISTS = "true";
-    };
-
-    # Add Doom bin to PATH
-    initContent = ''
-      export PATH="$HOME/.config/emacs/bin:$PATH"
+      # Environment variables
+      set -gx EDITOR "emacsclient -t -a 'emacs'"
+      set -gx VISUAL "emacsclient -c -a 'emacs'"
+      set -gx DOOMDIR "${config.home.homeDirectory}/.config/doom"
+      set -gx LSP_USE_PLISTS "true"
     '';
   };
 

@@ -13,16 +13,16 @@
     # doctl            # DigitalOcean CLI
   ];
 
-  # Configure gcloud completion for zsh
-  programs.zsh.initContent = ''
+  # Configure gcloud completion for fish
+  programs.fish.interactiveShellInit = ''
     # Google Cloud SDK completion
-    if [ -f "${pkgs.google-cloud-sdk}/google-cloud-sdk/completion.zsh.inc" ]; then
-      source "${pkgs.google-cloud-sdk}/google-cloud-sdk/completion.zsh.inc"
-    fi
+    if test -f "${pkgs.google-cloud-sdk}/google-cloud-sdk/completion.fish.inc"
+      source "${pkgs.google-cloud-sdk}/google-cloud-sdk/completion.fish.inc"
+    end
   '';
 
   # Useful aliases for gcloud
-  programs.zsh.shellAliases = {
+  programs.fish.shellAliases = {
     # gcloud shortcuts
     gcp = "gcloud config list project --format='value(core.project)'";
     gcs = "gcloud config set project";

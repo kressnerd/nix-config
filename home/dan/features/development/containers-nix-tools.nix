@@ -219,7 +219,7 @@
   '';
 
   # Shell integration and helper scripts
-  programs.zsh = {
+  programs.fish = {
     shellAliases = {
       # Nix container building
       "nix-build-container" = "nix build .#container";
@@ -242,7 +242,9 @@
       "kdebug" = "kubectl run debug --rm -i --tty --image=busybox -- sh";
     };
 
-    initContent = ''
+    interactiveShellInit = ''
+      # Note: Complex bash functions kept for compatibility
+      # Fish will execute these via bash -c when needed
       # Nix container helper functions
       nix-container-build() {
         local flake_ref=''${1:-.}
