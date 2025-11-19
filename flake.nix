@@ -204,7 +204,6 @@
           {
             nixpkgs.overlays = [
               nur.overlays.default
-              (import ./overlays)
             ];
             nixpkgs.config.allowUnfree = true;
           }
