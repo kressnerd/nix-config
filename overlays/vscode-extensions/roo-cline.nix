@@ -12,8 +12,8 @@ vscode-utils.buildVscodeMarketplaceExtension {
   mktplcRef = {
     name = "roo-cline";
     publisher = "RooVeterinaryInc";
-    version = "3.32.1";
-    sha256 = "sha256-pEWWvePC30X0RuAwLsgoWwYqigkocjMjQNIiGDC80Fk=";
+    version = "3.33.1";
+    sha256 = "sha256-F9iQKh+OITlxNbFQf/IVoyeTkmo7S17nv6jq5GT7xCQ=";
     # sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
   };
 
