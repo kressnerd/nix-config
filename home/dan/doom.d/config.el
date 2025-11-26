@@ -6,7 +6,17 @@
 ;; Early directories (must precede org/org-roam load to override defaults)
 (setq org-directory "~/dev/PRIVATE/breq/")
 (setq org-roam-directory (file-truename "~/dev/PRIVATE/breq/")
-      org-roam-dailies-directory "journals")
+            org-roam-dailies-directory "journals"
+            org-roam-dailies-capture-templates
+            '(("d" "default" entry
+                  "* %?" :target
+                  (file+head "%<%Y-%m-%d>.org"
+                                      "#+title: %<%a, %d.%m.%Y>\n * Aufgaben\n ** \n * Tagesplan\n ** \n * Log\n ** "))) 
+            org-roam-capture-templates
+            '(("d" "default" plain
+                  "%?" :target
+                  (file+head "pages/${slug}.org" "#+title: ${title}\n")
+                  :unnarrowed t)))
 
 ;; Larger initial GUI window (only when a graphical display is used)
 (when (display-graphic-p)
@@ -119,18 +129,7 @@
   :init
   (setq org-roam-completion-everywhere t)
   :config
-  (setq org-roam-file-exclude-regexp "\\.git/.*\\|logseq/.*$"
-        org-roam-capture-templates
-        '(("d" "default" plain
-         "%?"
-         ;; Accomodates for the fact that Logseq uses the "pages" directory
-         :target (file+head "pages/${slug}.org" "#+title: ${title}\n")
-         :unnarrowed t))
-        org-roam-dailies-capture-templates
-        '(("d" "default" entry
-           "* %?"
-           :target (file+head "%<%Y-%m-%d>.org" ;; format matches Logseq
-                            "#+title: %<%a, %d.%m.%Y>\n * Aufgaben\n ** \n * Tagesplan\n ** \n * Log\n ** "))))
+  (setq org-roam-file-exclude-regexp "\\.git/.*\\|logseq/.*$"))
 ;;; Development Configuration
 ;; LSP configuration - enhanced from original
 (use-package! lsp-mode
