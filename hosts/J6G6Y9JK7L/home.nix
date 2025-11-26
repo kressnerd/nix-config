@@ -29,7 +29,5 @@
   home.packages = with pkgs; [
     htop
     ripgrep
-
-    jetbrains-toolbox
   ];
 }
