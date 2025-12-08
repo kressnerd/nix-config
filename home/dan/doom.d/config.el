@@ -11,7 +11,7 @@
             '(("d" "default" entry
                   "* %?" :target
                   (file+head "%<%Y-%m-%d>.org"
-                                      "#+title: %<%a, %d.%m.%Y>\n * Aufgaben\n ** \n * Tagesplan\n ** \n * Log\n ** "))) 
+                                      "#+title: %<%a, %d.%m.%Y>\n* Aufgaben\n** \n* Tagesplan\n** \n* Log\n** "))) 
             org-roam-capture-templates
             '(("d" "default" plain
                   "%?" :target
