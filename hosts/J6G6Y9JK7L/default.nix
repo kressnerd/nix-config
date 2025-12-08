@@ -55,6 +55,7 @@
     brews = ["score-compose"];
     casks = [
       "crossover"
+      "cameracontroller"
     ];
   };
 
