@@ -36,11 +36,6 @@
       ".." = "cd ..";
       "..." = "cd ../..";
       "...." = "cd ../../..";
-
-      # Safety nets
-      cp = "cp -i";
-      mv = "mv -i";
-      rm = "rm -i";
     };
 
     # History configuration
