@@ -65,5 +65,6 @@
 
   # Additional packages for fish (keeping minimal to avoid broken plugins)
   home.packages = with pkgs; [
+    fishPlugins.sdkman-for-fish
   ];
 }
