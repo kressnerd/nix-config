@@ -242,64 +242,82 @@
       "kdebug" = "kubectl run debug --rm -i --tty --image=busybox -- sh";
     };
 
-    interactiveShellInit = ''
-      # Note: Complex bash functions kept for compatibility
-      # Fish will execute these via bash -c when needed
-      # Nix container helper functions
-      nix-container-build() {
-        local flake_ref=''${1:-.}
-        local attr=''${2:-container}
+    functions = {
+      nix-container-build = ''
+        set flake_ref $argv[1]
+        set attr $argv[2]
+
+        if test -z "$flake_ref"
+          set flake_ref .
+        end
+
+        if test -z "$attr"
+          set attr container
+        end
 
         echo "Building container with Nix..."
-        nix build "''${flake_ref}#''${attr}"
+        nix build "$flake_ref#$attr"
 
-        if [[ -L result ]]; then
+        if test -L result
           echo "Container built successfully!"
           echo "Load with: podman load < result"
           echo "Inspect with: skopeo inspect docker-archive:result"
-        fi
-      }
+        end
+      '';
 
-      nix-container-run() {
-        local image_name="$1"
-        shift
-        local args=("$@")
+      nix-container-run = ''
+        set image_name $argv[1]
 
-        if [[ -z "$image_name" ]]; then
+        if test -z "$image_name"
           echo "Usage: nix-container-run <image-name> [podman-args...]"
           return 1
-        fi
+        end
 
-        podman run --rm -it "''${args[@]}" "$image_name"
-      }
+        podman run --rm -it $argv[2..-1] "$image_name"
+      '';
 
-      nix-dev-container() {
-        local template=''${1:-webapp}
-        local project_name=''${2:-$(basename $(pwd))}
+      nix-dev-container = ''
+        set template $argv[1]
+        set project_name $argv[2]
 
-        local template_dir="${config.home.homeDirectory}/.config/nix-containers/templates"
+        if test -z "$template"
+          set template webapp
+        end
 
-        if [[ ! -f "$template_dir/$template-flake.nix" ]]; then
+        if test -z "$project_name"
+          set project_name (basename (pwd))
+        end
+
+        set template_dir "${config.home.homeDirectory}/.config/nix-containers/templates"
+
+        if not test -f "$template_dir/$template-flake.nix"
           echo "Template $template not found. Available templates:"
           ls "$template_dir"/*-flake.nix 2>/dev/null | xargs -n1 basename -s -flake.nix | sed 's/^/  /'
           return 1
-        fi
+        end
 
         cp "$template_dir/$template-flake.nix" ./flake.nix
-        cp "$template_dir/compose-with-nix.yaml" ./docker-compose.yml 2>/dev/null || true
-        cp "$template_dir/Dockerfile.nix" ./Dockerfile 2>/dev/null || true
+        cp "$template_dir/compose-with-nix.yaml" ./docker-compose.yml 2>/dev/null; or true
+        cp "$template_dir/Dockerfile.nix" ./Dockerfile 2>/dev/null; or true
 
         echo "Created Nix containerized project template: $template"
         echo "Next steps:"
         echo "  nix develop          # Enter development shell"
         echo "  nix build .#container # Build container image"
         echo "  podman-compose up    # Start development stack"
-      }
+      '';
 
-      # Kubernetes development helper
-      k8s-nix-deploy() {
-        local namespace=''${1:-default}
-        local image_tag=''${2:-latest}
+      k8s-nix-deploy = ''
+        set namespace $argv[1]
+        set image_tag $argv[2]
+
+        if test -z "$namespace"
+          set namespace default
+        end
+
+        if test -z "$image_tag"
+          set image_tag latest
+        end
 
         # Build container
         nix build .#container
@@ -308,34 +326,40 @@
         podman load < result
 
         # Tag for deployment
-        local image_name=$(podman images --format "{{.Repository}}:{{.Tag}}" | head -n1)
-        podman tag "$image_name" "localhost:5000/$(basename $(pwd)):$image_tag"
+        set image_name (podman images --format "{{.Repository}}:{{.Tag}}" | head -n1)
+        podman tag "$image_name" "localhost:5000/"(basename (pwd))":$image_tag"
 
         # Push to local registry (if running)
-        if podman ps --format "{{.Names}}" | grep -q registry; then
-          podman push "localhost:5000/$(basename $(pwd)):$image_tag"
-        fi
+        if podman ps --format "{{.Names}}" | grep -q registry
+          podman push "localhost:5000/"(basename (pwd))":$image_tag"
+        end
 
         # Apply Kubernetes manifests
-        if [[ -f k8s-deployment.yaml ]]; then
+        if test -f k8s-deployment.yaml
           kubectl apply -f k8s-deployment.yaml -n "$namespace"
           echo "Deployed to Kubernetes namespace: $namespace"
-        fi
-      }
+        end
+      '';
 
-      # Container cleanup with Nix awareness
-      container-cleanup-nix() {
+      container-cleanup-nix = ''
         echo "Cleaning up containers and Nix build results..."
 
         # Clean up podman
         podman system prune -af
 
         # Clean up Nix build results
-        find . -name "result*" -type l -delete 2>/dev/null || true
+        find . -name "result*" -type l -delete 2>/dev/null; or true
 
         # Clean up Nix store (careful!)
         echo "Run 'nix-collect-garbage -d' to clean up Nix store"
-      }
+      '';
+    };
+
+    interactiveShellInit = ''
+      # Podman completion
+      if command -v podman >/dev/null 2>&1
+        podman completion fish | source
+      end
     '';
   };
 

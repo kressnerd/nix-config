@@ -408,11 +408,8 @@
       "net-test" = "podman run --rm nicolaka/netshoot";
     };
 
-    interactiveShellInit = ''
-      # Note: Complex bash functions kept for compatibility
-      # Fish will execute these via bash -c when needed
-      # Container networking helpers
-      container-network-setup() {
+    functions = {
+      container-network-setup = ''
         echo "Setting up development networks..."
 
         # Create development network
@@ -420,7 +417,7 @@
           --driver bridge \
           --subnet 10.89.0.0/16 \
           --gateway 10.89.0.1 \
-          2>/dev/null || echo "Development network already exists"
+          2>/dev/null; or echo "Development network already exists"
 
         # Create isolated network
         podman network create isolated \
@@ -428,34 +425,33 @@
           --subnet 10.90.0.0/16 \
           --gateway 10.90.0.1 \
           --internal \
-          2>/dev/null || echo "Isolated network already exists"
+          2>/dev/null; or echo "Isolated network already exists"
 
         echo "Networks created successfully"
         podman network ls
-      }
+      '';
 
-      container-volumes-setup() {
+      container-volumes-setup = ''
         echo "Setting up development volumes..."
 
         # Create persistent volumes
-        podman volume create node_modules 2>/dev/null || true
-        podman volume create python_cache 2>/dev/null || true
-        podman volume create cargo_registry 2>/dev/null || true
-        podman volume create postgres_data 2>/dev/null || true
-        podman volume create redis_data 2>/dev/null || true
+        podman volume create node_modules 2>/dev/null; or true
+        podman volume create python_cache 2>/dev/null; or true
+        podman volume create cargo_registry 2>/dev/null; or true
+        podman volume create postgres_data 2>/dev/null; or true
+        podman volume create redis_data 2>/dev/null; or true
 
         echo "Volumes created successfully"
         podman volume ls
-      }
+      '';
 
-      # Network debugging helper
-      debug-container-network() {
-        local container_name="$1"
+      debug-container-network = ''
+        set container_name $argv[1]
 
-        if [[ -z "$container_name" ]]; then
+        if test -z "$container_name"
           echo "Usage: debug-container-network <container-name>"
           return 1
-        fi
+        end
 
         echo "=== Container Network Debug: $container_name ==="
         echo ""
@@ -474,16 +470,15 @@
         echo ""
         echo "Connected Networks:"
         podman inspect "$container_name" --format '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}}: {{$conf.IPAddress}}{{"\n"}}{{end}}'
-      }
+      '';
 
-      # Volume debugging helper
-      debug-container-volumes() {
-        local container_name="$1"
+      debug-container-volumes = ''
+        set container_name $argv[1]
 
-        if [[ -z "$container_name" ]]; then
+        if test -z "$container_name"
           echo "Usage: debug-container-volumes <container-name>"
           return 1
-        fi
+        end
 
         echo "=== Container Volume Debug: $container_name ==="
         echo ""
@@ -493,43 +488,47 @@
 
         echo ""
         echo "Volume Usage:"
-        podman exec "$container_name" df -h 2>/dev/null || echo "Cannot access container filesystem"
-      }
+        podman exec "$container_name" df -h 2>/dev/null; or echo "Cannot access container filesystem"
+      '';
 
-      # Performance testing for volumes
-      test-volume-performance() {
-        local mount_type=''${1:-bind}
-        local test_dir=''${2:-/tmp/volume-test}
+      test-volume-performance = ''
+        set mount_type $argv[1]
+        set test_dir $argv[2]
+
+        if test -z "$mount_type"
+          set mount_type bind
+        end
+
+        if test -z "$test_dir"
+          set test_dir /tmp/volume-test
+        end
 
         echo "Testing $mount_type volume performance..."
 
-        case "$mount_type" in
-          "bind")
-            podman run --rm -v "$(pwd):$test_dir:rw" alpine:latest sh -c "
+        switch "$mount_type"
+          case "bind"
+            podman run --rm -v "(pwd):$test_dir:rw" alpine:latest sh -c "
               time dd if=/dev/zero of=$test_dir/test-file bs=1M count=100
               sync
               time dd if=$test_dir/test-file of=/dev/null bs=1M
               rm $test_dir/test-file
             "
-            ;;
-          "cached")
-            podman run --rm -v "$(pwd):$test_dir:rw,cached" alpine:latest sh -c "
+          case "cached"
+            podman run --rm -v "(pwd):$test_dir:rw,cached" alpine:latest sh -c "
               time dd if=/dev/zero of=$test_dir/test-file bs=1M count=100
               sync
               time dd if=$test_dir/test-file of=/dev/null bs=1M
               rm $test_dir/test-file
             "
-            ;;
-          "delegated")
-            podman run --rm -v "$(pwd):$test_dir:rw,delegated" alpine:latest sh -c "
+          case "delegated"
+            podman run --rm -v "(pwd):$test_dir:rw,delegated" alpine:latest sh -c "
               time dd if=/dev/zero of=$test_dir/test-file bs=1M count=100
               sync
               time dd if=$test_dir/test-file of=/dev/null bs=1M
               rm $test_dir/test-file
             "
-            ;;
-          "volume")
-            podman volume create test-volume 2>/dev/null || true
+          case "volume"
+            podman volume create test-volume 2>/dev/null; or true
             podman run --rm -v test-volume:$test_dir alpine:latest sh -c "
               time dd if=/dev/zero of=$test_dir/test-file bs=1M count=100
               sync
@@ -537,30 +536,28 @@
               rm $test_dir/test-file
             "
             podman volume rm test-volume
-            ;;
-        esac
-      }
+        end
+      '';
 
-      # Port forwarding helper
-      container-port-forward() {
-        local container_name="$1"
-        local host_port="$2"
-        local container_port="$3"
+      container-port-forward = ''
+        set container_name $argv[1]
+        set host_port $argv[2]
+        set container_port $argv[3]
 
-        if [[ -z "$container_name" || -z "$host_port" || -z "$container_port" ]]; then
+        if test -z "$container_name"; or test -z "$host_port"; or test -z "$container_port"
           echo "Usage: container-port-forward <container-name> <host-port> <container-port>"
           return 1
-        fi
+        end
 
-        podman stop "$container_name" 2>/dev/null || true
+        podman stop "$container_name" 2>/dev/null; or true
         podman run -d \
           --name "$container_name" \
           -p "$host_port:$container_port" \
-          "$@"
+          $argv[4..-1]
 
         echo "Port forwarding: localhost:$host_port -> $container_name:$container_port"
-      }
-    '';
+      '';
+    };
   };
 
   # Environment variables for networking (paths unified in containers-common.nix; keep only subnet info)
