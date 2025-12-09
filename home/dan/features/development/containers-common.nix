@@ -16,6 +16,7 @@
     ctop
     dive
     lazydocker
+    podman-desktop
     crane
 
     # Kubernetes toolchain
