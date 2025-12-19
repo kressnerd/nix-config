@@ -187,7 +187,7 @@
   };
 
   # Git configuration for better Magit integration
-  programs.git.extraConfig = {
+  programs.git.settings = {
     magit = {
       hideCursor = false;
     };

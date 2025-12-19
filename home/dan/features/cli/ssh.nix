@@ -1,17 +1,17 @@
 {config, ...}: {
   programs.ssh = {
     enable = true;
-
-    # Automatically add keys to SSH agent
-    addKeysToAgent = "yes";
-
-    # Use macOS keychain to store passphrases
-    extraConfig = ''
-      UseKeychain yes
-      IgnoreUnknown UseKeychain
-    '';
+    enableDefaultConfig = false;
 
     matchBlocks = {
+      "*" = {
+        addKeysToAgent = "yes";
+        extraOptions = {
+          UseKeychain = "yes";
+          IgnoreUnknown = "UseKeychain";
+        };
+      };
+
       "github-personal" = {
         hostname = "github.com";
         user = "git";

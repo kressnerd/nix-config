@@ -76,7 +76,7 @@
 
   # Git configuration override for VM
   programs.git = {
-    extraConfig = {
+    settings = {
       # VM-specific git settings
       init.defaultBranch = "main";
       pull.rebase = true;

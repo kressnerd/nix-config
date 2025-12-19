@@ -144,7 +144,7 @@ alejandra .
       br = "branch";
       ci = "commit";
     };
-    extraConfig = {
+    settings = {
       init.defaultBranch = "main";
       core.editor = "vim";
     };
