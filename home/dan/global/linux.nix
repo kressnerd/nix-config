@@ -6,7 +6,7 @@
   ...
 }: {
   home = {
-    stateVersion = "25.05";
+    stateVersion = "25.11";
 
     # Common packages for all hosts
     packages = with pkgs; [

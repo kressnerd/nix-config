@@ -19,7 +19,7 @@ in {
     waybar
     mako
     libnotify
-    rofi-wayland
+    rofi
     wl-clipboard
     cliphist
     brightnessctl

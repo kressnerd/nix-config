@@ -60,7 +60,7 @@ nix-config/
 - **Hyprland** Wayland compositor (from unstable)
 - **greetd + tuigreet** login manager
 - **waybar, mako, kitty** essential Wayland tools
-- **rofi-wayland** application launcher
+- **rofi** application launcher
 
 ### ✅ Development Tools
 

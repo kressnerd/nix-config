@@ -11,7 +11,7 @@
   ];
 
   # System Configuration
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
   nixpkgs.hostPlatform = "aarch64-linux";
 
   # Allow unfree packages

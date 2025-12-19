@@ -141,15 +141,6 @@
       package = pkgs.qemu_kvm;
       runAsRoot = true;
       swtpm.enable = true;
-      ovmf = {
-        enable = true;
-        packages = [
-          (pkgs.OVMF.override {
-            secureBoot = true;
-            tpmSupport = true;
-          }).fd
-        ];
-      };
     };
   };
   virtualisation.spiceUSBRedirection.enable = true;
@@ -242,7 +233,7 @@
     mako
     libnotify
     kitty
-    rofi-wayland
+    rofi
 
     # Rust-based CLI tools
     fzf # actually written in go
@@ -345,5 +336,5 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
 }

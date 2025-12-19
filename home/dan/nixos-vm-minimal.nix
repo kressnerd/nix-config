@@ -5,7 +5,7 @@
   pkgs-unstable,
   ...
 }: {
-  home.stateVersion = "25.05";
+  home.stateVersion = "25.11";
 
   # Basic user information
   home.username = "dan";
@@ -50,8 +50,10 @@
   # Basic git configuration (will be overridden by git.nix feature)
   programs.git = {
     enable = true;
-    userName = "Dan";
-    userEmail = "dan@nixos-vm";
+    settings.user = {
+      name = "Dan";
+      email = "dan@nixos-vm";
+    };
   };
 
   # Environment variables

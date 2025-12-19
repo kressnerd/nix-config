@@ -86,7 +86,7 @@
     mako
     libnotify
     kitty
-    rofi-wayland
+    rofi
 
     # Essential Rust-based CLI tools (subset from thiniel)
     fzf
@@ -162,5 +162,5 @@
   security.sudo.wheelNeedsPassword = false;
 
   # System state version
-  system.stateVersion = "25.05";
+  system.stateVersion = "25.11";
 }
