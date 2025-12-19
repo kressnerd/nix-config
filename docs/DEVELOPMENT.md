@@ -135,8 +135,10 @@ alejandra .
 {
   programs.git = {
     enable = true;
-    userName = "user";
-    userEmail = "user@example.com";
+    settings.user = {
+      name = "user";
+      email = "user@example.com";
+    };
     aliases = {
       co = "checkout";
       br = "branch";
@@ -153,9 +155,9 @@ alejandra .
 {
   programs.git.enable = true;
   programs.git.extraConfig.init.defaultBranch = "main";
-  programs.git.userName = "user";
+  programs.git.settings.user.name = "user";
   programs.git.aliases.co = "checkout";
-  programs.git.userEmail = "user@example.com";
+  programs.git.settings.user.email = "user@example.com";
 }
 ```
 

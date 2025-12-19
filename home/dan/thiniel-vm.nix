@@ -24,7 +24,7 @@
   home = {
     username = "dan";
     homeDirectory = "/home/dan";
-    stateVersion = "25.05";
+    stateVersion = "25.11";
   };
 
   # Let Home Manager manage itself
