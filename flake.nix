@@ -153,7 +153,7 @@
       };
 
       thiniel-vm = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux"; # Default to Apple Silicon, can be overridden
+        system = "aarch64-linux";
         specialArgs = {
           inherit inputs outputs;
           pkgs-unstable = import ./lib/pkgs-unstable.nix {

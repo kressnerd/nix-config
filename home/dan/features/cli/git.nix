@@ -6,19 +6,31 @@
 }: {
   home.packages = [pkgs.git pkgs.delta];
 
-  # Git program configuration with Delta integration
   programs.git = {
     enable = true;
-    delta = {
-      enable = true;
-      options = {
+    settings = {
+      delta = {
+        enable = true;
         theme = "Dracula";
-        line-numbers = true;
-        side-by-side = true;
+        "line-numbers" = true;
+        "side-by-side" = true;
         navigate = true;
         hyperlinks = true;
         light = false;
       };
+    };
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      theme = "Dracula";
+      "line-numbers" = true;
+      "side-by-side" = true;
+      navigate = true;
+      hyperlinks = true;
+      light = false;
     };
   };
 
