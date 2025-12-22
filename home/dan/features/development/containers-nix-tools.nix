@@ -19,8 +19,8 @@
 
       outputs = { self, nixpkgs, flake-utils }:
         flake-utils.lib.eachDefaultSystem (system: {
-          devShells.default = nixpkgs.legacyPackages.''${system}.mkShell {
-            buildInputs = with nixpkgs.legacyPackages.''${system}; [
+          devShells.default = nixpkgs.legacyPackages.''${stdenv.hostPlatform.system}.mkShell {
+            buildInputs = with nixpkgs.legacyPackages.''${stdenv.hostPlatform.system}; [
               nodejs_20
               podman
               skopeo
