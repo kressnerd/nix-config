@@ -49,7 +49,7 @@
         id = 0;
         isDefault = true;
 
-        extensions.packages = with inputs.firefox-addons.packages.${pkgs.system}; [
+        extensions.packages = with inputs.firefox-addons.packages.${pkgs.stdenv.hostPlatform.system}; [
           ublock-origin
           sponsorblock
           return-youtube-dislikes
