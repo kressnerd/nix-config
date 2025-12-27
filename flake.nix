@@ -188,6 +188,35 @@
           }
         ];
       };
+
+      pronix = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs outputs;
+        };
+        modules = [
+          {
+            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.config.allowUnfree = true;
+          }
+          ./hosts/pronix
+          disko.nixosModules.disko
+          home-manager.nixosModules.home-manager
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              extraSpecialArgs = {
+                inherit inputs outputs;
+              };
+              users.dan = import ./home/dan/pronix.nix;
+              sharedModules = [
+                sops-nix.homeManagerModules.sops
+              ];
+            };
+          }
+        ];
+      };
     };
 
     darwinConfigurations = {
