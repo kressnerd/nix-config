@@ -217,6 +217,22 @@
           }
         ];
       };
+
+      cupix001 = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs outputs;
+        };
+        modules = [
+          {
+            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.config.allowUnfree = true;
+          }
+          ./hosts/cupix001
+          disko.nixosModules.disko
+          home-manager.nixosModules.home-manager
+        ];
+      };
     };
 
     darwinConfigurations = {
