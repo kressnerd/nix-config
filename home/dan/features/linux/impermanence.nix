@@ -20,8 +20,7 @@
       ".ssh"
       "dev"
       "Projects"
-      #      { directory = ".gnupg"; mode = "0700"; }
-      #      { directory = ".ssh"; mode = "0700"; }
+      ".config/sops/age"
     ];
     files = [
       ".bash_history"
