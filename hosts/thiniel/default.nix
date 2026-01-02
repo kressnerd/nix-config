@@ -149,6 +149,12 @@
   networking.hostName = "thiniel";
   networking.networkmanager.enable = true;
 
+  # Fix sops key permissions so home-manager (user dan) can read it
+  systemd.tmpfiles.rules = [
+    "d /var/lib/sops-nix 0750 root wheel -"
+    "z /var/lib/sops-nix/key.txt 0640 root wheel -"
+  ];
+
   # Configure network proxy if necessary
   # networking.proxy.default = "http://user:password@proxy:port/";
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";

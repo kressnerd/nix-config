@@ -24,7 +24,7 @@
   # SOPS configuration for thiniel - only personal secrets for security
   sops = {
     defaultSopsFile = ../../hosts/thiniel/secrets.yaml;
-    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+    age.keyFile = "/var/lib/sops-nix/key.txt";
     secrets = {
       "git/personal/name" = {};
       "git/personal/email" = {};
