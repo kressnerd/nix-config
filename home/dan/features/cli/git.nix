@@ -78,8 +78,8 @@
           [commit]
               gpgsign = false
 
-          [url "git@github-personal:"]
-              insteadOf = git@github.com:
+          [url "git@github.com:"]
+              insteadOf = git@github-personal:
         '';
         path = "${config.home.homeDirectory}/.config/git/personal";
       };
@@ -94,8 +94,8 @@
           [commit]
               gpgsign = false
 
-          [url "git@github-company:"]
-              insteadOf = git@github.com:
+          [url "git@github.com:"]
+              insteadOf = git@github-company:
         '';
         path = "${config.home.homeDirectory}/.config/git/company";
       };
@@ -110,8 +110,8 @@
           [commit]
               gpgsign = false
 
-          [url "git@github-client001:"]
-              insteadOf = git@github.com:
+          [url "git@github.com:"]
+              insteadOf = git@github-client001:
         '';
         path = "${config.home.homeDirectory}/.config/git/client001";
       };
