@@ -175,6 +175,68 @@ in {
           };
         };
       };
+
+      client002 = {
+        id = 2;
+        name = "client002";
+        isDefault = false;
+
+        extensions.packages =
+          commonExtensions
+          ++ convinienceExtensions
+          ++ devExtensions
+          ++ privacyExtensions
+          ++ productivityExtensions
+          ++ (with addons; [
+            multi-account-containers
+            # foxyproxy
+          ]);
+
+        settings = {
+          "privacy.clearOnShutdown.cookies" = true;
+          "privacy.clearOnShutdown.offlineApps" = true;
+          "privacy.clearOnShutdown.sessions" = true;
+          "privacy.resistFingerprinting" = true;
+          "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
+
+          "privacy.clearOnShutdown.history" = false;
+          "privacy.clearOnShutdown.downloads" = false;
+          "privacy.clearOnShutdown.cache" = false;
+          "privacy.clearOnShutdown.formdata" = false;
+          "browser.startup.page" = 3;
+          "browser.toolbars.bookmarks.visibility" = "always";
+
+          "privacy.clearOnShutdown.siteSettings" = false;
+
+          "webgl.disabled" = false;
+
+          # Extension-specific settings
+          "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
+        };
+
+        search = {
+          force = true;
+          default = "Kagi";
+          engines = {
+            "Kagi" = {
+              urls = [
+                {
+                  template = "https://kagi.com/search";
+                  params = [
+                    {
+                      name = "q";
+                      value = "{searchTerms}";
+                    }
+                  ];
+                }
+              ];
+              icon = "https://kagi.com/favicon.ico";
+              updateInterval = 24 * 60 * 60 * 1000;
+              definedAliases = ["@k"];
+            };
+          };
+        };
+      };
     };
   };
 }

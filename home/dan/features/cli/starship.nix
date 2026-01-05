@@ -84,6 +84,7 @@
           "~/dev/personal" = " ";
           "~/dev/company" = " ";
           "~/dev/client001" = " ";
+          "~/dev/client002" = " ";
           "~/Documents" = "󰈙 ";
           "~/Downloads" = " ";
           "~/Music" = " ";

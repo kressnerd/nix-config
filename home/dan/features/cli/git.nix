@@ -62,6 +62,11 @@
                 path = ~/.config/git/client001
           ''}
 
+          ${lib.optionalString (config.sops.secrets ? "git/client002/folder") ''
+            [includeIf "gitdir:~/dev/${config.sops.placeholder."git/client002/folder"}/"]
+                path = ~/.config/git/client002
+          ''}
+
           [alias]
               lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
               whoami = !git config user.name && git config user.email
@@ -114,6 +119,22 @@
               insteadOf = git@github-client001:
         '';
         path = "${config.home.homeDirectory}/.config/git/client001";
+      };
+    }
+    // lib.optionalAttrs (config.sops.secrets ? "git/client002/name") {
+      "git-client002" = {
+        content = ''
+          [user]
+              name = ${config.sops.placeholder."git/client002/name"}
+              email = ${config.sops.placeholder."git/client002/email"}
+
+          [commit]
+              gpgsign = false
+
+          [url "git@github.com:"]
+              insteadOf = git@github-client002:
+        '';
+        path = "${config.home.homeDirectory}/.config/git/client002";
       };
     };
 }

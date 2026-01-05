@@ -39,6 +39,9 @@
       "git/client001/name" = {};
       "git/client001/email" = {};
       "git/client001/folder" = {};
+      "git/client002/name" = {};
+      "git/client002/email" = {};
+      "git/client002/folder" = {};
     };
   };
 
