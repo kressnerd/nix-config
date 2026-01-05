@@ -32,6 +32,13 @@
         identityFile = "~/.ssh/id_ed25519_2025-07-22-temp";
         identitiesOnly = true;
       };
+
+      "github-client002" = {
+        hostname = "github.com";
+        user = "git";
+        identityFile = "~/.ssh/id_ed25519_2025-07-22-temp";
+        identitiesOnly = true;
+      };
     };
   };
 }
