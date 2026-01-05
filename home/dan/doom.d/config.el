@@ -65,10 +65,10 @@
 
 ;;; macOS specific configuration
 (when IS-MAC
-  ;; macOS modifier keys - matching original configuration
-  (setq mac-option-modifier 'meta
+  ;; macOS modifier keys - enable umlauts with left Option key
+  (setq mac-option-modifier 'none
         mac-command-modifier 'super
-        mac-right-option-modifier 'nil
+        mac-right-option-modifier 'meta
         ns-use-native-fullscreen nil
         ns-use-fullscreen-animation nil)
 

@@ -78,10 +78,10 @@
         (when (memq window-system '(mac ns x))
           (exec-path-from-shell-initialize))
 
-        ;; macOS keybindings
-        (setq mac-option-modifier 'meta
+        ;; macOS keybindings - enable umlauts with left Option key
+        (setq mac-option-modifier 'none
               mac-command-modifier 'super
-              mac-right-option-modifier 'nil)
+              mac-right-option-modifier 'meta)
 
         ;; Better scrolling on macOS
         (setq mouse-wheel-scroll-amount '(1 ((shift) . 1))
