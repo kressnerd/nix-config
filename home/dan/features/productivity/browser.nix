@@ -189,7 +189,7 @@ in {
           ++ productivityExtensions
           ++ (with addons; [
             multi-account-containers
-            # foxyproxy
+            onepassword-password-manager
           ]);
 
         settings = {
