@@ -131,8 +131,8 @@
           [commit]
               gpgsign = false
 
-          [url "git@github.com:"]
-              insteadOf = git@github-client002:
+          [url "git@bitbucket.org:"]
+              insteadOf = git@gbitbucket-client002:
         '';
         path = "${config.home.homeDirectory}/.config/git/client002";
       };
