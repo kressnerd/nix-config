@@ -33,10 +33,10 @@
         identitiesOnly = true;
       };
 
-      "github-client002" = {
-        hostname = "github.com";
+      "bitbucket-client002" = {
+        hostname = "bitbucket.org";
         user = "git";
-        identityFile = "~/.ssh/id_ed25519_2025-07-22-temp";
+        identityFile = "~/.ssh/id_ed25519";
         identitiesOnly = true;
       };
     };
