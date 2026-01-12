@@ -126,13 +126,13 @@
   };
 
   # Add aliases for the new tools
-  programs.fish.shellAliases = {
-    ls = "eza";
-    cat = "bat";
-    ps = "procs";
-    top = "btm";
-    du = "dust";
-    df = "duf";
-    cd = "z"; # From zoxide
-  };
+  # programs.fish.shellAliases = {
+  #   ls = "eza";
+  #   cat = "bat";
+  #   ps = "procs";
+  #   top = "btm";
+  #   du = "dust";
+  #   df = "duf";
+  #   cd = "z"; # From zoxide
+  # };
 }
