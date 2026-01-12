@@ -327,6 +327,34 @@
 (setq gc-cons-threshold 100000000
       read-process-output-max (* 1024 1024))
 
+;;; Spell Checking Configuration
+;; Configure ispell to use Hunspell with English and German dictionaries simultaneously
+(use-package! ispell
+  :init
+  ;; On macOS, add user Nix profile to exec-path for GUI Emacs
+  (when (and IS-MAC (display-graphic-p))
+    (let ((user-bin (expand-file-name "~/.nix-profile/bin")))
+      (when (file-directory-p user-bin)
+        (add-to-list 'exec-path user-bin)))
+    (let ((user-bin "/etc/profiles/per-user/daniel.kressner/bin"))
+      (when (file-directory-p user-bin)
+        (add-to-list 'exec-path user-bin))))
+  
+  (setq ispell-program-name "hunspell"
+        ispell-dictionary "en_US,de_DE")
+  :config
+  ;; Configure Hunspell to use multiple dictionaries
+  (ispell-set-spellchecker-params)
+  (ispell-hunspell-add-multi-dic "en_US,de_DE"))
+
+;; Flyspell configuration for on-the-fly spell checking
+(use-package! flyspell
+  :hook ((text-mode . flyspell-mode)
+         (prog-mode . flyspell-prog-mode))
+  :init
+  (setq flyspell-issue-message-flag nil
+        flyspell-issue-welcome-flag nil))
+
 ;;; Load local configuration if it exists
 ;; This allows for machine-specific configuration without modifying this file
 (when (file-exists-p (concat doom-user-dir "local.el"))

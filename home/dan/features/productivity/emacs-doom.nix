@@ -29,6 +29,9 @@
       imagemagick # For image-dired
       zstd # For undo-tree compression
 
+      # Spell checking - Hunspell with English and German dictionaries
+      (hunspell.withDicts (dicts: [dicts.en_US dicts.de_DE]))
+
       # LSP servers (managed by Nix, used by Doom)
       nixd # Nix LSP
       nodePackages.typescript-language-server
@@ -143,6 +146,12 @@
 
     # Socket activation for faster startup
     socketActivation.enable = lib.mkIf (!pkgs.stdenv.isDarwin) true;
+
+    # Add Nix packages to Emacs PATH (macOS GUI fix)
+    extraOptions = lib.optionals pkgs.stdenv.isDarwin [
+      "--eval"
+      ''(setenv "PATH" (concat "${config.home.profileDirectory}/bin:" (getenv "PATH")))''
+    ];
   };
 
   # Declaratively manage doom.d configuration
