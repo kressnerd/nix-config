@@ -88,6 +88,9 @@
   )
 
 ;;; Editor Configuration
+;; Configure internal shell to POSIX (bash) to avoid issues with sub-processes
+(setq shell-file-name (executable-find "bash"))
+
 ;; Line numbers - Doom enables this by default, but ensure it's configured properly
 (setq display-line-numbers-type 'relative) ; Use relative line numbers for vim-style navigation
 
@@ -222,6 +225,10 @@
         magit-revision-show-gravatars '("^Author:     " . "^Commit:     ")))
 
 ;;; Terminal Integration
+;; Use fish for interactive terminal buffers
+(setq-default vterm-shell (executable-find "fish")
+              explicit-shell-file-name (executable-find "fish"))
+
 (use-package! vterm
   :commands (vterm multi-vterm)
   :init
