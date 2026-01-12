@@ -3,7 +3,7 @@
   inputs,
   ...
 }: {
-  home.persistence."/persist/home" = {
+  home.persistence."/persist" = {
     directories = [
       #      ".cache/bat"
       #      ".cache/dconf"
