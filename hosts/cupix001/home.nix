@@ -11,10 +11,6 @@
     extraSpecialArgs = {inherit inputs;};
 
     users.dan = {
-      imports = [
-        inputs.impermanence.nixosModules.home-manager.impermanence
-      ];
-
       home.stateVersion = "25.11";
 
       # Minimal packages
@@ -48,7 +44,7 @@
       };
 
       # Impermanence for home directory
-      home.persistence."/persist/home/dan" = {
+      home.persistence."/persist/home" = {
         directories = [
           ".ssh"
           ".local/share/fish"
@@ -56,7 +52,6 @@
         files = [
           ".local/share/fish/fish_history"
         ];
-        allowOther = true;
       };
     };
   };

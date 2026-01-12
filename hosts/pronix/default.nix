@@ -111,7 +111,6 @@
   '';
 
   fileSystems."/persist".neededForBoot = true;
-  fileSystems."/var/log".neededForBoot = true;
 
   environment.persistence."/persist/system" = {
     hideMounts = true;
