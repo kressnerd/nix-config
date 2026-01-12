@@ -42,8 +42,30 @@
 
       # Language formatters
       nixpkgs-fmt # Nix formatter
+      nixfmt-rfc-style # Nix formatter (official)
       nodePackages.prettier
       black # Python formatter
+      shfmt # Shell formatter
+      stylelint # CSS linter
+      nodePackages.js-beautify # JS beautifier
+
+      # Build tools
+      cmake
+      gnumake
+
+      # Python tools
+      python3Packages.pyflakes
+      python3Packages.isort
+      python3Packages.nose2 # nose is deprecated/removed in newer python versions
+      python3Packages.pytest
+      pipenv
+
+      # Rust tools
+      cargo
+      rustc
+
+      # Shell tools
+      shellcheck
 
       # Search tools (used by Doom's search features)
       silver-searcher # ag command
@@ -66,6 +88,7 @@
       # macOS specific
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
+      coreutils # Provides gls
       terminal-notifier # macOS notifications
       pinentry_mac # GPG pinentry for macOS
     ];
