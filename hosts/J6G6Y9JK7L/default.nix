@@ -77,7 +77,7 @@
     fi
   '';
 
-  # Declaratively set user shell - runs after user creation
+  # Set user shell - runs after user creation
   system.activationScripts.users.text = lib.mkAfter ''
     echo "Setting default shell to fish for ${config.system.primaryUser}..."
     CURRENT_SHELL=$(dscl . -read /Users/${config.system.primaryUser} UserShell 2>/dev/null | awk '{print $2}')
