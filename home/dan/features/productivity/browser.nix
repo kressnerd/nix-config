@@ -72,7 +72,7 @@ in {
           "privacy.clearOnShutdown.cookies" = true;
           "privacy.clearOnShutdown.offlineApps" = true;
           "privacy.clearOnShutdown.sessions" = true;
-          "privacy.resistFingerprinting" = true;
+          "privacy.resistFingerprinting" = false;
           "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
 
           "privacy.clearOnShutdown.history" = false;
@@ -196,7 +196,7 @@ in {
           "privacy.clearOnShutdown.cookies" = true;
           "privacy.clearOnShutdown.offlineApps" = true;
           "privacy.clearOnShutdown.sessions" = true;
-          "privacy.resistFingerprinting" = true;
+          "privacy.resistFingerprinting" = false;
           "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
 
           "privacy.clearOnShutdown.history" = false;
