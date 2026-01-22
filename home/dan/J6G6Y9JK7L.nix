@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   inputs,
   outputs,
   ...
@@ -54,5 +55,15 @@
   # Host-specific shell aliases
   programs.fish.shellAliases = {
     drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config";
+  };
+
+  # Fix for sops-nix on macOS: ensure /usr/bin is in PATH for getconf
+  launchd.agents.sops-nix = {
+    enable = true;
+    config = {
+      EnvironmentVariables = {
+        PATH = lib.mkForce "/usr/bin:/bin:/usr/sbin:/sbin:${config.home.path}/bin";
+      };
+    };
   };
 }
