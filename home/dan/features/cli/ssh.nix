@@ -3,6 +3,8 @@
     enable = true;
     enableDefaultConfig = false;
 
+    includes = ["config.d/client002"];
+
     matchBlocks = {
       "*" = {
         addKeysToAgent = "yes";
