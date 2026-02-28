@@ -469,6 +469,24 @@
         "type": "github"
       }
     },
+    "nixpkgs-firefox-darwin": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_8"
+      },
+      "locked": {
+        "lastModified": 1772241442,
+        "narHash": "sha256-OE8WN66zpjUY6oqx7RYV3m7L4nANhbXK2+AZElWswBs=",
+        "owner": "bandithedoge",
+        "repo": "nixpkgs-firefox-darwin",
+        "rev": "bff1fcce2c98f5a90afbb144bef162eed49161a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bandithedoge",
+        "repo": "nixpkgs-firefox-darwin",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1765674936,
@@ -600,6 +618,22 @@
       "locked": {
         "lastModified": 1770115704,
         "narHash": "sha256-KHFT9UWOF2yRPlAnSXQJh6uVcgNcWlFqqiAZ7OVlHNc=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "16762245d811fdd74b417cc922223dc8eb741e8b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_9": {
+      "locked": {
+        "lastModified": 1769018530,
+        "narHash": "sha256-MJ27Cy2NtBEV5tsK+YraYr2g851f3Fl1LpNHDzDX15c=",
         "owner": "nixos",
         "repo": "nixpkgs",
         "rev": "e6eae2ee2110f3d31110d5c222cd395303343b08",
@@ -615,7 +649,7 @@
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts_3",
-        "nixpkgs": "nixpkgs_8"
+        "nixpkgs": "nixpkgs_9"
       },
       "locked": {
         "lastModified": 1770212052,
@@ -646,6 +680,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_7",
         "nixpkgs-darwin": "nixpkgs-darwin",
+        "nixpkgs-firefox-darwin": "nixpkgs-firefox-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
         "score-spec-tap": "score-spec-tap",
