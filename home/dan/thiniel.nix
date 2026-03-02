@@ -11,7 +11,8 @@
     ./features/cli/vim.nix
     ./features/linux/hyprland.nix
     ./features/linux/impermanence.nix
-    ./features/productivity/firefox-linux.nix
+    ./features/productivity/browser.nix
+    ./features/productivity/firefox-personal.nix
     ./features/linux/fonts.nix
   ];
 
