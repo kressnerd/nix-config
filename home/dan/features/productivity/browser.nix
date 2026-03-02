@@ -3,238 +3,55 @@
   pkgs,
   lib,
   ...
-}: let
-  addons = pkgs.nur.repos.rycee.firefox-addons;
-
-  commonExtensions = with addons; [
-    ublock-origin # Ad blocker
-    keepassxc-browser # Password manager
-    darkreader # Dark mode for websites
-    consent-o-matic
-  ];
-
-  devExtensions = with addons; [
-    # react-devtools
-    refined-github
-    octotree # GitHub code tree
-    wappalyzer # Technology profiler
-  ];
-
-  privacyExtensions = with addons; [
-    privacy-badger
-    decentraleyes
-    clearurls
-    noscript
-    temporary-containers
-  ];
-
-  productivityExtensions = with addons; [
-    tridactyl
-    # vimium
-    tree-style-tab
-    # sidebery
-    languagetool # Grammar checker
-    single-file # Save complete web pages
-  ];
-
-  convinienceExtensions = with addons; [
-    sponsorblock # Skip YouTube sponsors
-    return-youtube-dislikes
-    youtube-shorts-block
-    reddit-enhancement-suite
-    old-reddit-redirect
-    # bypass-paywalls-clean
-  ];
-in {
-  programs.librewolf = {
+}: {
+  programs.firefox = {
     enable = true;
 
-    profiles = {
-      company = {
-        id = 0;
-        name = "company";
-        isDefault = true;
+    package =
+      if pkgs.stdenv.isDarwin
+      then null # pre-installed externally
+      else pkgs.firefox;
 
-        extensions.packages =
-          commonExtensions
-          ++ devExtensions
-          ++ privacyExtensions
-          ++ productivityExtensions
-          ++ convinienceExtensions
-          ++ (with addons; [
-            multi-account-containers
-            # aws-sso-container
-            link-cleaner
-            # markdown-viewer-webext
-          ]);
-
-        settings = {
-          "privacy.clearOnShutdown.cookies" = true;
-          "privacy.clearOnShutdown.offlineApps" = true;
-          "privacy.clearOnShutdown.sessions" = true;
-          "privacy.resistFingerprinting" = false;
-          "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
-
-          "privacy.clearOnShutdown.history" = false;
-          "privacy.clearOnShutdown.downloads" = false;
-          "privacy.clearOnShutdown.cache" = false;
-          "privacy.clearOnShutdown.formdata" = false;
-          "browser.startup.page" = 3;
-          "browser.toolbars.bookmarks.visibility" = "always";
-
-          "privacy.clearOnShutdown.siteSettings" = false;
-
-          "webgl.disabled" = false;
-
-          # Extension-specific settings
-          "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
-        };
-
-        search = {
-          force = true;
-          default = "Kagi";
-          engines = {
-            "Kagi" = {
-              urls = [
-                {
-                  template = "https://kagi.com/search";
-                  params = [
-                    {
-                      name = "q";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-              icon = "https://kagi.com/favicon.ico";
-              updateInterval = 24 * 60 * 60 * 1000;
-              definedAliases = ["@k"];
-            };
-          };
-        };
+    policies = {
+      DisableTelemetry = true;
+      DisableFirefoxStudies = true;
+      FirefoxSuggest = {
+        WebSuggestions = false;
+        SponsoredSuggestions = false;
+        ImproveSuggest = false;
       };
-
-      client001 = {
-        id = 1;
-        name = "client001";
-        isDefault = false;
-
-        extensions.packages =
-          commonExtensions
-          ++ convinienceExtensions
-          ++ devExtensions
-          ++ privacyExtensions
-          ++ productivityExtensions
-          ++ (with addons; [
-            multi-account-containers
-            # foxyproxy
-          ]);
-
-        settings = {
-          "privacy.clearOnShutdown.cookies" = true;
-          "privacy.clearOnShutdown.offlineApps" = true;
-          "privacy.clearOnShutdown.sessions" = true;
-          "privacy.resistFingerprinting" = true;
-          "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
-
-          "privacy.clearOnShutdown.history" = false;
-          "privacy.clearOnShutdown.downloads" = false;
-          "privacy.clearOnShutdown.cache" = false;
-          "privacy.clearOnShutdown.formdata" = false;
-          "browser.startup.page" = 3;
-          "browser.toolbars.bookmarks.visibility" = "always";
-
-          "privacy.clearOnShutdown.siteSettings" = false;
-
-          "webgl.disabled" = false;
-
-          # Extension-specific settings
-          "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
-        };
-
-        search = {
-          force = true;
-          default = "Kagi";
-          engines = {
-            "Kagi" = {
-              urls = [
-                {
-                  template = "https://kagi.com/search";
-                  params = [
-                    {
-                      name = "q";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-              icon = "https://kagi.com/favicon.ico";
-              updateInterval = 24 * 60 * 60 * 1000;
-              definedAliases = ["@k"];
-            };
-          };
-        };
+      EnableTrackingProtection = {
+        Value = true;
+        Locked = true;
+        Cryptomining = true;
+        Fingerprinting = true;
       };
-
-      client002 = {
-        id = 2;
-        name = "client002";
-        isDefault = false;
-
-        extensions.packages =
-          commonExtensions
-          ++ convinienceExtensions
-          ++ devExtensions
-          ++ privacyExtensions
-          ++ productivityExtensions
-          ++ (with addons; [
-            multi-account-containers
-            onepassword-password-manager
-          ]);
-
-        settings = {
-          "privacy.clearOnShutdown.cookies" = true;
-          "privacy.clearOnShutdown.offlineApps" = true;
-          "privacy.clearOnShutdown.sessions" = true;
-          "privacy.resistFingerprinting" = false;
-          "privacy.sanitize.sanitizeOnShutdown" = false; # Ensure overall sanitization is off
-
-          "privacy.clearOnShutdown.history" = false;
-          "privacy.clearOnShutdown.downloads" = false;
-          "privacy.clearOnShutdown.cache" = false;
-          "privacy.clearOnShutdown.formdata" = false;
-          "browser.startup.page" = 3;
-          "browser.toolbars.bookmarks.visibility" = "always";
-
-          "privacy.clearOnShutdown.siteSettings" = false;
-
-          "webgl.disabled" = false;
-
-          # Extension-specific settings
-          "extensions.treestyletab.show-in-browser-action" = false; # Hide TST from toolbar
+      DisablePocket = true;
+      DisableFirefoxAccounts = true;
+      DisableAccounts = true;
+      FirefoxHome = {
+        Search = true;
+        TopSites = false;
+        SponsoredTopSites = false;
+        Highlights = false;
+        Pocket = false;
+        SponsoredPocket = false;
+        Snippets = false;
+      };
+      SanitizeOnShutdown = {
+        Cache = true;
+        Cookies = true;
+        OfflineApps = true;
+        Sessions = true;
+      };
+      "3rdparty".extensions = {
+        "uBlock@raymondhill.net" = {
+          permissions = ["internal.privateBrowsingAllowed"];
+          origins = [];
         };
-
-        search = {
-          force = true;
-          default = "Kagi";
-          engines = {
-            "Kagi" = {
-              urls = [
-                {
-                  template = "https://kagi.com/search";
-                  params = [
-                    {
-                      name = "q";
-                      value = "{searchTerms}";
-                    }
-                  ];
-                }
-              ];
-              icon = "https://kagi.com/favicon.ico";
-              updateInterval = 24 * 60 * 60 * 1000;
-              definedAliases = ["@k"];
-            };
-          };
+        "gdpr@cavi.au.dk" = {
+          permissions = ["<all_urls>"];
+          origins = ["<all_urls>"];
         };
       };
     };

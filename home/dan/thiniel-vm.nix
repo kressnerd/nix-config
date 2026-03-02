@@ -15,7 +15,8 @@
     ./features/cli/starship.nix
     ./features/linux/hyprland.nix
     ./features/linux/fonts.nix
-    ./features/productivity/firefox-linux.nix
+    ./features/productivity/browser.nix
+    ./features/productivity/firefox-personal.nix
     # Note: No impermanence module for VM simplicity
     # Note: Can add more features incrementally for testing
   ];

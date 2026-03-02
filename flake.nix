@@ -46,8 +46,6 @@
 
     firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
 
-    nixpkgs-firefox-darwin.url = "github:bandithedoge/nixpkgs-firefox-darwin";
-
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -75,7 +73,6 @@
     nixos-hardware,
     impermanence,
     firefox-addons,
-    nixpkgs-firefox-darwin,
     disko,
     nixos-anywhere,
     ...
@@ -297,21 +294,6 @@
           {
             nixpkgs.overlays = [
               nur.overlays.default
-              nixpkgs-firefox-darwin.overlay
-              # Make the overlay's librewolf compatible with Home Manager's
-              # mkFirefoxModule which expects a wrapped package with .override
-              (final: prev: {
-                librewolf = prev.librewolf.overrideAttrs (old: {
-                  passthru =
-                    (old.passthru or {})
-                    // {
-                      override = f: prev.librewolf;
-                      unwrapped = prev.librewolf;
-                      binaryName = "librewolf";
-                      browserName = "librewolf";
-                    };
-                });
-              })
             ];
             nixpkgs.config.allowUnfree = true;
           }
