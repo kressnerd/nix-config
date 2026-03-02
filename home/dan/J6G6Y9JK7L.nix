@@ -24,7 +24,7 @@
     ./features/productivity/firefox-company.nix
     # ./features/productivity/keepassxc.nix # installed via Homebrew cask to have signed version for quick unlock
     # ./features/productivity/vscode.nix
-    ./features/productivity/tools.nix
+    ./features/productivity/mac-tools.nix
     ./features/productivity/emacs-doom.nix
   ];
 
