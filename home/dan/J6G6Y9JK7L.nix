@@ -48,6 +48,9 @@
   };
 
   # Host-specific overrides
+  # Disable App Management TCC check — JAMF MDM resets this permission on every check-in
+  targets.darwin.copyApps.enableChecks = false;
+
   home = {
     username = "daniel.kressner";
     homeDirectory = "/Users/daniel.kressner";
