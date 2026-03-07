@@ -13,6 +13,8 @@
       else pkgs.firefox;
 
     policies = {
+      PasswordManagerEnabled = false;
+      OfferToSaveLogins = false;
       DisableTelemetry = true;
       DisableFirefoxStudies = true;
       FirefoxSuggest = {
