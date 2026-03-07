@@ -17,6 +17,13 @@
       "dev"
       "Projects"
       ".config/sops/age"
+      # KeepassXC
+      ".config/keepassxc"
+      # ownCloud client
+      ".config/ownCloud"
+      ".local/share/ownCloud"
+      # SweetHome3D
+      ".eteks"
     ];
     files = [
       ".bash_history"
