@@ -58,6 +58,14 @@
     "network.IDN_show_punycode" = true;
     "browser.formfill.enable" = false;
 
+    # Disable built-in password manager
+    "signon.rememberSignons" = false;
+    "signon.autofillForms" = false;
+    "signon.formlessCapture.enabled" = false;
+
+    # Disable translation for German
+    "browser.translations.neverTranslateLanguages" = "de";
+
     # UI
     "browser.startup.page" = 3; # restore previous session
     "browser.toolbars.bookmarks.visibility" = "always";
