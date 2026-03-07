@@ -131,6 +131,16 @@
         $VERBOSE_ECHO "Run 'doom install' manually after activation completes"
       fi
     '';
+
+    # Restart Emacs daemon after rebuild to pick up new environment (macOS only)
+    restartEmacsDaemon = lib.mkIf pkgs.stdenv.isDarwin (
+      lib.hm.dag.entryAfter ["linkGeneration"] ''
+        if /bin/launchctl list | grep -q org.nix-community.home.emacs; then
+          $VERBOSE_ECHO "Restarting Emacs daemon to pick up new environment..."
+          /bin/launchctl kickstart -k gui/$(/usr/bin/id -u)/org.nix-community.home.emacs 2>/dev/null || true
+        fi
+      ''
+    );
   };
 
   # Shell integration for Doom Emacs
