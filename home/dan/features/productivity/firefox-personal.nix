@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  inputs,
-  ...
-}: let
+{pkgs, ...}: let
   addons = pkgs.nur.repos.rycee.firefox-addons;
   exts = import ../../../../lib/firefox-extensions.nix {inherit addons;};
 in {
