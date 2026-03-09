@@ -30,6 +30,7 @@
     # Development tools
     direnv # Per-directory environments
     lazygit # Terminal UI for git
+    glab # GitLab CLI
     #git
     #gh
     #delta # Better git diff
@@ -51,6 +52,7 @@
     #nodejs_20
     #python312
     go
+    uv # Python package manager (provides uvx)
     #rustup
 
     # Cloud tools (moved to cloud-tools.nix module)
