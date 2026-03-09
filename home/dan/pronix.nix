@@ -6,6 +6,9 @@
 }: {
   home.stateVersion = "25.11";
 
+  # Suppress options.json generation to avoid nixpkgs store path context warning
+  manual.manpages.enable = false;
+
   # Basic user information
   home.username = "dan";
   home.homeDirectory = "/home/dan";

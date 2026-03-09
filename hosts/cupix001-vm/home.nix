@@ -13,6 +13,9 @@
     users.dan = {
       home.stateVersion = "25.11";
 
+      # Suppress options.json generation to avoid nixpkgs store path context warning
+      manual.manpages.enable = false;
+
       # Minimal packages for VM testing
       home.packages = with pkgs; [
         ripgrep
