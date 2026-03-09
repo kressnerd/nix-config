@@ -8,9 +8,6 @@
   # Disable nix-darwin's Nix management (required for Determinate Nix)
   nix.enable = false;
 
-  # Suppress options.json generation to avoid store path context warning
-  documentation.enable = false;
-
   nixpkgs.config.allowUnfree = true;
 
   programs.fish.enable = true;
