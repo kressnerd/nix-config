@@ -30,6 +30,8 @@
     };
   };
 
+  documentation.nixos.enable = false;
+
   # Boot configuration is handled in hardware.nix
 
   # Hostname

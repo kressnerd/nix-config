@@ -39,6 +39,8 @@
     };
   };
 
+  documentation.nixos.enable = false;
+
   # Hostname
   networking.hostName = "cupix001-vm";
   networking.domain = "kressner.cloud";

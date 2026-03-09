@@ -26,6 +26,8 @@
     options = "--delete-older-than 7d";
   };
 
+  documentation.nixos.enable = false;
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux"; # Default to Apple Silicon, can be overridden
