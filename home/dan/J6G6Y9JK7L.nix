@@ -1,5 +1,6 @@
 {
   config,
+  pkgs,
   lib,
   ...
 }: {
@@ -48,6 +49,10 @@
   # Host-specific overrides
   # Disable App Management TCC check — JAMF MDM resets this permission on every check-in
   targets.darwin.copyApps.enableChecks = false;
+
+  # Use Homebrew Cask kitty for GUI app
+  # programs.kitty.enable remains true — HM still generates ~/.config/kitty/kitty.conf
+  programs.kitty.package = pkgs.emptyDirectory;
 
   home = {
     username = "daniel.kressner";
