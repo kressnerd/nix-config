@@ -18,12 +18,12 @@
                   (file+head "pages/${slug}.org" "#+title: ${title}\n")
                   :unnarrowed t)))
 
-;; Larger initial GUI window (only when a graphical display is used)
+;; Initial GUI window size and position (only when a graphical display is used)
 (when (display-graphic-p)
   (setq frame-resize-pixelwise t)
-  ;; Append preferred size; Doom may set its own later, so we prepend ours
-  (setq initial-frame-alist (append '((width . 180) (height . 55)) initial-frame-alist)
-        default-frame-alist (append '((width . 180) (height . 55)) default-frame-alist)))
+  ;; Prepend preferred size and position; overrides Doom defaults
+  (setq initial-frame-alist (append '((width . 140) (height . 50) (left . 500) (top . 50)) initial-frame-alist)
+        default-frame-alist (append '((width . 140) (height . 50) (left . 500) (top . 50)) default-frame-alist)))
 
 ;;; Personal Information
 (setq user-full-name "Daniel Kressner"
