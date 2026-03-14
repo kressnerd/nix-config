@@ -183,7 +183,7 @@
     # Add Nix packages to Emacs PATH (macOS GUI fix)
     extraOptions = lib.optionals pkgs.stdenv.isDarwin [
       "--eval"
-      ''(progn (setenv "PATH" (concat "${config.home.profileDirectory}/bin:" (getenv "PATH"))) (add-to-list 'exec-path "${config.home.profileDirectory}/bin"))''
+      ''(progn (setenv "PATH" (concat "${config.home.profileDirectory}/bin:" (getenv "PATH"))) (add-to-list 'exec-path "${config.home.profileDirectory}/bin") (jka-compr-update))''
     ];
   };
 
