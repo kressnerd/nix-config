@@ -18,6 +18,7 @@
     ./features/development/formatters.nix
     ./features/development/jdk.nix
     ./features/development/nodejs.nix
+    ./features/development/fnm.nix
     ./features/macos/defaults.nix
     ./features/productivity/browser.nix
     ./features/productivity/firefox-company.nix
