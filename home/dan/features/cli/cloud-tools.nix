@@ -4,10 +4,13 @@
     # Google Cloud Platform
     google-cloud-sdk # Complete Google Cloud CLI toolset (gcloud, gsutil, bq)
 
+    # Infrastructure as Code
+    tenv # Version manager for OpenTofu, Terraform, Terragrunt, and Atmos
+    # terraform        # Managed by tenv; do not install directly
+
     # Other cloud tools (uncomment as needed)
     # awscli2          # AWS CLI v2
     # azure-cli        # Azure CLI
-    # terraform        # Infrastructure as Code
     # kubectl          # Kubernetes CLI
     # helm             # Kubernetes package manager
     # doctl            # DigitalOcean CLI
