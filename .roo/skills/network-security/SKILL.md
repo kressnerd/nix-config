@@ -1,6 +1,6 @@
 # Skill: Network & Security Administration
 
-**Applies to**: architect, code, debug, nix-expert
+**Applies to**: architect, code, debug
 **Trigger**: Configuring firewall rules, SSH, VPN/WireGuard, TLS certificates, DNS, or security hardening
 
 ## Scope

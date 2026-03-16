@@ -75,7 +75,7 @@ Skills are selected by the mandatory skill check in each mode. The `description`
 ## Skill 1: `nix-module-dev`
 
 - **Directory**: `.roo/skills/nix-module-dev/SKILL.md`
-- **Applies to**: architect, code, debug, nix-expert
+- **Applies to**: architect, code, debug
 - **Description**: "Apply when writing custom Nix modules with options, creating derivations, authoring overlays, managing flake inputs, or working with advanced Nix language features (functors, fixed-points, type composition)."
 
 ### Content Outline
@@ -139,7 +139,7 @@ Skills are selected by the mandatory skill check in each mode. The `description`
 ## Skill 2: `nixos-server`
 
 - **Directory**: `.roo/skills/nixos-server/SKILL.md`
-- **Applies to**: architect, code, debug, nix-expert
+- **Applies to**: architect, code, debug
 - **Description**: "Apply when configuring NixOS system services (systemd units, nginx, databases, monitoring), disk management (disko, btrfs, LUKS), impermanence, or boot configuration. Covers service orchestration, state management, and system lifecycle."
 
 ### Content Outline
@@ -215,7 +215,7 @@ Skills are selected by the mandatory skill check in each mode. The `description`
 ## Skill 3: `home-manager-config`
 
 - **Directory**: `.roo/skills/home-manager-config/SKILL.md`
-- **Applies to**: architect, code, nix-expert
+- **Applies to**: architect, code
 - **Description**: "Apply when configuring Home Manager programs (git, shell, editor, browser, terminal), managing XDG directories, writing cross-platform features (Linux + macOS), or integrating with macOS specifics (Homebrew, launchd, system defaults)."
 
 ### Content Outline
@@ -304,7 +304,7 @@ Skills are selected by the mandatory skill check in each mode. The `description`
 ## Skill 4: `network-security`
 
 - **Directory**: `.roo/skills/network-security/SKILL.md`
-- **Applies to**: architect, code, debug, nix-expert
+- **Applies to**: architect, code, debug
 - **Description**: "Apply when configuring networking (firewall rules, DNS, interfaces), security hardening (SSH, fail2ban, AppArmor, audit), TLS certificates (ACME, Let's Encrypt), or VPN/mesh networking (WireGuard, Headscale/Tailscale)."
 
 ### Content Outline
@@ -390,7 +390,7 @@ Skills are selected by the mandatory skill check in each mode. The `description`
 ## Skill 5: `sops-secrets`
 
 - **Directory**: `.roo/skills/sops-secrets/SKILL.md`
-- **Applies to**: architect, code, debug, nix-expert
+- **Applies to**: architect, code, debug
 - **Description**: "Apply when managing secrets with sops-nix: adding/removing secrets, configuring `.sops.yaml` rules, managing age keys, rotating keys, debugging decryption failures, or setting up sops for new hosts. Covers both NixOS and Home Manager (macOS) secret paths."
 
 ### Content Outline

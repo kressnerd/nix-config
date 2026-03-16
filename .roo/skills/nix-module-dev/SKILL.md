@@ -1,6 +1,6 @@
 # Skill: Nix Module Development
 
-**Applies to**: architect, code, debug, nix-expert
+**Applies to**: architect, code, debug
 **Trigger**: Creating custom modules, overlays, derivations, or modifying flake inputs
 
 ## Scope
