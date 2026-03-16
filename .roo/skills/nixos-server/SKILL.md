@@ -1,6 +1,6 @@
 # Skill: NixOS Server Administration
 
-**Applies to**: architect, code, debug, nix-expert
+**Applies to**: architect, code, debug
 **Trigger**: Configuring system services, systemd units, disk management, boot, or impermanence
 
 ## Scope

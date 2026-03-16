@@ -1,6 +1,6 @@
 # Skill: Home Manager Configuration
 
-**Applies to**: architect, code, nix-expert
+**Applies to**: architect, code
 **Trigger**: Configuring user programs, shells, editors, browsers, desktop environments, or cross-platform features
 
 ## Scope
