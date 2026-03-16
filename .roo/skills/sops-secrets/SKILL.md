@@ -1,6 +1,6 @@
 # Skill: SOPS Secrets Management
 
-**Applies to**: architect, code, debug, nix-expert
+**Applies to**: architect, code, debug
 **Trigger**: Managing secrets, configuring sops-nix, key rotation, or debugging decryption issues
 
 ## Scope
