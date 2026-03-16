@@ -3,12 +3,15 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   # Code formatters for various languages
   home.packages = with pkgs; [
     # Nix formatters
     alejandra # Modern, opinionated Nix formatter
     nixpkgs-fmt # Traditional Nix formatter (for compatibility)
+    deadnix # Detect unused bindings and dead code in Nix files
+    statix # Lint Nix code for anti-patterns and suggest idiomatic improvements
 
     # Language-specific formatters
     black # Python formatter
