@@ -22,6 +22,7 @@
 
     # Additional development tools
     treefmt # Multi-language formatter wrapper
+    vale # Syntax-aware prose linter
   ];
 
   # Shell integration for formatters
