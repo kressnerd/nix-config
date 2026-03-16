@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   programs.fish = {
     enable = true;
 
@@ -46,6 +47,9 @@
       set -g fish_color_redirection magenta
       set -g fish_color_end blue
       set -g fish_color_autosuggestion brblack
+
+      # Auto-load .sdkmanrc on shell start (requires sdkman-for-fish plugin)
+      sdk env install 2>/dev/null
     '';
 
     functions = {
