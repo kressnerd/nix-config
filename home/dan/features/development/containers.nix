@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  lib,
-  ...
-}: {
+{config, ...}: {
   # Main container development configuration - imports all container features
   imports = [
     ./containers-common.nix # Consolidated shared tooling/env
@@ -368,7 +362,7 @@
           usage
           ;;
         *)
-          echo "Error: Unknown command ''\${1:-}'"
+          echo "Error: Unknown command ''${1:-}'"
           echo ""
           usage
           exit 1

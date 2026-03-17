@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}:
-{
+{pkgs, ...}: {
   # Code formatters for various languages
   home.packages = with pkgs; [
     # Nix formatters

@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: {
+_: {
   programs.keepassxc = {
     enable = true;
     settings = {

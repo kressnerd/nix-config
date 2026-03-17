@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: {
+{lib, ...}: {
   networking.firewall = {
     enable = true;
 

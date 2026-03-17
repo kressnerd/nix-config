@@ -37,7 +37,7 @@
   sops.secrets.example_key = {}; # owned by root
   sops.secrets."myservice/user_dir/my_secret" = {
     mode = "0440";
-    group = config.users.users.dan.group;
+    inherit (config.users.users.dan) group;
 
     # restart/reload systemd unit on secret change
     #    restartUnits = [ "home-assistant.service" ]; # there is also a reloadUnit

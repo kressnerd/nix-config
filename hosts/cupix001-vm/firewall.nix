@@ -1,9 +1,5 @@
 # Simplified firewall for VM testing
-{
-  config,
-  lib,
-  ...
-}: {
+_: {
   networking.firewall = {
     enable = true;
 

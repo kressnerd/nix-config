@@ -1,8 +1,4 @@
-{
-  config,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   # Define a user account
   users.users.dan = {
     isNormalUser = true;

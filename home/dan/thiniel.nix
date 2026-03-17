@@ -1,9 +1,4 @@
-{
-  config,
-  inputs,
-  outputs,
-  ...
-}: {
+{...}: {
   imports = [
     ./global/default.nix
     ./features/cli/git.nix

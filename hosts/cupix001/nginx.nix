@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+{config, ...}: {
   # ACME/Let's Encrypt configuration
   security.acme = {
     acceptTerms = true;
