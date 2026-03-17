@@ -1,8 +1,6 @@
 {
   config,
   pkgs,
-  pkgs-unstable,
-  lib,
   ...
 }: {
   # Container networking and volume mounting strategies (network tools consolidated in containers-common.nix)

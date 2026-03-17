@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: {
+{lib, ...}: {
   disko.devices = {
     disk = {
       # Primary VM disk - matches UTM's typical setup

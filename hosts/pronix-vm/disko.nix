@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: {
+{lib, ...}: {
   disko.devices = {
     disk = {
       # Single VM disk (simplified from RAID setup)

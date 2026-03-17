@@ -1,8 +1,6 @@
 {
   config,
   pkgs,
-  pkgs-unstable,
-  lib,
   ...
 }: {
   # VS Code dev container integration with Podman

@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: {
+_: {
   # macOS user-specific settings
   targets.darwin = {
     defaults = {

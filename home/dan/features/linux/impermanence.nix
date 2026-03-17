@@ -1,8 +1,4 @@
-{
-  config,
-  inputs,
-  ...
-}: {
+_: {
   home.persistence."/persist" = {
     directories = [
       #      ".cache/bat"

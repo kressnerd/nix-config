@@ -1,10 +1,5 @@
 # Simplified nginx for VM testing (self-signed certs)
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+_: {
   # Nginx reverse proxy
   services.nginx = {
     enable = true;

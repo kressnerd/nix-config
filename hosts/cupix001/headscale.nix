@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+{config, ...}: {
   services.headscale = {
     enable = true;
     address = "127.0.0.1";
