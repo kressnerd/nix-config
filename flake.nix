@@ -67,14 +67,8 @@
     sops-nix,
     mac-app-util,
     nix-homebrew,
-    homebrew-core,
-    homebrew-cask,
     nur,
-    nixos-hardware,
-    impermanence,
-    firefox-addons,
     disko,
-    nixos-anywhere,
     ...
   } @ inputs: let
     inherit (self) outputs;

@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}: {
+_: {
   programs.vscode = {
     enable = true;
     mutableExtensionsDir = true;

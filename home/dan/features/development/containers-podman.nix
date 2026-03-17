@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  lib,
-  ...
-}: {
+{config, ...}: {
   # Podman-based containerized development environment (runtime packages consolidated in containers-common.nix)
 
   # Podman configuration

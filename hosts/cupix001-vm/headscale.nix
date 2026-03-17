@@ -1,10 +1,5 @@
 # Simplified Headscale for VM testing (no secrets)
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+_: {
   services.headscale = {
     enable = true;
     address = "127.0.0.1";

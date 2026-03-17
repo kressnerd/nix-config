@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  pkgs-unstable,
-  lib,
-  ...
-}: {
+{config, ...}: {
   # Nix-specific containerization tools and workflows (packages moved to containers-common.nix)
 
   # Nix flake template for containerized applications

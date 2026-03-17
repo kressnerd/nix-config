@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: {
+_: {
   # System hardening
   security = {
     # Lockdown kernel modules
