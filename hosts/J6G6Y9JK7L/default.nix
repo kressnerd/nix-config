@@ -55,6 +55,8 @@
     brews = ["score-compose"];
     casks = [
       "cameracontroller"
+      "claude"
+      "claude-code"
       "crossover"
       "kitty"
     ];
