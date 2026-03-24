@@ -4,7 +4,6 @@
     ../common/users/dan.nix
     ./hardware.nix
     ./disko.nix
-    ./home.nix
   ];
 
   # System Configuration
@@ -71,4 +70,18 @@
 
   # Enable sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
+
+  # User (extends common/users/dan.nix base definition)
+  users.users.dan = {
+    extraGroups = ["sudo"];
+    shell = pkgs.zsh;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEWvGgnlCq6l+ObGMVLLs34CP0vEX+Edf7sx6/3BvDpQ vm-minimal"
+    ];
+  };
+
+  # Enable zsh system-wide
+  programs.zsh.enable = true;
+  environment.shells = with pkgs; [zsh];
+  users.defaultUserShell = pkgs.zsh;
 }
