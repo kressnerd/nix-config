@@ -190,7 +190,7 @@
   # Declaratively manage doom.d configuration
   # Home Manager will symlink this to ~/.config/doom
   xdg.configFile."doom" = {
-    source = ./../../doom.d;
+    source = ./../../dotfiles/doom.d;
     recursive = true;
   };
 
