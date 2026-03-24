@@ -4,6 +4,43 @@ Modular Nix configuration for macOS (nix-darwin) and NixOS (Linux). Started as a
 
 ## Repository Structure
 
+```
+flake.nix / flake.lock
+├── hosts/
+│   ├── common/
+│   │   ├── global/         (shared NixOS base: timezone, locale, NetworkManager, flakes)
+│   │   ├── optional/       (optional NixOS modules: virtualisation, docker)
+│   │   └── users/          (shared NixOS user definition)
+│   ├── J6G6Y9JK7L/         (aarch64-darwin — macOS workstation)
+│   ├── thiniel/            (x86_64-linux — ThinkPad X270)
+│   └── nixos-vm-minimal/   (aarch64-linux — minimal test VM)
+├── home/
+│   └── dan/
+│       ├── global/         (HM base: stateVersion, htop, ripgrep)
+│       ├── features/       (composable feature modules)
+│       │   ├── cli/
+│       │   ├── development/
+│       │   ├── linux/
+│       │   ├── macos/
+│       │   └── productivity/
+│       ├── dotfiles/
+│       │   └── doom.d/     (Doom Emacs config)
+│       ├── J6G6Y9JK7L.nix
+│       ├── thiniel.nix
+│       └── nixos-vm-minimal.nix
+├── lib/
+│   └── helpers.nix         (mkPkgsUnstable, mkFirefoxExtensions)
+├── overlays/               (custom nixpkgs overlays)
+├── pkgs/                   (custom packages)
+├── modules/
+│   ├── nixos/              (reusable NixOS modules)
+│   └── home-manager/       (reusable HM modules)
+├── templates/
+│   └── host/               (new NixOS host scaffold)
+├── scripts/                (VM build and deploy scripts)
+└── docs/                   (detailed documentation)
+```
+
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed structure and module organization.
 
 ## Quick Start
@@ -48,6 +85,7 @@ See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SE
 
 - nix-darwin for macOS system-level configuration
 - NixOS for Linux hosts (thiniel, VMs)
+- Shared NixOS base config in `hosts/common/` (timezone, locale, Nix settings)
 - Declarative Homebrew package management (macOS)
 - macOS system preferences automation
 - Home Manager for user environment (cross-platform)
@@ -67,6 +105,7 @@ See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SE
   - Emacs packages managed by straight.el
   - Automatic doom sync on Home Manager activation
   - Full LSP support (Nix, Python, Rust, TypeScript, etc.)
+  - Config dotfiles at `home/dan/dotfiles/doom.d/`
 - VS Code with extensions managed declaratively
 - Vim configuration
 - Standard CLI tools (Git, SSH, etc.)
@@ -74,6 +113,7 @@ See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SE
 ### Organization
 
 - Feature modules in `home/dan/features/`
+- Shared NixOS config in `hosts/common/`
 - Host-specific configs in `hosts/` (J6G6Y9JK7L, thiniel, VMs)
 - Platform-specific features (macOS/Linux)
 - Shared base configurations in `home/dan/global/`
@@ -82,7 +122,7 @@ See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SE
 
 - nixos-anywhere for remote VM installation
 - Disko for declarative disk partitioning
-- Automated deployment scripts in `scripts/`
+- Deployment scripts in `scripts/`
 
 ## Configuration Management
 
@@ -90,13 +130,25 @@ See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SE
 
 Create a module in the appropriate feature directory and import it in your host configuration. Examples and patterns are in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/HOME-MANAGER.md](docs/HOME-MANAGER.md).
 
+### Adding a New Host
+
+Use the template scaffold:
+
+```bash
+cp -r templates/host hosts/<new-hostname>
+# Edit hosts/<new-hostname>/default.nix
+# Create hosts/<new-hostname>/hardware.nix
+# Create home/dan/<new-hostname>.nix
+# Register in flake.nix
+```
+
 ### Secrets
 
 Managed via SOPS. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for setup details.
 
 ### Host Customization
 
-Each host imports features as needed. Check the layering structure in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Each host imports `hosts/common/global` (NixOS only) plus optional modules and features as needed. Check the layering structure in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Documentation
 
@@ -155,10 +207,12 @@ Working configurations:
 - NixOS on thiniel (physical Linux host)
 - NixOS VMs with nixos-anywhere deployment
 - Feature-based module organization
+- Shared NixOS base config via `hosts/common/`
 - SOPS secrets management
 - Homebrew integration (macOS)
 - Cross-platform Home Manager setup
 - Doom Emacs with Henrik Lissner's recommended approach
+- Custom overlays applied to all hosts
 
 In progress:
 
@@ -169,7 +223,8 @@ In progress:
 
 Future additions:
 
-- Custom derivations
+- Custom derivations in `pkgs/`
+- Scripts migration to Nix derivations
 - Multi-host coordination
 - Container orchestration
 
