@@ -52,11 +52,24 @@ flake.nix
 ├── darwinConfigurations.J6G6Y9JK7L  →  hosts/J6G6Y9JK7L/     (nix-darwin system)
 │                                    →  home/dan/J6G6Y9JK7L.nix (home-manager)
 ├── nixosConfigurations.<host>       →  hosts/<host>/           (NixOS system)
+│   (NixOS only)                        imports ../common/global + ../common/users/dan.nix
 │                                    →  home/dan/<host>.nix     (home-manager)
 │
-├── home/dan/global/default.nix      (base: htop, ripgrep, home-manager self-management)
-├── home/dan/global/linux.nix        (linux base: extends default.nix + SOPS age keyFile)
-└── home/dan/features/<category>/<tool>.nix  (composable feature modules)
+├── hosts/common/global/default.nix  (shared NixOS base: timezone, locale, NetworkManager)
+├── hosts/common/global/nix.nix      (shared Nix settings: experimental-features)
+├── hosts/common/optional/           (optional NixOS modules: virtualisation, docker)
+├── hosts/common/users/dan.nix       (shared NixOS user base definition)
+│
+├── home/dan/global/default.nix      (HM base: htop, ripgrep, home-manager self-management)
+├── home/dan/dotfiles/doom.d/        (Doom Emacs config — symlinked to ~/.config/doom)
+├── home/dan/features/<category>/<tool>.nix  (composable feature modules)
+│
+├── lib/helpers.nix                  (mkPkgsUnstable, mkFirefoxExtensions)
+├── overlays/default.nix             (custom nixpkgs overlay aggregator)
+├── pkgs/default.nix                 (custom packages — placeholder)
+├── modules/nixos/                   (reusable NixOS modules — placeholder)
+├── modules/home-manager/            (reusable HM modules — placeholder)
+└── templates/host/                  (new NixOS host scaffold)
 ```
 
 ### Host Definitions
@@ -164,10 +177,10 @@ programs.kitty.package = pkgs.emptyDirectory;  # in J6G6Y9JK7L.nix
 - `containers-networking.nix` — Network configs (dev: 10.89.0.0/16, isolated: 10.90.0.0/16), volume strategies
 
 ### Firefox Extension Library
-Shared extension sets defined in `lib/firefox-extensions.nix`, imported by profile modules:
+Shared extension sets defined in `lib/helpers.nix` via `mkFirefoxExtensions`, imported by profile modules:
 ```nix
-let extensions = import ../../../../lib/firefox-extensions.nix { inherit addons; };
-in { extensions = extensions.common ++ extensions.privacy ++ extensions.dev; }
+let exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions { inherit addons; };
+in { extensions = exts.common ++ exts.privacy ++ exts.dev; }
 ```
 Categories: common, dev, privacy, productivity, convenience.
 
@@ -190,10 +203,9 @@ Used on thiniel, pronix, cupix001. Root filesystem is wiped on boot via btrfs su
 
 ## Utility Files
 
-- **`lib/pkgs-unstable.nix`** — Creates unstable nixpkgs instance with `allowUnfree = true`
-- **`lib/firefox-extensions.nix`** — Categorized Firefox addon sets
+- **`lib/helpers.nix`** — `mkPkgsUnstable` (creates unstable nixpkgs instance) and `mkFirefoxExtensions` (categorized addon sets)
 - **`shell.nix`** — Dev shell with nix, home-manager, git (+ commented sops/age tools)
-- **`scripts/`** — VM build (`build-vm.sh`, `build-vm-test.sh`) and deploy (`deploy-vm.sh`) scripts for UTM/nixos-anywhere
+- **`scripts/`** — VM build (`build-vm.sh`, `build-vm-test.sh`) and deploy (`deploy-vm.sh`) scripts for UTM/nixos-anywhere. See `scripts/README.md`.
 
 ## Documentation
 
