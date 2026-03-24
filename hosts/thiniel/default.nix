@@ -7,22 +7,15 @@
   ...
 }: {
   imports = [
+    ../common/global
+    ../common/users/dan.nix
+    ../common/optional/virtualisation.nix
     ./hardware.nix
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
   ];
 
-  # Nix settings
-  nix.settings = {
-    # Removed hyprland.cachix.org as hyprland is now from nixpkgs-unstable
-    experimental-features = ["nix-command" "flakes"];
-  };
-
-  documentation.nixos.enable = false;
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
   # Boot configuration
@@ -56,10 +49,8 @@
   users.groups.libvirtd.members = ["dan"];
   users.users = {
     dan = {
-      isNormalUser = true;
       description = "Me Myself and Billie";
       initialHashedPassword = "$6$.tIb37hYTPJeB13w$RSDaCkfYIEcxNn7Isct6XxeIS8mENfhx15XjDCuSlA4xrsCwAjZZuP7vp0xTmGBOAAZoGESsG4GT8eecpTASn/";
-      extraGroups = ["wheel" "networkmanager"];
     };
     test = {
       isNormalUser = true;
@@ -134,22 +125,8 @@
     ];
   };
 
-  # Virtualization
-  programs.virt-manager.enable = true;
-
-  virtualisation.libvirtd = {
-    enable = true;
-    qemu = {
-      package = pkgs.qemu_kvm;
-      runAsRoot = true;
-      swtpm.enable = true;
-    };
-  };
-  virtualisation.spiceUSBRedirection.enable = true;
-
   # Networking
   networking.hostName = "thiniel";
-  networking.networkmanager.enable = true;
 
   # Fix sops key permissions so home-manager (user dan) can read it
   systemd.tmpfiles.rules = [
@@ -162,9 +139,7 @@
   # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Localization
-  time.timeZone = "Europe/Berlin";
   time.hardwareClockInLocalTime = true; # For Windows dual boot
-  i18n.defaultLocale = "en_US.UTF-8";
   i18n.extraLocaleSettings = {
     LC_TIME = "de_DE.UTF-8";
   };

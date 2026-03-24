@@ -1,5 +1,7 @@
 {pkgs, ...}: {
   imports = [
+    ../common/global
+    ../common/users/dan.nix
     ./hardware.nix
     ./disko.nix
     ./home.nix
@@ -9,15 +11,9 @@
   system.stateVersion = "25.11";
   nixpkgs.hostPlatform = "aarch64-linux";
 
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
-
-  # Nix configuration
+  # Nix configuration (host-specific: gc and store optimisation)
   nix = {
-    settings = {
-      experimental-features = ["nix-command" "flakes"];
-      auto-optimise-store = true;
-    };
+    settings.auto-optimise-store = true;
     gc = {
       automatic = true;
       dates = "weekly";
@@ -25,21 +21,12 @@
     };
   };
 
-  documentation.nixos.enable = false;
-
   # Boot configuration is handled in hardware.nix
 
   # Hostname
   networking.hostName = "nixos-vm-minimal";
 
-  # Enable NetworkManager for easy network configuration
-  networking.networkmanager.enable = true;
-
-  # Time zone
-  time.timeZone = "Europe/Berlin";
-
-  # Internationalization
-  i18n.defaultLocale = "en_US.UTF-8";
+  # Internationalization (host-specific extra locales)
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "de_DE.UTF-8";
     LC_IDENTIFICATION = "de_DE.UTF-8";
