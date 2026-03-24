@@ -1,116 +1,125 @@
 {config, ...}: {
   # Podman-based containerized development environment (runtime packages consolidated in containers-common.nix)
 
-  # Podman configuration
-  home.file.".config/containers/containers.conf".text = ''
-    [containers]
-    # Use cgroups v2 for better resource management
-    cgroups = "enabled"
+  home = {
+    # Podman configuration
+    file = {
+      ".config/containers/containers.conf".text = ''
+        [containers]
+        # Use cgroups v2 for better resource management
+        cgroups = "enabled"
 
-    # Default capabilities for containers
-    default_capabilities = [
-      "CHOWN",
-      "DAC_OVERRIDE",
-      "FOWNER",
-      "FSETID",
-      "KILL",
-      "NET_BIND_SERVICE",
-      "SETFCAP",
-      "SETGID",
-      "SETPCAP",
-      "SETUID",
-      "SYS_CHROOT"
-    ]
+        # Default capabilities for containers
+        default_capabilities = [
+          "CHOWN",
+          "DAC_OVERRIDE",
+          "FOWNER",
+          "FSETID",
+          "KILL",
+          "NET_BIND_SERVICE",
+          "SETFCAP",
+          "SETGID",
+          "SETPCAP",
+          "SETUID",
+          "SYS_CHROOT"
+        ]
 
-    # Default sysctls
-    default_sysctls = [
-      "net.ipv4.ping_group_range=0 0",
-    ]
+        # Default sysctls
+        default_sysctls = [
+          "net.ipv4.ping_group_range=0 0",
+        ]
 
-    # Timezone in containers
-    tz = "local"
+        # Timezone in containers
+        tz = "local"
 
-    [engine]
-    # Container engine settings
-    cgroup_manager = "systemd"
-    runtime = "crun"
+        [engine]
+        # Container engine settings
+        cgroup_manager = "systemd"
+        runtime = "crun"
 
-    # Network settings
+        # Network settings
 
-    # Storage settings
-    driver = "overlay"
+        # Storage settings
+        driver = "overlay"
 
-    [network]
-    # Network backend
-    network_backend = "netavark"
+        [network]
+        # Network backend
+        network_backend = "netavark"
 
-    [secrets]
-    driver = "file"
-  '';
+        [secrets]
+        driver = "file"
+      '';
 
-  # Podman network configuration
-  home.file.".config/containers/networks/podman-default.json".text = builtins.toJSON {
-    name = "podman-default";
-    id = "2f259bab93aaaaa2542ba43ef33eb990d0999ee1b9924b557b7be53c0b7a1bb9";
-    driver = "bridge";
-    network_interface = "podman0";
-    created = "2023-01-01T00:00:00Z";
-    subnets = [
-      {
-        subnet = "10.88.0.0/16";
-        gateway = "10.88.0.1";
-      }
-    ];
-    ipv6_enabled = false;
-    internal = false;
-    dns_enabled = true;
-    ipam_options = {
-      driver = "dhcp";
+      # Podman network configuration
+      ".config/containers/networks/podman-default.json".text = builtins.toJSON {
+        name = "podman-default";
+        id = "2f259bab93aaaaa2542ba43ef33eb990d0999ee1b9924b557b7be53c0b7a1bb9";
+        driver = "bridge";
+        network_interface = "podman0";
+        created = "2023-01-01T00:00:00Z";
+        subnets = [
+          {
+            subnet = "10.88.0.0/16";
+            gateway = "10.88.0.1";
+          }
+        ];
+        ipv6_enabled = false;
+        internal = false;
+        dns_enabled = true;
+        ipam_options = {
+          driver = "dhcp";
+        };
+      };
+
+      # Storage configuration for Podman
+      ".config/containers/storage.conf".text = ''
+        [storage]
+        driver = "overlay"
+        runroot = "${config.home.homeDirectory}/.local/share/containers/run"
+        graphroot = "${config.home.homeDirectory}/.local/share/containers/storage"
+
+        [storage.options]
+        additionalimagestores = []
+
+        [storage.options.overlay]
+        mountopt = "nodev,metacopy=on"
+
+      '';
+
+      # Registries configuration
+      ".config/containers/registries.conf".text = ''
+        # v2 format for registries.conf
+        # Search registries
+        [[registry]]
+        location = "docker.io"
+        [[registry]]
+        location = "quay.io"
+        [[registry]]
+        location = "ghcr.io"
+
+        # Insecure registries (none by default)
+        # [[registry]]
+        # location = "my.insecure.registry:5000"
+        # insecure = true
+
+        # Blocked registries (none by default)
+        # [[registry]]
+        # location = "bad.registry.com"
+        # blocked = true
+
+        # Mirror for docker.io
+        [[registry]]
+        location = "docker.io"
+        [[registry.mirror]]
+        location = "mirror.gcr.io"
+      '';
+    };
+
+    # Environment variable (retain only Docker compatibility; others unified in containers-common.nix)
+    sessionVariables = {
+      DOCKER_HOST = "unix://${config.home.homeDirectory}/.local/share/containers/podman/machine/podman.sock";
     };
   };
-
-  # Storage configuration for Podman
-  home.file.".config/containers/storage.conf".text = ''
-    [storage]
-    driver = "overlay"
-    runroot = "${config.home.homeDirectory}/.local/share/containers/run"
-    graphroot = "${config.home.homeDirectory}/.local/share/containers/storage"
-
-    [storage.options]
-    additionalimagestores = []
-
-    [storage.options.overlay]
-    mountopt = "nodev,metacopy=on"
-
-  '';
-
-  # Registries configuration
-  home.file.".config/containers/registries.conf".text = ''
-    # v2 format for registries.conf
-    # Search registries
-    [[registry]]
-    location = "docker.io"
-    [[registry]]
-    location = "quay.io"
-    [[registry]]
-    location = "ghcr.io"
-
-    # Insecure registries (none by default)
-    # [[registry]]
-    # location = "my.insecure.registry:5000"
-    # insecure = true
-
-    # Blocked registries (none by default)
-    # [[registry]]
-    # location = "bad.registry.com"
-    # blocked = true
-
-    # Mirror for docker.io
-    [[registry]]
-    location = "docker.io"
-    [[registry.mirror]]
-    location = "mirror.gcr.io"
-  '';
 
   # Shell integration and aliases
   programs.fish = {
@@ -166,11 +175,6 @@
           "$image" sleep infinity
       '';
     };
-  };
-
-  # Environment variable (retain only Docker compatibility; others unified in containers-common.nix)
-  home.sessionVariables = {
-    DOCKER_HOST = "unix://${config.home.homeDirectory}/.local/share/containers/podman/machine/podman.sock";
   };
 
   # Directory creation moved to containers-common.nix

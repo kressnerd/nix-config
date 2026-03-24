@@ -1,216 +1,225 @@
 {config, ...}: {
   # Nix-specific containerization tools and workflows (packages moved to containers-common.nix)
 
-  # Nix flake template for containerized applications
-  home.file.".config/nix-containers/templates/webapp-flake.nix".text = ''
-    {
-      description = "Simple containerized application with Nix";
+  home = {
+    file = {
+      # Nix flake template for containerized applications
+      ".config/nix-containers/templates/webapp-flake.nix".text = ''
+        {
+          description = "Simple containerized application with Nix";
 
-      inputs = {
-        nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-        flake-utils.url = "github:numtide/flake-utils";
-      };
-
-      outputs = { self, nixpkgs, flake-utils }:
-        flake-utils.lib.eachDefaultSystem (system: {
-          devShells.default = nixpkgs.legacyPackages.''${stdenv.hostPlatform.system}.mkShell {
-            buildInputs = with nixpkgs.legacyPackages.''${stdenv.hostPlatform.system}; [
-              nodejs_20
-              podman
-              skopeo
-            ];
-
-            shellHook = "echo 'Nix development environment ready!'";
+          inputs = {
+            nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+            flake-utils.url = "github:numtide/flake-utils";
           };
-        });
-    }
-  '';
 
-  # Docker Compose with Nix services
-  home.file.".config/nix-containers/templates/compose-with-nix.yaml".text = ''
-    version: '3.8'
+          outputs = { self, nixpkgs, flake-utils }:
+            flake-utils.lib.eachDefaultSystem (system: {
+              devShells.default = nixpkgs.legacyPackages.''${stdenv.hostPlatform.system}.mkShell {
+                buildInputs = with nixpkgs.legacyPackages.''${stdenv.hostPlatform.system}; [
+                  nodejs_20
+                  podman
+                  skopeo
+                ];
 
-    services:
-      # Application built with Nix
-      app:
-        build:
-          context: .
-          dockerfile: Dockerfile.nix
-        ports:
-          - "3000:3000"
-        environment:
-          - NODE_ENV=development
+                shellHook = "echo 'Nix development environment ready!'";
+              };
+            });
+        }
+      '';
+
+      # Docker Compose with Nix services
+      ".config/nix-containers/templates/compose-with-nix.yaml".text = ''
+        version: '3.8'
+
+        services:
+          # Application built with Nix
+          app:
+            build:
+              context: .
+              dockerfile: Dockerfile.nix
+            ports:
+              - "3000:3000"
+            environment:
+              - NODE_ENV=development
+            volumes:
+              - ./src:/app/src:ro
+              - ./public:/app/public:ro
+            depends_on:
+              - postgres
+              - redis
+
+          # PostgreSQL with Nix-managed configuration
+          postgres:
+            image: postgres:15-alpine
+            environment:
+              POSTGRES_DB: devdb
+              POSTGRES_USER: postgres
+              POSTGRES_PASSWORD: password
+            volumes:
+              - postgres_data:/var/lib/postgresql/data
+              - ./nix/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+            ports:
+              - "5432:5432"
+
+          # Redis
+          redis:
+            image: redis:7-alpine
+            volumes:
+              - redis_data:/data
+            ports:
+              - "6379:6379"
+
+          # Nginx reverse proxy (Nix-configured)
+          nginx:
+            build:
+              context: ./nix/nginx
+              dockerfile: Dockerfile
+            ports:
+              - "80:80"
+              - "443:443"
+            volumes:
+              - ./nix/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+              - ./nix/nginx/ssl:/etc/nginx/ssl:ro
+            depends_on:
+              - app
+
         volumes:
-          - ./src:/app/src:ro
-          - ./public:/app/public:ro
-        depends_on:
-          - postgres
-          - redis
+          postgres_data:
+          redis_data:
 
-      # PostgreSQL with Nix-managed configuration
-      postgres:
-        image: postgres:15-alpine
-        environment:
-          POSTGRES_DB: devdb
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-        volumes:
-          - postgres_data:/var/lib/postgresql/data
-          - ./nix/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-        ports:
-          - "5432:5432"
+        networks:
+          default:
+            driver: bridge
+      '';
 
-      # Redis
-      redis:
-        image: redis:7-alpine
-        volumes:
-          - redis_data:/data
-        ports:
-          - "6379:6379"
+      # Nix-based Dockerfile template
+      ".config/nix-containers/templates/Dockerfile.nix".text = ''
+        # Multi-stage Dockerfile using Nix
+        FROM nixos/nix:latest AS builder
 
-      # Nginx reverse proxy (Nix-configured)
-      nginx:
-        build:
-          context: ./nix/nginx
-          dockerfile: Dockerfile
-        ports:
-          - "80:80"
-          - "443:443"
-        volumes:
-          - ./nix/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-          - ./nix/nginx/ssl:/etc/nginx/ssl:ro
-        depends_on:
-          - app
+        # Enable flakes and add cache
+        RUN echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf && \
+            echo 'substituters = https://cache.nixos.org https://nix-community.cachix.org' >> /etc/nix/nix.conf && \
+            echo 'trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=' >> /etc/nix/nix.conf
 
-    volumes:
-      postgres_data:
-      redis_data:
+        # Copy source
+        WORKDIR /src
+        COPY . .
 
-    networks:
-      default:
-        driver: bridge
-  '';
+        # Build the application
+        RUN nix build .#webapp
 
-  # Nix-based Dockerfile template
-  home.file.".config/nix-containers/templates/Dockerfile.nix".text = ''
-    # Multi-stage Dockerfile using Nix
-    FROM nixos/nix:latest AS builder
+        # Runtime stage
+        FROM scratch
 
-    # Enable flakes and add cache
-    RUN echo 'experimental-features = nix-command flakes' >> /etc/nix/nix.conf && \
-        echo 'substituters = https://cache.nixos.org https://nix-community.cachix.org' >> /etc/nix/nix.conf && \
-        echo 'trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=' >> /etc/nix/nix.conf
+        # Copy the built application and its dependencies
+        COPY --from=builder /nix/store /nix/store
+        COPY --from=builder /src/result /app
 
-    # Copy source
-    WORKDIR /src
-    COPY . .
+        # Set up environment
+        ENV PATH="/app/bin:/nix/store/*/bin"
+        EXPOSE 3000
 
-    # Build the application
-    RUN nix build .#webapp
+        # Run the application
+        ENTRYPOINT ["/app/bin/webapp"]
+      '';
 
-    # Runtime stage
-    FROM scratch
-
-    # Copy the built application and its dependencies
-    COPY --from=builder /nix/store /nix/store
-    COPY --from=builder /src/result /app
-
-    # Set up environment
-    ENV PATH="/app/bin:/nix/store/*/bin"
-    EXPOSE 3000
-
-    # Run the application
-    ENTRYPOINT ["/app/bin/webapp"]
-  '';
-
-  # Kubernetes deployment template using Nix
-  home.file.".config/nix-containers/templates/k8s-deployment.yaml".text = ''
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: nix-webapp
-      labels:
-        app: nix-webapp
-    spec:
-      replicas: 3
-      selector:
-        matchLabels:
-          app: nix-webapp
-      template:
+      # Kubernetes deployment template using Nix
+      ".config/nix-containers/templates/k8s-deployment.yaml".text = ''
+        apiVersion: apps/v1
+        kind: Deployment
         metadata:
+          name: nix-webapp
           labels:
             app: nix-webapp
         spec:
-          containers:
-          - name: webapp
-            image: nix-webapp:latest
-            ports:
-            - containerPort: 3000
-            env:
-            - name: NODE_ENV
-              value: "production"
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: webapp-secrets
-                  key: database-url
-            resources:
-              requests:
-                memory: "128Mi"
-                cpu: "100m"
-              limits:
-                memory: "256Mi"
-                cpu: "200m"
-            livenessProbe:
-              httpGet:
-                path: /health
-                port: 3000
-              initialDelaySeconds: 30
-              periodSeconds: 10
-            readinessProbe:
-              httpGet:
-                path: /ready
-                port: 3000
-              initialDelaySeconds: 5
-              periodSeconds: 5
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: nix-webapp-service
-    spec:
-      selector:
-        app: nix-webapp
-      ports:
-      - protocol: TCP
-        port: 80
-        targetPort: 3000
-      type: ClusterIP
-    ---
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: nix-webapp-ingress
-      annotations:
-        kubernetes.io/ingress.class: nginx
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-    spec:
-      tls:
-      - hosts:
-        - webapp.example.com
-        secretName: webapp-tls
-      rules:
-      - host: webapp.example.com
-        http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: nix-webapp-service
-                port:
-                  number: 80
-  '';
+          replicas: 3
+          selector:
+            matchLabels:
+              app: nix-webapp
+          template:
+            metadata:
+              labels:
+                app: nix-webapp
+            spec:
+              containers:
+              - name: webapp
+                image: nix-webapp:latest
+                ports:
+                - containerPort: 3000
+                env:
+                - name: NODE_ENV
+                  value: "production"
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: webapp-secrets
+                      key: database-url
+                resources:
+                  requests:
+                    memory: "128Mi"
+                    cpu: "100m"
+                  limits:
+                    memory: "256Mi"
+                    cpu: "200m"
+                livenessProbe:
+                  httpGet:
+                    path: /health
+                    port: 3000
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                readinessProbe:
+                  httpGet:
+                    path: /ready
+                    port: 3000
+                  initialDelaySeconds: 5
+                  periodSeconds: 5
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: nix-webapp-service
+        spec:
+          selector:
+            app: nix-webapp
+          ports:
+          - protocol: TCP
+            port: 80
+            targetPort: 3000
+          type: ClusterIP
+        ---
+        apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          name: nix-webapp-ingress
+          annotations:
+            kubernetes.io/ingress.class: nginx
+            cert-manager.io/cluster-issuer: letsencrypt-prod
+        spec:
+          tls:
+          - hosts:
+            - webapp.example.com
+            secretName: webapp-tls
+          rules:
+          - host: webapp.example.com
+            http:
+              paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: nix-webapp-service
+                    port:
+                      number: 80
+      '';
+    };
+
+    # Environment variables (template path unified in containers-common.nix)
+    sessionVariables = {
+      NIX_CONFIG = "experimental-features = nix-command flakes";
+    };
+  };
 
   # Shell integration and helper scripts
   programs.fish = {
@@ -355,11 +364,6 @@
         podman completion fish | source
       end
     '';
-  };
-
-  # Environment variables (template path unified in containers-common.nix)
-  home.sessionVariables = {
-    NIX_CONFIG = "experimental-features = nix-command flakes";
   };
 
   # Template directory creation handled by containers-common.nix

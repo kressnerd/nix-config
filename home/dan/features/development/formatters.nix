@@ -1,23 +1,62 @@
 {pkgs, ...}: {
   # Code formatters for various languages
-  home.packages = with pkgs; [
-    # Nix formatters
-    alejandra # Modern, opinionated Nix formatter
-    nixpkgs-fmt # Traditional Nix formatter (for compatibility)
-    deadnix # Detect unused bindings and dead code in Nix files
-    statix # Lint Nix code for anti-patterns and suggest idiomatic improvements
+  home = {
+    packages = with pkgs; [
+      # Nix formatters
+      alejandra # Modern, opinionated Nix formatter
+      nixpkgs-fmt # Traditional Nix formatter (for compatibility)
+      deadnix # Detect unused bindings and dead code in Nix files
+      statix # Lint Nix code for anti-patterns and suggest idiomatic improvements
 
-    # Language-specific formatters
-    black # Python formatter
-    rustfmt # Rust formatter
-    nodePackages.prettier # JavaScript/TypeScript/CSS/HTML formatter
-    shfmt # Shell script formatter
-    stylua # Lua formatter
+      # Language-specific formatters
+      black # Python formatter
+      rustfmt # Rust formatter
+      nodePackages.prettier # JavaScript/TypeScript/CSS/HTML formatter
+      shfmt # Shell script formatter
+      stylua # Lua formatter
 
-    # Additional development tools
-    treefmt # Multi-language formatter wrapper
-    vale # Syntax-aware prose linter
-  ];
+      # Additional development tools
+      treefmt # Multi-language formatter wrapper
+      vale # Syntax-aware prose linter
+    ];
+
+    # Optional: Create a treefmt configuration for multi-language formatting
+    file.".treefmt.toml".text = ''
+      [formatter.alejandra]
+      command = "alejandra"
+      includes = ["*.nix"]
+
+      [formatter.black]
+      command = "black"
+      includes = ["*.py"]
+
+      [formatter.prettier]
+      command = "prettier"
+      options = ["--write"]
+      includes = ["*.js", "*.ts", "*.jsx", "*.tsx", "*.json", "*.css", "*.md", "*.yaml", "*.yml"]
+
+      [formatter.rustfmt]
+      command = "rustfmt"
+      includes = ["*.rs"]
+
+      [formatter.shfmt]
+      command = "shfmt"
+      options = ["-w"]
+      includes = ["*.sh"]
+    '';
+
+    # Environment variables for formatters
+    sessionVariables = {
+      # Alejandra configuration
+      ALEJANDRA_VERBOSITY = "normal";
+
+      # Black configuration
+      BLACK_LINE_LENGTH = "88";
+
+      # Prettier configuration
+      PRETTIER_CONFIG_PRECEDENCE = "prefer-file";
+    };
+  };
 
   # Shell integration for formatters
   programs.fish = {
@@ -89,42 +128,5 @@
         end
       '';
     };
-  };
-
-  # Optional: Create a treefmt configuration for multi-language formatting
-  home.file.".treefmt.toml".text = ''
-    [formatter.alejandra]
-    command = "alejandra"
-    includes = ["*.nix"]
-
-    [formatter.black]
-    command = "black"
-    includes = ["*.py"]
-
-    [formatter.prettier]
-    command = "prettier"
-    options = ["--write"]
-    includes = ["*.js", "*.ts", "*.jsx", "*.tsx", "*.json", "*.css", "*.md", "*.yaml", "*.yml"]
-
-    [formatter.rustfmt]
-    command = "rustfmt"
-    includes = ["*.rs"]
-
-    [formatter.shfmt]
-    command = "shfmt"
-    options = ["-w"]
-    includes = ["*.sh"]
-  '';
-
-  # Environment variables for formatters
-  home.sessionVariables = {
-    # Alejandra configuration
-    ALEJANDRA_VERBOSITY = "normal";
-
-    # Black configuration
-    BLACK_LINE_LENGTH = "88";
-
-    # Prettier configuration
-    PRETTIER_CONFIG_PRECEDENCE = "prefer-file";
   };
 }

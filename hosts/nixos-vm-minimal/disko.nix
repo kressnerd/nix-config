@@ -58,34 +58,38 @@
   };
 
   # Additional filesystem configuration for VM optimization
-  boot.initrd.availableKernelModules = [
-    "virtio_pci"
-    "virtio_scsi"
-    "virtio_blk"
-    "virtio_net"
-    # LUKS encryption support
-    "aes"
-    "dm_crypt"
-    "cryptd"
-  ];
+  boot = {
+    initrd = {
+      availableKernelModules = [
+        "virtio_pci"
+        "virtio_scsi"
+        "virtio_blk"
+        "virtio_net"
+        # LUKS encryption support
+        "aes"
+        "dm_crypt"
+        "cryptd"
+      ];
 
-  # LUKS configuration
-  boot.initrd.luks.devices."crypted" = {
-    device = "/dev/disk/by-partlabel/crypted";
-    allowDiscards = true;
-    bypassWorkqueues = true;
+      # LUKS configuration
+      luks.devices."crypted" = {
+        device = "/dev/disk/by-partlabel/crypted";
+        allowDiscards = true;
+        bypassWorkqueues = true;
+      };
+
+      # Ensure proper disk labels are available during boot
+      postDeviceCommands = lib.mkAfter ''
+        # Wait for disk labels to be available
+        echo "Waiting for disk labels..."
+        for i in $(seq 1 10); do
+          if [ -e /dev/disk/by-partlabel/crypted ] && [ -e /dev/disk/by-label/boot ]; then
+            echo "Disk labels found!"
+            break
+          fi
+          sleep 1
+        done
+      '';
+    };
   };
-
-  # Ensure proper disk labels are available during boot
-  boot.initrd.postDeviceCommands = lib.mkAfter ''
-    # Wait for disk labels to be available
-    echo "Waiting for disk labels..."
-    for i in $(seq 1 10); do
-      if [ -e /dev/disk/by-partlabel/crypted ] && [ -e /dev/disk/by-label/boot ]; then
-        echo "Disk labels found!"
-        break
-      fi
-      sleep 1
-    done
-  '';
 }
