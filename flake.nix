@@ -73,6 +73,13 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
+    templates = {
+      host = {
+        path = ./templates/host;
+        description = "New NixOS host scaffold";
+      };
+    };
+
     nixosConfigurations = {
       nixos-vm-minimal = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
