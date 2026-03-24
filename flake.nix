@@ -78,7 +78,7 @@
         system = "aarch64-linux";
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+          pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
             inherit nixpkgs-unstable;
             system = "aarch64-linux";
           };
@@ -97,7 +97,7 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
                   inherit nixpkgs-unstable;
                   system = "aarch64-linux";
                 };
@@ -114,7 +114,7 @@
         system = "x86_64-linux";
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+          pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
             inherit nixpkgs-unstable;
             system = "x86_64-linux";
           };
@@ -132,7 +132,7 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
                   inherit nixpkgs-unstable;
                   system = "x86_64-linux";
                 };
@@ -152,7 +152,7 @@
         system = "aarch64-darwin";
         specialArgs = {
           inherit inputs outputs;
-          pkgs-unstable = import ./lib/pkgs-unstable.nix {
+          pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
             inherit nixpkgs-unstable;
             system = "aarch64-darwin";
           };
@@ -174,7 +174,7 @@
               useUserPackages = true;
               extraSpecialArgs = {
                 inherit inputs outputs;
-                pkgs-unstable = import ./lib/pkgs-unstable.nix {
+                pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
                   inherit nixpkgs-unstable;
                   system = "aarch64-darwin";
                 };
