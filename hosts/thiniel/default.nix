@@ -19,30 +19,63 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
   # Boot configuration
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot = {
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+    };
+
+    initrd.postDeviceCommands = lib.mkAfter ''
+      mkdir /btrfs_tmp
+      mount /dev/root_vg/root /btrfs_tmp
+      if [[ -e /btrfs_tmp/root ]]; then
+          mkdir -p /btrfs_tmp/old_roots
+          timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/root)" "+%Y-%m-%-d_%H:%M:%S")
+          mv /btrfs_tmp/root "/btrfs_tmp/old_roots/$timestamp"
+      fi
+
+      delete_subvolume_recursively() {
+          IFS=$'\n'
+          for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
+              delete_subvolume_recursively "/btrfs_tmp/$i"
+          done
+          btrfs subvolume delete "$1"
+      }
+
+      for i in $(find /btrfs_tmp/old_roots/ -maxdepth 1 -mtime +30); do
+          delete_subvolume_recursively "$i"
+      done
+
+      btrfs subvolume create /btrfs_tmp/root
+      umount /btrfs_tmp
+    '';
+  };
 
   # SOPS configuration
-  sops.defaultSopsFile = ./secrets.yaml;
-  sops.defaultSopsFormat = "yaml";
-  sops.age.keyFile = "/persist/system/var/lib/sops-nix/key.txt";
+  sops = {
+    defaultSopsFile = ./secrets.yaml;
+    defaultSopsFormat = "yaml";
+    age.keyFile = "/persist/system/var/lib/sops-nix/key.txt";
 
-  sops.secrets.example_key = {}; # owned by root
-  sops.secrets."myservice/user_dir/my_secret" = {
-    mode = "0440";
-    inherit (config.users.users.dan) group;
+    secrets = {
+      example_key = {}; # owned by root
+      "myservice/user_dir/my_secret" = {
+        mode = "0440";
+        inherit (config.users.users.dan) group;
 
-    # restart/reload systemd unit on secret change
-    #    restartUnits = [ "home-assistant.service" ]; # there is also a reloadUnit
+        # restart/reload systemd unit on secret change
+        #    restartUnits = [ "home-assistant.service" ]; # there is also a reloadUnit
 
-    # Symlinks to other directories
-    #    path = "/var/lib/hass/secrets.yaml";
-  };
-  sops.secrets."myservice/my_subdir/my_secret" = {
-    owner = config.users.users.dan.name;
-  };
-  sops.secrets."users/test/hashed_pwd" = {
-    neededForUsers = true;
+        # Symlinks to other directories
+        #    path = "/var/lib/hass/secrets.yaml";
+      };
+      "myservice/my_subdir/my_secret" = {
+        owner = config.users.users.dan.name;
+      };
+      "users/test/hashed_pwd" = {
+        neededForUsers = true;
+      };
+    };
   };
 
   # User configuration
@@ -61,40 +94,15 @@
     };
   };
 
-  # Impermanence configuration - automatic btrfs root reset
-  boot.initrd.postDeviceCommands = lib.mkAfter ''
-    mkdir /btrfs_tmp
-    mount /dev/root_vg/root /btrfs_tmp
-    if [[ -e /btrfs_tmp/root ]]; then
-        mkdir -p /btrfs_tmp/old_roots
-        timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/root)" "+%Y-%m-%-d_%H:%M:%S")
-        mv /btrfs_tmp/root "/btrfs_tmp/old_roots/$timestamp"
-    fi
-
-    delete_subvolume_recursively() {
-        IFS=$'\n'
-        for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
-            delete_subvolume_recursively "/btrfs_tmp/$i"
-        done
-        btrfs subvolume delete "$1"
-    }
-
-    for i in $(find /btrfs_tmp/old_roots/ -maxdepth 1 -mtime +30); do
-        delete_subvolume_recursively "$i"
-    done
-
-    btrfs subvolume create /btrfs_tmp/root
-    umount /btrfs_tmp
-  '';
-
   # File system configuration
   fileSystems = {
     "/".options = ["compress=zstd" "noatime"];
-    "/persist".options = ["compress=zstd" "noatime"];
+    "/persist" = {
+      options = ["compress=zstd" "noatime"];
+      neededForBoot = true;
+    };
     "/nix".options = ["compress=zstd" "noatime"];
   };
-
-  fileSystems."/persist".neededForBoot = true;
 
   # Impermanence system directories
   environment.persistence."/persist/system" = {
@@ -150,61 +158,74 @@
   #   useXkbConfig = true; # use xkb.options in tty.
   # };
 
-  # File system maintenance
-  services.btrfs.autoScrub = {
-    enable = true;
-    interval = "weekly";
-    fileSystems = ["/"];
+  # Services
+  services = {
+    # File system maintenance
+    btrfs.autoScrub = {
+      enable = true;
+      interval = "weekly";
+      fileSystems = ["/"];
+    };
+
+    # Power management
+    thermald.enable = true;
+    auto-cpufreq = {
+      enable = true;
+      settings = {
+        battery = {
+          governor = "powersafe";
+          turbo = "never";
+        };
+        charger = {
+          governor = "performance";
+          turbo = "auto";
+        };
+      };
+    };
+
+    # Enable the X11 windowing system.
+    # xserver.enable = true;
+
+    # Configure keymap in X11
+    # xserver.xkb.layout = "us";
+    # xserver.xkb.options = "eurosign:e,caps:escape";
+
+    # Enable CUPS to print documents.
+    # printing.enable = true;
+
+    # Enable sound.
+    # hardware.pulseaudio.enable = true;
+    # OR
+
+    # Audio
+    pipewire = {
+      enable = true;
+      pulse.enable = true;
+    };
+
+    # Enable touchpad support (enabled default in most desktopManager).
+    # libinput.enable = true;
+
+    openssh.enable = true;
+
+    greetd = {
+      enable = true;
+      settings = {
+        initial_session = {
+          command = "${pkgs.hyprland}/bin/Hyprland";
+          user = "dan";
+        };
+        default_session = {
+          command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs.hyprland}/share/wayland-sessions";
+          user = "greeter";
+        };
+      };
+    };
   };
 
   # Power management
   powerManagement.enable = true;
   powerManagement.powertop.enable = true;
-  services.thermald.enable = true;
-  services.auto-cpufreq.enable = true;
-  services.auto-cpufreq.settings = {
-    battery = {
-      governor = "powersafe";
-      turbo = "never";
-    };
-    charger = {
-      governor = "performance";
-      turbo = "auto";
-    };
-  };
-
-  # Enable the X11 windowing system.
-  # services.xserver.enable = true;
-
-  # Configure keymap in X11
-  # services.xserver.xkb.layout = "us";
-  # services.xserver.xkb.options = "eurosign:e,caps:escape";
-
-  # Enable CUPS to print documents.
-  # services.printing.enable = true;
-
-  # Enable sound.
-  # hardware.pulseaudio.enable = true;
-  # OR
-
-  # Audio
-  services.pipewire = {
-    enable = true;
-    pulse.enable = true;
-  };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
-  # users.users.alice = {
-  #   isNormalUser = true;
-  #   extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
-  #   packages = with pkgs; [
-  #     firefox
-  #     tree
-  #   ];
-  # };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -277,41 +298,29 @@
   ];
 
   # Programs
-  programs.vim = {
-    enable = true;
-    defaultEditor = true;
-  };
-  programs.git.enable = true;
-  programs.fuse.userAllowOther = true;
+  programs = {
+    vim = {
+      enable = true;
+      defaultEditor = true;
+    };
+    git.enable = true;
+    fuse.userAllowOther = true;
 
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
+    # Some programs need SUID wrappers, can be configured further or are
+    # started in user sessions.
+    # mtr.enable = true;
+    # gnupg.agent = {
+    #   enable = true;
+    #   enableSSHSupport = true;
+    # };
 
-  # Services
-  services.openssh.enable = true;
-  services.greetd = {
-    enable = true;
-    settings = {
-      initial_session = {
-        command = "${pkgs.hyprland}/bin/Hyprland";
-        user = "dan";
-      };
-      default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs.hyprland}/share/wayland-sessions";
-        user = "greeter";
-      };
+    # Hyprland
+    hyprland = {
+      enable = true;
+      package = pkgs-unstable.hyprland;
+      # portalPackage is typically not needed when using pkgs-unstable.hyprland
     };
   };
-
-  # Hyprland
-  programs.hyprland.enable = true;
-  programs.hyprland.package = pkgs-unstable.hyprland;
-  # programs.hyprland.portalPackage is typically not needed when using pkgs-unstable.hyprland
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

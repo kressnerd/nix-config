@@ -60,71 +60,73 @@
   ];
 
   # Configure some of these tools
-  programs.eza = {
-    enable = true;
-    enableFishIntegration = true;
-    git = true;
-    icons = "auto";
-  };
-
-  programs.bat = {
-    enable = true;
-    config = {
-      theme = "catppuccin-latte";
+  programs = {
+    eza = {
+      enable = true;
+      enableFishIntegration = true;
+      git = true;
+      icons = "auto";
     };
 
-    # Add Catppuccin themes
-    themes = {
-      catppuccin-latte = {
-        src = pkgs.fetchFromGitHub {
-          owner = "catppuccin";
-          repo = "bat";
-          rev = "main";
-          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
-        };
-        file = "Catppuccin-latte.tmTheme";
+    bat = {
+      enable = true;
+      config = {
+        theme = "catppuccin-latte";
       };
-      catppuccin-frappe = {
-        src = pkgs.fetchFromGitHub {
-          owner = "catppuccin";
-          repo = "bat";
-          rev = "main";
-          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+
+      # Add Catppuccin themes
+      themes = {
+        catppuccin-latte = {
+          src = pkgs.fetchFromGitHub {
+            owner = "catppuccin";
+            repo = "bat";
+            rev = "main";
+            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+          };
+          file = "Catppuccin-latte.tmTheme";
         };
-        file = "Catppuccin-frappe.tmTheme";
-      };
-      catppuccin-macchiato = {
-        src = pkgs.fetchFromGitHub {
-          owner = "catppuccin";
-          repo = "bat";
-          rev = "main";
-          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+        catppuccin-frappe = {
+          src = pkgs.fetchFromGitHub {
+            owner = "catppuccin";
+            repo = "bat";
+            rev = "main";
+            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+          };
+          file = "Catppuccin-frappe.tmTheme";
         };
-        file = "Catppuccin-macchiato.tmTheme";
-      };
-      catppuccin-mocha = {
-        src = pkgs.fetchFromGitHub {
-          owner = "catppuccin";
-          repo = "bat";
-          rev = "main";
-          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+        catppuccin-macchiato = {
+          src = pkgs.fetchFromGitHub {
+            owner = "catppuccin";
+            repo = "bat";
+            rev = "main";
+            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+          };
+          file = "Catppuccin-macchiato.tmTheme";
         };
-        file = "Catppuccin-mocha.tmTheme";
+        catppuccin-mocha = {
+          src = pkgs.fetchFromGitHub {
+            owner = "catppuccin";
+            repo = "bat";
+            rev = "main";
+            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
+          };
+          file = "Catppuccin-mocha.tmTheme";
+        };
       };
     };
-  };
 
-  programs.fzf = {
-    enable = true;
-  };
+    fzf = {
+      enable = true;
+    };
 
-  programs.zoxide = {
-    enable = true;
-  };
+    zoxide = {
+      enable = true;
+    };
 
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
   };
 
   # Add aliases for the new tools
