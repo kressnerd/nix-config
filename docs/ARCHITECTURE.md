@@ -1,92 +1,92 @@
 This document provides a unified overview of the structure, modularity,
-and layering of the Nix configuration repository. It consolidates the
-architectural insights previously found in FLAKE.md, MODULES.md, and
-HOSTS.md.
+and layering of the Nix configuration repository.
 
 # Overview
 
 The repository is organized for modularity, maintainability, and
 scalability. It uses a layered approach:
 
-- **Flake-based entry point** for reproducible builds and input
-  management
-
+- **Flake-based entry point** for reproducible builds and input management
+- **Shared NixOS base** via `hosts/common/` for deduplication
 - **System-level configuration** with nix-darwin and Homebrew
-
 - **User-level configuration** with Home Manager and feature modules
-
 - **Secrets management** with SOPS and age
 
-# Flake Structure
+# Repository Layout
 
-The `flake.nix` file defines all external dependencies (inputs),
-overlays, and outputs. It composes system and user configurations,
-passing special arguments for advanced composition.
+```
+flake.nix
+├── overlays/default.nix          (custom nixpkgs overlays)
+├── lib/helpers.nix               (mkPkgsUnstable, mkFirefoxExtensions)
+├── pkgs/default.nix              (custom packages — placeholder)
+├── modules/nixos/                (reusable NixOS modules — placeholder)
+├── modules/home-manager/         (reusable HM modules — placeholder)
+├── templates/host/               (new host scaffold)
+│
+├── hosts/common/
+│   ├── global/default.nix        (shared NixOS base: timezone, locale, NetworkManager)
+│   ├── global/nix.nix            (shared Nix settings: experimental-features)
+│   ├── optional/virtualisation.nix (libvirtd, virt-manager)
+│   ├── optional/docker.nix       (placeholder)
+│   └── users/dan.nix             (shared NixOS user definition)
+│
+├── hosts/J6G6Y9JK7L/             (aarch64-darwin, nix-darwin — does NOT use hosts/common/)
+├── hosts/thiniel/                (x86_64-linux NixOS, imports common/global + optional/virtualisation)
+└── hosts/nixos-vm-minimal/       (aarch64-linux NixOS, imports common/global)
+│
+├── home/dan/global/default.nix   (HM base: stateVersion, htop, ripgrep, home-manager)
+├── home/dan/dotfiles/doom.d/     (Doom Emacs config — symlinked to ~/.config/doom)
+└── home/dan/features/            (composable HM feature modules)
+```
+
+# Flake Outputs
+
+| Output | Description |
+|---|---|
+| `darwinConfigurations.J6G6Y9JK7L` | macOS workstation |
+| `nixosConfigurations.thiniel` | ThinkPad X270 |
+| `nixosConfigurations.nixos-vm-minimal` | Minimal aarch64 VM |
+| `overlays.default` | Custom nixpkgs overlay (vscode-extensions) |
+| `templates.host` | New NixOS host scaffold |
 
 # System and Host Layer
 
-Each host has a dedicated directory under `hosts/`, containing
-system-level configuration (`default.nix`) and secrets. System
-configuration manages:
+Each host has a directory under `hosts/` with system-level configuration.
+NixOS hosts import `../common/global` for shared settings and
+`../common/users/dan.nix` for the base user definition.
 
-- Platform and state version
-
-- User account setup for Home Manager
-
-- Declarative Homebrew integration
-
-- Minimal system-wide packages
-
-- Activation scripts for runtime checks
+**J6G6Y9JK7L** (macOS/nix-darwin) does NOT import `hosts/common/` — it is
+a darwin host and uses darwin-specific modules only.
 
 # User and Feature Layer
 
-User configuration is modular and lives under `home/dan/`. It imports:
+User configuration lives under `home/dan/`. Each host has a corresponding
+`home/dan/<hostname>.nix` that imports:
 
-- Global settings (`global/default.nix`)
+- `global/default.nix` — shared HM base
+- Feature modules from `features/`
+- Host-specific overrides (SOPS secrets, aliases, platform settings)
 
-- Feature modules (`features/cli/`, `features/macos/`,
-  `features/productivity/`)
-
-- Host-specific overrides
-
-Feature modules encapsulate CLI tools, macOS settings, productivity
-apps, and more. Each module is self-contained and composable.
-
-# Modularity and Extensibility
-
-- Features are added by creating new modules and importing them in the
-  user config.
-
-- Secrets are defined globally and referenced where needed.
-
-- The architecture supports incremental adoption and cross-platform
-  expansion.
+Doom Emacs dotfiles live at `home/dan/dotfiles/doom.d/` and are symlinked
+to `~/.config/doom` via `xdg.configFile."doom"` in `emacs-doom.nix`.
 
 # Architectural Patterns
 
-- **Layered composition**: System → User → Features
+- **Layered composition**: System (hosts/common) → Host → User (HM global) → Features
+- **Shared base extraction**: Common NixOS settings in `hosts/common/` avoid duplication
+- **Optional modules**: `hosts/common/optional/` for conditional system features
+- **Declarative management**: All configuration is code, no imperative commands
+- **Extensible modules**: New features added without disrupting existing configs
 
-- **Declarative management**: All configuration is code, not imperative
-  commands
+# Adding a New Host
 
-- **Separation of concerns**: System, user, and secrets are managed
-  independently
-
-- **Extensible modules**: New features can be added without disrupting
-  existing configs
-
-# Adding or Modifying Hosts
-
-To add a new host: . Create a new directory under `hosts/` . Add system
-configuration and secrets . Create a user configuration in `home/dan/` .
-Register the host in `flake.nix`
+1. Copy `templates/host/default.nix` to `hosts/<hostname>/default.nix`
+2. Add `hosts/<hostname>/hardware.nix` (or generate with `nixos-generate-config`)
+3. Create `home/dan/<hostname>.nix` importing global + desired feature modules
+4. Register in `flake.nix` under `nixosConfigurations`
 
 # Future Evolution
 
-The structure is designed for: \* Multi-host and cross-platform support
-\* Custom overlays and package extensions \* CI/CD and automated
-validation \* Infrastructure as Code integration
-
-For detailed examples and up-to-date module patterns, see the codebase
-and feature modules.
+- `modules/nixos/` and `modules/home-manager/` for reusable modules
+- `pkgs/` for custom derivations (scripts migration from `scripts/`)
+- Additional `hosts/common/optional/` modules as needs arise
