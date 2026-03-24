@@ -1,4 +1,4 @@
-{ ... }: {
+{...}: {
   imports = [./nix.nix];
 
   documentation.nixos.enable = false;
