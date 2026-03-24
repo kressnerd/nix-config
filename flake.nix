@@ -73,6 +73,8 @@
   } @ inputs: let
     inherit (self) outputs;
   in {
+    overlays.default = import ./overlays;
+
     templates = {
       host = {
         path = ./templates/host;
@@ -92,7 +94,7 @@
         };
         modules = [
           {
-            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.overlays = [nur.overlays.default (import ./overlays)];
             nixpkgs.config.allowUnfree = true;
           }
           ./hosts/nixos-vm-minimal
@@ -128,7 +130,7 @@
         };
         modules = [
           {
-            nixpkgs.overlays = [nur.overlays.default];
+            nixpkgs.overlays = [nur.overlays.default (import ./overlays)];
             nixpkgs.config.allowUnfree = true;
           }
           ./hosts/thiniel
@@ -168,6 +170,7 @@
           {
             nixpkgs.overlays = [
               nur.overlays.default
+              (import ./overlays)
             ];
             nixpkgs.config.allowUnfree = true;
           }
