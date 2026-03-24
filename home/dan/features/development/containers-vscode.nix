@@ -29,107 +29,109 @@
   };
 
   # Example devcontainer configurations
-  home.file.".config/devcontainers/nodejs/.devcontainer.json".text = builtins.toJSON {
-    name = "Node.js Development";
-    image = "node:20-bullseye";
+  home.file = {
+    ".config/devcontainers/nodejs/.devcontainer.json".text = builtins.toJSON {
+      name = "Node.js Development";
+      image = "node:20-bullseye";
 
-    features = {
-      "ghcr.io/devcontainers/features/git:1" = {};
-      "ghcr.io/devcontainers/features/github-cli:1" = {};
-    };
+      features = {
+        "ghcr.io/devcontainers/features/git:1" = {};
+        "ghcr.io/devcontainers/features/github-cli:1" = {};
+      };
 
-    customizations = {
-      vscode = {
-        extensions = [
-          "dbaeumer.vscode-eslint"
-          "esbenp.prettier-vscode"
-          "ms-vscode.vscode-typescript-next"
-        ];
-        settings = {
-          "terminal.integrated.defaultProfile.linux" = "bash";
+      customizations = {
+        vscode = {
+          extensions = [
+            "dbaeumer.vscode-eslint"
+            "esbenp.prettier-vscode"
+            "ms-vscode.vscode-typescript-next"
+          ];
+          settings = {
+            "terminal.integrated.defaultProfile.linux" = "bash";
+          };
         };
       };
+
+      forwardPorts = [3000 8000 8080];
+      postCreateCommand = "npm install -g pnpm yarn";
+
+      mounts = [
+        "source=${config.home.homeDirectory}/.ssh,target=/home/node/.ssh,type=bind,consistency=cached"
+        "source=${config.home.homeDirectory}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached"
+      ];
+
+      remoteUser = "node";
     };
 
-    forwardPorts = [3000 8000 8080];
-    postCreateCommand = "npm install -g pnpm yarn";
+    ".config/devcontainers/python/.devcontainer.json".text = builtins.toJSON {
+      name = "Python Development";
+      image = "python:3.11-bullseye";
 
-    mounts = [
-      "source=${config.home.homeDirectory}/.ssh,target=/home/node/.ssh,type=bind,consistency=cached"
-      "source=${config.home.homeDirectory}/.gitconfig,target=/home/node/.gitconfig,type=bind,consistency=cached"
-    ];
-
-    remoteUser = "node";
-  };
-
-  home.file.".config/devcontainers/python/.devcontainer.json".text = builtins.toJSON {
-    name = "Python Development";
-    image = "python:3.11-bullseye";
-
-    features = {
-      "ghcr.io/devcontainers/features/git:1" = {};
-      "ghcr.io/devcontainers/features/python:1" = {
-        version = "3.11";
-        installTools = true;
-      };
-    };
-
-    customizations = {
-      vscode = {
-        extensions = [
-          "ms-python.python"
-          "ms-python.pylint"
-          "ms-python.black-formatter"
-          "ms-toolsai.jupyter"
-        ];
-        settings = {
-          "python.defaultInterpreterPath" = "/usr/local/bin/python";
-          "python.linting.enabled" = true;
-          "python.linting.pylintEnabled" = true;
-          "python.formatting.provider" = "black";
+      features = {
+        "ghcr.io/devcontainers/features/git:1" = {};
+        "ghcr.io/devcontainers/features/python:1" = {
+          version = "3.11";
+          installTools = true;
         };
       };
-    };
 
-    forwardPorts = [8000 5000 8080];
-    postCreateCommand = "pip install --upgrade pip && pip install poetry black pylint";
-
-    mounts = [
-      "source=${config.home.homeDirectory}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
-      "source=${config.home.homeDirectory}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
-    ];
-  };
-
-  home.file.".config/devcontainers/rust/.devcontainer.json".text = builtins.toJSON {
-    name = "Rust Development";
-    image = "rust:1.75-bullseye";
-
-    features = {
-      "ghcr.io/devcontainers/features/git:1" = {};
-      "ghcr.io/devcontainers/features/rust:1" = {};
-    };
-
-    customizations = {
-      vscode = {
-        extensions = [
-          "rust-lang.rust-analyzer"
-          "tamasfe.even-better-toml"
-          "serayuzgur.crates"
-        ];
-        settings = {
-          "rust-analyzer.checkOnSave.command" = "clippy";
+      customizations = {
+        vscode = {
+          extensions = [
+            "ms-python.python"
+            "ms-python.pylint"
+            "ms-python.black-formatter"
+            "ms-toolsai.jupyter"
+          ];
+          settings = {
+            "python.defaultInterpreterPath" = "/usr/local/bin/python";
+            "python.linting.enabled" = true;
+            "python.linting.pylintEnabled" = true;
+            "python.formatting.provider" = "black";
+          };
         };
       };
+
+      forwardPorts = [8000 5000 8080];
+      postCreateCommand = "pip install --upgrade pip && pip install poetry black pylint";
+
+      mounts = [
+        "source=${config.home.homeDirectory}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+        "source=${config.home.homeDirectory}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+      ];
     };
 
-    forwardPorts = [8000 3030];
-    postCreateCommand = "rustup component add clippy rustfmt";
+    ".config/devcontainers/rust/.devcontainer.json".text = builtins.toJSON {
+      name = "Rust Development";
+      image = "rust:1.75-bullseye";
 
-    mounts = [
-      "source=${config.home.homeDirectory}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
-      "source=${config.home.homeDirectory}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
-      "source=${config.home.homeDirectory}/.cargo,target=/usr/local/cargo,type=bind,consistency=cached"
-    ];
+      features = {
+        "ghcr.io/devcontainers/features/git:1" = {};
+        "ghcr.io/devcontainers/features/rust:1" = {};
+      };
+
+      customizations = {
+        vscode = {
+          extensions = [
+            "rust-lang.rust-analyzer"
+            "tamasfe.even-better-toml"
+            "serayuzgur.crates"
+          ];
+          settings = {
+            "rust-analyzer.checkOnSave.command" = "clippy";
+          };
+        };
+      };
+
+      forwardPorts = [8000 3030];
+      postCreateCommand = "rustup component add clippy rustfmt";
+
+      mounts = [
+        "source=${config.home.homeDirectory}/.ssh,target=/root/.ssh,type=bind,consistency=cached"
+        "source=${config.home.homeDirectory}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+        "source=${config.home.homeDirectory}/.cargo,target=/usr/local/cargo,type=bind,consistency=cached"
+      ];
+    };
   };
 
   # Shell helper for dev containers
