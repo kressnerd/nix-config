@@ -18,6 +18,16 @@
                   (file+head "pages/${slug}.org" "#+title: ${title}\n")
                   :unnarrowed t)))
 
+;; Nix PATH integration for macOS GUI/daemon Emacs
+;; Subprocess shells (/bin/sh) need PATH, not just exec-path, to find Nix binaries.
+;; Must run early and without (display-graphic-p) guard — the daemon starts in non-graphic mode.
+(when IS-MAC
+  (let ((nix-profile (format "/etc/profiles/per-user/%s/bin" (user-login-name))))
+    (when (file-directory-p nix-profile)
+      (unless (string-match-p (regexp-quote nix-profile) (or (getenv "PATH") ""))
+        (setenv "PATH" (concat nix-profile ":" (getenv "PATH"))))
+      (add-to-list 'exec-path nix-profile))))
+
 ;; Initial GUI window size and position (only when a graphical display is used)
 (when (display-graphic-p)
   (setq frame-resize-pixelwise t)
@@ -84,7 +94,7 @@
   (global-set-key (kbd "s--") 'text-scale-decrease)
   (global-set-key (kbd "s-0") 'text-scale-adjust)
 
-  ;; PATH integration not needed; Doom env handles shell PATH.
+  ;; PATH integration is handled at top of this file (early, daemon-safe).
   )
 
 ;;; Editor Configuration
@@ -338,15 +348,6 @@
 ;; Configure ispell to use Hunspell with English and German dictionaries simultaneously
 (use-package! ispell
   :init
-  ;; On macOS, add user Nix profile to exec-path for GUI Emacs
-  (when (and IS-MAC (display-graphic-p))
-    (let ((user-bin (expand-file-name "~/.nix-profile/bin")))
-      (when (file-directory-p user-bin)
-        (add-to-list 'exec-path user-bin)))
-    (let ((user-bin "/etc/profiles/per-user/daniel.kressner/bin"))
-      (when (file-directory-p user-bin)
-        (add-to-list 'exec-path user-bin))))
-  
   (setq ispell-program-name "hunspell"
         ispell-dictionary "en_US,de_DE")
   :config
