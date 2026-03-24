@@ -1,6 +1,6 @@
 {pkgs, ...}: let
   addons = pkgs.nur.repos.rycee.firefox-addons;
-  exts = import ../../../../lib/firefox-extensions.nix {inherit addons;};
+  exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions {inherit addons;};
 in {
   programs.firefox.profiles.user = {
     id = 0;
