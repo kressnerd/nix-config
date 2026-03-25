@@ -1,7 +1,5 @@
 {pkgs, ...}: let
   startupScript = pkgs.writeShellScriptBin "start" ''
-    ${pkgs.waybar}/bin/waybar &
-    ${pkgs.mako}/bin/mako &
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store # Stores only text data
     ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store # Stores only image data
     sleep 1
@@ -11,14 +9,72 @@
 in {
   # Install required packages
   home.packages = with pkgs; [
-    waybar
-    mako
     libnotify
-    rofi
     wl-clipboard
     cliphist
     brightnessctl
   ];
+
+  programs.waybar.enable = true;
+
+  services.mako = {
+    enable = true;
+    settings = {
+      background-color = "#eff1f5";
+      text-color = "#4c4f69";
+      border-color = "#7287fd";
+      progress-color = "over #ccd0da";
+      "urgency=low" = {
+        border-color = "#4c4f69";
+      };
+      "urgency=high" = {
+        border-color = "#d20f39";
+      };
+    };
+  };
+
+  programs.rofi = {
+    enable = true;
+    terminal = "${pkgs.kitty}/bin/kitty";
+    extraConfig = {
+      show-icons = true;
+    };
+    theme = builtins.toFile "catppuccin-latte.rasi" ''
+      * {
+        bg:      #eff1f5;
+        bg-alt:  #e6e9ef;
+        fg:      #4c4f69;
+        fg-alt:  #9ca0b0;
+        accent:  #7287fd;
+        urgent:  #d20f39;
+      }
+      window {
+        background-color: @bg;
+        border: 2px solid;
+        border-color: @accent;
+        border-radius: 8px;
+      }
+      mainbox { background-color: @bg; }
+      inputbar {
+        background-color: @bg-alt;
+        text-color: @fg;
+        padding: 8px;
+        border-radius: 4px;
+      }
+      element {
+        background-color: transparent;
+        text-color: @fg;
+        padding: 6px;
+        border-radius: 4px;
+      }
+      element selected {
+        background-color: @accent;
+        text-color: @bg;
+      }
+      element-text { background-color: transparent; text-color: inherit; }
+      element-icon { background-color: transparent; }
+    '';
+  };
 
   wayland.windowManager.hyprland = {
     enable = true;
@@ -28,6 +84,11 @@ in {
     #    ];
 
     settings = {
+      general = {
+        "col.active_border" = "rgb(7287fd)"; # Catppuccin Latte lavender
+        "col.inactive_border" = "rgb(ccd0da)"; # Catppuccin Latte surface0
+      };
+
       input = {
         kb_options = "compose:ralt";
       };

@@ -6,7 +6,7 @@ _: {
 
       GUI = {
         AdvancedSettings = true;
-        ApplicationTheme = "dark";
+        ApplicationTheme = "classic";
         CompactMode = true;
         HidePasswords = true;
       };

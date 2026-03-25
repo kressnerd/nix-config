@@ -54,8 +54,9 @@
         doom-unicode-font (font-spec :family "Monaco" :size 14)
         doom-big-font (font-spec :family "Monaco" :size 20 :weight 'medium)))
 
-;; Theme configuration - keeping doom-one from original
-(setq doom-theme 'doom-one)
+;; Theme configuration - Catppuccin Latte
+(setq doom-theme 'catppuccin)
+(setq catppuccin-flavor 'latte)
 
 ;; Modeline configuration
 (setq doom-modeline-height 32

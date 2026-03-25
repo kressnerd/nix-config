@@ -11,12 +11,11 @@
     settings = {
       delta = {
         enable = true;
-        theme = "Dracula";
         "line-numbers" = true;
         "side-by-side" = true;
         navigate = true;
         hyperlinks = true;
-        light = false;
+        light = true;
       };
     };
   };
@@ -25,12 +24,11 @@
     enable = true;
     enableGitIntegration = true;
     options = {
-      theme = "Dracula";
       "line-numbers" = true;
       "side-by-side" = true;
       navigate = true;
       hyperlinks = true;
-      light = false;
+      light = true;
     };
   };
 

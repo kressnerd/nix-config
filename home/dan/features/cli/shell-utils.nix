@@ -70,58 +70,49 @@
 
     bat = {
       enable = true;
-      config = {
-        theme = "catppuccin-latte";
-      };
-
-      # Add Catppuccin themes
-      themes = {
-        catppuccin-latte = {
-          src = pkgs.fetchFromGitHub {
-            owner = "catppuccin";
-            repo = "bat";
-            rev = "main";
-            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
-          };
-          file = "Catppuccin-latte.tmTheme";
+      config.theme = "catppuccin-latte";
+      # Catppuccin Latte theme for bat
+      themes.catppuccin-latte = {
+        src = pkgs.fetchFromGitHub {
+          owner = "catppuccin";
+          repo = "bat";
+          rev = "main";
+          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
         };
-        catppuccin-frappe = {
-          src = pkgs.fetchFromGitHub {
-            owner = "catppuccin";
-            repo = "bat";
-            rev = "main";
-            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
-          };
-          file = "Catppuccin-frappe.tmTheme";
-        };
-        catppuccin-macchiato = {
-          src = pkgs.fetchFromGitHub {
-            owner = "catppuccin";
-            repo = "bat";
-            rev = "main";
-            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
-          };
-          file = "Catppuccin-macchiato.tmTheme";
-        };
-        catppuccin-mocha = {
-          src = pkgs.fetchFromGitHub {
-            owner = "catppuccin";
-            repo = "bat";
-            rev = "main";
-            sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
-          };
-          file = "Catppuccin-mocha.tmTheme";
-        };
+        file = "Catppuccin-latte.tmTheme";
       };
     };
 
     fzf = {
       enable = true;
+      # Catppuccin Latte colors
+      defaultOptions = [
+        "--color=bg+:#ccd0da,bg:#eff1f5,spinner:#dc8a78,hl:#d20f39"
+        "--color=fg:#4c4f69,header:#d20f39,info:#8839ef,pointer:#dc8a78"
+        "--color=marker:#7287fd,fg+:#4c4f69,prompt:#8839ef,hl+:#d20f39"
+        "--color=selected-bg:#bcc0cc,border:#ccd0da,label:#4c4f69"
+      ];
     };
 
-    zoxide = {
+    lazygit = {
       enable = true;
+      settings = {
+        gui.theme = {
+          activeBorderColor = ["#7287fd" "bold"];
+          inactiveBorderColor = ["#4c4f69"];
+          optionsTextColor = ["#1e66f5"];
+          selectedLineBgColor = ["#ccd0da"];
+          cherryPickedCommitFgColor = ["#1e66f5"];
+          cherryPickedCommitBgColor = ["#7287fd"];
+          markedBaseCommitFgColor = ["#fe640b"];
+          markedBaseCommitBgColor = ["#df8e1d"];
+          unstagedChangesColor = ["#d20f39"];
+          defaultFgColor = ["#4c4f69"];
+        };
+      };
     };
+
+    zoxide.enable = true;
 
     direnv = {
       enable = true;

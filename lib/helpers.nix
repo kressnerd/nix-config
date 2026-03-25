@@ -12,7 +12,6 @@
     common = with addons; [
       ublock-origin
       keepassxc-browser
-      darkreader
       consent-o-matic
     ];
 
