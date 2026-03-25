@@ -58,6 +58,36 @@
 (setq doom-theme 'catppuccin)
 (setq catppuccin-flavor 'latte)
 
+;; Catppuccin Latte faces for the dashboard cat banner
+(defface doom-dashboard-cat-lavender '((t (:foreground "#7287fd"))) "Catppuccin Latte Lavender." :group 'doom-dashboard)
+(defface doom-dashboard-cat-mauve    '((t (:foreground "#8839ef"))) "Catppuccin Latte Mauve."    :group 'doom-dashboard)
+(defface doom-dashboard-cat-pink     '((t (:foreground "#ea76cb"))) "Catppuccin Latte Pink."     :group 'doom-dashboard)
+(defface doom-dashboard-cat-text     '((t (:foreground "#4c4f69"))) "Catppuccin Latte Text."     :group 'doom-dashboard)
+(defface doom-dashboard-cat-subtext  '((t (:foreground "#6c6f85"))) "Catppuccin Latte Subtext."  :group 'doom-dashboard)
+
+(defun catppuccin-cat-dashboard-banner-fn ()
+  "Catppuccin cat ASCII art banner for the Doom dashboard."
+  (let* ((banner
+          '(("       /\\_____/\\      " . doom-dashboard-cat-mauve)
+            ("      /  o   o  \\     " . doom-dashboard-cat-lavender)
+            ("     ( ==  ^  == )    " . doom-dashboard-cat-pink)
+            ("      )  =====  (     " . doom-dashboard-cat-lavender)
+            ("     ( (       ) )    " . doom-dashboard-cat-lavender)
+            ("    (__(__)___(__)__)  " . doom-dashboard-cat-mauve)
+            (""                      . doom-dashboard-cat-text)
+            ("  ~ c a t p p u c c i n ~" . doom-dashboard-cat-lavender)
+            ("        E M A C S        " . doom-dashboard-cat-text)))
+         (longest-line (apply #'max (mapcar (lambda (x) (length (car x))) banner))))
+    (dolist (entry banner)
+      (let ((line (car entry))
+            (face (cdr entry))
+            (start (point)))
+        (insert (+doom-dashboard--center
+                 +doom-dashboard--width
+                 (concat line (make-string (max 0 (- longest-line (length line))) 32)))
+                "\n")
+        (put-text-property start (point) 'face face)))))
+
 ;; Modeline configuration
 (setq doom-modeline-height 32
       doom-modeline-bar-width 3
@@ -66,7 +96,9 @@
       doom-modeline-buffer-file-name-style 'truncate-upto-project)
 
 ;; Dashboard configuration
-(setq doom-dashboard-name "Welcome to Doom Emacs"
+(setq +doom-dashboard-ascii-banner-fn #'catppuccin-cat-dashboard-banner-fn
+      fancy-splash-image nil
+      doom-dashboard-name "Welcome to Doom Emacs"
       +doom-dashboard-menu-sections
       '(("Recently opened files" :icon (nerd-icons-faicon "nf-fa-file_text_o" :face 'doom-dashboard-menu-title) :action recentf-open-files)
         ("Open project" :icon (nerd-icons-codicon "nf-cod-briefcase" :face 'doom-dashboard-menu-title) :action projectile-switch-project)
