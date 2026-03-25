@@ -3,9 +3,9 @@ _: {
   targets.darwin = {
     defaults = {
       NSGlobalDomain = {
-        # Graphite accent color
-        AppleAccentColor = -1; # -1 for Graphite
-        AppleHighlightColor = "0.847059 0.847059 0.862745 Graphite";
+        # Purple accent — closest macOS accent to Catppuccin Latte lavender (#7287fd)
+        AppleAccentColor = 5; # 5 = Purple
+        AppleHighlightColor = "0.698039 0.678431 1.000000 Purple";
 
         # Interface and interaction
         # AppleInterfaceStyle = "Dark";

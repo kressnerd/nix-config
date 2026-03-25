@@ -45,6 +45,9 @@
 
 ;;; Actual Package Declarations
 
+;; Catppuccin theme
+(package! catppuccin-theme)
+
 ;; Nix-specific packages for better NixOS/Nix integration
 (package! nixos-options)
 (package! company-nixos-options)

@@ -38,7 +38,8 @@
         neotree # File tree
 
         # Theme and appearance
-        doom-themes # Modern themes
+        catppuccin-theme # Catppuccin Latte theme
+        doom-themes # Modern themes (kept for doom-modeline)
         doom-modeline # Modern modeline
         all-the-icons # Icon support
 
@@ -180,9 +181,13 @@
         :config
         (setq doom-themes-enable-bold t
               doom-themes-enable-italic t)
-        (load-theme 'doom-one t)
         (doom-themes-visual-bell-config)
         (doom-themes-org-config))
+
+      (use-package catppuccin-theme
+        :config
+        (setq catppuccin-flavor 'latte)
+        (load-theme 'catppuccin t))
 
       ;; Doom modeline
       (use-package doom-modeline

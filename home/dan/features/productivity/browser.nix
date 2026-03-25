@@ -1,4 +1,5 @@
 {pkgs, ...}: {
+  # Firefox theme managed manually — install Catppuccin Latte addon from marketplace
   programs.firefox = {
     enable = true;
 

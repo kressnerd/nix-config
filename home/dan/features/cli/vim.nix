@@ -1,6 +1,8 @@
-_: {
+{pkgs, ...}: {
   programs.vim = {
     enable = true;
+
+    plugins = with pkgs.vimPlugins; [catppuccin-vim];
 
     settings = {
       expandtab = true;
@@ -17,6 +19,12 @@ _: {
     extraConfig = ''
       " Enable syntax highlighting
       syntax on
+
+      " Catppuccin Latte colorscheme
+      set termguicolors
+      set background=light
+      colorscheme catppuccin_latte
+
 
       " Better search highlighting
       set hlsearch

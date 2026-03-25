@@ -21,7 +21,7 @@
         "$character"
       ];
 
-      # Catppuccin Latte colors to match your Kitty theme
+      # Catppuccin Latte palette
       palette = "catppuccin_latte";
 
       palettes.catppuccin_latte = {
