@@ -15,7 +15,13 @@ in {
     brightnessctl
   ];
 
-  programs.waybar.enable = true;
+  programs.waybar = {
+    enable = true;
+    systemd = {
+      enable = true;
+      target = "hyprland-session.target";
+    };
+  };
 
   services.mako = {
     enable = true;
