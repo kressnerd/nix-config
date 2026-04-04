@@ -199,5 +199,28 @@
         ];
       };
     };
+
+    # ── Test checks ──────────────────────────────────────────────────────
+    checks = let
+      allSystems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin"];
+      linuxSystems = ["x86_64-linux" "aarch64-linux"];
+      forSystems = systems: f:
+        builtins.listToAttrs (map (system: {
+            name = system;
+            value = f system;
+          })
+          systems);
+    in
+      nixpkgs.lib.recursiveUpdate
+      (forSystems allSystems (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        unit-helpers = import ./tests/unit/default.nix {inherit pkgs;};
+      }))
+      (forSystems linuxSystems (system: let
+        pkgs = nixpkgs.legacyPackages.${system};
+        integrationTests = import ./tests/integration/default.nix {inherit pkgs;};
+      in
+        integrationTests));
   };
 }
