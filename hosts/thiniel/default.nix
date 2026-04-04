@@ -14,6 +14,7 @@
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
+    ../../tests/assertions
   ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";

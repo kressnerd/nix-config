@@ -4,6 +4,7 @@
     ../common/users/dan.nix
     ./hardware.nix
     ./disko.nix
+    ../../tests/assertions
   ];
 
   # System Configuration
