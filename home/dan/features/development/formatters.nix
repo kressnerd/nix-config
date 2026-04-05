@@ -4,8 +4,7 @@
   home = {
     packages = with pkgs; [
       # Nix formatters
-      alejandra # Modern, opinionated Nix formatter
-      nixpkgs-fmt # Traditional Nix formatter (for compatibility)
+      nixfmt-rfc-style # Official Nix formatter (RFC 166)
       deadnix # Detect unused bindings and dead code in Nix files
       statix # Lint Nix code for anti-patterns and suggest idiomatic improvements
 
@@ -23,8 +22,8 @@
 
     # Optional: Create a treefmt configuration for multi-language formatting
     file.".treefmt.toml".text = ''
-      [formatter.alejandra]
-      command = "alejandra"
+      [formatter.nixfmt]
+      command = "nixfmt"
       includes = ["*.nix"]
 
       [formatter.black]
@@ -48,9 +47,6 @@
 
     # Environment variables for formatters
     sessionVariables = {
-      # Alejandra configuration
-      ALEJANDRA_VERBOSITY = "normal";
-
       # Black configuration
       BLACK_LINE_LENGTH = "88";
 
@@ -63,9 +59,8 @@
   programs.fish = {
     shellAliases = {
       # Nix formatting aliases
-      "fmt-nix" = "alejandra .";
-      "fmt-nix-check" = "alejandra --check .";
-      "fmt-nix-legacy" = "nixpkgs-fmt";
+      "fmt-nix" = "nix fmt .";
+      "fmt-nix-check" = "nix fmt -- --check .";
 
       # Multi-format with treefmt
       "fmt-all" = "treefmt";
@@ -85,8 +80,8 @@
 
         switch "$file_type"
           case nix '*.nix'
-            echo "Formatting Nix files with Alejandra..."
-            alejandra .
+            echo "Formatting Nix files with nixfmt..."
+            nix fmt .
           case py python '*.py'
             echo "Formatting Python files with Black..."
             black .
@@ -104,8 +99,8 @@
             if command -v treefmt >/dev/null 2>&1
               treefmt
             else
-              echo "treefmt not available, running Alejandra on Nix files..."
-              alejandra .
+              echo "treefmt not available, running nixfmt on Nix files..."
+              nix fmt .
             end
         end
       '';
@@ -119,12 +114,12 @@
 
         switch "$file_type"
           case nix '*.nix'
-            alejandra --check .
+            nix fmt -- --check .
           case all
             if command -v treefmt >/dev/null 2>&1
               treefmt --fail-on-change
             else
-              alejandra --check .
+              nix fmt -- --check .
             end
         end
       '';

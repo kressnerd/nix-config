@@ -40,7 +40,7 @@ You are an experienced Senior Nix/NixOS Administrator with deep expertise in dec
 
 ### Tooling
 
-- **Formatters**: nixfmt, alejandra
+- **Formatters**: nixfmt (RFC-style)
 - **Linters**: statix, deadnix
 - **LSP**: nil
 - **MCP**: nixos MCP server for package/option lookups
