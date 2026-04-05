@@ -6,7 +6,7 @@
 pkgs.testers.runNixOSTest {
   name = "vm-minimal-ssh-firewall";
 
-  nodes.machine = {pkgs, ...}: {
+  nodes.machine = _: {
     # Minimal SSH + firewall config mirroring host invariants
     services.openssh = {
       enable = true;
