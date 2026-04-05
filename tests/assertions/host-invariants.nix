@@ -1,7 +1,6 @@
 # tests/assertions/host-invariants.nix
 # NixOS module assertions — enforced at evaluation time via nix flake check
-{ config, ... }:
-{
+{config, ...}: {
   config = {
     assertions = [
       {
@@ -13,8 +12,8 @@
         message = "Host invariant violated: networking.firewall must be enabled";
       }
       {
-        assertion = config.services.openssh.settings.PermitRootLogin != "yes";
-        message = "Host invariant violated: SSH root login must not be 'yes'";
+        assertion = !config.services.openssh.enable || config.services.openssh.settings.PermitRootLogin != "yes";
+        message = "Host invariant violated: SSH root login must not be 'yes' when OpenSSH is enabled";
       }
     ];
   };
