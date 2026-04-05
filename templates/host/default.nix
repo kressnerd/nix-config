@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ../../hosts/common/global
     ../../hosts/common/users/dan.nix

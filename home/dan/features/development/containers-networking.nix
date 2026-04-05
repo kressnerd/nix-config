@@ -2,7 +2,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   # Container networking and volume mounting strategies (network tools consolidated in containers-common.nix)
 
   home = {

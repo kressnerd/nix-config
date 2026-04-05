@@ -2,15 +2,16 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   # Enable Emacs with comprehensive configuration
   programs.emacs = {
     enable = true;
     package = pkgs.emacs; # Emacs 30 is available in stable
 
     # Essential Emacs packages for Nix ecosystem and productivity
-    extraPackages = epkgs:
-      with epkgs; [
+    extraPackages =
+      epkgs: with epkgs; [
         # Essential packages
         use-package # Package configuration management
         magit # Git integration

@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   # Nix-specific containerization tools and workflows (packages moved to containers-common.nix)
 
   home = {

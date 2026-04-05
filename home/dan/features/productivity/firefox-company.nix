@@ -1,6 +1,7 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   addons = pkgs.nur.repos.rycee.firefox-addons;
-  exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions {inherit addons;};
+  exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions { inherit addons; };
 
   kagiSearch = {
     force = true;
@@ -20,7 +21,7 @@
         ];
         icon = "https://kagi.com/favicon.ico";
         updateInterval = 24 * 60 * 60 * 1000;
-        definedAliases = ["@g"];
+        definedAliases = [ "@g" ];
       };
     };
   };
@@ -67,7 +68,8 @@
     "webgl.disabled" = false;
     "extensions.treestyletab.show-in-browser-action" = false;
   };
-in {
+in
+{
   programs.firefox.profiles = {
     company = {
       id = 0;
@@ -85,11 +87,9 @@ in {
           link-cleaner
         ]);
 
-      settings =
-        workSettings
-        // {
-          "privacy.resistFingerprinting" = false;
-        };
+      settings = workSettings // {
+        "privacy.resistFingerprinting" = false;
+      };
 
       search = kagiSearch;
     };
@@ -109,11 +109,9 @@ in {
           multi-account-containers
         ]);
 
-      settings =
-        workSettings
-        // {
-          "privacy.resistFingerprinting" = true;
-        };
+      settings = workSettings // {
+        "privacy.resistFingerprinting" = true;
+      };
 
       search = kagiSearch;
     };
@@ -134,11 +132,9 @@ in {
           onepassword-password-manager
         ]);
 
-      settings =
-        workSettings
-        // {
-          "privacy.resistFingerprinting" = false;
-        };
+      settings = workSettings // {
+        "privacy.resistFingerprinting" = false;
+      };
 
       search = kagiSearch;
     };

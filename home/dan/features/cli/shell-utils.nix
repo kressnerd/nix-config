@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   home.packages = with pkgs; [
     # Modern replacements for common commands
     eza # Better ls
@@ -98,16 +99,19 @@
       enable = true;
       settings = {
         gui.theme = {
-          activeBorderColor = ["#7287fd" "bold"];
-          inactiveBorderColor = ["#4c4f69"];
-          optionsTextColor = ["#1e66f5"];
-          selectedLineBgColor = ["#ccd0da"];
-          cherryPickedCommitFgColor = ["#1e66f5"];
-          cherryPickedCommitBgColor = ["#7287fd"];
-          markedBaseCommitFgColor = ["#fe640b"];
-          markedBaseCommitBgColor = ["#df8e1d"];
-          unstagedChangesColor = ["#d20f39"];
-          defaultFgColor = ["#4c4f69"];
+          activeBorderColor = [
+            "#7287fd"
+            "bold"
+          ];
+          inactiveBorderColor = [ "#4c4f69" ];
+          optionsTextColor = [ "#1e66f5" ];
+          selectedLineBgColor = [ "#ccd0da" ];
+          cherryPickedCommitFgColor = [ "#1e66f5" ];
+          cherryPickedCommitBgColor = [ "#7287fd" ];
+          markedBaseCommitFgColor = [ "#fe640b" ];
+          markedBaseCommitBgColor = [ "#df8e1d" ];
+          unstagedChangesColor = [ "#d20f39" ];
+          defaultFgColor = [ "#4c4f69" ];
         };
       };
     };

@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # Cloud development and infrastructure tools
   home.packages = with pkgs; [
     # Google Cloud Platform

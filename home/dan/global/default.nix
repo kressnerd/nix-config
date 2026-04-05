@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   home.stateVersion = "25.11";
 
   # Suppress options.json generation to avoid nixpkgs store path context warning

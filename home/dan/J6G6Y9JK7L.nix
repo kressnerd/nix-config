@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   imports = [
     ./global/default.nix
     ./features/cli/cloud-tools.nix
@@ -32,18 +33,18 @@
     defaultSopsFile = ../../hosts/J6G6Y9JK7L/secrets.yaml;
     age.keyFile = "${config.home.homeDirectory}/Library/Application Support/sops/age/keys.txt";
     secrets = {
-      "git/personal/name" = {};
-      "git/personal/email" = {};
-      "git/personal/folder" = {};
-      "git/company/name" = {};
-      "git/company/email" = {};
-      "git/company/folder" = {};
-      "git/client001/name" = {};
-      "git/client001/email" = {};
-      "git/client001/folder" = {};
-      "git/client002/name" = {};
-      "git/client002/email" = {};
-      "git/client002/folder" = {};
+      "git/personal/name" = { };
+      "git/personal/email" = { };
+      "git/personal/folder" = { };
+      "git/company/name" = { };
+      "git/company/email" = { };
+      "git/company/folder" = { };
+      "git/client001/name" = { };
+      "git/client001/email" = { };
+      "git/client001/folder" = { };
+      "git/client002/name" = { };
+      "git/client002/email" = { };
+      "git/client002/folder" = { };
     };
   };
 

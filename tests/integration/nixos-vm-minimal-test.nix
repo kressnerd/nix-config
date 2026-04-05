@@ -2,7 +2,7 @@
 # Integration test: SSH + firewall behavior in a minimal NixOS VM
 # Run: nix build .#checks.<linux-system>.integration-vm-minimal-ssh
 # Interactive: nix build .#checks.<linux-system>.integration-vm-minimal-ssh.driverInteractive && result/bin/nixos-test-driver
-{pkgs, ...}:
+{ pkgs, ... }:
 pkgs.testers.runNixOSTest {
   name = "vm-minimal-ssh-firewall";
 
@@ -18,7 +18,7 @@ pkgs.testers.runNixOSTest {
 
     networking.firewall = {
       enable = true;
-      allowedTCPPorts = [22];
+      allowedTCPPorts = [ 22 ];
     };
 
     users.users.testuser = {
