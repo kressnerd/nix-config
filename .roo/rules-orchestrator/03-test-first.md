@@ -11,7 +11,7 @@ The Orchestrator MUST delegate the Red (failing test) and Green (passing impleme
 
 ## Delegation Sequence
 
-For every configuration change, the Orchestrator follows this sequence:
+For every configuration change, the Orchestrator follows this sequence, with **one minimal change per Red-Green pair**:
 
 | Step | Mode | Action | Verification |
 |------|------|--------|-------------|
@@ -34,6 +34,40 @@ The Orchestrator MUST select the appropriate test type based on the change:
 | Module option constraint | NixOS `assertions` | `tests/assertions/<name>-invariants.nix` | `nix flake check --no-build` |
 | Service behavior / firewall / networking | `testers.runNixOSTest` | `tests/integration/<name>-test.nix` | `nix build .#checks.<system>.<name>` |
 | Post-deployment state | `pytest-testinfra` | `tests/deploy/test_<host>.py` | `pytest --hosts=ssh://...` |
+
+## Atomic Step Size
+
+Each Red-Green pair delegated by the Orchestrator MUST cover exactly **one minimal change**. The Orchestrator breaks features into the smallest testable increments.
+
+### Decomposition Rule
+
+When delegating a feature that requires multiple configuration changes:
+
+1. **Decompose** the feature into individual testable steps
+2. **Delegate** one Red-Green cycle per step
+3. **Verify** each cycle passes before starting the next
+4. **Refactor** only after multiple Green cycles accumulate
+
+### Example: "Enable SSH with hardened config"
+
+Do NOT delegate as one task. Decompose into:
+
+```
+Subtask 1 (Red):   Write test: SSH service must be active
+Subtask 2 (Green): Enable services.openssh.enable = true → test passes
+Subtask 3 (Red):   Write test: root login must be disabled
+Subtask 4 (Green): Set PermitRootLogin = "no" → test passes
+Subtask 5 (Red):   Write test: password auth must be disabled
+Subtask 6 (Green): Set PasswordAuthentication = false → test passes
+Subtask 7:         Refactor if needed → all tests still pass
+```
+
+### Prohibited Delegation Patterns
+
+- ❌ `"Write all SSH tests and implement SSH config"` (too large)
+- ❌ `"Add 5 assertions for the new service"` (batch test creation)
+- ✅ `"Write one assertion: SSH root login must be disabled"` (atomic)
+- ✅ `"Implement: set PermitRootLogin = no to pass the assertion"` (atomic)
 
 ## Subtask Message Templates
 
