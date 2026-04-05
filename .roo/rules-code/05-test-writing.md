@@ -122,6 +122,19 @@ Code Mode MUST NOT:
 - Report DONE without the `TESTS:` block when working on test-related tasks
 - Modify existing tests to weaken assertions
 
+## Step Size
+
+Each test-writing subtask targets exactly **one behavior**. Code Mode MUST:
+
+- Write **one test case** (or one assertion) per Red subtask
+- Implement **one configuration change** per Green subtask
+- Report exactly what was tested and what was changed
+
+If the delegated task specifies multiple tests or changes, Code Mode MUST:
+1. Implement only the first one
+2. Return PARTIAL with the remaining items listed
+3. Wait for the Orchestrator to delegate the next step
+
 ## Verification Commands Quick Reference
 
 | Test Type | Verify Command |

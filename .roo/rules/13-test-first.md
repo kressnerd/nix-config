@@ -9,6 +9,53 @@
 
 Every configuration change MUST start with a failing test (Red), then implement the change to make the test pass (Green), then refactor while tests stay green (Refactor).
 
+## Small Steps — One Change Per Cycle
+
+Each Red-Green-Refactor cycle covers exactly **one minimal, verifiable change**. Do not batch multiple changes into a single cycle.
+
+### What Constitutes One Step
+
+- **One assertion** per cycle (not 5 assertions at once)
+- **One module option** per cycle (not an entire service config)
+- **One test case** per cycle (write test → fail → implement → pass → next test)
+- **One firewall rule** per cycle (not all ports at once)
+
+### Iterative Progression Example
+
+```
+Cycle 1: Red   → assertion: hostname must not be empty
+         Green → set networking.hostName = "myhost"
+
+Cycle 2: Red   → assertion: firewall must be enabled
+         Green → networking.firewall.enable = true
+
+Cycle 3: Red   → nixosTest: SSH must be running
+         Green → services.openssh.enable = true
+
+Cycle 4: Red   → nixosTest: root login must be disabled
+         Green → services.openssh.settings.PermitRootLogin = "no"
+
+Cycle 5: Refactor → extract SSH config into reusable module
+         Verify  → all tests still pass
+```
+
+### Anti-Patterns
+
+- ❌ Writing 10 assertions, then implementing everything at once
+- ❌ Creating an entire service module, then writing tests after
+- ❌ Skipping Red phase because "the test is obvious"
+- ❌ Combining unrelated changes in one cycle
+
+### Granularity Guide
+
+| Change Scope | Cycles Expected |
+|--------------|----------------|
+| Add one package | 1 (assertion or unit test) |
+| Enable a service | 2–3 (enable → port → security) |
+| Configure firewall | 1 per rule/port |
+| New feature module | 3–5 (option → enable → config → verify → refactor) |
+| New host config | 5–10 (hostname → network → firewall → ssh → users → services) |
+
 ## Test Layers
 
 | Layer | Tool | Runs Without VM? | Trigger |
