@@ -34,8 +34,157 @@ nix flake update   # Update all inputs (updates flake.lock)
 
 **Nix formatting:**
 ```bash
-alejandra .        # Format all Nix files (primary formatter)
+nixfmt .           # Format all Nix files (nixfmt-rfc-style, enforced by flake checks)
 ```
+
+**Validation pipeline:**
+```bash
+# Evaluation-only (fast, fires assertions, no VM tests)
+nix flake check --no-build
+
+# Full check (evaluation + all checks derivations)
+nix flake check
+
+# Specific check
+nix build .#checks.<system>.<name>
+
+# Linting (on changed files)
+deadnix --fail <file.nix>
+statix check <file.nix>
+nixfmt --check <file.nix>
+```
+
+**Current checks:**
+
+| Check | Systems | Type |
+|---|---|---|
+| `unit-helpers` | all | Unit tests (`lib.debug.runTests`) |
+| `lint-deadnix` | all | Unused Nix bindings |
+| `lint-statix` | all | Nix anti-patterns |
+| `lint-nixfmt` | all | Formatting (nixfmt-rfc-style) |
+| `integration-vm-minimal-ssh` | Linux only | VM integration test (QEMU) |
+
+---
+
+## Test-First Workflow (MANDATORY)
+
+Every configuration change MUST follow Red-Green-Refactor. Write the test first, confirm it fails (Red), implement the change, confirm it passes (Green), then clean up (Refactor).
+
+### One Change Per Cycle
+
+Each cycle covers exactly **one minimal, verifiable change**:
+- One assertion per cycle (not 5 at once)
+- One module option per cycle
+- One firewall rule per cycle
+
+| Change Scope | Expected Cycles |
+|---|---|
+| Add one package | 1 (assertion or unit test) |
+| Enable a service | 2–3 (enable → port → security) |
+| Configure firewall | 1 per rule/port |
+| New feature module | 3–5 (option → enable → config → verify → refactor) |
+| New host config | 5–10 (hostname → network → firewall → SSH → users → services) |
+
+### Iterative Example
+
+```
+Cycle 1: Red   → assertion: hostname must not be empty
+         Green → set networking.hostName = "myhost"
+
+Cycle 2: Red   → assertion: firewall must be enabled
+         Green → networking.firewall.enable = true
+
+Cycle 3: Red   → nixosTest: SSH must be running
+         Green → services.openssh.enable = true
+
+Cycle 4: Red   → nixosTest: root login must be disabled
+         Green → services.openssh.settings.PermitRootLogin = "no"
+
+Cycle 5: Refactor → extract SSH config into reusable module
+         Verify  → all tests still pass
+```
+
+### Test Layers
+
+| Layer | Tool | VM? | Directory | Trigger |
+|---|---|---|---|---|
+| Unit | `lib.debug.runTests` | No | `tests/unit/` | Pure Nix logic (helpers, transforms) |
+| Assertions | NixOS `assertions` | No (eval-time) | `tests/assertions/` | Option constraints, type guards, invariants |
+| Integration | `pkgs.testers.runNixOSTest` | Yes (Linux only) | `tests/integration/` | Services, firewall, networking, systemd |
+| Deploy | `pytest-testinfra` | No (SSH) | `tests/deploy/` | Post-deployment verification on live hosts |
+
+### Red-Green-Refactor Cycle
+
+**For module/option changes:**
+1. Red: Write assertion or unit test → `nix flake check --no-build` → FAIL
+2. Green: Implement option/module → `nix flake check --no-build` → PASS
+3. Refactor: Clean up → `nix flake check` → PASS
+
+**For service/infrastructure changes:**
+1. Red: Write `testers.runNixOSTest` → `nix build .#checks.<linux-system>.<test>` → FAIL
+2. Green: Implement service config → `nix build .#checks.<linux-system>.<test>` → PASS
+3. Refactor: Clean up → all tests → PASS
+4. Deploy: `nixos-rebuild switch` → `pytest` validates real system
+
+### Test File Locations
+
+| Test Type | Directory | Naming Convention |
+|---|---|---|
+| Unit | `tests/unit/` | `<module>-test.nix` |
+| Assertions | `tests/assertions/` | `<scope>-invariants.nix` |
+| Integration | `tests/integration/` | `<host-or-feature>-test.nix` |
+| Deploy | `tests/deploy/` | `test_<host>.py` |
+
+### Obligations
+
+- Write the test BEFORE the implementation
+- Confirm test FAILS before implementing (Red)
+- Confirm test PASSES after implementing (Green)
+- Run ALL existing tests after refactoring (regression check)
+- Wire new tests into `flake.nix` `checks` output so `nix flake check` runs them
+
+### Exceptions
+
+Test-first is NOT required for:
+- Documentation-only changes (`.md` files)
+- `nix flake update` (dependency updates)
+- SOPS secret value changes (encrypted content)
+- Formatting-only changes
+- `.gitignore`, `.editorconfig`, and similar tooling config
+
+### Anti-Patterns
+
+- Writing 10 assertions, then implementing everything at once
+- Creating an entire service module, then writing tests after
+- Skipping Red phase because "the test is obvious"
+- Deleting or weakening existing tests to make implementation pass
+
+---
+
+## Safety Rules
+
+### Immutable Values
+
+- **NEVER** change `system.stateVersion` or `home.stateVersion` — set at install time, must not change during routine updates
+- `hardware-configuration.nix` / `hardware.nix` is **READ-ONLY** — modify only when explicitly changing kernel modules, filesystems, or hardware settings
+
+### Secrets
+
+- **NEVER** commit plaintext secrets — use `sops-nix` with age encryption
+- Secret files: `hosts/<host>/secrets.yaml`
+- Reference secrets via `config.sops.placeholder."path"` inside `sops.templates`
+
+### Dangerous Changes — Always Warn + Provide Rollback
+
+| Area | Risk | Rollback |
+|---|---|---|
+| `boot.loader.*` | Reboot required; may prevent boot | `darwin-rebuild --rollback` / generation switch |
+| `networking.*` | Connectivity loss | `sudo nixos-rebuild test` first |
+| `fileSystems.*`, `disko` | Data loss | Backup required |
+| `environment.persistence.*` (impermanence) | Paths lost on reboot | Review persist list before changing |
+| `boot.kernelPackages`, `boot.kernelModules` | Boot failure | Previous generation via GRUB/systemd-boot |
+
+---
 
 **VM deployment** (from repo root):
 ```bash
