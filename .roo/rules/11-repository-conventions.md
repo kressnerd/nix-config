@@ -80,7 +80,7 @@ nix-config/
 ### Libraries (`lib/`)
 
 - Shared helper functions
-- Currently: `pkgs-unstable.nix` (unstable channel import), `firefox-extensions.nix` (extension sets)
+- Currently: `helpers.nix` (mkPkgsUnstable, mkFirefoxExtensions)
 
 ## Composition Strategy
 

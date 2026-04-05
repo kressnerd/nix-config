@@ -58,169 +58,230 @@
     };
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    nixpkgs-unstable,
-    darwin,
-    home-manager,
-    sops-nix,
-    mac-app-util,
-    nix-homebrew,
-    nur,
-    disko,
-    ...
-  } @ inputs: let
-    inherit (self) outputs;
-  in {
-    overlays.default = import ./overlays;
-
-    templates = {
-      host = {
-        path = ./templates/host;
-        description = "New NixOS host scaffold";
-      };
-    };
-
-    nixosConfigurations = {
-      nixos-vm-minimal = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit inputs outputs;
-          pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
-            inherit nixpkgs-unstable;
-            system = "aarch64-linux";
-          };
-        };
-        modules = [
-          {
-            nixpkgs.overlays = [nur.overlays.default (import ./overlays)];
-            nixpkgs.config.allowUnfree = true;
-          }
-          ./hosts/nixos-vm-minimal
-          disko.nixosModules.disko
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              extraSpecialArgs = {
-                inherit inputs outputs;
-                pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
-                  inherit nixpkgs-unstable;
-                  system = "aarch64-linux";
-                };
-              };
-              users.dan = import ./home/dan/nixos-vm-minimal.nix;
-              sharedModules = [
-                sops-nix.homeManagerModules.sops
-              ];
-            };
-          }
-        ];
-      };
-      thiniel = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs outputs;
-          pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
-            inherit nixpkgs-unstable;
-            system = "x86_64-linux";
-          };
-        };
-        modules = [
-          {
-            nixpkgs.overlays = [nur.overlays.default (import ./overlays)];
-            nixpkgs.config.allowUnfree = true;
-          }
-          ./hosts/thiniel
-          home-manager.nixosModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              extraSpecialArgs = {
-                inherit inputs outputs;
-                pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
-                  inherit nixpkgs-unstable;
-                  system = "x86_64-linux";
-                };
-              };
-              users.dan = import ./home/dan/thiniel.nix;
-              sharedModules = [
-                sops-nix.homeManagerModules.sops
-              ];
-            };
-          }
-        ];
-      };
-    };
-
-    darwinConfigurations = {
-      J6G6Y9JK7L = darwin.lib.darwinSystem {
-        system = "aarch64-darwin";
-        specialArgs = {
-          inherit inputs outputs;
-          pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
-            inherit nixpkgs-unstable;
-            system = "aarch64-darwin";
-          };
-        };
-        modules = [
-          {
-            nixpkgs.overlays = [
-              nur.overlays.default
-              (import ./overlays)
-            ];
-            nixpkgs.config.allowUnfree = true;
-          }
-          mac-app-util.darwinModules.default
-          nix-homebrew.darwinModules.nix-homebrew
-          ./hosts/J6G6Y9JK7L
-          home-manager.darwinModules.home-manager
-          {
-            home-manager = {
-              useGlobalPkgs = true;
-              useUserPackages = true;
-              extraSpecialArgs = {
-                inherit inputs outputs;
-                pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
-                  inherit nixpkgs-unstable;
-                  system = "aarch64-darwin";
-                };
-              };
-              users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
-              sharedModules = [
-                mac-app-util.homeManagerModules.default
-                sops-nix.homeManagerModules.sops
-              ];
-            };
-          }
-        ];
-      };
-    };
-
-    # ── Test checks ──────────────────────────────────────────────────────
-    checks = let
-      allSystems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin"];
-      linuxSystems = ["x86_64-linux" "aarch64-linux"];
-      forSystems = systems: f:
-        builtins.listToAttrs (map (system: {
-            name = system;
-            value = f system;
-          })
-          systems);
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      darwin,
+      home-manager,
+      sops-nix,
+      mac-app-util,
+      nix-homebrew,
+      nur,
+      disko,
+      ...
+    }@inputs:
+    let
+      inherit (self) outputs;
     in
-      nixpkgs.lib.recursiveUpdate
-      (forSystems allSystems (system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in {
-        unit-helpers = import ./tests/unit/default.nix {inherit pkgs;};
-      }))
-      (forSystems linuxSystems (system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-        integrationTests = import ./tests/integration/default.nix {inherit pkgs;};
-      in
-        integrationTests));
-  };
+    {
+      overlays.default = import ./overlays;
+
+      templates = {
+        host = {
+          path = ./templates/host;
+          description = "New NixOS host scaffold";
+        };
+      };
+
+      nixosConfigurations = {
+        nixos-vm-minimal = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+              inherit nixpkgs-unstable;
+              system = "aarch64-linux";
+            };
+          };
+          modules = [
+            {
+              nixpkgs.overlays = [
+                nur.overlays.default
+                (import ./overlays)
+              ];
+              nixpkgs.config.allowUnfree = true;
+            }
+            ./hosts/nixos-vm-minimal
+            disko.nixosModules.disko
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs outputs;
+                  pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+                    inherit nixpkgs-unstable;
+                    system = "aarch64-linux";
+                  };
+                };
+                users.dan = import ./home/dan/nixos-vm-minimal.nix;
+                sharedModules = [
+                  sops-nix.homeManagerModules.sops
+                ];
+              };
+            }
+          ];
+        };
+        thiniel = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+              inherit nixpkgs-unstable;
+              system = "x86_64-linux";
+            };
+          };
+          modules = [
+            {
+              nixpkgs.overlays = [
+                nur.overlays.default
+                (import ./overlays)
+              ];
+              nixpkgs.config.allowUnfree = true;
+            }
+            ./hosts/thiniel
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs outputs;
+                  pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+                    inherit nixpkgs-unstable;
+                    system = "x86_64-linux";
+                  };
+                };
+                users.dan = import ./home/dan/thiniel.nix;
+                sharedModules = [
+                  sops-nix.homeManagerModules.sops
+                ];
+              };
+            }
+          ];
+        };
+      };
+
+      darwinConfigurations = {
+        J6G6Y9JK7L = darwin.lib.darwinSystem {
+          system = "aarch64-darwin";
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+              inherit nixpkgs-unstable;
+              system = "aarch64-darwin";
+            };
+          };
+          modules = [
+            {
+              nixpkgs.overlays = [
+                nur.overlays.default
+                (import ./overlays)
+              ];
+              nixpkgs.config.allowUnfree = true;
+            }
+            mac-app-util.darwinModules.default
+            nix-homebrew.darwinModules.nix-homebrew
+            ./hosts/J6G6Y9JK7L
+            home-manager.darwinModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs outputs;
+                  pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+                    inherit nixpkgs-unstable;
+                    system = "aarch64-darwin";
+                  };
+                };
+                users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
+                sharedModules = [
+                  mac-app-util.homeManagerModules.default
+                  sops-nix.homeManagerModules.sops
+                ];
+              };
+            }
+          ];
+        };
+      };
+
+      # ── Test checks ──────────────────────────────────────────────────────
+      checks =
+        let
+          allSystems = [
+            "x86_64-linux"
+            "aarch64-linux"
+            "aarch64-darwin"
+          ];
+          linuxSystems = [
+            "x86_64-linux"
+            "aarch64-linux"
+          ];
+          forSystems =
+            systems: f:
+            builtins.listToAttrs (
+              map (system: {
+                name = system;
+                value = f system;
+              }) systems
+            );
+        in
+        nixpkgs.lib.recursiveUpdate
+          (forSystems allSystems (
+            system:
+            let
+              pkgs = nixpkgs.legacyPackages.${system};
+            in
+            {
+              unit-helpers = import ./tests/unit/default.nix { inherit pkgs; };
+
+              lint-deadnix =
+                pkgs.runCommand "lint-deadnix"
+                  {
+                    src = self;
+                    nativeBuildInputs = [ pkgs.deadnix ];
+                  }
+                  ''
+                    deadnix --fail $src
+                    touch $out
+                  '';
+
+              lint-statix =
+                pkgs.runCommand "lint-statix"
+                  {
+                    src = self;
+                    nativeBuildInputs = [ pkgs.statix ];
+                  }
+                  ''
+                    statix check $src
+                    touch $out
+                  '';
+
+              lint-nixfmt =
+                pkgs.runCommand "lint-nixfmt"
+                  {
+                    src = self;
+                    nativeBuildInputs = [ pkgs.nixfmt-rfc-style ];
+                  }
+                  ''
+                    find $src -name '*.nix' -not -path '*/result*' -exec nixfmt --check {} +
+                    touch $out
+                  '';
+            }
+          ))
+          (
+            forSystems linuxSystems (
+              system:
+              let
+                pkgs = nixpkgs.legacyPackages.${system};
+                integrationTests = import ./tests/integration/default.nix { inherit pkgs; };
+              in
+              integrationTests
+            )
+          );
+    };
 }
