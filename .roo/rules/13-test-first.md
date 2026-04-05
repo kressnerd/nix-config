@@ -21,7 +21,7 @@ Every configuration change MUST start with a failing test (Red), then implement 
 ## Red-Green-Refactor Cycle
 
 ### For Module/Option Changes
-1. **Red**: Write assertion or `lib.runTests` test → `nix flake check` → FAIL
+1. **Red**: Write assertion or `lib.debug.runTests` test → `nix flake check` → FAIL
 2. **Green**: Implement module/option → `nix flake check` → PASS
 3. **Refactor**: Restructure → `nix flake check` → PASS
 

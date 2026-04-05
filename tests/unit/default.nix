@@ -3,6 +3,7 @@
 {pkgs}: let
   helperTests = import ./helpers-test.nix {inherit (pkgs) lib;};
 in
+  # lib.debug.runTests returns [] on success — the branch is selected at eval time
   pkgs.runCommand "unit-helpers" {} ''
     # lib.debug.runTests returns [] on success, list of failures otherwise
     ${
