@@ -1,5 +1,6 @@
-{pkgs, ...}: {
-  home.packages = [pkgs.fnm];
+{ pkgs, ... }:
+{
+  home.packages = [ pkgs.fnm ];
 
   # Automatic Node version switching when entering directories with
   # .nvmrc or .node-version files.

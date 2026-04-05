@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # Code formatters for various languages
   home = {
     packages = with pkgs; [

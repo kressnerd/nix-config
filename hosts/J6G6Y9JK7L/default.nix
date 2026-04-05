@@ -4,7 +4,8 @@
   lib,
   inputs,
   ...
-}: {
+}:
+{
   # Disable nix-darwin's Nix management (required for Determinate Nix)
   nix.enable = false;
 
@@ -13,7 +14,7 @@
   programs.fish.enable = true;
 
   # Add fish to /etc/shells for macOS
-  environment.shells = [pkgs.fish];
+  environment.shells = [ pkgs.fish ];
 
   nixpkgs.hostPlatform = "aarch64-darwin";
 
@@ -89,7 +90,7 @@
       autoUpdate = false;
       upgrade = true;
     };
-    brews = ["score-compose"];
+    brews = [ "score-compose" ];
     casks = [
       "cameracontroller"
       "claude"

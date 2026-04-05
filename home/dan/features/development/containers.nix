@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   # Main container development configuration - imports all container features
   imports = [
     ./containers-common.nix # Consolidated shared tooling/env

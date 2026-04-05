@@ -1,4 +1,5 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   imports = [
     ../common/global
     ../common/users/dan.nix
@@ -66,7 +67,7 @@
   # Firewall
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [22]; # SSH
+    allowedTCPPorts = [ 22 ]; # SSH
   };
 
   # Enable sudo for wheel group
@@ -74,7 +75,7 @@
 
   # User (extends common/users/dan.nix base definition)
   users.users.dan = {
-    extraGroups = ["sudo"];
+    extraGroups = [ "sudo" ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEWvGgnlCq6l+ObGMVLLs34CP0vEX+Edf7sx6/3BvDpQ vm-minimal"
@@ -83,6 +84,6 @@
 
   # Enable zsh system-wide
   programs.zsh.enable = true;
-  environment.shells = with pkgs; [zsh];
+  environment.shells = with pkgs; [ zsh ];
   users.defaultUserShell = pkgs.zsh;
 }

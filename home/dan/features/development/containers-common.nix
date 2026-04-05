@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   # Common container/devcontainers/Kubernetes tooling consolidated here to eliminate duplication
   home = {
     packages = with pkgs; [
@@ -56,7 +57,7 @@
     };
 
     # Unified directory creation (replaces per-module activation DAG entries)
-    activation.containerCommonDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    activation.containerCommonDirs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       mkdir -p "${config.home.homeDirectory}/.local/bin"
 
       # Core container config tree

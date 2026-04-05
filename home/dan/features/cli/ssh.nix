@@ -3,7 +3,10 @@ _: {
     enable = true;
     enableDefaultConfig = false;
 
-    includes = ["config.d/client002" "config.d/nix-builder"];
+    includes = [
+      "config.d/client002"
+      "config.d/nix-builder"
+    ];
 
     matchBlocks = {
       "*" = {

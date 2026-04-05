@@ -6,46 +6,56 @@
   lib,
   modulesPath,
   ...
-}: {
+}:
+{
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
   boot = {
-    initrd.availableKernelModules = ["xhci_pci" "nvme" "uas" "sd_mod" "rtsx_pci_sdmmc"];
-    initrd.kernelModules = ["dm-snapshot"];
-    kernelModules = ["kvm-intel"];
-    extraModulePackages = [];
+    initrd.availableKernelModules = [
+      "xhci_pci"
+      "nvme"
+      "uas"
+      "sd_mod"
+      "rtsx_pci_sdmmc"
+    ];
+    initrd.kernelModules = [ "dm-snapshot" ];
+    kernelModules = [ "kvm-intel" ];
+    extraModulePackages = [ ];
   };
 
   fileSystems = {
     "/" = {
       device = "/dev/disk/by-uuid/66fd797f-afa2-406d-b48c-311f24bd08a3";
       fsType = "btrfs";
-      options = ["subvol=root"];
+      options = [ "subvol=root" ];
     };
 
     "/persist" = {
       device = "/dev/disk/by-uuid/66fd797f-afa2-406d-b48c-311f24bd08a3";
       fsType = "btrfs";
-      options = ["subvol=persist"];
+      options = [ "subvol=persist" ];
     };
 
     "/nix" = {
       device = "/dev/disk/by-uuid/66fd797f-afa2-406d-b48c-311f24bd08a3";
       fsType = "btrfs";
-      options = ["subvol=nix"];
+      options = [ "subvol=nix" ];
     };
 
     "/boot" = {
       device = "/dev/disk/by-uuid/E618-FF57";
       fsType = "vfat";
-      options = ["fmask=0077" "dmask=0077"];
+      options = [
+        "fmask=0077"
+        "dmask=0077"
+      ];
     };
   };
 
   swapDevices = [
-    {device = "/dev/disk/by-uuid/fa49a0e0-366e-438f-b0da-161c4200d361";}
+    { device = "/dev/disk/by-uuid/fa49a0e0-366e-438f-b0da-161c4200d361"; }
   ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking

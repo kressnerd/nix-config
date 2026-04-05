@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   # Install Emacs declaratively via Nix (Henrik Lissner's approach)
   # Doom Emacs will manage its own packages via straight.el
 
@@ -13,11 +14,12 @@
   home = {
     # System-level dependencies and tools for Doom Emacs
     # These are NOT Emacs packages - they're external binaries
-    packages = with pkgs;
+    packages =
+      with pkgs;
       [
         # Core Doom dependencies
         git
-        (ripgrep.override {withPCRE2 = true;})
+        (ripgrep.override { withPCRE2 = true; })
         fd
         fontconfig # Required for nerd-icons font detection
 
@@ -26,7 +28,10 @@
         zstd # For undo-tree compression
 
         # Spell checking - Hunspell with English and German dictionaries
-        (hunspell.withDicts (dicts: [dicts.en_US dicts.de_DE]))
+        (hunspell.withDicts (dicts: [
+          dicts.en_US
+          dicts.de_DE
+        ]))
 
         # LSP servers (managed by Nix, used by Doom)
         nixd # Nix LSP
@@ -93,7 +98,7 @@
     # Following Henrik Lissner's dotfiles pattern
     activation = {
       # Remove old doom.d symlink if it exists (cleanup from previous setup)
-      cleanupOldDoomConfig = lib.hm.dag.entryBefore ["checkLinkTargets"] ''
+      cleanupOldDoomConfig = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
         DOOM_PRIVATE_DIR="${config.home.homeDirectory}/.config/doom"
         if [ -L "$DOOM_PRIVATE_DIR" ] || [ -e "$DOOM_PRIVATE_DIR" ]; then
           $VERBOSE_ECHO "Removing old doom.d configuration"
@@ -102,7 +107,7 @@
       '';
 
       # Clone Doom Emacs if it doesn't exist
-      installDoomEmacs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      installDoomEmacs = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         DOOM_DIR="${config.home.homeDirectory}/.config/emacs"
 
         # Clone Doom Emacs if not present
@@ -114,7 +119,7 @@
 
       # Run doom sync after Home Manager activation
       # This keeps Doom packages in sync with doom.d configuration
-      doomSync = lib.hm.dag.entryAfter ["installDoomEmacs" "linkGeneration"] ''
+      doomSync = lib.hm.dag.entryAfter [ "installDoomEmacs" "linkGeneration" ] ''
         DOOM_DIR="${config.home.homeDirectory}/.config/emacs"
         DOOM_BIN="$DOOM_DIR/bin/doom"
 
@@ -130,7 +135,7 @@
 
       # Restart Emacs daemon after rebuild to pick up new environment (macOS only)
       restartEmacsDaemon = lib.mkIf pkgs.stdenv.isDarwin (
-        lib.hm.dag.entryAfter ["linkGeneration"] ''
+        lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           if /bin/launchctl list | grep -q org.nix-community.home.emacs; then
             $VERBOSE_ECHO "Restarting Emacs daemon to pick up new environment..."
             /bin/launchctl kickstart -k gui/$(/usr/bin/id -u)/org.nix-community.home.emacs 2>/dev/null || true

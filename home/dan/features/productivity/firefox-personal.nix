@@ -1,7 +1,9 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   addons = pkgs.nur.repos.rycee.firefox-addons;
-  exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions {inherit addons;};
-in {
+  exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions { inherit addons; };
+in
+{
   programs.firefox.profiles.user = {
     id = 0;
     isDefault = true;
@@ -90,7 +92,7 @@ in {
           ];
           icon = "https://kagi.com/favicon.ico";
           updateInterval = 24 * 60 * 60 * 1000;
-          definedAliases = ["@k"];
+          definedAliases = [ "@k" ];
         };
       };
     };

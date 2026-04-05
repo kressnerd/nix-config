@@ -2,7 +2,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   # VS Code dev container integration with Podman
   # No additional packages needed - uses existing Podman setup
 
@@ -35,8 +36,8 @@
       image = "node:20-bullseye";
 
       features = {
-        "ghcr.io/devcontainers/features/git:1" = {};
-        "ghcr.io/devcontainers/features/github-cli:1" = {};
+        "ghcr.io/devcontainers/features/git:1" = { };
+        "ghcr.io/devcontainers/features/github-cli:1" = { };
       };
 
       customizations = {
@@ -52,7 +53,11 @@
         };
       };
 
-      forwardPorts = [3000 8000 8080];
+      forwardPorts = [
+        3000
+        8000
+        8080
+      ];
       postCreateCommand = "npm install -g pnpm yarn";
 
       mounts = [
@@ -68,7 +73,7 @@
       image = "python:3.11-bullseye";
 
       features = {
-        "ghcr.io/devcontainers/features/git:1" = {};
+        "ghcr.io/devcontainers/features/git:1" = { };
         "ghcr.io/devcontainers/features/python:1" = {
           version = "3.11";
           installTools = true;
@@ -92,7 +97,11 @@
         };
       };
 
-      forwardPorts = [8000 5000 8080];
+      forwardPorts = [
+        8000
+        5000
+        8080
+      ];
       postCreateCommand = "pip install --upgrade pip && pip install poetry black pylint";
 
       mounts = [
@@ -106,8 +115,8 @@
       image = "rust:1.75-bullseye";
 
       features = {
-        "ghcr.io/devcontainers/features/git:1" = {};
-        "ghcr.io/devcontainers/features/rust:1" = {};
+        "ghcr.io/devcontainers/features/git:1" = { };
+        "ghcr.io/devcontainers/features/rust:1" = { };
       };
 
       customizations = {
@@ -123,7 +132,10 @@
         };
       };
 
-      forwardPorts = [8000 3030];
+      forwardPorts = [
+        8000
+        3030
+      ];
       postCreateCommand = "rustup component add clippy rustfmt";
 
       mounts = [

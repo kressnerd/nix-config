@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   # Podman-based containerized development environment (runtime packages consolidated in containers-common.nix)
 
   home = {

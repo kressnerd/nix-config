@@ -1,4 +1,5 @@
-{...}: {
+{ ... }:
+{
   imports = [
     ./global/default.nix
     ./features/cli/git.nix
@@ -25,9 +26,9 @@
     defaultSopsFile = ../../hosts/thiniel/secrets.yaml;
     age.keyFile = "/var/lib/sops-nix/key.txt";
     secrets = {
-      "git/personal/name" = {};
-      "git/personal/email" = {};
-      "git/personal/folder" = {};
+      "git/personal/name" = { };
+      "git/personal/email" = { };
+      "git/personal/folder" = { };
     };
   };
 

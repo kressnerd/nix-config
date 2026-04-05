@@ -5,7 +5,8 @@
   pkgs-unstable, # Add pkgs-unstable here
   inputs,
   ...
-}: {
+}:
+{
   imports = [
     ../common/global
     ../common/users/dan.nix
@@ -59,7 +60,7 @@
     age.keyFile = "/persist/system/var/lib/sops-nix/key.txt";
 
     secrets = {
-      example_key = {}; # owned by root
+      example_key = { }; # owned by root
       "myservice/user_dir/my_secret" = {
         mode = "0440";
         inherit (config.users.users.dan) group;
@@ -80,7 +81,7 @@
   };
 
   # User configuration
-  users.groups.libvirtd.members = ["dan"];
+  users.groups.libvirtd.members = [ "dan" ];
   users.users = {
     dan = {
       description = "Me Myself and Billie";
@@ -91,18 +92,30 @@
       description = "Non-sudo account for testing new config options that could break login.";
       hashedPasswordFile = config.sops.secrets."users/test/hashed_pwd".path;
       # initialHashedPassword = "$6$HzSnxWKrApkhTofZ$oLQL5ibjJWYR9ur4Bf56Ln5/bYZyETa526cESY2X.quTXYg4cMaJ.oLeG1ihV2LdYOPdX13IZ.O1ysfjV8gj2/";
-      extraGroups = ["wheel" "networkmanager"];
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+      ];
     };
   };
 
   # File system configuration
   fileSystems = {
-    "/".options = ["compress=zstd" "noatime"];
+    "/".options = [
+      "compress=zstd"
+      "noatime"
+    ];
     "/persist" = {
-      options = ["compress=zstd" "noatime"];
+      options = [
+        "compress=zstd"
+        "noatime"
+      ];
       neededForBoot = true;
     };
-    "/nix".options = ["compress=zstd" "noatime"];
+    "/nix".options = [
+      "compress=zstd"
+      "noatime"
+    ];
   };
 
   # Impermanence system directories
@@ -165,7 +178,7 @@
     btrfs.autoScrub = {
       enable = true;
       interval = "weekly";
-      fileSystems = ["/"];
+      fileSystems = [ "/" ];
     };
 
     # Power management

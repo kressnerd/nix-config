@@ -1,12 +1,14 @@
-{pkgs, ...}: {
+{ pkgs, ... }:
+{
   # Firefox theme managed manually — install Catppuccin Latte addon from marketplace
   programs.firefox = {
     enable = true;
 
     package =
-      if pkgs.stdenv.isDarwin
-      then null # pre-installed externally
-      else pkgs.firefox;
+      if pkgs.stdenv.isDarwin then
+        null # pre-installed externally
+      else
+        pkgs.firefox;
 
     policies = {
       PasswordManagerEnabled = false;
@@ -44,12 +46,12 @@
       };
       "3rdparty".extensions = {
         "uBlock@raymondhill.net" = {
-          permissions = ["internal.privateBrowsingAllowed"];
-          origins = [];
+          permissions = [ "internal.privateBrowsingAllowed" ];
+          origins = [ ];
         };
         "gdpr@cavi.au.dk" = {
-          permissions = ["<all_urls>"];
-          origins = ["<all_urls>"];
+          permissions = [ "<all_urls>" ];
+          origins = [ "<all_urls>" ];
         };
       };
     };

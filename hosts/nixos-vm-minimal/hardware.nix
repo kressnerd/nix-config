@@ -2,7 +2,8 @@
   lib,
   modulesPath,
   ...
-}: {
+}:
+{
   imports = [
     (modulesPath + "/profiles/qemu-guest.nix")
   ];
@@ -22,10 +23,10 @@
         "aes"
         "cryptd"
       ];
-      kernelModules = [];
+      kernelModules = [ ];
     };
 
-    kernelModules = [];
+    kernelModules = [ ];
 
     # Enable virtio modules for better VM performance
     kernelParams = [
@@ -33,7 +34,7 @@
       "console=tty0"
     ];
 
-    extraModulePackages = [];
+    extraModulePackages = [ ];
 
     # UEFI boot configuration for VM
     loader = {
@@ -45,7 +46,7 @@
 
   # Filesystem configuration is handled by disko.nix
   # No swap for VM
-  swapDevices = [];
+  swapDevices = [ ];
 
   # Network interfaces
   networking.useDHCP = lib.mkDefault true;
@@ -65,7 +66,7 @@
   # Video drivers for UTM
   services.xserver = {
     enable = false; # We'll start minimal without X11
-    videoDrivers = ["qxl"];
+    videoDrivers = [ "qxl" ];
   };
 
   # Power management for VMs

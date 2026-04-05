@@ -1,5 +1,6 @@
-{...}: {
-  imports = [./nix.nix];
+{ ... }:
+{
+  imports = [ ./nix.nix ];
 
   documentation.nixos.enable = false;
   nixpkgs.config.allowUnfree = true;
