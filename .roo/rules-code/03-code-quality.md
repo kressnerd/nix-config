@@ -27,10 +27,7 @@ Auto-fix is allowed when the fix is obvious. If uncertain, report the finding an
 
 | Tool | Command | Purpose |
 |------|---------|---------|
-| nixfmt | `nixfmt <file>` | Official Nix formatter |
-| alejandra | `alejandra <file>` | Alternative formatter |
-
-Use whichever formatter is configured in the project's devShell (this repo provides both).
+| nixfmt | `nixfmt <file>` or `nix fmt .` | Official Nix formatter (RFC 166) |
 
 ## Quality Checklist
 

@@ -34,7 +34,7 @@ nix flake update   # Update all inputs (updates flake.lock)
 
 **Nix formatting:**
 ```bash
-nixfmt .           # Format all Nix files (nixfmt-rfc-style, enforced by flake checks)
+nix fmt .          # Format all Nix files (uses nixfmt-rfc-style via flake formatter output)
 ```
 
 **Validation pipeline:**

@@ -121,11 +121,8 @@ up-to-date templates.
 - **Attribute alignment**: Align equals signs in attribute sets
 
 ``` bash
-# Format all Nix files
-find . -name "*.nix" -exec nixpkgs-fmt {} \;
-
-# Or use alejandra formatter
-alejandra .
+# Format all Nix files (nixfmt-rfc-style, enforced by flake checks)
+nix fmt .
 ```
 
 ### Code Organization

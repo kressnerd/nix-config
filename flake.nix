@@ -209,6 +209,18 @@
         };
       };
 
+      # ── Formatter (nix fmt) ────────────────────────────────────────────────
+      formatter = builtins.listToAttrs (
+        map (system: {
+          name = system;
+          value = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+        }) [
+          "x86_64-linux"
+          "aarch64-linux"
+          "aarch64-darwin"
+        ]
+      );
+
       # ── Test checks ──────────────────────────────────────────────────────
       checks =
         let

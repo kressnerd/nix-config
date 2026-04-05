@@ -141,7 +141,7 @@ All configurations pass these via `specialArgs`:
 
 ## Development Workflow
 
-- devShell provides: `nixfmt`, `alejandra`, `statix`, `nil`, `deadnix`
+- devShell provides: `nixfmt`, `statix`, `nil`, `deadnix`
 - Pre-commit hooks: use if present; otherwise minimal format checks
 - Format check: run formatter before committing Nix files
 

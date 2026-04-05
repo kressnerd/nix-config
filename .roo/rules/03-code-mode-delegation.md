@@ -159,7 +159,7 @@ EDIT → [nix flake check?] → FORMAT/LINT → [clean?] → DONE
    - If check fails: attempt fix (max 2 iterations), then BLOCKED
 
 3. **FORMAT/LINT**: Ensure code quality
-   - Run: `nixfmt` or `alejandra` on changed files
+   - Run: `nix fmt` on changed files
    - Run: `statix check` and `deadnix` on changed files
    - Auto-fix safe issues with `statix fix`
    - If issues remain after auto-fix: BLOCKED

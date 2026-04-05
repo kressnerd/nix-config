@@ -102,7 +102,7 @@ Test-first is NOT required for:
 - Documentation-only changes (`.md` files)
 - `nix flake update` (dependency updates)
 - SOPS secret value changes (encrypted content)
-- Formatting-only changes (`nixfmt`, `alejandra`)
+- Formatting-only changes (`nixfmt`)
 - `.gitignore`, `.editorconfig`, and similar tooling config
 
 ## Test File Locations
