@@ -1,0 +1,87 @@
+# MANDATORY RULE: Test-First Delegation Sequence
+
+## Rule ID: ORCH-TEST-001
+
+**Priority**: MANDATORY  
+**Applies to**: All Orchestrator delegations involving configuration changes
+
+## Core Rule
+
+The Orchestrator MUST delegate the Red (failing test) and Green (passing implementation) phases as **separate, sequential subtasks**. The test MUST demonstrably fail before the implementation subtask begins.
+
+## Delegation Sequence
+
+For every configuration change, the Orchestrator follows this sequence:
+
+| Step | Mode | Action | Verification |
+|------|------|--------|-------------|
+| 1 | `architect` | Plan change + identify required test type | Test type determined |
+| 2 | `code` | **Red**: Write failing test (assertion, unit, or integration) | Test EXISTS |
+| 3 | `code` | **Verify Red**: Run test, confirm it FAILS | FAIL confirmed |
+| 4 | `code` | **Green**: Implement the configuration change | Change applied |
+| 5 | `code` | **Verify Green**: Run test, confirm it PASSES | PASS confirmed |
+| 6 | `code` | **Refactor** (optional): Restructure while tests pass | All tests PASS |
+| 7 | `code` | **Pre-deploy gate**: `nix flake check` must pass | PASS confirmed |
+| 8 | `code` | **Deploy** (if applicable): `nixos-rebuild switch` | Applied |
+
+## Test Type Selection
+
+The Orchestrator MUST select the appropriate test type based on the change:
+
+| Change Type | Test Type | File Location | Verify Command |
+|-------------|-----------|---------------|----------------|
+| Helper function / pure Nix logic | `lib.debug.runTests` | `tests/unit/<name>-test.nix` | `nix flake check` |
+| Module option constraint | NixOS `assertions` | `tests/assertions/<name>-invariants.nix` | `nix flake check --no-build` |
+| Service behavior / firewall / networking | `testers.runNixOSTest` | `tests/integration/<name>-test.nix` | `nix build .#checks.<system>.<name>` |
+| Post-deployment state | `pytest-testinfra` | `tests/deploy/test_<host>.py` | `pytest --hosts=ssh://...` |
+
+## Subtask Message Templates
+
+### Red Phase (Write Failing Test)
+
+```
+TASK: Write failing test for [feature/change]
+LOCATION: tests/<type>/<name>-test.nix
+SPEC: [What the test should verify — expected behavior that does NOT yet exist]
+VERIFY: [Command that must FAIL] → confirm FAIL
+CONTEXT:
+- Test type: [unit | assertion | integration | deploy]
+- This test must FAIL because [reason — the feature is not yet implemented]
+- Follow pattern from tests/<type>/<existing-example>.nix
+```
+
+### Green Phase (Implement Change)
+
+```
+TASK: Implement [feature/change] to make test pass
+LOCATION: [path/to/config.nix]
+SPEC: [What to implement]
+VERIFY: [Same command from Red phase] → confirm PASS
+CONTEXT:
+- The failing test is at tests/<type>/<name>-test.nix
+- After implementation, run: [verification command]
+- All existing tests must continue to pass
+```
+
+## Prohibitions
+
+The Orchestrator MUST NOT:
+
+- Delegate test + implementation in the same subtask
+- Skip the Red phase verification (test must demonstrably fail)
+- Proceed to Green without confirmed Red
+- Deploy without passing `nix flake check`
+
+## Exceptions
+
+Test delegation is NOT required for changes listed in TEST-FIRST-001 exceptions:
+- Documentation-only changes (`.md` files)
+- `nix flake update`
+- SOPS secret value changes
+- Formatting-only changes
+
+## Enforcement
+
+- Subtask result from Red phase MUST contain `FAIL confirmed` or equivalent
+- Subtask result from Green phase MUST contain `PASS confirmed` or equivalent
+- Any Green subtask delegated without a preceding Red subtask = rule violation

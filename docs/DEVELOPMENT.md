@@ -380,6 +380,18 @@ nix flake update
 darwin-rebuild switch --flake .#J6G6Y9JK7L --show-trace 2>&1 | grep -i error
 ```
 
+## Testing
+
+See [TESTING.md](TESTING.md) for the test-first workflow, test types, and how to add new tests.
+
+```bash
+# Run all tests
+nix flake check
+
+# Run specific test
+nix build .#checks.<system>.<check-name>
+```
+
 # Maintenance and Updates
 
 ## Regular Maintenance Tasks

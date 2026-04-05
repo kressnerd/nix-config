@@ -35,6 +35,11 @@ nix-config/
 ├── pkgs/                        # Custom package derivations
 ├── modules/                     # Custom NixOS/HM modules (optional)
 ├── scripts/                     # Build/deploy shell scripts
+├── tests/                       # Test infrastructure
+│   ├── unit/                    # Pure Nix unit tests (lib.debug.runTests)
+│   ├── assertions/              # NixOS module assertion tests
+│   ├── integration/             # NixOS VM integration tests (testers.runNixOSTest)
+│   └── deploy/                  # Post-deployment validation (pytest-testinfra)
 └── docs/                        # Project documentation
 ```
 
@@ -101,6 +106,7 @@ flake.nix
 - `overlays` — Nixpkgs overlays
 - `packages` — Custom packages (per system)
 - `devShells` — Development environments
+- `checks` — Test derivations (unit tests, integration tests)
 
 **Note**: `homeConfigurations` is not a separate flake output; Home Manager is integrated as a NixOS/nix-darwin module via `home-manager.users.dan` within each host configuration.
 
