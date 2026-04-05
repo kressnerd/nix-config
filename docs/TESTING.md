@@ -75,12 +75,33 @@ SSH-based validation using `pytest-testinfra` on real hosts. Run after `nixos-re
 pytest --hosts=ssh://dan@thiniel tests/deploy/test_thiniel.py
 ```
 
+### Linter Checks
+
+Automated code quality checks run on all platforms via `nix flake check`.
+
+- **deadnix**: Detects unused Nix bindings
+- **statix**: Detects Nix anti-patterns
+- **nixfmt**: Verifies formatting (nixfmt-rfc-style)
+
+```bash
+# Run all linters via flake check
+nix flake check
+
+# Run specific linter
+nix build .#checks.aarch64-darwin.lint-deadnix
+nix build .#checks.aarch64-darwin.lint-statix
+nix build .#checks.aarch64-darwin.lint-nixfmt
+```
+
 ## Current Checks
 
 | Check Attribute | Platform | Tests |
 |----------------|----------|-------|
 | `unit-helpers` | All (x86_64-linux, aarch64-linux, aarch64-darwin) | `lib/helpers.nix` functions |
 | `integration-vm-minimal-ssh` | Linux only | SSH + firewall behavior |
+| `lint-deadnix` | All | Unused Nix binding detection |
+| `lint-statix` | All | Nix anti-pattern detection |
+| `lint-nixfmt` | All | Formatting verification (nixfmt-rfc-style) |
 
 ## Workflow
 
