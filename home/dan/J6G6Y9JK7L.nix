@@ -66,6 +66,12 @@
   # Host-specific shell aliases
   programs.fish.shellAliases = {
     drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config";
+    # Colmena fleet deployment
+    cs = "colmena apply --on";
+    ct = "colmena apply --goal test --on";
+    cb = "colmena apply --goal boot --on";
+    cda = "colmena apply --goal dry-activate --on";
+    call = "colmena apply";
   };
 
   # Fix for sops-nix on macOS: ensure /usr/bin is in PATH for getconf

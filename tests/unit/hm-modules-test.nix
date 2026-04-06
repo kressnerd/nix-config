@@ -6,6 +6,7 @@
 # Phase 7 RED — F-007 (SSH UseKeychain must NOT be present on Linux)
 # Colmena Phase 1 RED — colmena must be in shell-utils.nix packages
 # Colmena Phase 2 RED — Colmena fleet deployment aliases (cs, ct, cb, cda, call)
+# Colmena Phase 3 RED — J6G6Y9JK7L Colmena aliases (cs, ct, cb, cda, call)
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -19,6 +20,14 @@ let
   # shell-utils.nix has signature { pkgs, ... }: and returns an attrset with home.packages.
   shellUtilsModule = import ../../home/dan/features/cli/shell-utils.nix { inherit pkgs; };
   shellUtilsPkgNames = builtins.map (p: p.pname or p.name or "") shellUtilsModule.home.packages;
+
+  # Import J6G6Y9JK7L HM profile — signature is { config, pkgs, lib, ... }:
+  # programs.fish.shellAliases only contains string literals so no real config/pkgs needed.
+  j6Module = import ../../home/dan/J6G6Y9JK7L.nix {
+    config = { home.homeDirectory = "/Users/daniel.kressner"; home.path = "/nix/profile"; };
+    inherit pkgs lib;
+  };
+  j6Aliases = j6Module.programs.fish.shellAliases;
 in
 lib.debug.runTests {
   # ── F-002: nrb local alias must exist ────────────────────────────────────
@@ -180,6 +189,33 @@ lib.debug.runTests {
 
   testThinielHasCallAlias = {
     expr = aliases ? call;
+    expected = true;
+  };
+
+  # ── Colmena Phase 3: J6G6Y9JK7L must have Colmena fleet aliases ──────────
+
+  testJ6G6Y9JK7LHasCsAlias = {
+    expr = j6Aliases ? cs;
+    expected = true;
+  };
+
+  testJ6G6Y9JK7LHasCtAlias = {
+    expr = j6Aliases ? ct;
+    expected = true;
+  };
+
+  testJ6G6Y9JK7LHasCbAlias = {
+    expr = j6Aliases ? cb;
+    expected = true;
+  };
+
+  testJ6G6Y9JK7LHasCdaAlias = {
+    expr = j6Aliases ? cda;
+    expected = true;
+  };
+
+  testJ6G6Y9JK7LHasCallAlias = {
+    expr = j6Aliases ? call;
     expected = true;
   };
 }
