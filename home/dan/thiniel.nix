@@ -10,6 +10,8 @@
     ./features/cli/starship.nix
     ./features/cli/vim.nix
     ./features/development/formatters.nix
+    ./features/development/go.nix
+    ./features/development/python-tools.nix
     ./features/linux/hyprland.nix
     ./features/linux/impermanence.nix
     ./features/productivity/browser.nix

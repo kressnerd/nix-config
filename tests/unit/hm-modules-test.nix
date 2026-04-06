@@ -1,7 +1,8 @@
 # tests/unit/hm-modules-test.nix
 # Unit tests for Home Manager module values in home/dan/thiniel.nix
 # Phase 4 RED — F-002 (nrb alias) and F-003 (--use-remote-sudo in remote aliases)
-{ lib }:
+# Phase 5 RED — F-004 (go and uv must NOT be in shell-utils.nix)
+{ lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
   # Returns the raw attrset { imports, home, sops, programs, ... } without
@@ -9,6 +10,11 @@ let
   thinielModule = import ../../home/dan/thiniel.nix { };
 
   aliases = thinielModule.programs.fish.shellAliases;
+
+  # Import shell-utils module with real pkgs to inspect home.packages.
+  # shell-utils.nix has signature { pkgs, ... }: and returns an attrset with home.packages.
+  shellUtilsModule = import ../../home/dan/features/cli/shell-utils.nix { inherit pkgs; };
+  shellUtilsPkgNames = builtins.map (p: p.pname or p.name or "") shellUtilsModule.home.packages;
 in
 lib.debug.runTests {
   # ── F-002: nrb local alias must exist ────────────────────────────────────
@@ -36,6 +42,20 @@ lib.debug.runTests {
   # RED: nrb-remote value lacks --use-remote-sudo → FAIL
   testNrbRemoteHasUseRemoteSudo = {
     expr = lib.strings.hasInfix "--use-remote-sudo" aliases.nrb-remote;
+    expected = true;
+  };
+
+  # ── F-004: go and uv must NOT be in shell-utils.nix home.packages ─────────
+
+  # RED: go is currently in shell-utils.nix → expects true (not present), expr returns false → FAIL
+  testGoNotInShellUtils = {
+    expr = !(builtins.elem "go" shellUtilsPkgNames);
+    expected = true;
+  };
+
+  # RED: uv is currently in shell-utils.nix → expects true (not present), expr returns false → FAIL
+  testUvNotInShellUtils = {
+    expr = !(builtins.elem "uv" shellUtilsPkgNames);
     expected = true;
   };
 }

@@ -50,13 +50,6 @@
     # Container tools
     #colima        # Docker Desktop alternative
 
-    # Language tools
-    #nodejs_20
-    #python312
-    go
-    uv # Python package manager (provides uvx)
-    #rustup
-
     # Cloud tools (moved to cloud-tools.nix module)
     # See features/cli/cloud-tools.nix for cloud CLI tools
   ];

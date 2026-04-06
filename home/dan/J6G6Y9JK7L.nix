@@ -17,7 +17,9 @@
     ./features/cli/fish.nix
     ./features/development/containers.nix
     ./features/development/formatters.nix
+    ./features/development/go.nix
     ./features/development/jdk.nix
+    ./features/development/python-tools.nix
     ./features/development/nodejs.nix
     ./features/development/fnm.nix
     ./features/macos/defaults.nix
