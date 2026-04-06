@@ -3,19 +3,21 @@
 { pkgs }:
 let
   helperTests = import ./helpers-test.nix { inherit (pkgs) lib; };
+  hmModuleTests = import ./hm-modules-test.nix { inherit (pkgs) lib; };
+  allFailures = helperTests ++ hmModuleTests;
 in
 # lib.debug.runTests returns [] on success — the branch is selected at eval time
-pkgs.runCommand "unit-helpers" { } ''
+pkgs.runCommand "unit-tests" { } ''
   # lib.debug.runTests returns [] on success, list of failures otherwise
   ${
-    if helperTests == [ ] then
+    if allFailures == [ ] then
       ''
         echo "All unit tests passed"
         touch $out
       ''
     else
       ''
-        echo "Unit test failures: ${builtins.toJSON helperTests}"
+        echo "Unit test failures: ${builtins.toJSON allFailures}"
         exit 1
       ''
   }
