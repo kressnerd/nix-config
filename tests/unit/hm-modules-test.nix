@@ -2,6 +2,7 @@
 # Unit tests for Home Manager module values in home/dan/thiniel.nix
 # Phase 4 RED — F-002 (nrb alias) and F-003 (--use-remote-sudo in remote aliases)
 # Phase 5 RED — F-004 (go and uv must NOT be in shell-utils.nix)
+# Phase 6 RED — F-005 (kitty keybindings must be platform-appropriate)
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -56,6 +57,42 @@ lib.debug.runTests {
   # RED: uv is currently in shell-utils.nix → expects true (not present), expr returns false → FAIL
   testUvNotInShellUtils = {
     expr = !(builtins.elem "uv" shellUtilsPkgNames);
+    expected = true;
+  };
+
+  # ── F-005: Kitty keybindings must be platform-appropriate ─────────────────
+
+  # RED: current kitty.nix always emits cmd+ keys regardless of platform → FAIL on Linux
+  testKittyLinuxNoCmd = {
+    expr =
+      let
+        mockPkgsLinux = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = false;
+            isLinux = true;
+          };
+        };
+        kittyModule = import ../../home/dan/features/cli/kitty.nix { pkgs = mockPkgsLinux; };
+        keybindingKeys = builtins.attrNames kittyModule.programs.kitty.keybindings;
+      in
+      !(builtins.any (k: lib.strings.hasPrefix "cmd+" k) keybindingKeys);
+    expected = true;
+  };
+
+  # PASS: current kitty.nix uses cmd+ which is correct for Darwin
+  testKittyDarwinUsesCmd = {
+    expr =
+      let
+        mockPkgsDarwin = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = true;
+            isLinux = false;
+          };
+        };
+        kittyModule = import ../../home/dan/features/cli/kitty.nix { pkgs = mockPkgsDarwin; };
+        keybindingKeys = builtins.attrNames kittyModule.programs.kitty.keybindings;
+      in
+      builtins.any (k: lib.strings.hasPrefix "cmd+" k) keybindingKeys;
     expected = true;
   };
 }

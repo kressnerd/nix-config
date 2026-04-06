@@ -1,4 +1,8 @@
 { pkgs, ... }:
+let
+  mod = if pkgs.stdenv.isDarwin then "cmd" else "ctrl+shift";
+  modShift = if pkgs.stdenv.isDarwin then "cmd+shift" else "ctrl+alt";
+in
 {
   programs.kitty = {
     enable = true;
@@ -50,42 +54,40 @@
       visual_bell_duration = "0.0";
     };
 
-    # Key mappings
+    # Key mappings — mod = cmd (macOS) or ctrl+shift (Linux)
     keybindings = {
       # Tabs
-      "cmd+t" = "new_tab";
-      "cmd+w" = "close_tab";
-      "cmd+]" = "next_tab";
-      "cmd+[" = "previous_tab";
-      "cmd+1" = "goto_tab 1";
-      "cmd+2" = "goto_tab 2";
-      "cmd+3" = "goto_tab 3";
-      "cmd+4" = "goto_tab 4";
-      "cmd+5" = "goto_tab 5";
+      "${mod}+t" = "new_tab";
+      "${mod}+w" = "close_tab";
+      "${mod}+]" = "next_tab";
+      "${mod}+[" = "previous_tab";
+      "${mod}+1" = "goto_tab 1";
+      "${mod}+2" = "goto_tab 2";
+      "${mod}+3" = "goto_tab 3";
+      "${mod}+4" = "goto_tab 4";
+      "${mod}+5" = "goto_tab 5";
 
-      # Splits
-      "cmd+d" = "launch --location=vsplit";
-      "cmd+shift+d" = "launch --location=hsplit";
-      "cmd+shift+]" = "next_window";
-      "cmd+shift+[" = "previous_window";
+      # Splits — modShift = cmd+shift (macOS) or ctrl+alt (Linux)
+      "${mod}+d" = "launch --location=vsplit";
+      "${modShift}+d" = "launch --location=hsplit";
+      "${modShift}+]" = "next_window";
+      "${modShift}+[" = "previous_window";
 
       # Font size
-      "cmd+plus" = "change_font_size all +2.0";
-      "cmd+minus" = "change_font_size all -2.0";
-      "cmd+0" = "change_font_size all 0";
+      "${mod}+plus" = "change_font_size all +2.0";
+      "${mod}+minus" = "change_font_size all -2.0";
+      "${mod}+0" = "change_font_size all 0";
 
       # Clear
-      "cmd+k" = "clear_terminal clear active";
+      "${mod}+k" = "clear_terminal clear active";
     };
 
     extraConfig = ''
-      # Add any additional config here
+      # Custom shortcuts
+      map ${modShift}+e open_url_with_hints
 
-      # Example: Custom shortcuts for specific tasks
-      map cmd+shift+e open_url_with_hints
-
-      # Example: SSH shortcuts
-      map cmd+shift+s launch --type=tab ssh myserver
+      # SSH shortcuts
+      map ${modShift}+s launch --type=tab ssh myserver
     '';
   };
 
