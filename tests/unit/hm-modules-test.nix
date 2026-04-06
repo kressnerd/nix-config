@@ -3,6 +3,7 @@
 # Phase 4 RED — F-002 (nrb alias) and F-003 (--use-remote-sudo in remote aliases)
 # Phase 5 RED — F-004 (go and uv must NOT be in shell-utils.nix)
 # Phase 6 RED — F-005 (kitty keybindings must be platform-appropriate)
+# Phase 7 RED — F-007 (SSH UseKeychain must NOT be present on Linux)
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -93,6 +94,26 @@ lib.debug.runTests {
         keybindingKeys = builtins.attrNames kittyModule.programs.kitty.keybindings;
       in
       builtins.any (k: lib.strings.hasPrefix "cmd+" k) keybindingKeys;
+    expected = true;
+  };
+
+  # ── F-007: SSH UseKeychain must only be present on macOS ──────────────────
+
+  # RED: current ssh.nix uses `_:` and always sets UseKeychain regardless of
+  # platform → expects true (not present on Linux), expr returns false → FAIL
+  testSshLinuxNoUseKeychain = {
+    expr =
+      let
+        mockPkgsLinux = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = false;
+            isLinux = true;
+          };
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsLinux; };
+        extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
+      in
+      !(builtins.hasAttr "UseKeychain" extraOpts);
     expected = true;
   };
 }
