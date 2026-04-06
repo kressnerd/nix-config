@@ -4,6 +4,7 @@
 # Phase 5 RED — F-004 (go and uv must NOT be in shell-utils.nix)
 # Phase 6 RED — F-005 (kitty keybindings must be platform-appropriate)
 # Phase 7 RED — F-007 (SSH UseKeychain must NOT be present on Linux)
+# Colmena Phase 1 RED — colmena must be in shell-utils.nix packages
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -163,6 +164,14 @@ lib.debug.runTests {
         extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
       in
       builtins.hasAttr "UseKeychain" extraOpts;
+    expected = true;
+  };
+
+  # ── Colmena Phase 1: colmena must be in shell-utils.nix packages ─────────
+
+  # RED: colmena is not yet in shell-utils.nix → expects true (present), expr returns false → FAIL
+  testColmenaInShellUtils = {
+    expr = builtins.elem "colmena" shellUtilsPkgNames;
     expected = true;
   };
 }
