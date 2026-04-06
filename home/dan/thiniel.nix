@@ -2,6 +2,7 @@
 {
   imports = [
     ./global/default.nix
+    ./features/cli/fish.nix
     ./features/cli/git.nix
     ./features/cli/shell-utils.nix
     ./features/cli/vim.nix
@@ -33,7 +34,7 @@
   };
 
   # Host-specific shell aliases
-  programs.zsh.shellAliases = {
+  programs.fish.shellAliases = {
     nrs = "sudo nixos-rebuild switch --flake ~/Projects/nix-config";
     nrt = "sudo nixos-rebuild test --flake ~/Projects/nix-config";
   };
