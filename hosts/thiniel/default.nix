@@ -254,7 +254,6 @@
     waybar
     mako
     libnotify
-    kitty
     rofi
 
     # Rust-based CLI tools
@@ -286,7 +285,6 @@
 
     # Rust other tools
     skim # fzf clone
-    starship # shell prompt
     topgrade # upgrade everything
     bingrep # binary grep
     broot # interactive tree

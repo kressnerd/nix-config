@@ -41,5 +41,9 @@
   programs.fish.shellAliases = {
     nrs = "sudo nixos-rebuild switch --flake ~/Projects/nix-config";
     nrt = "sudo nixos-rebuild test --flake ~/Projects/nix-config";
+    # Remote deploy aliases — nixos-rebuild handles SSH + remote sudo automatically
+    nrs-remote = "nixos-rebuild switch --flake ~/Projects/nix-config --target-host";
+    nrt-remote = "nixos-rebuild test --flake ~/Projects/nix-config --target-host";
+    nrb-remote = "nixos-rebuild boot --flake ~/Projects/nix-config --target-host";
   };
 }
