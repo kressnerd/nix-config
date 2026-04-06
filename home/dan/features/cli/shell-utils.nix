@@ -33,6 +33,7 @@
     lazygit # Terminal UI for git
     glab # GitLab CLI
     nil # Nix language server (LSP)
+    colmena # Fleet deployment tool for NixOS
     #git
     #gh
     #delta # Better git diff
