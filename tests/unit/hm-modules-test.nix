@@ -116,4 +116,21 @@ lib.debug.runTests {
       !(builtins.hasAttr "UseKeychain" extraOpts);
     expected = true;
   };
+
+  # F-NEW-003: UseKeychain must be present on Darwin (macOS)
+  testSshDarwinHasUseKeychain = {
+    expr =
+      let
+        mockPkgsDarwin = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = true;
+            isLinux = false;
+          };
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsDarwin; };
+        extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
+      in
+      builtins.hasAttr "UseKeychain" extraOpts;
+    expected = true;
+  };
 }
