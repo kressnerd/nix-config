@@ -44,9 +44,11 @@
     nrs = "sudo nixos-rebuild switch --flake ~/Projects/nix-config";
     nrt = "sudo nixos-rebuild test --flake ~/Projects/nix-config";
     nrb = "sudo nixos-rebuild boot --flake ~/Projects/nix-config";
-    # Remote deploy aliases — use --use-remote-sudo so target user does not need root SSH
-    nrs-remote = "nixos-rebuild switch --flake ~/Projects/nix-config --use-remote-sudo --target-host";
-    nrt-remote = "nixos-rebuild test --flake ~/Projects/nix-config --use-remote-sudo --target-host";
-    nrb-remote = "nixos-rebuild boot --flake ~/Projects/nix-config --use-remote-sudo --target-host";
+    # Colmena fleet deployment
+    cs = "colmena apply --on";
+    ct = "colmena apply --goal test --on";
+    cb = "colmena apply --goal boot --on";
+    cda = "colmena apply --goal dry-activate --on";
+    call = "colmena apply";
   };
 }
