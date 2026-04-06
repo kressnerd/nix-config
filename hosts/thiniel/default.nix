@@ -80,11 +80,15 @@
     };
   };
 
+  # Fish shell — must be enabled at system level for it to work as a login shell
+  programs.fish.enable = true;
+
   # User configuration
   users.groups.libvirtd.members = [ "dan" ];
   users.users = {
     dan = {
       description = "Me Myself and Billie";
+      shell = pkgs.fish;
       initialHashedPassword = "$6$.tIb37hYTPJeB13w$RSDaCkfYIEcxNn7Isct6XxeIS8mENfhx15XjDCuSlA4xrsCwAjZZuP7vp0xTmGBOAAZoGESsG4GT8eecpTASn/";
     };
     test = {
