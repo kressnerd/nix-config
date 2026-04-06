@@ -56,6 +56,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.disko.follows = "disko";
     };
+
+    colmena = {
+      url = "github:zhaofengli/colmena";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -70,6 +75,7 @@
       nix-homebrew,
       nur,
       disko,
+      colmena,
       ...
     }@inputs:
     let
@@ -297,5 +303,36 @@
               integrationTests
             )
           );
+
+      colmenaHive = colmena.lib.makeHive {
+        meta = {
+          # Default nixpkgs for x86_64-linux nodes.
+          # For aarch64-linux nodes, override per node:
+          #   nodeNixpkgs.<hostname> = import nixpkgs { system = "aarch64-linux"; ... };
+          nixpkgs = import nixpkgs {
+            system = "x86_64-linux";
+            overlays = [
+              nur.overlays.default
+              (import ./overlays)
+            ];
+            config.allowUnfree = true;
+          };
+          specialArgs = {
+            inherit inputs outputs; # outputs is self-referential (same pattern as nixosConfigurations)
+          };
+          # Per-node specialArgs for arch-specific pkgs-unstable:
+          # nodeSpecialArgs.<hostname> = { pkgs-unstable = ...; };
+        };
+        # Nodes are added here after initial provisioning via nixos-anywhere.
+        # Example:
+        # my-server = {
+        #   imports = [ ./hosts/my-server ];
+        #   deployment = {
+        #     targetHost = "my-server.example.com";
+        #     targetUser = "dan";
+        #     tags = [ "server" ];
+        #   };
+        # };
+      };
     };
 }

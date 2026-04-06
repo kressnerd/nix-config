@@ -4,9 +4,10 @@
 # Phase 5 RED — F-004 (go and uv must NOT be in shell-utils.nix)
 # Phase 6 RED — F-005 (kitty keybindings must be platform-appropriate)
 # Phase 7 RED — F-007 (SSH UseKeychain must NOT be present on Linux)
-# Colmena Phase 1 RED — colmena must be in shell-utils.nix packages
+# Colmena Review F-002 RED — colmena must NOT be in shell-utils.nix; must be in deploy-tools.nix
 # Colmena Phase 2 RED — Colmena fleet deployment aliases (cs, ct, cb, cda, call)
 # Colmena Phase 3 RED — J6G6Y9JK7L Colmena aliases (cs, ct, cb, cda, call)
+# Colmena Review F-004 — alias value assertions for canonical Colmena aliases
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -14,17 +15,27 @@ let
   # invoking the module system, so programs.fish.shellAliases is a plain attrset.
   thinielModule = import ../../home/dan/thiniel.nix { };
 
-  aliases = thinielModule.programs.fish.shellAliases;
+  thinielAliases = thinielModule.programs.fish.shellAliases;
+
+  # Keep backward-compat binding used by existing alias existence tests
+  aliases = thinielAliases;
 
   # Import shell-utils module with real pkgs to inspect home.packages.
   # shell-utils.nix has signature { pkgs, ... }: and returns an attrset with home.packages.
   shellUtilsModule = import ../../home/dan/features/cli/shell-utils.nix { inherit pkgs; };
   shellUtilsPkgNames = builtins.map (p: p.pname or p.name or "") shellUtilsModule.home.packages;
 
+  # Import deploy-tools module to verify colmena lives there.
+  deployToolsModule = import ../../home/dan/features/cli/deploy-tools.nix { inherit pkgs; };
+  deployToolsPackageNames = builtins.map (p: p.pname or p.name or "") deployToolsModule.home.packages;
+
   # Import J6G6Y9JK7L HM profile — signature is { config, pkgs, lib, ... }:
   # programs.fish.shellAliases only contains string literals so no real config/pkgs needed.
   j6Module = import ../../home/dan/J6G6Y9JK7L.nix {
-    config = { home.homeDirectory = "/Users/daniel.kressner"; home.path = "/nix/profile"; };
+    config = {
+      home.homeDirectory = "/Users/daniel.kressner";
+      home.path = "/nix/profile";
+    };
     inherit pkgs lib;
   };
   j6Aliases = j6Module.programs.fish.shellAliases;
@@ -157,11 +168,17 @@ lib.debug.runTests {
     expected = true;
   };
 
-  # ── Colmena Phase 1: colmena must be in shell-utils.nix packages ─────────
+  # ── Colmena Review F-002: colmena location ───────────────────────────────
 
-  # RED: colmena is not yet in shell-utils.nix → expects true (present), expr returns false → FAIL
-  testColmenaInShellUtils = {
+  # RED: colmena is still in shell-utils.nix → expects false (not present), expr returns true → FAIL
+  testColmenaNotInShellUtils = {
     expr = builtins.elem "colmena" shellUtilsPkgNames;
+    expected = false;
+  };
+
+  # RED: deploy-tools.nix does not exist yet → will fail to import → FAIL
+  testColmenaInDeployTools = {
+    expr = builtins.elem "colmena" deployToolsPackageNames;
     expected = true;
   };
 
@@ -217,5 +234,17 @@ lib.debug.runTests {
   testJ6G6Y9JK7LHasCallAlias = {
     expr = j6Aliases ? call;
     expected = true;
+  };
+
+  # ── Colmena Review F-004: alias value assertions ──────────────────────────
+
+  testThinielCsAliasValue = {
+    expr = thinielAliases.cs;
+    expected = "colmena apply --on";
+  };
+
+  testThinielCallAliasValue = {
+    expr = thinielAliases.call;
+    expected = "colmena apply";
   };
 }

@@ -8,6 +8,7 @@
   imports = [
     ./global/default.nix
     ./features/cli/cloud-tools.nix
+    ./features/cli/deploy-tools.nix
     ./features/cli/git.nix
     ./features/cli/kitty.nix
     ./features/cli/shell-utils.nix
