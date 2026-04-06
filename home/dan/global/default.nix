@@ -8,7 +8,6 @@
 
   home.packages = with pkgs; [
     htop
-    ripgrep
   ];
 
   programs.home-manager.enable = true;

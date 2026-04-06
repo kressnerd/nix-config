@@ -1,7 +1,12 @@
 # tests/assertions/thiniel-invariants.nix
 # Thiniel-specific NixOS module assertions — enforced at evaluation time via nix flake check
 # Guarded by hostname to avoid failures on other hosts that import tests/assertions
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 {
   config = lib.mkIf (config.networking.hostName == "thiniel") {
     assertions = [
@@ -12,6 +17,27 @@
       {
         assertion = config.users.users.dan.shell == pkgs.fish;
         message = "Thiniel invariant violated: users.users.dan.shell must be set to pkgs.fish";
+      }
+      {
+        assertion =
+          let
+            sysPkgNames = builtins.map (p: p.pname or p.name or "") config.environment.systemPackages;
+            hmManagedTools = [
+              "eza"
+              "bat"
+              "fd"
+              "ripgrep"
+              "fzf"
+              "zoxide"
+              "delta"
+              "duf"
+              "dust"
+              "procs"
+              "bottom"
+            ];
+          in
+          !builtins.any (tool: builtins.elem tool sysPkgNames) hmManagedTools;
+        message = "Thiniel invariant violated: CLI tools managed by Home Manager (shell-utils.nix) must not be duplicated in environment.systemPackages";
       }
     ];
   };
