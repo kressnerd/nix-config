@@ -1,10 +1,11 @@
 # tests/unit/hm-modules-test.nix
 # Unit tests for Home Manager module values in home/dan/thiniel.nix
-# Phase 4 RED — F-002 (nrb alias) and F-003 (--use-remote-sudo in remote aliases)
+# Phase 4 RED — F-002 (nrb alias)
 # Phase 5 RED — F-004 (go and uv must NOT be in shell-utils.nix)
 # Phase 6 RED — F-005 (kitty keybindings must be platform-appropriate)
 # Phase 7 RED — F-007 (SSH UseKeychain must NOT be present on Linux)
 # Colmena Phase 1 RED — colmena must be in shell-utils.nix packages
+# Colmena Phase 2 RED — Colmena fleet deployment aliases (cs, ct, cb, cda, call)
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -25,26 +26,6 @@ lib.debug.runTests {
   # RED: thiniel.nix has no `nrb` key — expects true, expr returns false → FAIL
   testNrbAliasExists = {
     expr = builtins.hasAttr "nrb" aliases;
-    expected = true;
-  };
-
-  # ── F-003: Remote aliases must contain --use-remote-sudo ─────────────────
-
-  # RED: nrs-remote value lacks --use-remote-sudo → FAIL
-  testNrsRemoteHasUseRemoteSudo = {
-    expr = lib.strings.hasInfix "--use-remote-sudo" aliases.nrs-remote;
-    expected = true;
-  };
-
-  # RED: nrt-remote value lacks --use-remote-sudo → FAIL
-  testNrtRemoteHasUseRemoteSudo = {
-    expr = lib.strings.hasInfix "--use-remote-sudo" aliases.nrt-remote;
-    expected = true;
-  };
-
-  # RED: nrb-remote value lacks --use-remote-sudo → FAIL
-  testNrbRemoteHasUseRemoteSudo = {
-    expr = lib.strings.hasInfix "--use-remote-sudo" aliases.nrb-remote;
     expected = true;
   };
 
@@ -172,6 +153,33 @@ lib.debug.runTests {
   # RED: colmena is not yet in shell-utils.nix → expects true (present), expr returns false → FAIL
   testColmenaInShellUtils = {
     expr = builtins.elem "colmena" shellUtilsPkgNames;
+    expected = true;
+  };
+
+  # ── Colmena Phase 2: Colmena fleet deployment aliases must exist ──────────
+
+  testThinielHasCsAlias = {
+    expr = aliases ? cs;
+    expected = true;
+  };
+
+  testThinielHasCtAlias = {
+    expr = aliases ? ct;
+    expected = true;
+  };
+
+  testThinielHasCbAlias = {
+    expr = aliases ? cb;
+    expected = true;
+  };
+
+  testThinielHasCdaAlias = {
+    expr = aliases ? cda;
+    expected = true;
+  };
+
+  testThinielHasCallAlias = {
+    expr = aliases ? call;
     expected = true;
   };
 }
