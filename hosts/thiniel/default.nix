@@ -257,30 +257,20 @@
     rofi
 
     # Rust-based CLI tools
-    fzf # actually written in go
-    eza # fancy ls like lsd
-    fd # modern find
-    ripgrep # modern grep
-    bat # cat with syntax highlighting
     lsd # fancy ls like exa
     diffr # diff with colors
-    delta # diff for git
     difftastic # slow colorfull diff
     ouch # com-/decompress everything
     macchina # system information
     sd # sed clone
-    procs # modern ps clone
     xcp # extended cp
     rm-improved # rm clone
     #rargs # deprecated:  awk and xargs clone with pattern matching
     runiq # remove duplicate lines from input
-    zoxide # better cd
 
     # Rust directory and disk usage tools
-    dust # du clone
     diskus # disk usage info
     dutree # du clone
-    duf # df alt
     dua # du clone
 
     # Rust other tools
@@ -299,7 +289,6 @@
     miniserve # mini http server
     monolith # bundle a webpage in a single file
     tealdeer # tldr clone to read man pages
-    bottom # top clone
     tokei # code statistics
 
     # Data handling
