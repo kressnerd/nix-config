@@ -12,6 +12,32 @@
 
   programs.git = {
     enable = true;
+    ignores =
+      # Common (Nix build outputs, direnv)
+      [
+        ".direnv"
+        ".envrc"
+        "result"
+        "result-*"
+      ]
+      # macOS
+      ++ lib.optionals pkgs.stdenv.isDarwin [
+        ".DS_Store"
+        ".AppleDouble"
+        ".LSOverride"
+        "._*"
+        ".Spotlight-V100"
+        ".Trashes"
+        "Icon?"
+      ]
+      # Linux
+      ++ lib.optionals pkgs.stdenv.isLinux [
+        "*~"
+        ".directory"
+        ".Trash-*"
+        "*.swp"
+        "*.swo"
+      ];
     settings = {
       delta = {
         enable = true;
