@@ -13,12 +13,13 @@
   programs.git = {
     enable = true;
     ignores =
-      # Common (Nix build outputs, direnv)
+      # Common (Nix build outputs, direnv, local tool config)
       [
         ".direnv"
         ".envrc"
         "result"
         "result-*"
+        "**/.claude/settings.local.json"
       ]
       # macOS
       ++ lib.optionals pkgs.stdenv.isDarwin [
