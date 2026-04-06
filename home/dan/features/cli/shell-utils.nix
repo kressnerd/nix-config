@@ -32,6 +32,7 @@
     direnv # Per-directory environments
     lazygit # Terminal UI for git
     glab # GitLab CLI
+    nil # Nix language server (LSP)
     #git
     #gh
     #delta # Better git diff
