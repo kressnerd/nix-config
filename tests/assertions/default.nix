@@ -3,5 +3,6 @@
 {
   imports = [
     ./host-invariants.nix
+    ./thiniel-invariants.nix
   ];
 }
