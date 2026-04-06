@@ -8,6 +8,8 @@
 # Colmena Phase 2 RED — Colmena fleet deployment aliases (cs, ct, cb, cda, call)
 # Colmena Phase 3 RED — J6G6Y9JK7L Colmena aliases (cs, ct, cb, cda, call)
 # Colmena Review F-004 — alias value assertions for canonical Colmena aliases
+# Claude Code RED — claude-code must be in home/dan/features/development/claude-code.nix
+# Claude Code F-001 — .claude must be in impermanence persisted directories
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -28,6 +30,14 @@ let
   # Import deploy-tools module to verify colmena lives there.
   deployToolsModule = import ../../home/dan/features/cli/deploy-tools.nix { inherit pkgs; };
   deployToolsPackageNames = builtins.map (p: p.pname or p.name or "") deployToolsModule.home.packages;
+
+  # Import claude-code feature module — file does not exist yet (RED phase).
+  claudeCodeModule = import ../../home/dan/features/development/claude-code.nix { inherit pkgs; };
+  claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") claudeCodeModule.home.packages;
+
+  # Import impermanence module — signature is `_:` so call with empty attrset.
+  impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
+  impermanenceDirs = impermanenceModule.home.persistence."/persist".directories;
 
   # Import J6G6Y9JK7L HM profile — signature is { config, pkgs, lib, ... }:
   # programs.fish.shellAliases only contains string literals so no real config/pkgs needed.
@@ -246,5 +256,21 @@ lib.debug.runTests {
   testThinielCallAliasValue = {
     expr = thinielAliases.call;
     expected = "colmena apply";
+  };
+
+  # ── Claude Code RED: claude-code must be in home.packages ────────────────
+
+  # RED: home/dan/features/development/claude-code.nix does not exist yet →
+  # import fails at eval time → nix flake check FAILS as expected.
+  testClaudeCodeInPackages = {
+    expr = builtins.elem "claude-code" claudeCodePkgNames;
+    expected = true;
+  };
+
+  # ── F-001: .claude must be in impermanence persisted directories ─────────
+
+  testClaudeDirInImpermanence = {
+    expr = builtins.elem ".claude" impermanenceDirs;
+    expected = true;
   };
 }

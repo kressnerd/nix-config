@@ -8,6 +8,7 @@ _: {
       ".cache/mesa_shader_cache_db"
       #     ".cargo"
       ".cache/mozilla"
+      ".claude"
       ".mozilla" # Firefox
       ".ssh"
       "dev"
