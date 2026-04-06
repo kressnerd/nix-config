@@ -1,4 +1,5 @@
-_: {
+{ pkgs, ... }:
+{
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
@@ -11,10 +12,14 @@ _: {
     matchBlocks = {
       "*" = {
         addKeysToAgent = "yes";
-        extraOptions = {
-          UseKeychain = "yes";
-          IgnoreUnknown = "UseKeychain";
-        };
+        extraOptions =
+          if pkgs.stdenv.isDarwin then
+            {
+              UseKeychain = "yes";
+              IgnoreUnknown = "UseKeychain";
+            }
+          else
+            { };
       };
 
       "github-personal" = {
