@@ -97,6 +97,38 @@ lib.debug.runTests {
     expected = true;
   };
 
+  # ── ssh-agent: services.ssh-agent.enable must be platform-conditional ─────
+
+  testSshAgentEnabledOnLinux = {
+    expr =
+      let
+        mockPkgsLinux = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = false;
+            isLinux = true;
+          };
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsLinux; };
+      in
+      sshModule.services.ssh-agent.enable;
+    expected = true;
+  };
+
+  testSshAgentDisabledOnDarwin = {
+    expr =
+      let
+        mockPkgsDarwin = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = true;
+            isLinux = false;
+          };
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsDarwin; };
+      in
+      sshModule.services.ssh-agent.enable;
+    expected = false;
+  };
+
   # ── F-007: SSH UseKeychain must only be present on macOS ──────────────────
 
   # RED: current ssh.nix uses `_:` and always sets UseKeychain regardless of

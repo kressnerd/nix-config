@@ -1,5 +1,8 @@
 { pkgs, ... }:
 {
+  # SSH agent as systemd user service (Linux only; macOS uses launchd agent)
+  services.ssh-agent.enable = !pkgs.stdenv.isDarwin;
+
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
