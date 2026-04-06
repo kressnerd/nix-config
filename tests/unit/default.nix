@@ -3,7 +3,10 @@
 { pkgs }:
 let
   helperTests = import ./helpers-test.nix { inherit (pkgs) lib; };
-  hmModuleTests = import ./hm-modules-test.nix { inherit (pkgs) lib; inherit pkgs; };
+  hmModuleTests = import ./hm-modules-test.nix {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
   allFailures = helperTests ++ hmModuleTests;
 in
 # lib.debug.runTests returns [] on success — the branch is selected at eval time

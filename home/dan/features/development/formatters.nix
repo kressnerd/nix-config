@@ -96,7 +96,7 @@
             find . -name "*.sh" -exec shfmt -w {} \;
           case all '*'
             echo "Running treefmt for multi-language formatting..."
-            if command -v treefmt >/dev/null 2>&1
+            if type -q treefmt
               treefmt
             else
               echo "treefmt not available, running nixfmt on Nix files..."
@@ -116,7 +116,7 @@
           case nix '*.nix'
             nix fmt -- --check .
           case all
-            if command -v treefmt >/dev/null 2>&1
+            if type -q treefmt
               treefmt --fail-on-change
             else
               nix fmt -- --check .
