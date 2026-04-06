@@ -4,8 +4,12 @@
     ./global/default.nix
     ./features/cli/fish.nix
     ./features/cli/git.nix
+    ./features/cli/kitty.nix
     ./features/cli/shell-utils.nix
+    ./features/cli/ssh.nix
+    ./features/cli/starship.nix
     ./features/cli/vim.nix
+    ./features/development/formatters.nix
     ./features/linux/hyprland.nix
     ./features/linux/impermanence.nix
     ./features/productivity/browser.nix
