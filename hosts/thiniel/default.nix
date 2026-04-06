@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  pkgs-unstable, # Add pkgs-unstable here
+  pkgs-unstable,
   inputs,
   ...
 }:
