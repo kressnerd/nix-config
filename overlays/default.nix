@@ -9,5 +9,10 @@ final: prev:
 {
   # Import all overlay modules
   # Each overlay should export a function that takes final/prev and returns an attrset
+
+  # Skip check phase: fish test gets SIGKILL'd on the remote builder (Killed: 9)
+  direnv = prev.direnv.overrideAttrs (_old: {
+    doCheck = false;
+  });
 }
 // (import ./vscode-extensions final prev)
