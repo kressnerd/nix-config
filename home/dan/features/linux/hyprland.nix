@@ -1,9 +1,9 @@
 { pkgs, ... }:
 let
   startupScript = pkgs.writeShellScriptBin "start" ''
-    ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store # Stores only text data
-    ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store # Stores only image data
-    sleep 1
+    ${pkgs.gnome-keyring}/bin/gnome-keyring-daemon --start --components=secrets &>/dev/null &
+    ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only text data
+    ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only image data
   '';
   #      ${pkgs.hyprpaper}/bin/hyprpaper &
   #      ${pkgs.hyprpanel}/bin/hyprpanel &

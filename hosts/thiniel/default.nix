@@ -135,7 +135,7 @@
       #      "/etc/mullvad-vpn"
       #      "/var/cache/libvirt"
       #      "/var/cache/mullvad-vpn"
-      #      "/var/cache/tuigreet"
+      "/var/cache/tuigreet"
       #      "/var/lib/OpenRGB"
       #      "/var/lib/alsa"
       #      "/var/lib/docker"
@@ -226,13 +226,12 @@
 
     openssh.enable = true;
 
+    # D-Bus Secret Service for credential storage (VS Code, etc.)
+    gnome.gnome-keyring.enable = true;
+
     greetd = {
       enable = true;
       settings = {
-        initial_session = {
-          command = "${pkgs.hyprland}/bin/Hyprland";
-          user = "dan";
-        };
         default_session = {
           command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs.hyprland}/share/wayland-sessions";
           user = "greeter";
@@ -240,6 +239,9 @@
       };
     };
   };
+
+  # PAM integration: auto-unlock gnome-keyring on greetd/tuigreet password login
+  security.pam.services.greetd.enableGnomeKeyring = true;
 
   # Power management
   powerManagement.enable = true;
