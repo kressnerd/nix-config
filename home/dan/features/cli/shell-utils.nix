@@ -29,7 +29,6 @@
     ncdu # Disk usage analyzer
 
     # Development tools
-    direnv # Per-directory environments
     lazygit # Terminal UI for git
     glab # GitLab CLI
     nil # Nix language server (LSP)
