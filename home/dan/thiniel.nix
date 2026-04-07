@@ -15,6 +15,7 @@
     ./features/development/go.nix
     ./features/development/python-tools.nix
     ./features/linux/fonts.nix
+    ./features/linux/gnome-keyring.nix
     ./features/linux/hyprland.nix
     ./features/linux/impermanence.nix
     ./features/productivity/browser.nix
