@@ -11,9 +11,12 @@ _: {
       ".claude"
       ".mozilla" # Firefox
       ".ssh"
+      ".vscode"
       "dev"
       "Projects"
       ".config/sops/age"
+      # VSCode
+      ".config/Code"
       # KeepassXC
       ".config/keepassxc"
       # ownCloud client
