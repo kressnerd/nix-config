@@ -14,6 +14,7 @@
     ./features/development/formatters.nix
     ./features/development/go.nix
     ./features/development/python-tools.nix
+    ./features/linux/fonts.nix
     ./features/linux/hyprland.nix
     ./features/linux/impermanence.nix
     ./features/productivity/browser.nix
@@ -21,7 +22,7 @@
     ./features/productivity/keepassxc.nix
     ./features/productivity/owncloud.nix
     ./features/productivity/sweethome3d.nix
-    ./features/linux/fonts.nix
+    ./features/productivity/vscode-fhs.nix
   ];
 
   # Host-specific overrides

@@ -10,6 +10,7 @@
 # Colmena Review F-004 — alias value assertions for canonical Colmena aliases
 # Claude Code RED — claude-code must be in home/dan/features/development/claude-code.nix
 # Claude Code F-001 — .claude must be in impermanence persisted directories
+# VSCode FHS RED — vscode-fhs must be in home/dan/features/productivity/vscode-fhs.nix
 { lib, pkgs }:
 let
   # Import the thiniel HM profile — call with {} since signature is { ... }:
@@ -36,6 +37,12 @@ let
     pkgs-unstable = pkgs;
   };
   claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") claudeCodeModule.home.packages;
+
+  # Import vscode-fhs feature module — file does not exist yet (RED phase).
+  vscodeFhsModule = import ../../home/dan/features/productivity/vscode-fhs.nix {
+    pkgs-unstable = pkgs;
+  };
+  vscodeFhsPkgNames = builtins.map (p: p.pname or p.name or "") vscodeFhsModule.home.packages;
 
   # Import impermanence module — signature is `_:` so call with empty attrset.
   impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
@@ -273,6 +280,20 @@ lib.debug.runTests {
 
   testClaudeDirInImpermanence = {
     expr = builtins.elem ".claude" impermanenceDirs;
+    expected = true;
+  };
+
+  # ── VSCode FHS RED: vscode-fhs must expose home.packages ────────────────
+
+  # RED: home/dan/features/productivity/vscode-fhs.nix does not exist yet →
+  # import fails at eval time → nix flake check FAILS as expected.
+  testVscodeFhsHasPackages = {
+    expr = vscodeFhsModule ? home && vscodeFhsModule.home ? packages;
+    expected = true;
+  };
+
+  testVscodeFhsInPackages = {
+    expr = builtins.any (n: lib.strings.hasPrefix "vscode" n) vscodeFhsPkgNames;
     expected = true;
   };
 }
