@@ -32,7 +32,9 @@ let
   deployToolsPackageNames = builtins.map (p: p.pname or p.name or "") deployToolsModule.home.packages;
 
   # Import claude-code feature module — file does not exist yet (RED phase).
-  claudeCodeModule = import ../../home/dan/features/development/claude-code.nix { inherit pkgs; };
+  claudeCodeModule = import ../../home/dan/features/development/claude-code.nix {
+    pkgs-unstable = pkgs;
+  };
   claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") claudeCodeModule.home.packages;
 
   # Import impermanence module — signature is `_:` so call with empty attrset.
