@@ -11,7 +11,7 @@ _: {
       ".claude"
       ".mozilla" # Firefox
       ".ssh"
-      ".vscode"
+      ".vscode/extensions"
       "dev"
       "Projects"
       ".config/sops/age"
@@ -22,6 +22,8 @@ _: {
       # ownCloud client
       ".config/ownCloud"
       ".local/share/ownCloud"
+      # gnome-keyring encrypted keyring files
+      ".local/share/keyrings"
       # SweetHome3D
       ".eteks"
     ];

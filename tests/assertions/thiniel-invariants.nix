@@ -39,6 +39,18 @@
           !builtins.any (tool: builtins.elem tool sysPkgNames) hmManagedTools;
         message = "Thiniel invariant violated: CLI tools managed by Home Manager (shell-utils.nix) must not be duplicated in environment.systemPackages";
       }
+      {
+        assertion = !(config.services.greetd.settings ? initial_session);
+        message = "Thiniel invariant violated: greetd must not use initial_session (auto-login). Use tuigreet with password for PAM keyring unlock.";
+      }
+      {
+        assertion = config.services.gnome.gnome-keyring.enable;
+        message = "Thiniel invariant violated: gnome-keyring must be enabled for D-Bus Secret Service (VS Code credential storage).";
+      }
+      {
+        assertion = config.security.pam.services.greetd.enableGnomeKeyring;
+        message = "Thiniel invariant violated: security.pam.services.greetd.enableGnomeKeyring must be true for PAM keyring auto-unlock on login.";
+      }
     ];
   };
 }
