@@ -197,7 +197,7 @@ lib.debug.runTests {
 
   testHyprlandBindCount = {
     expr = builtins.length hyprSettings.bind;
-    expected = 35;
+    expected = 36;
   };
 
   testHyprlandBindeCount = {
@@ -272,6 +272,13 @@ lib.debug.runTests {
 
   testHyprlandHasRofiPowerMenu = {
     expr = builtins.elem "rofi-power-menu" hyprPkgNames;
+    expected = true;
+  };
+
+  # ── hyprland: power keybinding ────────────────────────────────────────────
+
+  testHyprlandHasPowerKeybinding = {
+    expr = builtins.any (b: lib.strings.hasInfix "rofi-power-menu" b) hyprSettings.bind;
     expected = true;
   };
 }
