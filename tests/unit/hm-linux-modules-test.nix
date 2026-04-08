@@ -237,6 +237,13 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testWaybarHasStyle = {
+    expr =
+      builtins.isString hyprlandModule.programs.waybar.style
+      && builtins.stringLength hyprlandModule.programs.waybar.style > 0;
+    expected = true;
+  };
+
   # ── mako ─────────────────────────────────────────────────────────────────
 
   testMakoEnabled = {
