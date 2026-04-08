@@ -17,8 +17,6 @@ _: {
       ".config/sops/age"
       # VSCode
       ".config/Code"
-      # KeepassXC
-      ".config/keepassxc"
       # ownCloud client
       ".config/ownCloud"
       ".local/share/ownCloud"

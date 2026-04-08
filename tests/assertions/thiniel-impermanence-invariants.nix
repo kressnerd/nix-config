@@ -11,6 +11,14 @@
         persistSystem = config.environment.persistence."/persist/system";
         hasDir = path: builtins.any (d: d.directory == path) persistSystem.directories;
         hasFile = path: builtins.any (f: f.file == path) persistSystem.files;
+
+        # HM persistence directories may be plain strings or attrsets with `directory`.
+        hmPersistDirs = config.home-manager.users.dan.home.persistence."/persist".directories;
+        hmHasDir =
+          path:
+          builtins.any (
+            d: if builtins.isString d then d == path else (d.directory or "") == path
+          ) hmPersistDirs;
       in
       [
         {
@@ -32,6 +40,10 @@
         {
           assertion = hasFile "/etc/machine-id";
           message = "Thiniel invariant violated: /etc/machine-id must be in system persistence (stable machine identity)";
+        }
+        {
+          assertion = !(hmHasDir ".config/keepassxc");
+          message = "Thiniel invariant violated: .config/keepassxc must not be in HM persistence — HM manages keepassxc.ini declaratively";
         }
       ];
   };
