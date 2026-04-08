@@ -19,6 +19,7 @@ let
   # hyprland.nix — signature is `{ pkgs, ... }:`
   hyprlandModule = import ../../home/dan/features/linux/hyprland.nix { inherit pkgs; };
   hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
+  hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
 in
 lib.debug.runTests {
 
@@ -221,6 +222,21 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testWaybarHasSettings = {
+    expr = builtins.length hyprlandModule.programs.waybar.settings > 0;
+    expected = true;
+  };
+
+  testWaybarHasCustomPowerModule = {
+    expr = (builtins.head hyprlandModule.programs.waybar.settings) ? "custom/power";
+    expected = true;
+  };
+
+  testWaybarCustomPowerHasOnClick = {
+    expr = (builtins.head hyprlandModule.programs.waybar.settings)."custom/power" ? "on-click";
+    expected = true;
+  };
+
   # ── mako ─────────────────────────────────────────────────────────────────
 
   testMakoEnabled = {
@@ -242,6 +258,13 @@ lib.debug.runTests {
 
   testRofiShowIcons = {
     expr = hyprlandModule.programs.rofi.extraConfig.show-icons;
+    expected = true;
+  };
+
+  # ── rofi-power-menu ───────────────────────────────────────────────────────
+
+  testHyprlandHasRofiPowerMenu = {
+    expr = builtins.elem "rofi-power-menu" hyprPkgNames;
     expected = true;
   };
 }
