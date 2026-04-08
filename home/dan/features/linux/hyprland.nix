@@ -6,6 +6,16 @@ let
   '';
   #      ${pkgs.hyprpaper}/bin/hyprpaper &
   #      ${pkgs.hyprpanel}/bin/hyprpanel &
+  rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
+    choice=$(printf ' Logout\n⏾ Suspend\n Reboot\n⏻ Shutdown' \
+      | ${pkgs.rofi}/bin/rofi -dmenu -p "Power" -theme-str 'window { width: 200px; }')
+    case "$choice" in
+      ' Logout')   ${pkgs.hyprland}/bin/hyprctl dispatch exit ;;
+      '⏾ Suspend') ${pkgs.systemd}/bin/systemctl suspend ;;
+      ' Reboot')   ${pkgs.systemd}/bin/systemctl reboot ;;
+      '⏻ Shutdown') ${pkgs.systemd}/bin/systemctl poweroff ;;
+    esac
+  '';
 in
 {
   # Install required packages
@@ -14,6 +24,7 @@ in
     wl-clipboard
     cliphist
     brightnessctl
+    rofiPowerMenu
   ];
 
   programs.waybar = {
@@ -22,6 +33,91 @@ in
       enable = true;
       target = "hyprland-session.target";
     };
+    settings = [
+      {
+        layer = "top";
+        position = "top";
+        height = 30;
+
+        modules-left = [ "hyprland/workspaces" ];
+        modules-center = [ "clock" ];
+        modules-right = [
+          "pulseaudio"
+          "network"
+          "cpu"
+          "memory"
+          "battery"
+          "tray"
+          "custom/power"
+        ];
+
+        "hyprland/workspaces" = {
+          format = "{icon}";
+          on-click = "activate";
+        };
+
+        clock = {
+          format = "{:%H:%M}";
+          format-alt = "{:%Y-%m-%d %H:%M}";
+          tooltip-format = "<tt>{calendar}</tt>";
+        };
+
+        cpu = {
+          format = " {usage}%";
+          interval = 5;
+        };
+
+        memory = {
+          format = " {}%";
+          interval = 5;
+        };
+
+        battery = {
+          format = "{icon} {capacity}%";
+          format-icons = [
+            ""
+            ""
+            ""
+            ""
+            ""
+          ];
+          states = {
+            warning = 30;
+            critical = 15;
+          };
+        };
+
+        network = {
+          format-wifi = " {signalStrength}%";
+          format-ethernet = " {ifname}";
+          format-disconnected = "⚠ Disconnected";
+          tooltip-format = "{ifname}: {ipaddr}/{cidr}";
+        };
+
+        pulseaudio = {
+          format = "{icon} {volume}%";
+          format-muted = " muted";
+          format-icons = {
+            default = [
+              ""
+              ""
+              ""
+            ];
+          };
+          on-click = "pavucontrol";
+        };
+
+        tray = {
+          spacing = 10;
+        };
+
+        "custom/power" = {
+          format = "⏻";
+          on-click = "${rofiPowerMenu}/bin/rofi-power-menu";
+          tooltip = false;
+        };
+      }
+    ];
   };
 
   services.mako = {
