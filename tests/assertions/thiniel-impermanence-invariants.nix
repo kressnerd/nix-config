@@ -1,0 +1,38 @@
+# tests/assertions/thiniel-impermanence-invariants.nix
+# Thiniel-specific impermanence assertions — enforced at evaluation time via nix flake check
+# Characterizes environment.persistence."/persist/system" from hosts/thiniel/default.nix
+{ config, lib, ... }:
+{
+  config = lib.mkIf (config.networking.hostName == "thiniel") {
+    # The impermanence module coerces string paths to attrsets with a `directory`
+    # or `file` field — use builtins.any rather than builtins.elem.
+    assertions =
+      let
+        persistSystem = config.environment.persistence."/persist/system";
+        hasDir = path: builtins.any (d: d.directory == path) persistSystem.directories;
+        hasFile = path: builtins.any (f: f.file == path) persistSystem.files;
+      in
+      [
+        {
+          assertion = hasDir "/var/log";
+          message = "Thiniel invariant violated: /var/log must be in system persistence (logs must survive reboot)";
+        }
+        {
+          assertion = hasDir "/var/lib/nixos";
+          message = "Thiniel invariant violated: /var/lib/nixos must be in system persistence (NixOS state)";
+        }
+        {
+          assertion = hasDir "/etc/NetworkManager/system-connections";
+          message = "Thiniel invariant violated: /etc/NetworkManager/system-connections must be in system persistence (WiFi configs)";
+        }
+        {
+          assertion = hasFile "/var/lib/sops-nix/key.txt";
+          message = "Thiniel invariant violated: /var/lib/sops-nix/key.txt must be in system persistence (SOPS decryption key)";
+        }
+        {
+          assertion = hasFile "/etc/machine-id";
+          message = "Thiniel invariant violated: /etc/machine-id must be in system persistence (stable machine identity)";
+        }
+      ];
+  };
+}
