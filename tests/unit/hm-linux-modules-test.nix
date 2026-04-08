@@ -86,9 +86,9 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceHasKeepassxc = {
+  testImpermanenceDoesNotHaveKeepassxc = {
     expr = builtins.elem ".config/keepassxc" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceHasOwnCloud = {
@@ -113,7 +113,7 @@ lib.debug.runTests {
 
   testImpermanenceDirCount = {
     expr = builtins.length impermanenceDirs;
-    expected = 16;
+    expected = 15;
   };
 
   # ── impermanence: files ───────────────────────────────────────────────────
