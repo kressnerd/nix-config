@@ -118,6 +118,106 @@ in
         };
       }
     ];
+    style = ''
+      * {
+        font-family: monospace;
+        font-size: 13px;
+        border: none;
+        border-radius: 0;
+        min-height: 0;
+      }
+
+      window#waybar {
+        background-color: #e6e9ef;
+        color: #4c4f69;
+        border-bottom: 2px solid #dce0e8;
+      }
+
+      .modules-left,
+      .modules-center,
+      .modules-right {
+        padding: 0 8px;
+      }
+
+      #workspaces button {
+        padding: 0 6px;
+        background-color: transparent;
+        color: #6c6f85;
+        border-bottom: 2px solid transparent;
+      }
+
+      #workspaces button:hover {
+        background-color: #dce0e8;
+        color: #4c4f69;
+      }
+
+      #workspaces button.active {
+        color: #1e66f5;
+        border-bottom: 2px solid #1e66f5;
+        font-weight: bold;
+      }
+
+      #workspaces button.focused {
+        color: #7287fd;
+        border-bottom: 2px solid #7287fd;
+      }
+
+      #clock {
+        color: #4c4f69;
+        padding: 0 8px;
+      }
+
+      #battery {
+        color: #40a02b;
+        padding: 0 8px;
+      }
+
+      #battery.warning {
+        color: #fe640b;
+      }
+
+      #battery.critical {
+        color: #d20f39;
+        font-weight: bold;
+      }
+
+      #network {
+        color: #179299;
+        padding: 0 8px;
+      }
+
+      #pulseaudio {
+        color: #8839ef;
+        padding: 0 8px;
+      }
+
+      #cpu {
+        color: #1e66f5;
+        padding: 0 8px;
+      }
+
+      #memory {
+        color: #7287fd;
+        padding: 0 8px;
+      }
+
+      #tray {
+        padding: 0 8px;
+        spacing: 8px;
+      }
+
+      #custom-power {
+        color: #eff1f5;
+        background-color: #d20f39;
+        padding: 0 12px;
+        font-size: 15px;
+        font-weight: bold;
+      }
+
+      #custom-power:hover {
+        background-color: #fe640b;
+      }
+    '';
   };
 
   services.mako = {
