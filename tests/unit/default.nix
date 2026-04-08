@@ -7,7 +7,31 @@ let
     inherit (pkgs) lib;
     inherit pkgs;
   };
-  allFailures = helperTests ++ hmModuleTests;
+  hmCliTests = import ./hm-cli-modules-test.nix {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
+  hmDevTests = import ./hm-dev-modules-test.nix {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
+  hmLinuxTests = import ./hm-linux-modules-test.nix {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
+  hmProductivityTests = import ./hm-productivity-modules-test.nix {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
+  hmMacosTests = import ./hm-macos-modules-test.nix { inherit (pkgs) lib; };
+  allFailures =
+    helperTests
+    ++ hmModuleTests
+    ++ hmCliTests
+    ++ hmDevTests
+    ++ hmLinuxTests
+    ++ hmProductivityTests
+    ++ hmMacosTests;
 in
 # lib.debug.runTests returns [] on success — the branch is selected at eval time
 pkgs.runCommand "unit-tests" { } ''

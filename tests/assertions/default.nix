@@ -4,5 +4,9 @@
   imports = [
     ./host-invariants.nix
     ./thiniel-invariants.nix
+    ./common-global-invariants.nix
+    ./thiniel-services-invariants.nix
+    ./thiniel-impermanence-invariants.nix
+    ./nixos-vm-minimal-invariants.nix
   ];
 }
