@@ -4,19 +4,12 @@ let
   modShift = if pkgs.stdenv.isDarwin then "cmd+shift" else "ctrl+alt";
 in
 {
+  stylix.targets.kitty.enable = true;
+
   programs.kitty = {
     enable = true;
 
-    themeFile = "Catppuccin-Latte";
-
     settings = {
-      # Font configuration
-      font_family = "JetBrainsMono Nerd Font Mono";
-      font_size = "12.0";
-      bold_font = "auto";
-      italic_font = "auto";
-      bold_italic_font = "auto";
-
       # Window settings
       window_padding_width = 10;
       hide_window_decorations = if pkgs.stdenv.isDarwin then "titlebar-only" else "no";
@@ -91,7 +84,4 @@ in
     '';
   };
 
-  home.packages = with pkgs; [
-    nerd-fonts.jetbrains-mono
-  ];
 }

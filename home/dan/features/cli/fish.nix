@@ -1,5 +1,7 @@
 { pkgs, ... }:
 {
+  stylix.targets.fish.enable = true;
+
   programs.fish = {
     enable = true;
 
@@ -27,31 +29,15 @@
       # Disable greeting
       set fish_greeting
 
+      # Vi-mode keybindings
+      fish_vi_key_bindings
+
       # Kitty shell integration
       if set -q KITTY_INSTALLATION_DIR
         set --prepend fish_function_path "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_functions.d"
         source "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_conf.d/kitty-shell-integration.fish"
         set --prepend fish_complete_path "$KITTY_INSTALLATION_DIR/shell-integration/fish/vendor_completions.d"
       end
-
-      # Catppuccin Latte colors
-      set -g fish_color_normal "#4c4f69"
-      set -g fish_color_command "#1e66f5"
-      set -g fish_color_keyword "#8839ef"
-      set -g fish_color_quote "#40a02b"
-      set -g fish_color_redirection "#ea76cb"
-      set -g fish_color_end "#179299"
-      set -g fish_color_error "#d20f39"
-      set -g fish_color_param "#4c4f69"
-      set -g fish_color_comment "#9ca0b0"
-      set -g fish_color_operator "#04a5e5"
-      set -g fish_color_escape "#ea76cb"
-      set -g fish_color_autosuggestion "#9ca0b0"
-      set -g fish_color_cancel "#d20f39"
-      set -g fish_pager_color_prefix "#7287fd" --bold
-      set -g fish_pager_color_completion "#4c4f69"
-      set -g fish_pager_color_description "#df8e1d"
-      set -g fish_pager_color_selected_background --background="#ccd0da"
     '';
 
     functions = {

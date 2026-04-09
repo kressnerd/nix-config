@@ -101,8 +101,8 @@ lib.debug.runTests {
   };
 
   # ── fish: interactiveShellInit ───────────────────────────────────────────────
-  testFishInteractiveInitCatppuccin = {
-    expr = lib.strings.hasInfix "fish_color_normal" fishModule.programs.fish.interactiveShellInit;
+  testFishInteractiveInitViMode = {
+    expr = lib.strings.hasInfix "fish_vi_key_bindings" fishModule.programs.fish.interactiveShellInit;
     expected = true;
   };
 
@@ -139,14 +139,14 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testStarshipPalette = {
-    expr = starshipSettings.palette;
-    expected = "catppuccin_latte";
+  testStarshipDirectoryStyle = {
+    expr = starshipSettings.directory.style;
+    expected = "bold blue";
   };
 
-  testStarshipLavender = {
-    expr = starshipSettings.palettes.catppuccin_latte.lavender;
-    expected = "#7287fd";
+  testStarshipNoPalette = {
+    expr = starshipSettings ? palettes;
+    expected = false;
   };
 
   testStarshipTruncationLength = {
