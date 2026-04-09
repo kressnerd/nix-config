@@ -2,10 +2,11 @@
 # Characterization unit tests for Home Manager Linux feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
 # Covers: impermanence.nix, gnome-keyring.nix, fonts.nix,
-#         hyprland.nix, waybar.nix, mako.nix, fuzzel.nix
+#         hyprland.nix, waybar.nix, mako.nix, fuzzel.nix,
+#         hyprlock.nix, hypridle.nix, gtk-qt.nix
 #
-# NOTE: hyprland/waybar/mako/fuzzel tests are Linux-only (pkgs.hyprland,
-# pkgs.fuzzel etc. are unsupported on Darwin). They are gated with
+# NOTE: hyprland/waybar/mako/fuzzel/hyprlock/hypridle/gtk-qt tests are Linux-only
+# (pkgs.hyprland, pkgs.fuzzel etc. are unsupported on Darwin). They are gated with
 # pkgs.stdenv.isLinux so the aarch64-darwin unit-helpers check continues to pass.
 { lib, pkgs }:
 let
@@ -21,15 +22,18 @@ let
   fontsModule = import ../../home/dan/features/linux/fonts.nix { inherit pkgs; };
   fontsPkgNames = builtins.map (p: p.pname or p.name or "") fontsModule.home.packages;
 
-  # hyprland/waybar/mako/fuzzel — Linux only
-  # Wrapped in lib.optionalAttrs so Darwin evaluation never touches Linux pkgs.
+  # hyprland/waybar/mako/fuzzel/hyprlock/hypridle/gtk-qt — Linux only
+  # Wrapped so Darwin evaluation never touches Linux-only packages.
   hyprlandTests =
     if pkgs.stdenv.isLinux then
       let
         hyprlandModule = import ../../home/dan/features/linux/hyprland.nix { inherit pkgs; };
         waybarModule = import ../../home/dan/features/linux/waybar.nix { inherit pkgs; };
         makoModule = import ../../home/dan/features/linux/mako.nix { };
-        fuzzelModule = import ../../home/dan/features/linux/fuzzel.nix { inherit pkgs; };
+        fuzzelModule = import ../../home/dan/features/linux/fuzzel.nix { };
+        hyprideModule = import ../../home/dan/features/linux/hypridle.nix { };
+        hyprlockModule = import ../../home/dan/features/linux/hyprlock.nix { inherit lib; };
+        gtkQtModule = import ../../home/dan/features/linux/gtk-qt.nix { inherit pkgs; };
         hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
         hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
         waybarPkgNames = builtins.map (p: p.pname or p.name or "") waybarModule.home.packages;
@@ -68,9 +72,14 @@ let
           expected = 4;
         };
 
-        testHyprlandActiveBorderColor = {
-          expr = hyprSettings.general."col.active_border";
-          expected = "rgb(7287fd)";
+        testHyprlandGapsIn = {
+          expr = hyprSettings.general.gaps_in;
+          expected = 4;
+        };
+
+        testHyprlandRounding = {
+          expr = hyprSettings.decoration.rounding;
+          expected = 8;
         };
 
         # ── waybar ──────────────────────────────────────────────────────────
@@ -90,6 +99,11 @@ let
           expected = true;
         };
 
+        testWaybarHeight = {
+          expr = waybarModule.programs.waybar.settings.mainBar.height;
+          expected = 32;
+        };
+
         testWaybarHasCustomPowerModule = {
           expr = waybarModule.programs.waybar.settings.mainBar ? "custom/power";
           expected = true;
@@ -97,13 +111,6 @@ let
 
         testWaybarCustomPowerHasOnClick = {
           expr = waybarModule.programs.waybar.settings.mainBar."custom/power" ? "on-click";
-          expected = true;
-        };
-
-        testWaybarHasStyle = {
-          expr =
-            builtins.isString waybarModule.programs.waybar.style
-            && builtins.stringLength waybarModule.programs.waybar.style > 0;
           expected = true;
         };
 
@@ -121,9 +128,9 @@ let
           expected = true;
         };
 
-        testMakoBgColor = {
-          expr = makoModule.services.mako.settings.background-color;
-          expected = "#eff1f5";
+        testMakoMaxVisible = {
+          expr = makoModule.services.mako.settings.max-visible;
+          expected = 3;
         };
 
         # ── fuzzel ──────────────────────────────────────────────────────────
@@ -138,19 +145,65 @@ let
           expected = true;
         };
 
-        testFuzzelIconsEnabled = {
-          expr = fuzzelModule.programs.fuzzel.settings.main.icons-enabled;
-          expected = "yes";
+        testFuzzelWidth = {
+          expr = fuzzelModule.programs.fuzzel.settings.main.width;
+          expected = 35;
         };
 
-        testFuzzelHasColorSettings = {
-          expr = fuzzelModule.programs.fuzzel.settings ? colors;
+        testFuzzelIconsEnabled = {
+          expr = fuzzelModule.programs.fuzzel.settings.main.icons-enabled;
+          expected = "no";
+        };
+
+        # ── hyprlock ─────────────────────────────────────────────────────────
+
+        testHyprlockEnabled = {
+          expr = hyprlockModule.programs.hyprlock.enable;
           expected = true;
         };
 
-        testFuzzelBackgroundColorNoHash = {
-          expr = builtins.substring 0 1 fuzzelModule.programs.fuzzel.settings.colors.background;
-          expected = "e"; # eff1f5ff starts with 'e', not '#'
+        testHyprlockHideCursor = {
+          expr = hyprlockModule.programs.hyprlock.settings.general.hide_cursor;
+          expected = true;
+        };
+
+        testHyprlockGrace = {
+          expr = hyprlockModule.programs.hyprlock.settings.general.grace;
+          expected = 5;
+        };
+
+        # ── hypridle ─────────────────────────────────────────────────────────
+
+        testHypridleEnabled = {
+          expr = hyprideModule.services.hypridle.enable;
+          expected = true;
+        };
+
+        testHypridleListenerCount = {
+          expr = builtins.length hyprideModule.services.hypridle.settings.listener;
+          expected = 3;
+        };
+
+        testHypridleLockCmd = {
+          expr = hyprideModule.services.hypridle.settings.general.lock_cmd;
+          expected = "pidof hyprlock || hyprlock";
+        };
+
+        # ── gtk-qt ───────────────────────────────────────────────────────────
+
+        testGtkEnabled = {
+          expr = gtkQtModule.gtk.enable;
+          expected = true;
+        };
+
+        testGtkIconThemeName = {
+          expr = gtkQtModule.gtk.iconTheme.name;
+          expected = "Papirus-Light";
+        };
+
+        testQtEnabled = {
+          expr = gtkQtModule.qt.enable;
+          expected = true;
         };
 
         # ── hyprland: power keybinding ───────────────────────────────────────
@@ -160,7 +213,7 @@ let
           expected = true;
         };
 
-        # ── hyprland: rofi-power-menu still in hyprland packages ─────────────
+        # ── hyprland: rofi-power-menu in hyprland packages ───────────────────
 
         testHyprlandHasRofiPowerMenu = {
           expr = builtins.elem "rofi-power-menu" hyprPkgNames;
@@ -307,19 +360,14 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testFontsHasWlClipboard = {
-    expr = builtins.elem "wl-clipboard" fontsPkgNames;
-    expected = true;
-  };
-
-  testFontsHasCliphist = {
-    expr = builtins.elem "cliphist" fontsPkgNames;
+  testFontsHasSymbolsOnly = {
+    expr = builtins.elem "nerd-fonts-symbols-only" fontsPkgNames;
     expected = true;
   };
 
   testFontsPackageCount = {
     expr = builtins.length fontsModule.home.packages;
-    expected = 7;
+    expected = 2;
   };
 
 }
