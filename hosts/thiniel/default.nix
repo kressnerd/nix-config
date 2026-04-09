@@ -250,55 +250,63 @@
   powerManagement.enable = true;
   powerManagement.powertop.enable = true;
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  # System packages
-  environment.systemPackages = with pkgs; [
-    # Rust-based CLI tools
-    lsd # fancy ls like exa
-    diffr # diff with colors
-    difftastic # slow colorfull diff
-    ouch # com-/decompress everything
-    macchina # system information
-    sd # sed clone
-    xcp # extended cp
-    rm-improved # rm clone
-    #rargs # deprecated:  awk and xargs clone with pattern matching
-    runiq # remove duplicate lines from input
+  environment = {
+    # List packages installed in system profile. To search, run:
+    # $ nix search wget
+    # System packages
+    systemPackages = with pkgs; [
+      # Rust-based CLI tools
+      lsd # fancy ls like exa
+      diffr # diff with colors
+      difftastic # slow colorfull diff
+      ouch # com-/decompress everything
+      macchina # system information
+      sd # sed clone
+      xcp # extended cp
+      rm-improved # rm clone
+      #rargs # deprecated:  awk and xargs clone with pattern matching
+      runiq # remove duplicate lines from input
 
-    # Rust directory and disk usage tools
-    diskus # disk usage info
-    dutree # du clone
-    dua # du clone
+      # Rust directory and disk usage tools
+      diskus # disk usage info
+      dutree # du clone
+      dua # du clone
 
-    # Rust other tools
-    skim # fzf clone
-    topgrade # upgrade everything
-    bingrep # binary grep
-    broot # interactive tree
-    dupe-krill # file deduplicator
-    ruplacer # find and replace
-    fastmod # find and replace
-    genact # activity generator
-    grex # regx builder
-    bandwhich # bandwith monitor
-    ffsend # firefox send file from cli
-    pastel # color info
-    miniserve # mini http server
-    monolith # bundle a webpage in a single file
-    tealdeer # tldr clone to read man pages
-    tokei # code statistics
+      # Rust other tools
+      skim # fzf clone
+      topgrade # upgrade everything
+      bingrep # binary grep
+      broot # interactive tree
+      dupe-krill # file deduplicator
+      ruplacer # find and replace
+      fastmod # find and replace
+      genact # activity generator
+      grex # regx builder
+      bandwhich # bandwith monitor
+      ffsend # firefox send file from cli
+      pastel # color info
+      miniserve # mini http server
+      monolith # bundle a webpage in a single file
+      tealdeer # tldr clone to read man pages
+      tokei # code statistics
 
-    # Data handling
-    jql # JSON
-    # xsv # deprecated CSV
-    xan # CSV
-    hexyl # HEX viewer
+      # Data handling
+      jql # JSON
+      # xsv # deprecated CSV
+      xan # CSV
+      hexyl # HEX viewer
 
-    #   wget
-    #   alacrity
-    #   sl
-  ];
+      #   wget
+      #   alacrity
+      #   sl
+    ];
+
+    # UWSM requires hyprland.desktop in XDG_DATA_DIRS for session discovery
+    # Workaround for nixpkgs#485123: services.displayManager not enabled with greetd
+    sessionVariables.XDG_DATA_DIRS = [
+      "${pkgs-unstable.hyprland}/share"
+    ];
+  };
 
   # Programs
   programs = {
