@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }:
+{ pkgs, ... }:
 let
   catppuccinLatte = {
     base = "#eff1f5";
