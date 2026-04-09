@@ -13,12 +13,12 @@ After completing a change, run linting tools on modified files:
 
 | Tool | Command | Purpose |
 |------|---------|---------|
-| deadnix | `deadnix <file>` | Find unused variables and expressions |
-| statix | `statix check <file>` | Find anti-patterns and suggest fixes |
+| deadnix | `deadnix <file>` | Find unused variables and expressions in one or more files |
+| statix | `statix check <file>` | Find anti-patterns and suggest fixes in exactly one file|
 
 ### Auto-fix
 
-- `statix fix <file>` — apply safe automatic fixes
+- `statix fix <file>` — apply safe automatic fixes to one file
 - `deadnix -e <file>` — remove unused bindings (use with caution)
 
 Auto-fix is allowed when the fix is obvious. If uncertain, report the finding and let the caller decide.
