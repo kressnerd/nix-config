@@ -1,21 +1,5 @@
 { pkgs, ... }:
 let
-  # Duplicated from hyprland.nix — will be replaced by Stylix tokens in Phase 7
-  catppuccinLatte = {
-    base = "#eff1f5";
-    mantle = "#e6e9ef";
-    crust = "#dce0e8";
-    text = "#4c4f69";
-    subtext0 = "#6c6f85";
-    blue = "#1e66f5";
-    lavender = "#7287fd";
-    red = "#d20f39";
-    peach = "#fe640b";
-    green = "#40a02b";
-    teal = "#179299";
-    mauve = "#8839ef";
-  };
-
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n⏾ Suspend\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
@@ -30,6 +14,8 @@ in
 {
   home.packages = [ rofiPowerMenu ];
 
+  stylix.targets.waybar.enable = true;
+
   programs.waybar = {
     enable = true;
     systemd = {
@@ -40,78 +26,73 @@ in
       mainBar = {
         layer = "top";
         position = "top";
-        height = 30;
+        height = 32;
+        spacing = 4;
 
         modules-left = [ "hyprland/workspaces" ];
         modules-center = [ "clock" ];
         modules-right = [
           "pulseaudio"
           "network"
-          "cpu"
-          "memory"
           "battery"
           "tray"
           "custom/power"
         ];
 
         "hyprland/workspaces" = {
-          format = "{icon}";
+          format = "{id}";
           on-click = "activate";
         };
 
         clock = {
-          format = "{:%H:%M}";
-          format-alt = "{:%Y-%m-%d %H:%M}";
-          tooltip-format = "<tt>{calendar}</tt>";
+          format = "{:%H:%M · %Y-%m-%d}";
+          tooltip-format = "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>";
         };
 
-        cpu = {
-          format = " {usage}%";
-          interval = 5;
+        pulseaudio = {
+          format = "{icon} {volume}%";
+          format-muted = "󰝟 muted";
+          format-icons = {
+            default = [
+              "󰕿"
+              "󰖀"
+              "󰕾"
+            ];
+          };
+          on-click = "pulsemixer";
         };
 
-        memory = {
-          format = " {}%";
-          interval = 5;
+        network = {
+          format-wifi = "󰤨 {signalStrength}%";
+          format-ethernet = "󰈀 {ipaddr}";
+          format-disconnected = "󰤭 ";
+          tooltip-format = "{ifname}: {ipaddr}/{cidr}";
         };
 
         battery = {
           format = "{icon} {capacity}%";
           format-icons = [
-            ""
-            ""
-            ""
-            ""
-            ""
+            "󰂎"
+            "󰁺"
+            "󰁻"
+            "󰁼"
+            "󰁽"
+            "󰁾"
+            "󰁿"
+            "󰂀"
+            "󰂁"
+            "󰂂"
+            "󰁹"
           ];
+          format-charging = "󰂄 {capacity}%";
           states = {
             warning = 30;
             critical = 15;
           };
         };
 
-        network = {
-          format-wifi = " {signalStrength}%";
-          format-ethernet = " {ifname}";
-          format-disconnected = "⚠ Disconnected";
-          tooltip-format = "{ifname}: {ipaddr}/{cidr}";
-        };
-
-        pulseaudio = {
-          format = "{icon} {volume}%";
-          format-muted = " muted";
-          format-icons = {
-            default = [
-              ""
-              ""
-              ""
-            ];
-          };
-          on-click = "pavucontrol";
-        };
-
         tray = {
-          spacing = 10;
+          spacing = 8;
         };
 
         "custom/power" = {
@@ -122,102 +103,59 @@ in
       };
     };
     style = ''
-      * {
-        font-family: monospace;
-        font-size: 13px;
-        border: none;
-        border-radius: 0;
-        min-height: 0;
-      }
+      /* Stylix provides @define-color base00..base0F and sets * { color, background } */
 
       window#waybar {
-        background-color: ${catppuccinLatte.mantle};
-        color: ${catppuccinLatte.text};
-        border-bottom: 2px solid ${catppuccinLatte.crust};
+        background: alpha(@base00, 0.95);
       }
 
       .modules-left,
       .modules-center,
       .modules-right {
+        background: alpha(@base01, 0.8);
+        border-radius: 16px;
         padding: 0 8px;
+        margin: 4px 4px;
       }
 
       #workspaces button {
         padding: 0 6px;
-        background-color: transparent;
-        color: ${catppuccinLatte.subtext0};
-        border-bottom: 2px solid transparent;
-      }
-
-      #workspaces button:hover {
-        background-color: ${catppuccinLatte.crust};
-        color: ${catppuccinLatte.text};
+        border-radius: 12px;
+        min-width: 20px;
+        color: @base04;
       }
 
       #workspaces button.active {
-        color: ${catppuccinLatte.blue};
-        border-bottom: 2px solid ${catppuccinLatte.blue};
-        font-weight: bold;
-      }
-
-      #workspaces button.focused {
-        color: ${catppuccinLatte.lavender};
-        border-bottom: 2px solid ${catppuccinLatte.lavender};
+        color: @base0D;
+        background: alpha(@base02, 0.6);
       }
 
       #clock {
-        color: ${catppuccinLatte.text};
-        padding: 0 8px;
-      }
-
-      #battery {
-        color: ${catppuccinLatte.green};
-        padding: 0 8px;
-      }
-
-      #battery.warning {
-        color: ${catppuccinLatte.peach};
-      }
-
-      #battery.critical {
-        color: ${catppuccinLatte.red};
         font-weight: bold;
       }
 
-      #network {
-        color: ${catppuccinLatte.teal};
+      #pulseaudio,
+      #network,
+      #battery,
+      #tray,
+      #custom-power {
         padding: 0 8px;
       }
 
-      #pulseaudio {
-        color: ${catppuccinLatte.mauve};
-        padding: 0 8px;
+      #battery.charging {
+        color: @base0B;
       }
 
-      #cpu {
-        color: ${catppuccinLatte.blue};
-        padding: 0 8px;
+      #battery.warning:not(.charging) {
+        color: @base09;
       }
 
-      #memory {
-        color: ${catppuccinLatte.lavender};
-        padding: 0 8px;
-      }
-
-      #tray {
-        padding: 0 8px;
+      #battery.critical:not(.charging) {
+        color: @base08;
       }
 
       #custom-power {
-        color: ${catppuccinLatte.base};
-        background-color: ${catppuccinLatte.red};
-        padding: 0 12px;
-        font-size: 15px;
-        font-weight: bold;
-      }
-
-      #custom-power:hover {
-        background-color: ${catppuccinLatte.peach};
+        padding: 0 4px 0 8px;
       }
     '';
   };
