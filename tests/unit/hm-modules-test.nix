@@ -23,9 +23,9 @@ let
   # Keep backward-compat binding used by existing alias existence tests
   aliases = thinielAliases;
 
-  # Import shell-utils module with real pkgs to inspect home.packages.
-  # shell-utils.nix has signature { pkgs, ... }: and returns an attrset with home.packages.
-  shellUtilsModule = import ../../home/dan/features/cli/shell-utils.nix { inherit pkgs; };
+  # Import shell-utils module with real pkgs and lib to inspect home.packages.
+  # shell-utils.nix has signature { pkgs, lib, ... }: and returns an attrset with home.packages.
+  shellUtilsModule = import ../../home/dan/features/cli/shell-utils.nix { inherit pkgs lib; };
   shellUtilsPkgNames = builtins.map (p: p.pname or p.name or "") shellUtilsModule.home.packages;
 
   # Import deploy-tools module to verify colmena lives there.
