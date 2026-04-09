@@ -339,9 +339,7 @@
     autoEnable = false;
     polarity = "light";
     base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-latte.yaml";
-    image = pkgs.runCommand "solid-latte-wallpaper" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
-      magick -size 1920x1080 xc:#eff1f5 $out
-    '';
+    image = pkgs.nixos-artwork.wallpapers.catppuccin-latte.gnomeFilePath;
     fonts = {
       monospace = {
         package = pkgs.nerd-fonts.jetbrains-mono;
