@@ -17,7 +17,9 @@
     ./features/linux/fonts.nix
     ./features/linux/gnome-keyring.nix
     ./features/linux/fuzzel.nix
+    ./features/linux/hypridle.nix
     ./features/linux/hyprland.nix
+    ./features/linux/hyprlock.nix
     ./features/linux/mako.nix
     ./features/linux/waybar.nix
     ./features/linux/impermanence.nix

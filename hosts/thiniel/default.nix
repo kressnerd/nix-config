@@ -243,6 +243,9 @@
   # PAM integration: auto-unlock gnome-keyring on greetd/tuigreet password login
   security.pam.services.greetd.enableGnomeKeyring = true;
 
+  # PAM integration: required for Hyprlock to authenticate via PAM
+  security.pam.services.hyprlock = { };
+
   # Power management
   powerManagement.enable = true;
   powerManagement.powertop.enable = true;
