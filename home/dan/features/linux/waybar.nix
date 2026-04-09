@@ -1,10 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-unstable, ... }:
 let
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n⏾ Suspend\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
     case "$choice" in
-      ' Logout')   ${pkgs.hyprland}/bin/hyprctl dispatch exit ;;
+      ' Logout')   ${pkgs-unstable.hyprland}/bin/hyprctl dispatch exit ;;
       '⏾ Suspend') ${pkgs.systemd}/bin/systemctl suspend ;;
       ' Reboot')   ${pkgs.systemd}/bin/systemctl reboot ;;
       '⏻ Shutdown') ${pkgs.systemd}/bin/systemctl poweroff ;;
