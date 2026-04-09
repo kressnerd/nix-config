@@ -233,7 +233,7 @@
       enable = true;
       settings = {
         default_session = {
-          command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs.hyprland}/share/wayland-sessions";
+          command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs-unstable.hyprland}/share/wayland-sessions";
           user = "greeter";
         };
       };
@@ -254,13 +254,6 @@
   # $ nix search wget
   # System packages
   environment.systemPackages = with pkgs; [
-    # System utilities
-    brightnessctl
-    waybar
-    mako
-    libnotify
-    rofi
-
     # Rust-based CLI tools
     lsd # fancy ls like exa
     diffr # diff with colors

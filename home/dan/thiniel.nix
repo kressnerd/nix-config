@@ -20,6 +20,7 @@
     ./features/linux/hypridle.nix
     ./features/linux/hyprland.nix
     ./features/linux/hyprlock.nix
+    ./features/linux/gtk-qt.nix
     ./features/linux/mako.nix
     ./features/linux/waybar.nix
     ./features/linux/impermanence.nix
