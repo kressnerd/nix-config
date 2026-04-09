@@ -2,6 +2,10 @@
 # Characterization unit tests for Home Manager Linux feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
 # Covers: impermanence.nix, gnome-keyring.nix, fonts.nix, hyprland.nix
+#
+# NOTE: hyprland tests are Linux-only (pkgs.hyprland, pkgs.fuzzel etc. are
+# unsupported on Darwin). They are gated with pkgs.stdenv.isLinux so the
+# aarch64-darwin unit-helpers check continues to pass.
 { lib, pkgs }:
 let
   # impermanence.nix — signature is `_:`, call with empty attrset
@@ -16,13 +20,143 @@ let
   fontsModule = import ../../home/dan/features/linux/fonts.nix { inherit pkgs; };
   fontsPkgNames = builtins.map (p: p.pname or p.name or "") fontsModule.home.packages;
 
-  # hyprland.nix — signature is `{ config, pkgs, lib, ... }:`
-  hyprlandModule = import ../../home/dan/features/linux/hyprland.nix {
-    inherit pkgs lib;
-    config = { };
-  };
-  hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
-  hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
+  # hyprland.nix — signature is `{ config, pkgs, lib, ... }:` — Linux only
+  # Wrapped in lib.optionalAttrs so Darwin evaluation never touches Linux pkgs.
+  hyprlandTests =
+    if pkgs.stdenv.isLinux then
+      let
+        hyprlandModule = import ../../home/dan/features/linux/hyprland.nix { inherit pkgs; };
+        hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
+        hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
+      in
+      lib.debug.runTests {
+
+        # ── hyprland ──────────────────────────────────────────────────────────
+
+        testHyprlandEnabled = {
+          expr = hyprlandModule.wayland.windowManager.hyprland.enable;
+          expected = true;
+        };
+
+        testHyprlandMainMod = {
+          expr = hyprSettings."$mainMod";
+          expected = "SUPER";
+        };
+
+        testHyprlandMonitorCount = {
+          expr = builtins.length hyprSettings.monitor;
+          expected = 4;
+        };
+
+        testHyprlandWorkspaceCount = {
+          expr = builtins.length hyprSettings.workspace;
+          expected = 10;
+        };
+
+        testHyprlandBindCount = {
+          expr = builtins.length hyprSettings.bind;
+          expected = 36;
+        };
+
+        testHyprlandBindeCount = {
+          expr = builtins.length hyprSettings.binde;
+          expected = 4;
+        };
+
+        testHyprlandActiveBorderColor = {
+          expr = hyprSettings.general."col.active_border";
+          expected = "rgb(7287fd)";
+        };
+
+        # ── waybar ──────────────────────────────────────────────────────────
+
+        testWaybarEnabled = {
+          expr = hyprlandModule.programs.waybar.enable;
+          expected = true;
+        };
+
+        testWaybarSystemdEnabled = {
+          expr = hyprlandModule.programs.waybar.systemd.enable;
+          expected = true;
+        };
+
+        testWaybarHasSettings = {
+          expr = hyprlandModule.programs.waybar.settings ? mainBar;
+          expected = true;
+        };
+
+        testWaybarHasCustomPowerModule = {
+          expr = hyprlandModule.programs.waybar.settings.mainBar ? "custom/power";
+          expected = true;
+        };
+
+        testWaybarCustomPowerHasOnClick = {
+          expr = hyprlandModule.programs.waybar.settings.mainBar."custom/power" ? "on-click";
+          expected = true;
+        };
+
+        testWaybarHasStyle = {
+          expr =
+            builtins.isString hyprlandModule.programs.waybar.style
+            && builtins.stringLength hyprlandModule.programs.waybar.style > 0;
+          expected = true;
+        };
+
+        # ── mako ────────────────────────────────────────────────────────────
+
+        testMakoEnabled = {
+          expr = hyprlandModule.services.mako.enable;
+          expected = true;
+        };
+
+        testMakoBgColor = {
+          expr = hyprlandModule.services.mako.settings.background-color;
+          expected = "#eff1f5";
+        };
+
+        # ── fuzzel ──────────────────────────────────────────────────────────
+
+        testFuzzelEnabled = {
+          expr = hyprlandModule.programs.fuzzel.enable;
+          expected = true;
+        };
+
+        testFuzzelHasMainSettings = {
+          expr = hyprlandModule.programs.fuzzel.settings ? main;
+          expected = true;
+        };
+
+        testFuzzelIconsEnabled = {
+          expr = hyprlandModule.programs.fuzzel.settings.main.icons-enabled;
+          expected = "yes";
+        };
+
+        testFuzzelHasColorSettings = {
+          expr = hyprlandModule.programs.fuzzel.settings ? colors;
+          expected = true;
+        };
+
+        testFuzzelBackgroundColorNoHash = {
+          expr = builtins.substring 0 1 hyprlandModule.programs.fuzzel.settings.colors.background;
+          expected = "e"; # eff1f5ff starts with 'e', not '#'
+        };
+
+        # ── rofi-power-menu ─────────────────────────────────────────────────
+
+        testHyprlandHasRofiPowerMenu = {
+          expr = builtins.elem "rofi-power-menu" hyprPkgNames;
+          expected = true;
+        };
+
+        # ── hyprland: power keybinding ───────────────────────────────────────
+
+        testHyprlandHasPowerKeybinding = {
+          expr = builtins.any (b: lib.strings.hasInfix "rofi-power-menu" b) hyprSettings.bind;
+          expected = true;
+        };
+      }
+    else
+      [ ]; # skip all hyprland tests on Darwin
 in
 lib.debug.runTests {
 
@@ -176,127 +310,5 @@ lib.debug.runTests {
     expected = 7;
   };
 
-  # ── hyprland ──────────────────────────────────────────────────────────────
-
-  testHyprlandEnabled = {
-    expr = hyprlandModule.wayland.windowManager.hyprland.enable;
-    expected = true;
-  };
-
-  testHyprlandMainMod = {
-    expr = hyprSettings."$mainMod";
-    expected = "SUPER";
-  };
-
-  testHyprlandMonitorCount = {
-    expr = builtins.length hyprSettings.monitor;
-    expected = 4;
-  };
-
-  testHyprlandWorkspaceCount = {
-    expr = builtins.length hyprSettings.workspace;
-    expected = 10;
-  };
-
-  testHyprlandBindCount = {
-    expr = builtins.length hyprSettings.bind;
-    expected = 36;
-  };
-
-  testHyprlandBindeCount = {
-    expr = builtins.length hyprSettings.binde;
-    expected = 4;
-  };
-
-  testHyprlandActiveBorderColor = {
-    expr = hyprSettings.general."col.active_border";
-    expected = "rgb(7287fd)";
-  };
-
-  # ── waybar ────────────────────────────────────────────────────────────────
-
-  testWaybarEnabled = {
-    expr = hyprlandModule.programs.waybar.enable;
-    expected = true;
-  };
-
-  testWaybarSystemdEnabled = {
-    expr = hyprlandModule.programs.waybar.systemd.enable;
-    expected = true;
-  };
-
-  testWaybarHasSettings = {
-    expr = hyprlandModule.programs.waybar.settings ? mainBar;
-    expected = true;
-  };
-
-  testWaybarHasCustomPowerModule = {
-    expr = hyprlandModule.programs.waybar.settings.mainBar ? "custom/power";
-    expected = true;
-  };
-
-  testWaybarCustomPowerHasOnClick = {
-    expr = hyprlandModule.programs.waybar.settings.mainBar."custom/power" ? "on-click";
-    expected = true;
-  };
-
-  testWaybarHasStyle = {
-    expr =
-      builtins.isString hyprlandModule.programs.waybar.style
-      && builtins.stringLength hyprlandModule.programs.waybar.style > 0;
-    expected = true;
-  };
-
-  # ── mako ─────────────────────────────────────────────────────────────────
-
-  testMakoEnabled = {
-    expr = hyprlandModule.services.mako.enable;
-    expected = true;
-  };
-
-  testMakoBgColor = {
-    expr = hyprlandModule.services.mako.settings.background-color;
-    expected = "#eff1f5";
-  };
-
-  # ── fuzzel ────────────────────────────────────────────────────────────────
-
-  testFuzzelEnabled = {
-    expr = hyprlandModule.programs.fuzzel.enable;
-    expected = true;
-  };
-
-  testFuzzelHasMainSettings = {
-    expr = hyprlandModule.programs.fuzzel.settings ? main;
-    expected = true;
-  };
-
-  testFuzzelIconsEnabled = {
-    expr = hyprlandModule.programs.fuzzel.settings.main.icons-enabled;
-    expected = "yes";
-  };
-
-  testFuzzelHasColorSettings = {
-    expr = hyprlandModule.programs.fuzzel.settings ? colors;
-    expected = true;
-  };
-
-  testFuzzelBackgroundColorNoHash = {
-    expr = builtins.substring 0 1 hyprlandModule.programs.fuzzel.settings.colors.background;
-    expected = "e"; # eff1f5ff starts with 'e', not '#'
-  };
-
-  # ── rofi-power-menu ───────────────────────────────────────────────────────
-
-  testHyprlandHasRofiPowerMenu = {
-    expr = builtins.elem "rofi-power-menu" hyprPkgNames;
-    expected = true;
-  };
-
-  # ── hyprland: power keybinding ────────────────────────────────────────────
-
-  testHyprlandHasPowerKeybinding = {
-    expr = builtins.any (b: lib.strings.hasInfix "rofi-power-menu" b) hyprSettings.bind;
-    expected = true;
-  };
 }
+++ hyprlandTests
