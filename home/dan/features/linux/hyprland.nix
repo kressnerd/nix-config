@@ -4,8 +4,6 @@ let
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only text data
     ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only image data
   '';
-  #      ${pkgs.hyprpaper}/bin/hyprpaper &
-  #      ${pkgs.hyprpanel}/bin/hyprpanel &
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n⏾ Suspend\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
@@ -18,35 +16,55 @@ let
   '';
 in
 {
-  # Install required packages
+  # Stylix handles border colors from the base16 scheme automatically
+  stylix.targets.hyprland.enable = true;
+
   home.packages = with pkgs; [
     libnotify
     wl-clipboard
     cliphist
     brightnessctl
+    grim
+    slurp
     rofiPowerMenu
   ];
 
   wayland.windowManager.hyprland = {
     enable = true;
 
-    #    plugins = [
-    #      inputs.hyprland-plugins.packages."${pkgs.stdenv.hostPlatform.system}".borders-plus-plus
-    #    ];
-
     settings = {
       general = {
-        "col.active_border" = "rgb(7287fd)"; # Catppuccin Latte lavender
-        "col.inactive_border" = "rgb(ccd0da)"; # Catppuccin Latte surface0
+        gaps_in = 4;
+        gaps_out = 8;
+        border_size = 2;
+        layout = "dwindle";
+      };
+
+      decoration = {
+        rounding = 8;
+        blur.enabled = false;
+        shadow.enabled = false;
+      };
+
+      animations = {
+        enabled = true;
+        animation = [
+          "windows, 1, 3, default, slide"
+          "windowsOut, 1, 3, default, slide"
+          "fade, 1, 3, default"
+          "workspaces, 1, 3, default, slide"
+        ];
       };
 
       input = {
         kb_options = "compose:ralt";
+        touchpad = {
+          natural_scroll = true;
+          tap-to-click = true;
+        };
       };
 
       exec-once = "${startupScript}/bin/start";
-      #       "[workspace 1 silent] firefox"
-      #       "[workspace 5 silent] kitty btm"
 
       monitor = [
         ", preferred, auto, 1"
@@ -68,25 +86,50 @@ in
         "10,monitor:DP-3"
       ];
 
+      windowrulev2 = [
+        "float, class:^(dialog)$"
+        "float, title:^(Open File)(.*)$"
+        "float, title:^(Select a File)(.*)$"
+        "float, title:^(Choose wallpaper)(.*)$"
+        "float, title:^(Open Folder)(.*)$"
+        "float, title:^(Save As)(.*)$"
+        "pin, title:^(Picture-in-Picture)$"
+        "idleinhibit fullscreen, class:.*"
+      ];
+
       "$mainMod" = "SUPER";
 
       bind = [
-        "$mainMod, S, exec, fuzzel"
-        "$mainMod, V, exec, cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
+        # Terminal
+        "$mainMod, Return, exec, kitty"
 
-        "$mainMod, F, fullscreen"
-        "$mainMod, D, killactive,"
-        "$mainMod, G, togglefloating,"
+        # Window management
+        "$mainMod, Q, killactive,"
+        "$mainMod, F, fullscreen, 1"
+        "$mainMod SHIFT, F, fullscreen, 0"
+        "$mainMod, V, togglefloating,"
+        "$mainMod, P, pseudo,"
+        "$mainMod, S, togglesplit,"
 
-        "$mainMod, L, movefocus, r"
-        "$mainMod, H, movefocus, l"
-        "$mainMod, K, movefocus, u"
-        "$mainMod, J, movefocus, d"
-        "$mainMod CTRL, L, swapwindow, r"
-        "$mainMod CTRL, H, swapwindow, l"
-        "$mainMod CTRL, K, swapwindow, u"
-        "$mainMod CTRL, J, swapwindow, d"
+        # Launcher
+        "$mainMod, D, exec, fuzzel"
 
+        # Clipboard history
+        "$mainMod SHIFT, V, exec, cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
+
+        # Focus: vim-style
+        "$mainMod, h, movefocus, l"
+        "$mainMod, l, movefocus, r"
+        "$mainMod, k, movefocus, u"
+        "$mainMod, j, movefocus, d"
+
+        # Move windows: vim-style with Shift
+        "$mainMod SHIFT, h, movewindow, l"
+        "$mainMod SHIFT, l, movewindow, r"
+        "$mainMod SHIFT, k, movewindow, u"
+        "$mainMod SHIFT, j, movewindow, d"
+
+        # Workspace switching
         "$mainMod, Q, workspace, 1"
         "$mainMod, W, workspace, 2"
         "$mainMod, E, workspace, 3"
@@ -98,6 +141,7 @@ in
         "$mainMod, O, workspace, 9"
         "$mainMod, P, workspace, 10"
 
+        # Move window to workspace
         "$mainMod SHIFT, Q, movetoworkspace, 1"
         "$mainMod SHIFT, W, movetoworkspace, 2"
         "$mainMod SHIFT, E, movetoworkspace, 3"
@@ -109,10 +153,18 @@ in
         "$mainMod SHIFT, O, movetoworkspace, 9"
         "$mainMod SHIFT, P, movetoworkspace, 10"
 
+        # Screenshot: region selection → clipboard
+        "$mainMod, Print, exec, grim -g \"$(slurp)\" - | wl-copy"
+
+        # Lock screen
+        "$mainMod, backspace, exec, hyprlock"
+
+        # Power menu
+        "$mainMod, Escape, exec, ${rofiPowerMenu}/bin/rofi-power-menu"
+
+        # Audio
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
         ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
-
-        "$mainMod, Escape, exec, ${rofiPowerMenu}/bin/rofi-power-menu"
       ];
 
       binde = [
@@ -122,14 +174,6 @@ in
         ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
         ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
       ];
-      #      "plugin:borders-plus-plus" = {
-      #        add_borders = 1;
-      #        "col.border_1" = "rgb(ffffff)";
-      #        "col.border_2" = "rgb(2222ff)";
-      #        border_size_1 = 10;
-      #        border_size_2 = -1;
-      #        natural_rounding = "yes";
-      #      };
     };
   };
 }
