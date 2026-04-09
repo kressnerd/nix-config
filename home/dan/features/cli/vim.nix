@@ -1,5 +1,8 @@
 { pkgs, ... }:
 {
+  # Keep catppuccin-vim for richer Latte color support; disable generic Stylix base16 vim theme
+  stylix.targets.vim.enable = false;
+
   programs.vim = {
     enable = true;
 
