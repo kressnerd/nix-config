@@ -64,7 +64,7 @@ let
 
         testHyprlandBindCount = {
           expr = builtins.length hyprSettings.bind;
-          expected = 36;
+          expected = 42;
         };
 
         testHyprlandBindeCount = {
