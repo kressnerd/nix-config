@@ -233,7 +233,7 @@
       enable = true;
       settings = {
         default_session = {
-          command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs-unstable.hyprland}/share/wayland-sessions";
+          command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions /run/current-system/sw/share/wayland-sessions";
           user = "greeter";
         };
       };
@@ -321,6 +321,7 @@
     hyprland = {
       enable = true;
       package = pkgs-unstable.hyprland;
+      withUWSM = true;
       # portalPackage is typically not needed when using pkgs-unstable.hyprland
     };
   };
