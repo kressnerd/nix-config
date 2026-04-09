@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-unstable, ... }:
 let
   startupScript = pkgs.writeShellScriptBin "start" ''
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only text data
@@ -8,7 +8,7 @@ let
     choice=$(printf ' Logout\n⏾ Suspend\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
     case "$choice" in
-      ' Logout')   ${pkgs.hyprland}/bin/hyprctl dispatch exit ;;
+      ' Logout')   ${pkgs-unstable.hyprland}/bin/hyprctl dispatch exit ;;
       '⏾ Suspend') ${pkgs.systemd}/bin/systemctl suspend ;;
       ' Reboot')   ${pkgs.systemd}/bin/systemctl reboot ;;
       '⏻ Shutdown') ${pkgs.systemd}/bin/systemctl poweroff ;;
@@ -31,6 +31,7 @@ in
 
   wayland.windowManager.hyprland = {
     enable = true;
+    package = pkgs-unstable.hyprland;
 
     settings = {
       general = {

@@ -38,6 +38,12 @@
           ));
         message = "Thiniel rice: mako must not be in systemPackages (HM manages it)";
       }
+      {
+        assertion =
+          config.home-manager.users.dan.wayland.windowManager.hyprland.package
+          == config.programs.hyprland.package;
+        message = "HM Hyprland package must match system-level programs.hyprland.package to prevent version mismatch";
+      }
     ];
   };
 }
