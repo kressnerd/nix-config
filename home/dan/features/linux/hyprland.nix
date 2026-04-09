@@ -106,11 +106,11 @@ in
         "$mainMod, Return, exec, kitty"
 
         # Window management
-        "$mainMod, Q, killactive,"
+        "$mainMod, C, killactive,"
         "$mainMod, F, fullscreen, 1"
         "$mainMod SHIFT, F, fullscreen, 0"
         "$mainMod, V, togglefloating,"
-        "$mainMod, P, pseudo,"
+        "$mainMod, G, pseudo,"
         "$mainMod, S, togglesplit,"
 
         # Launcher
