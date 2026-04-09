@@ -16,7 +16,10 @@
     ./features/development/python-tools.nix
     ./features/linux/fonts.nix
     ./features/linux/gnome-keyring.nix
+    ./features/linux/fuzzel.nix
     ./features/linux/hyprland.nix
+    ./features/linux/mako.nix
+    ./features/linux/waybar.nix
     ./features/linux/impermanence.nix
     ./features/productivity/browser.nix
     ./features/productivity/firefox-personal.nix

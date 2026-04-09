@@ -1,11 +1,12 @@
 # tests/unit/hm-linux-modules-test.nix
 # Characterization unit tests for Home Manager Linux feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
-# Covers: impermanence.nix, gnome-keyring.nix, fonts.nix, hyprland.nix
+# Covers: impermanence.nix, gnome-keyring.nix, fonts.nix,
+#         hyprland.nix, waybar.nix, mako.nix, fuzzel.nix
 #
-# NOTE: hyprland tests are Linux-only (pkgs.hyprland, pkgs.fuzzel etc. are
-# unsupported on Darwin). They are gated with pkgs.stdenv.isLinux so the
-# aarch64-darwin unit-helpers check continues to pass.
+# NOTE: hyprland/waybar/mako/fuzzel tests are Linux-only (pkgs.hyprland,
+# pkgs.fuzzel etc. are unsupported on Darwin). They are gated with
+# pkgs.stdenv.isLinux so the aarch64-darwin unit-helpers check continues to pass.
 { lib, pkgs }:
 let
   # impermanence.nix — signature is `_:`, call with empty attrset
@@ -20,14 +21,18 @@ let
   fontsModule = import ../../home/dan/features/linux/fonts.nix { inherit pkgs; };
   fontsPkgNames = builtins.map (p: p.pname or p.name or "") fontsModule.home.packages;
 
-  # hyprland.nix — signature is `{ config, pkgs, lib, ... }:` — Linux only
+  # hyprland/waybar/mako/fuzzel — Linux only
   # Wrapped in lib.optionalAttrs so Darwin evaluation never touches Linux pkgs.
   hyprlandTests =
     if pkgs.stdenv.isLinux then
       let
         hyprlandModule = import ../../home/dan/features/linux/hyprland.nix { inherit pkgs; };
+        waybarModule = import ../../home/dan/features/linux/waybar.nix { inherit pkgs; };
+        makoModule = import ../../home/dan/features/linux/mako.nix { };
+        fuzzelModule = import ../../home/dan/features/linux/fuzzel.nix { inherit pkgs; };
         hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
         hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
+        waybarPkgNames = builtins.map (p: p.pname or p.name or "") waybarModule.home.packages;
       in
       lib.debug.runTests {
 
@@ -71,87 +76,94 @@ let
         # ── waybar ──────────────────────────────────────────────────────────
 
         testWaybarEnabled = {
-          expr = hyprlandModule.programs.waybar.enable;
+          expr = waybarModule.programs.waybar.enable;
           expected = true;
         };
 
         testWaybarSystemdEnabled = {
-          expr = hyprlandModule.programs.waybar.systemd.enable;
+          expr = waybarModule.programs.waybar.systemd.enable;
           expected = true;
         };
 
         testWaybarHasSettings = {
-          expr = hyprlandModule.programs.waybar.settings ? mainBar;
+          expr = waybarModule.programs.waybar.settings ? mainBar;
           expected = true;
         };
 
         testWaybarHasCustomPowerModule = {
-          expr = hyprlandModule.programs.waybar.settings.mainBar ? "custom/power";
+          expr = waybarModule.programs.waybar.settings.mainBar ? "custom/power";
           expected = true;
         };
 
         testWaybarCustomPowerHasOnClick = {
-          expr = hyprlandModule.programs.waybar.settings.mainBar."custom/power" ? "on-click";
+          expr = waybarModule.programs.waybar.settings.mainBar."custom/power" ? "on-click";
           expected = true;
         };
 
         testWaybarHasStyle = {
           expr =
-            builtins.isString hyprlandModule.programs.waybar.style
-            && builtins.stringLength hyprlandModule.programs.waybar.style > 0;
+            builtins.isString waybarModule.programs.waybar.style
+            && builtins.stringLength waybarModule.programs.waybar.style > 0;
+          expected = true;
+        };
+
+        # ── rofi-power-menu (now in waybar.nix) ─────────────────────────────
+
+        testWaybarHasRofiPowerMenu = {
+          expr = builtins.elem "rofi-power-menu" waybarPkgNames;
           expected = true;
         };
 
         # ── mako ────────────────────────────────────────────────────────────
 
         testMakoEnabled = {
-          expr = hyprlandModule.services.mako.enable;
+          expr = makoModule.services.mako.enable;
           expected = true;
         };
 
         testMakoBgColor = {
-          expr = hyprlandModule.services.mako.settings.background-color;
+          expr = makoModule.services.mako.settings.background-color;
           expected = "#eff1f5";
         };
 
         # ── fuzzel ──────────────────────────────────────────────────────────
 
         testFuzzelEnabled = {
-          expr = hyprlandModule.programs.fuzzel.enable;
+          expr = fuzzelModule.programs.fuzzel.enable;
           expected = true;
         };
 
         testFuzzelHasMainSettings = {
-          expr = hyprlandModule.programs.fuzzel.settings ? main;
+          expr = fuzzelModule.programs.fuzzel.settings ? main;
           expected = true;
         };
 
         testFuzzelIconsEnabled = {
-          expr = hyprlandModule.programs.fuzzel.settings.main.icons-enabled;
+          expr = fuzzelModule.programs.fuzzel.settings.main.icons-enabled;
           expected = "yes";
         };
 
         testFuzzelHasColorSettings = {
-          expr = hyprlandModule.programs.fuzzel.settings ? colors;
+          expr = fuzzelModule.programs.fuzzel.settings ? colors;
           expected = true;
         };
 
         testFuzzelBackgroundColorNoHash = {
-          expr = builtins.substring 0 1 hyprlandModule.programs.fuzzel.settings.colors.background;
+          expr = builtins.substring 0 1 fuzzelModule.programs.fuzzel.settings.colors.background;
           expected = "e"; # eff1f5ff starts with 'e', not '#'
-        };
-
-        # ── rofi-power-menu ─────────────────────────────────────────────────
-
-        testHyprlandHasRofiPowerMenu = {
-          expr = builtins.elem "rofi-power-menu" hyprPkgNames;
-          expected = true;
         };
 
         # ── hyprland: power keybinding ───────────────────────────────────────
 
         testHyprlandHasPowerKeybinding = {
           expr = builtins.any (b: lib.strings.hasInfix "rofi-power-menu" b) hyprSettings.bind;
+          expected = true;
+        };
+
+        # ── hyprland: rofi-power-menu still in hyprland packages ─────────────
+
+        testHyprlandHasRofiPowerMenu = {
+          expr = builtins.elem "rofi-power-menu" hyprPkgNames;
           expected = true;
         };
       }
