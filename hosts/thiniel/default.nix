@@ -335,5 +335,43 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
+  # --- Stylix: system-wide Catppuccin Latte theming ---
+  # autoEnable = false: HM feature modules already have hand-crafted Catppuccin Latte
+  # theming; Stylix HM targets are enabled selectively to avoid conflicts.
+  stylix = {
+    enable = true;
+    autoEnable = false;
+    polarity = "light";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-latte.yaml";
+    image = pkgs.runCommand "solid-latte-wallpaper" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
+      magick -size 1920x1080 xc:#eff1f5 $out
+    '';
+    fonts = {
+      monospace = {
+        package = pkgs.nerd-fonts.jetbrains-mono;
+        name = "JetBrainsMono Nerd Font Mono";
+      };
+      sansSerif = {
+        package = pkgs.inter;
+        name = "Inter";
+      };
+      emoji = {
+        package = pkgs.noto-fonts-color-emoji;
+        name = "Noto Color Emoji";
+      };
+      sizes = {
+        applications = 11;
+        terminal = 12;
+        desktop = 11;
+        popups = 11;
+      };
+    };
+    cursor = {
+      package = pkgs.catppuccin-cursors.latteBlue;
+      name = "catppuccin-latte-blue-cursors";
+      size = 24;
+    };
+  };
+
   system.stateVersion = "25.11";
 }

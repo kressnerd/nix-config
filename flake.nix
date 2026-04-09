@@ -61,6 +61,11 @@
       url = "github:zhaofengli/colmena";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    stylix = {
+      url = "github:nix-community/stylix/release-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -76,6 +81,7 @@
       nur,
       disko,
       colmena,
+      stylix,
       ...
     }@inputs:
     let
@@ -149,6 +155,7 @@
               nixpkgs.config.allowUnfree = true;
             }
             ./hosts/thiniel
+            stylix.nixosModules.stylix
             home-manager.nixosModules.home-manager
             {
               home-manager = {
@@ -192,6 +199,7 @@
             mac-app-util.darwinModules.default
             nix-homebrew.darwinModules.nix-homebrew
             ./hosts/J6G6Y9JK7L
+            stylix.darwinModules.stylix
             home-manager.darwinModules.home-manager
             {
               home-manager = {
