@@ -1,5 +1,22 @@
-{ pkgs, ... }:
+{ config, pkgs, lib, ... }:
 let
+  catppuccinLatte = {
+    base = "#eff1f5";
+    mantle = "#e6e9ef";
+    crust = "#dce0e8";
+    text = "#4c4f69";
+    subtext0 = "#6c6f85";
+    blue = "#1e66f5";
+    lavender = "#7287fd";
+    red = "#d20f39";
+    peach = "#fe640b";
+    green = "#40a02b";
+    teal = "#179299";
+    mauve = "#8839ef";
+  };
+
+  removeHash = s: builtins.substring 1 (builtins.stringLength s - 1) s;
+
   startupScript = pkgs.writeShellScriptBin "start" ''
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only text data
     ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only image data
@@ -8,7 +25,7 @@ let
   #      ${pkgs.hyprpanel}/bin/hyprpanel &
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n⏾ Suspend\n Reboot\n⏻ Shutdown' \
-      | ${pkgs.rofi}/bin/rofi -dmenu -p "Power" -theme-str 'window { width: 200px; }')
+      | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
     case "$choice" in
       ' Logout')   ${pkgs.hyprland}/bin/hyprctl dispatch exit ;;
       '⏾ Suspend') ${pkgs.systemd}/bin/systemctl suspend ;;
@@ -33,8 +50,8 @@ in
       enable = true;
       target = "hyprland-session.target";
     };
-    settings = [
-      {
+    settings = {
+      mainBar = {
         layer = "top";
         position = "top";
         height = 30;
@@ -116,8 +133,8 @@ in
           on-click = "${rofiPowerMenu}/bin/rofi-power-menu";
           tooltip = false;
         };
-      }
-    ];
+      };
+    };
     style = ''
       * {
         font-family: monospace;
@@ -128,9 +145,9 @@ in
       }
 
       window#waybar {
-        background-color: #e6e9ef;
-        color: #4c4f69;
-        border-bottom: 2px solid #dce0e8;
+        background-color: ${catppuccinLatte.mantle};
+        color: ${catppuccinLatte.text};
+        border-bottom: 2px solid ${catppuccinLatte.crust};
       }
 
       .modules-left,
@@ -142,62 +159,62 @@ in
       #workspaces button {
         padding: 0 6px;
         background-color: transparent;
-        color: #6c6f85;
+        color: ${catppuccinLatte.subtext0};
         border-bottom: 2px solid transparent;
       }
 
       #workspaces button:hover {
-        background-color: #dce0e8;
-        color: #4c4f69;
+        background-color: ${catppuccinLatte.crust};
+        color: ${catppuccinLatte.text};
       }
 
       #workspaces button.active {
-        color: #1e66f5;
-        border-bottom: 2px solid #1e66f5;
+        color: ${catppuccinLatte.blue};
+        border-bottom: 2px solid ${catppuccinLatte.blue};
         font-weight: bold;
       }
 
       #workspaces button.focused {
-        color: #7287fd;
-        border-bottom: 2px solid #7287fd;
+        color: ${catppuccinLatte.lavender};
+        border-bottom: 2px solid ${catppuccinLatte.lavender};
       }
 
       #clock {
-        color: #4c4f69;
+        color: ${catppuccinLatte.text};
         padding: 0 8px;
       }
 
       #battery {
-        color: #40a02b;
+        color: ${catppuccinLatte.green};
         padding: 0 8px;
       }
 
       #battery.warning {
-        color: #fe640b;
+        color: ${catppuccinLatte.peach};
       }
 
       #battery.critical {
-        color: #d20f39;
+        color: ${catppuccinLatte.red};
         font-weight: bold;
       }
 
       #network {
-        color: #179299;
+        color: ${catppuccinLatte.teal};
         padding: 0 8px;
       }
 
       #pulseaudio {
-        color: #8839ef;
+        color: ${catppuccinLatte.mauve};
         padding: 0 8px;
       }
 
       #cpu {
-        color: #1e66f5;
+        color: ${catppuccinLatte.blue};
         padding: 0 8px;
       }
 
       #memory {
-        color: #7287fd;
+        color: ${catppuccinLatte.lavender};
         padding: 0 8px;
       }
 
@@ -207,15 +224,15 @@ in
       }
 
       #custom-power {
-        color: #eff1f5;
-        background-color: #d20f39;
+        color: ${catppuccinLatte.base};
+        background-color: ${catppuccinLatte.red};
         padding: 0 12px;
         font-size: 15px;
         font-weight: bold;
       }
 
       #custom-power:hover {
-        background-color: #fe640b;
+        background-color: ${catppuccinLatte.peach};
       }
     '';
   };
@@ -223,60 +240,44 @@ in
   services.mako = {
     enable = true;
     settings = {
-      background-color = "#eff1f5";
-      text-color = "#4c4f69";
-      border-color = "#7287fd";
+      background-color = catppuccinLatte.base;
+      text-color = catppuccinLatte.text;
+      border-color = catppuccinLatte.lavender;
       progress-color = "over #ccd0da";
       "urgency=low" = {
-        border-color = "#4c4f69";
+        border-color = catppuccinLatte.text;
       };
       "urgency=high" = {
-        border-color = "#d20f39";
+        border-color = catppuccinLatte.red;
       };
     };
   };
 
-  programs.rofi = {
+  programs.fuzzel = {
     enable = true;
-    terminal = "${pkgs.kitty}/bin/kitty";
-    extraConfig = {
-      show-icons = true;
+    settings = {
+      main = {
+        terminal = "${pkgs.kitty}/bin/kitty";
+        icons-enabled = "yes";
+        width = 50;
+        font = "monospace:size=13";
+        line-height = 25;
+        lines = 10;
+        letter-spacing = 0;
+      };
+      colors = {
+        background = "${removeHash catppuccinLatte.base}ff";
+        text = "${removeHash catppuccinLatte.text}ff";
+        match = "${removeHash catppuccinLatte.lavender}ff";
+        selection = "${removeHash catppuccinLatte.lavender}ff";
+        selection-text = "${removeHash catppuccinLatte.base}ff";
+        border = "${removeHash catppuccinLatte.lavender}ff";
+      };
+      border = {
+        width = 2;
+        radius = 8;
+      };
     };
-    theme = builtins.toFile "catppuccin-latte.rasi" ''
-      * {
-        bg:      #eff1f5;
-        bg-alt:  #e6e9ef;
-        fg:      #4c4f69;
-        fg-alt:  #9ca0b0;
-        accent:  #7287fd;
-        urgent:  #d20f39;
-      }
-      window {
-        background-color: @bg;
-        border: 2px solid;
-        border-color: @accent;
-        border-radius: 8px;
-      }
-      mainbox { background-color: @bg; }
-      inputbar {
-        background-color: @bg-alt;
-        text-color: @fg;
-        padding: 8px;
-        border-radius: 4px;
-      }
-      element {
-        background-color: transparent;
-        text-color: @fg;
-        padding: 6px;
-        border-radius: 4px;
-      }
-      element selected {
-        background-color: @accent;
-        text-color: @bg;
-      }
-      element-text { background-color: transparent; text-color: inherit; }
-      element-icon { background-color: transparent; }
-    '';
   };
 
   wayland.windowManager.hyprland = {
@@ -323,8 +324,8 @@ in
       "$mainMod" = "SUPER";
 
       bind = [
-        "$mainMod, S, exec, rofi -show drun -show-icons"
-        "$mainMod, V, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy"
+        "$mainMod, S, exec, fuzzel"
+        "$mainMod, V, exec, cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
 
         "$mainMod, F, fullscreen"
         "$mainMod, D, killactive,"

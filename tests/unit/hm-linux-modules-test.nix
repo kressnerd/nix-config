@@ -16,8 +16,11 @@ let
   fontsModule = import ../../home/dan/features/linux/fonts.nix { inherit pkgs; };
   fontsPkgNames = builtins.map (p: p.pname or p.name or "") fontsModule.home.packages;
 
-  # hyprland.nix — signature is `{ pkgs, ... }:`
-  hyprlandModule = import ../../home/dan/features/linux/hyprland.nix { inherit pkgs; };
+  # hyprland.nix — signature is `{ config, pkgs, lib, ... }:`
+  hyprlandModule = import ../../home/dan/features/linux/hyprland.nix {
+    inherit pkgs lib;
+    config = { };
+  };
   hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
   hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
 in
@@ -223,17 +226,17 @@ lib.debug.runTests {
   };
 
   testWaybarHasSettings = {
-    expr = builtins.length hyprlandModule.programs.waybar.settings > 0;
+    expr = hyprlandModule.programs.waybar.settings ? mainBar;
     expected = true;
   };
 
   testWaybarHasCustomPowerModule = {
-    expr = (builtins.head hyprlandModule.programs.waybar.settings) ? "custom/power";
+    expr = hyprlandModule.programs.waybar.settings.mainBar ? "custom/power";
     expected = true;
   };
 
   testWaybarCustomPowerHasOnClick = {
-    expr = (builtins.head hyprlandModule.programs.waybar.settings)."custom/power" ? "on-click";
+    expr = hyprlandModule.programs.waybar.settings.mainBar."custom/power" ? "on-click";
     expected = true;
   };
 
@@ -256,16 +259,31 @@ lib.debug.runTests {
     expected = "#eff1f5";
   };
 
-  # ── rofi ──────────────────────────────────────────────────────────────────
+  # ── fuzzel ────────────────────────────────────────────────────────────────
 
-  testRofiEnabled = {
-    expr = hyprlandModule.programs.rofi.enable;
+  testFuzzelEnabled = {
+    expr = hyprlandModule.programs.fuzzel.enable;
     expected = true;
   };
 
-  testRofiShowIcons = {
-    expr = hyprlandModule.programs.rofi.extraConfig.show-icons;
+  testFuzzelHasMainSettings = {
+    expr = hyprlandModule.programs.fuzzel.settings ? main;
     expected = true;
+  };
+
+  testFuzzelIconsEnabled = {
+    expr = hyprlandModule.programs.fuzzel.settings.main.icons-enabled;
+    expected = "yes";
+  };
+
+  testFuzzelHasColorSettings = {
+    expr = hyprlandModule.programs.fuzzel.settings ? colors;
+    expected = true;
+  };
+
+  testFuzzelBackgroundColorNoHash = {
+    expr = builtins.substring 0 1 hyprlandModule.programs.fuzzel.settings.colors.background;
+    expected = "e"; # eff1f5ff starts with 'e', not '#'
   };
 
   # ── rofi-power-menu ───────────────────────────────────────────────────────
