@@ -220,7 +220,6 @@ in
 
       #tray {
         padding: 0 8px;
-        spacing: 8px;
       }
 
       #custom-power {
@@ -260,7 +259,7 @@ in
         terminal = "${pkgs.kitty}/bin/kitty";
         icons-enabled = "yes";
         width = 50;
-        font = "monospace:size=13";
+        font = "monospace:size=11";
         line-height = 25;
         lines = 10;
         letter-spacing = 0;
