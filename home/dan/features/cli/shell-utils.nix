@@ -1,59 +1,45 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
-  home.packages = with pkgs; [
-    # Modern replacements for common commands
-    eza # Better ls
-    bat # Better cat
-    fd # Better find
-    ripgrep # Better grep
-    fzf # Fuzzy finder
-    zoxide # Better cd
-    delta # Better git diff
-    sd # Better sed
-    duf # Better df
-    dust # Better du
-    procs # Better ps
-    bottom # Better top
-    #    coreutils
-    #    findutils
-    #    gnugrep
-    #    gnused
-    #    gawk
+  home.packages =
+    with pkgs;
+    [
+      # Modern replacements for common commands
+      eza # ls alternative — better listing with icons and git status
+      bat # cat alternative — syntax highlighting and git integration
+      fd # find alternative — fast file search
+      ripgrep # grep alternative — fast text search
+      fzf # fuzzy finder — interactive filtering for files, history, etc.
+      zoxide # cd alternative — smart directory jumping
+      delta # diff alternative — syntax-highlighted git diffs
+      sd # sed alternative — text substitution with simpler syntax
+      duf # df alternative — disk usage overview with better formatting
+      dust # du alternative — intuitive disk usage by directory
+      procs # ps alternative — process list with colours and sorting
+      bottom # top alternative — terminal resource monitor
 
-    # Useful utilities
-    jq # JSON processor
-    yq # YAML processor
-    httpie # Better curl
-    tldr # Simplified man pages
-    tree # Directory tree
-    ncdu # Disk usage analyzer
+      # Useful utilities
+      jq # JSON processor — query and transform JSON data
+      yq # YAML processor — query and transform YAML/JSON/TOML
+      httpie # curl alternative — human-friendly HTTP client
+      tldr # man alternative — simplified community-maintained docs
+      tree # directory tree — recursive directory listing
+      ncdu # disk usage analyzer — interactive ncurses du
 
-    # Development tools
-    lazygit # Terminal UI for git
-    glab # GitLab CLI
-    nil # Nix language server (LSP)
-    #git
-    #gh
-    #delta # Better git diff
-    #neovim
-    #tmux
-    #curl
-    #wget
-    #watch
+      # TUI apps
+      lazydocker # TUI for Docker and docker-compose management
+      fastfetch # system information display — fast neofetch alternative
 
-    # Build tools
-    #gnumake
-    #cmake
-    #pkg-config
+      # Development tools
+      lazygit # TUI for git — interactive staging, rebasing, log
+      glab # GitLab CLI — manage issues, MRs, pipelines from terminal
+      nil # Nix language server — LSP for editor integration
+    ]
+    ++ lib.optionals pkgs.stdenv.isLinux [
+      bluetuith # TUI Bluetooth manager — Linux-only, requires bluez
+      pulsemixer # TUI PulseAudio mixer — Linux-only volume control
+    ];
 
-    # Container tools
-    #colima        # Docker Desktop alternative
-
-    # Cloud tools (moved to cloud-tools.nix module)
-    # See features/cli/cloud-tools.nix for cloud CLI tools
-  ];
-
-  # Configure some of these tools
+  # Configure tools
   programs = {
     eza = {
       enable = true;
@@ -64,49 +50,29 @@
 
     bat = {
       enable = true;
-      config.theme = "catppuccin-latte";
-      # Catppuccin Latte theme for bat
-      themes.catppuccin-latte = {
-        src = pkgs.fetchFromGitHub {
-          owner = "catppuccin";
-          repo = "bat";
-          rev = "main";
-          sha256 = "sha256-6WVKQErGdaqb++oaXnY3i6/GuH2FhTgK0v4TN4Y0Wbw=";
-        };
-        file = "Catppuccin-latte.tmTheme";
-      };
+      # Theme injected by Stylix — no hardcoded theme needed
     };
 
     fzf = {
       enable = true;
-      # Catppuccin Latte colors
-      defaultOptions = [
-        "--color=bg+:#ccd0da,bg:#eff1f5,spinner:#dc8a78,hl:#d20f39"
-        "--color=fg:#4c4f69,header:#d20f39,info:#8839ef,pointer:#dc8a78"
-        "--color=marker:#7287fd,fg+:#4c4f69,prompt:#8839ef,hl+:#d20f39"
-        "--color=selected-bg:#bcc0cc,border:#ccd0da,label:#4c4f69"
-      ];
+      # Colors injected by Stylix — no hardcoded defaultOptions needed
     };
 
     lazygit = {
       enable = true;
+      # Theme injected by Stylix — no hardcoded gui.theme needed
+    };
+
+    btop = {
+      enable = true;
       settings = {
-        gui.theme = {
-          activeBorderColor = [
-            "#7287fd"
-            "bold"
-          ];
-          inactiveBorderColor = [ "#4c4f69" ];
-          optionsTextColor = [ "#1e66f5" ];
-          selectedLineBgColor = [ "#ccd0da" ];
-          cherryPickedCommitFgColor = [ "#1e66f5" ];
-          cherryPickedCommitBgColor = [ "#7287fd" ];
-          markedBaseCommitFgColor = [ "#fe640b" ];
-          markedBaseCommitBgColor = [ "#df8e1d" ];
-          unstagedChangesColor = [ "#d20f39" ];
-          defaultFgColor = [ "#4c4f69" ];
-        };
+        vim_keys = true; # hjkl navigation in btop
       };
+    };
+
+    yazi = {
+      enable = true;
+      enableFishIntegration = true; # provides `y` shell wrapper with cwd tracking
     };
 
     zoxide.enable = true;
@@ -117,14 +83,27 @@
     };
   };
 
-  # Add aliases for the new tools
-  # programs.fish.shellAliases = {
-  #   ls = "eza";
-  #   cat = "bat";
-  #   ps = "procs";
-  #   top = "btm";
-  #   du = "dust";
-  #   df = "duf";
-  #   cd = "z"; # From zoxide
-  # };
+  # Stylix targets — explicit opt-in required because autoEnable = false
+  stylix.targets = {
+    bat.enable = true;
+    fzf.enable = true;
+    lazygit.enable = true;
+    btop.enable = true;
+    yazi.enable = true;
+  };
+
+  # fastfetch: minimal module list; inherits terminal colours (no Stylix target needed)
+  xdg.configFile."fastfetch/config.jsonc".text = builtins.toJSON {
+    modules = [
+      "title"
+      "separator"
+      "os"
+      "kernel"
+      "shell"
+      "wm"
+      "terminal"
+      "cpu"
+      "memory"
+    ];
+  };
 }
