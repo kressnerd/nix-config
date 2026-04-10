@@ -126,7 +126,7 @@ in
         }
         {
           name = "idleinhibit-full";
-          idleinhibit = "fullscreen";
+          idle_inhibit = "fullscreen";
           "match:class" = ".*";
         }
       ];
