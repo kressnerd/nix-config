@@ -27,7 +27,10 @@ let
   hyprlandTests =
     if pkgs.stdenv.isLinux then
       let
-        hyprlandModule = import ../../home/dan/features/linux/hyprland.nix { inherit pkgs; };
+        hyprlandModule = import ../../home/dan/features/linux/hyprland.nix {
+          inherit pkgs;
+          pkgs-unstable = pkgs;
+        };
         waybarModule = import ../../home/dan/features/linux/waybar.nix { inherit pkgs; };
         makoModule = import ../../home/dan/features/linux/mako.nix { };
         fuzzelModule = import ../../home/dan/features/linux/fuzzel.nix { };
@@ -70,6 +73,16 @@ let
         testHyprlandBindeCount = {
           expr = builtins.length hyprSettings.binde;
           expected = 4;
+        };
+
+        testHyprlandNoWindowrulev2 = {
+          expr = !(hyprSettings ? windowrulev2);
+          expected = true;
+        };
+
+        testHyprlandWindowruleCount = {
+          expr = builtins.length hyprSettings.windowrule;
+          expected = 8;
         };
 
         testHyprlandGapsIn = {
