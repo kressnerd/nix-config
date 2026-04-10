@@ -51,6 +51,14 @@
         assertion = config.security.pam.services.greetd.enableGnomeKeyring;
         message = "Thiniel invariant violated: security.pam.services.greetd.enableGnomeKeyring must be true for PAM keyring auto-unlock on login.";
       }
+      {
+        assertion =
+          let
+            hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home-manager.users.dan.home.packages;
+          in
+          builtins.elem "fnm" hmPkgNames;
+        message = "thiniel: fnm (Fast Node Manager) must be installed for Node.js development";
+      }
     ];
   };
 }
