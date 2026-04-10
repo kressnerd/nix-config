@@ -88,15 +88,47 @@ in
         "10,monitor:DP-3"
       ];
 
-      windowrulev2 = [
-        "float, class:^(dialog)$"
-        "float, title:^(Open File)(.*)$"
-        "float, title:^(Select a File)(.*)$"
-        "float, title:^(Choose wallpaper)(.*)$"
-        "float, title:^(Open Folder)(.*)$"
-        "float, title:^(Save As)(.*)$"
-        "pin, title:^(Picture-in-Picture)$"
-        "idleinhibit fullscreen, class:.*"
+      windowrule = [
+        {
+          name = "float-dialog";
+          float = true;
+          "match:class" = "^(dialog)$";
+        }
+        {
+          name = "float-open-file";
+          float = true;
+          "match:title" = "^(Open File)(.*)$";
+        }
+        {
+          name = "float-select-file";
+          float = true;
+          "match:title" = "^(Select a File)(.*)$";
+        }
+        {
+          name = "float-wallpaper";
+          float = true;
+          "match:title" = "^(Choose wallpaper)(.*)$";
+        }
+        {
+          name = "float-open-folder";
+          float = true;
+          "match:title" = "^(Open Folder)(.*)$";
+        }
+        {
+          name = "float-save-as";
+          float = true;
+          "match:title" = "^(Save As)(.*)$";
+        }
+        {
+          name = "pin-pip";
+          pin = true;
+          "match:title" = "^(Picture-in-Picture)$";
+        }
+        {
+          name = "idleinhibit-full";
+          idleinhibit = "fullscreen";
+          "match:class" = ".*";
+        }
       ];
 
       "$mainMod" = "SUPER";
