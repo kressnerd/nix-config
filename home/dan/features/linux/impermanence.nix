@@ -12,6 +12,8 @@ _: {
       ".mozilla" # Firefox
       ".ssh"
       ".vscode/extensions"
+      # Roo Code rules and skills
+      ".roo"
       "dev"
       "Projects"
       ".config/sops/age"
