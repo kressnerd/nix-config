@@ -31,7 +31,10 @@ let
           inherit pkgs;
           pkgs-unstable = pkgs;
         };
-        waybarModule = import ../../home/dan/features/linux/waybar.nix { inherit pkgs; };
+        waybarModule = import ../../home/dan/features/linux/waybar.nix {
+          inherit pkgs;
+          pkgs-unstable = pkgs;
+        };
         makoModule = import ../../home/dan/features/linux/mako.nix { };
         fuzzelModule = import ../../home/dan/features/linux/fuzzel.nix { };
         hyprideModule = import ../../home/dan/features/linux/hypridle.nix { };
@@ -287,6 +290,11 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testImpermanenceHasRoo = {
+    expr = builtins.elem ".roo" impermanenceDirs;
+    expected = true;
+  };
+
   testImpermanenceHasDev = {
     expr = builtins.elem "dev" impermanenceDirs;
     expected = true;
@@ -334,7 +342,7 @@ lib.debug.runTests {
 
   testImpermanenceDirCount = {
     expr = builtins.length impermanenceDirs;
-    expected = 15;
+    expected = 16;
   };
 
   # ── impermanence: files ───────────────────────────────────────────────────

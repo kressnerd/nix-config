@@ -42,11 +42,11 @@
         message = "Thiniel invariant violated: virtualisation.libvirtd.enable must be true (VM support)";
       }
       {
-        assertion = config.programs.hyprland.withUWSM == true;
+        assertion = config.programs.hyprland.withUWSM;
         message = "programs.hyprland.withUWSM must be true for proper Hyprland session management via UWSM";
       }
       {
-        assertion = config.home-manager.users.dan.wayland.windowManager.hyprland.systemd.enable == false;
+        assertion = !config.home-manager.users.dan.wayland.windowManager.hyprland.systemd.enable;
         message = "HM wayland.windowManager.hyprland.systemd.enable must be false when UWSM manages systemd targets";
       }
     ];
