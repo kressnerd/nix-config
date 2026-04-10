@@ -45,6 +45,23 @@
           assertion = !(hmHasDir ".config/keepassxc");
           message = "Thiniel invariant violated: .config/keepassxc must not be in HM persistence — HM manages keepassxc.ini declaratively";
         }
+        # VS Code / Roo Code persistence
+        {
+          assertion = hmHasDir ".config/Code";
+          message = "Thiniel invariant violated: .config/Code must be in HM persistence (VS Code user data)";
+        }
+        {
+          assertion = hmHasDir ".vscode/extensions";
+          message = "Thiniel invariant violated: .vscode/extensions must be in HM persistence (VS Code extensions)";
+        }
+        {
+          assertion = hmHasDir ".roo";
+          message = "Thiniel invariant violated: .roo must be in HM persistence (Roo Code rules and skills)";
+        }
+        {
+          assertion = hmHasDir ".local/share/keyrings";
+          message = "Thiniel invariant violated: .local/share/keyrings must be in HM persistence (gnome-keyring for VS Code credential storage)";
+        }
       ];
   };
 }
