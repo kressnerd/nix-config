@@ -85,6 +85,11 @@ let
           expected = 8;
         };
 
+        testHyprlandNoDeprecatedIdleinhibit = {
+          expr = builtins.any (rule: rule ? idleinhibit) hyprSettings.windowrule;
+          expected = false;
+        };
+
         testHyprlandGapsIn = {
           expr = hyprSettings.general.gaps_in;
           expected = 4;
