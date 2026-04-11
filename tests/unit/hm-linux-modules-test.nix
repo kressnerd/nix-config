@@ -60,12 +60,7 @@ let
 
         testHyprlandMonitorCount = {
           expr = builtins.length hyprSettings.monitor;
-          expected = 4;
-        };
-
-        testHyprlandWorkspaceCount = {
-          expr = builtins.length hyprSettings.workspace;
-          expected = 10;
+          expected = 2;
         };
 
         testHyprlandBindCount = {

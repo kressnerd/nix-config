@@ -4,6 +4,47 @@ let
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only text data
     ${pkgs.wl-clipboard}/bin/wl-paste --type image --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only image data
   '';
+  assign-workspaces = pkgs.writeShellScriptBin "assign-workspaces" ''
+    set -euo pipefail
+    export PATH="${
+      pkgs.lib.makeBinPath [
+        pkgs.jq
+        pkgs.socat
+        pkgs-unstable.hyprland
+      ]
+    }:$PATH"
+
+    assign_workspaces() {
+      local monitors count idx monitor
+      monitors=($(hyprctl monitors -j | jq -r '.[].name'))
+      count=''${#monitors[@]}
+
+      if [ "$count" -eq 0 ]; then
+        return
+      fi
+
+      for ws in $(seq 1 10); do
+        idx=$(( (ws - 1) % count ))
+        monitor="''${monitors[$idx]}"
+        hyprctl dispatch moveworkspacetomonitor "$ws" "$monitor"
+      done
+
+      hyprctl dispatch workspace 1
+    }
+
+    sleep 2
+    assign_workspaces
+
+    SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+    socat -U - UNIX-CONNECT:"$SOCKET" | while IFS= read -r line; do
+      case "$line" in
+        monitoradded*|monitorremoved*)
+          sleep 1
+          assign_workspaces
+          ;;
+      esac
+    done
+  '';
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
@@ -68,26 +109,14 @@ in
         };
       };
 
-      exec-once = "${startupScript}/bin/start";
+      exec-once = [
+        "${startupScript}/bin/start"
+        "${assign-workspaces}/bin/assign-workspaces"
+      ];
 
       monitor = [
         ", preferred, auto, 1"
         "eDP-1, preferred, 0x0, 1"
-        "DP-3, preferred, 4480x0, 1, transform, 1"
-        "DP-4, preferred, 1920x0, 1"
-      ];
-
-      workspace = [
-        "1,monitor:eDP-1,default:true"
-        "2,monitor:eDP-1"
-        "3,monitor:eDP-1"
-        "4,monitor:eDP-1"
-        "5,monitor:DP-6,default:true"
-        "6,monitor:DP-6"
-        "7,monitor:DP-6"
-        "8,monitor:DP-3,default:true"
-        "9,monitor:DP-3"
-        "10,monitor:DP-3"
       ];
 
       windowrule = [
@@ -209,6 +238,10 @@ in
 
         ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
         ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
+      ];
+
+      env = [
+        "AQ_NO_MODIFIERS,1"
       ];
     };
   };
