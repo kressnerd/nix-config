@@ -58,7 +58,10 @@ in
       };
 
       input = {
-        kb_options = "compose:ralt";
+        kb_layout = "us";
+        kb_variant = "altgr-intl";
+        kb_model = "pc105";
+        kb_options = "terminate:ctrl_alt_bksp";
         touchpad = {
           natural_scroll = true;
           tap-to-click = true;
