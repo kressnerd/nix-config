@@ -47,7 +47,7 @@ let
       socat -U - UNIX-CONNECT:"$SOCKET" | while IFS= read -r line; do
         case "$line" in
           monitoradded*|monitorremoved*)
-            sleep 1
+            sleep 3
             assign_workspaces
             ;;
         esac
