@@ -352,7 +352,7 @@ lib.debug.runTests {
 
   testImpermanenceDirCount = {
     expr = builtins.length impermanenceDirs;
-    expected = 17;
+    expected = 19;
   };
 
   # ── impermanence: files ───────────────────────────────────────────────────
