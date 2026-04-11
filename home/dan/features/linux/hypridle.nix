@@ -18,8 +18,9 @@ _: {
           on-timeout = "loginctl lock-session";
         }
         {
-          timeout = 900; # 15 minutes — suspend
-          on-timeout = "systemctl suspend";
+          timeout = 900; # 15 minutes — screen off (no suspend: OPAL SED FDE)
+          on-timeout = "hyprctl dispatch dpms off";
+          on-resume = "hyprctl dispatch dpms on";
         }
       ];
     };

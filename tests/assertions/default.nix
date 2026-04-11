@@ -8,6 +8,7 @@
     ./thiniel-services-invariants.nix
     ./thiniel-impermanence-invariants.nix
     ./thiniel-rice-invariants.nix
+    ./thiniel-sleep-invariants.nix
     ./nixos-vm-minimal-invariants.nix
   ];
 }
