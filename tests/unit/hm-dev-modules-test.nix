@@ -11,6 +11,10 @@ let
   fnmModule = import ../../home/dan/features/development/fnm.nix { inherit pkgs; };
   fnmPkgNames = builtins.map (p: p.pname or p.name or "") fnmModule.home.packages;
 
+  # ── nodejs.nix ──────────────────────────────────────────────────────────────
+  nodejsModule = import ../../home/dan/features/development/nodejs.nix { inherit pkgs; };
+  nodejsPkgNames = builtins.map (p: p.pname or p.name or "") nodejsModule.home.packages;
+
   # ── go.nix ──────────────────────────────────────────────────────────────────
   goModule = import ../../home/dan/features/development/go.nix { inherit pkgs; };
   goPkgNames = builtins.map (p: p.pname or p.name or "") goModule.home.packages;
@@ -95,6 +99,12 @@ lib.debug.runTests {
     expected = true;
   };
 
+  # ── nodejs: package present ───────────────────────────────────────────────────
+  testNodejsHasNodejs = {
+    expr = builtins.elem "nodejs" nodejsPkgNames;
+    expected = true;
+  };
+
   # ── go: package present ───────────────────────────────────────────────────────
   testGoHasGo = {
     expr = builtins.elem "go" goPkgNames;
@@ -115,6 +125,11 @@ lib.debug.runTests {
   # ── python-tools: package present ────────────────────────────────────────────
   testPythonHasUv = {
     expr = builtins.elem "uv" pythonPkgNames;
+    expected = true;
+  };
+
+  testPythonHasPython3 = {
+    expr = builtins.elem "python3" pythonPkgNames;
     expected = true;
   };
 

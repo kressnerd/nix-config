@@ -56,8 +56,16 @@
           let
             hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home-manager.users.dan.home.packages;
           in
-          builtins.elem "fnm" hmPkgNames;
-        message = "thiniel: fnm (Fast Node Manager) must be installed for Node.js development";
+          builtins.elem "nodejs" hmPkgNames;
+        message = "Thiniel invariant violated: Node.js must be installed for development";
+      }
+      {
+        assertion =
+          let
+            hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home-manager.users.dan.home.packages;
+          in
+          builtins.elem "python3" hmPkgNames;
+        message = "Thiniel invariant violated: Python 3 must be installed for development";
       }
       {
         assertion =
