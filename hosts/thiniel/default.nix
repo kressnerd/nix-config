@@ -15,6 +15,7 @@
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
+    ../../modules/nixos/systemd-sleep-settings.nix
     ../../tests/assertions
   ];
 
@@ -249,6 +250,21 @@
   # Power management
   powerManagement.enable = true;
   powerManagement.powertop.enable = true;
+
+  # OPAL SED FDE: lid close must not suspend — encryption key is lost on sleep/hibernate
+  services.logind.settings.Login = {
+    HandleLidSwitch = "ignore";
+    HandleLidSwitchDocked = "ignore";
+    HandleLidSwitchExternalPower = "ignore";
+  };
+
+  # OPAL SED FDE: disable all sleep states — encryption key is lost on sleep/hibernate
+  systemd.sleep.settings.Sleep = {
+    AllowSuspend = "no";
+    AllowHibernation = "no";
+    AllowHybridSleep = "no";
+    AllowSuspendThenHibernate = "no";
+  };
 
   environment = {
     # List packages installed in system profile. To search, run:
