@@ -9,7 +9,126 @@ Subcommands:
 """
 
 import argparse
+import json
+import os
 import sys
+import time
+
+import requests
+
+# ---------------------------------------------------------------------------
+# OIDC / SCP auth constants
+# ---------------------------------------------------------------------------
+
+TOKEN_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/token"
+DEVICE_AUTH_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/auth/device"
+USERINFO_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/userinfo"
+CLIENT_ID = "scp"
+SCOPES = "offline_access openid"
+
+
+# ---------------------------------------------------------------------------
+# ScpAuth — OIDC device code flow + token management
+# ---------------------------------------------------------------------------
+
+
+class ScpAuth:
+    """OIDC authentication for the netcup Server Control Panel."""
+
+    def __init__(self):
+        self._credentials_path = os.path.join(
+            os.path.expanduser("~"), ".config", "netcup-scp", "credentials.json"
+        )
+
+    @property
+    def credentials_path(self):
+        return self._credentials_path
+
+    def load_credentials(self):
+        """Load stored credentials. Returns dict or None."""
+        try:
+            with open(self._credentials_path) as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None
+
+    def save_credentials(self, tokens):
+        """Save tokens to credentials file with 0600 permissions."""
+        creds_dir = os.path.dirname(self._credentials_path)
+        os.makedirs(creds_dir, mode=0o700, exist_ok=True)
+        with open(self._credentials_path, "w") as f:
+            json.dump(tokens, f, indent=2)
+        os.chmod(self._credentials_path, 0o600)
+
+    def device_code_flow(self):
+        """Initiate OIDC device code flow. Returns device auth response."""
+        resp = requests.post(DEVICE_AUTH_URL, data={
+            "client_id": CLIENT_ID,
+            "scope": SCOPES,
+        })
+        resp.raise_for_status()
+        return resp.json()
+
+    def poll_for_token(self, device_code, interval=5, expires_in=600):
+        """Poll token endpoint until user completes auth."""
+        elapsed = 0
+        current_interval = interval
+        while elapsed < expires_in:
+            time.sleep(current_interval)
+            elapsed += current_interval
+            resp = requests.post(TOKEN_URL, data={
+                "client_id": CLIENT_ID,
+                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                "device_code": device_code,
+            })
+            if resp.status_code == 200:
+                return resp.json()
+            error = resp.json().get("error")
+            if error == "authorization_pending":
+                continue
+            elif error == "slow_down":
+                current_interval += 5
+                continue
+            else:
+                raise RuntimeError(f"Device code auth failed: {error}")
+        raise TimeoutError("Device code flow expired")
+
+    def refresh_access_token(self, refresh_token):
+        """Exchange refresh token for new access token."""
+        resp = requests.post(TOKEN_URL, data={
+            "client_id": CLIENT_ID,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        })
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_access_token(self):
+        """Get valid access token. Uses stored refresh or initiates device flow."""
+        creds = self.load_credentials()
+        if creds and "refresh_token" in creds:
+            tokens = self.refresh_access_token(creds["refresh_token"])
+            self.save_credentials(tokens)
+            return tokens["access_token"]
+        # No stored credentials — initiate device code flow
+        device_resp = self.device_code_flow()
+        print(f"\nOpen this URL in your browser: {device_resp['verification_uri']}")
+        print(f"Enter this code: {device_resp['user_code']}\n")
+        tokens = self.poll_for_token(
+            device_resp["device_code"],
+            interval=device_resp.get("interval", 5),
+            expires_in=device_resp.get("expires_in", 600),
+        )
+        self.save_credentials(tokens)
+        return tokens["access_token"]
+
+    def get_user_id(self, access_token):
+        """Get SCP user ID from userinfo endpoint."""
+        resp = requests.get(USERINFO_URL, headers={
+            "Authorization": f"Bearer {access_token}",
+        })
+        resp.raise_for_status()
+        return resp.json()["id"]
 
 
 def parse_args(argv=None):
