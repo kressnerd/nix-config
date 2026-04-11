@@ -16,10 +16,10 @@ The kill switch runs from **thiniel** (the operator's NixOS workstation with imp
 
 ### Acceptance Criteria
 
-- [ ] `scripts/netcup-firewall.py backup --server cupix001` exports all user firewall policies + server interface assignment to a timestamped JSON file
-- [ ] `scripts/netcup-firewall.py lockdown --server cupix001` creates an empty policy and assigns it, blocking all traffic (implicit DROP\_ALL)
-- [ ] `scripts/netcup-firewall.py restore --server cupix001 --file <backup.json>` restores policies and interface assignment from a backup file
-- [ ] `scripts/netcup-firewall.py apply --policy bootstrap` exits with "not implemented — see Epic 15" message
+- [ ] `scripts/netcup_firewall.py backup --server cupix001` exports all user firewall policies + server interface assignment to a timestamped JSON file
+- [ ] `scripts/netcup_firewall.py lockdown --server cupix001` creates an empty policy and assigns it, blocking all traffic (implicit DROP\_ALL)
+- [ ] `scripts/netcup_firewall.py restore --server cupix001 --file <backup.json>` restores policies and interface assignment from a backup file
+- [ ] `scripts/netcup_firewall.py apply --policy bootstrap` exits with "not implemented — see Epic 15" message
 - [ ] All offline unit tests pass: `python3 -m pytest scripts/tests/test_netcup_firewall.py -v`
 - [ ] Auth module handles device code flow (first-time) and refresh token flow (subsequent)
 - [ ] Credentials stored at `~/.config/netcup-scp/credentials.json` (mode 0600), never in git
@@ -43,7 +43,7 @@ The script runs on **thiniel** (NixOS workstation with impermanence). Key implic
 | SCP OIDC refresh token | Tier 1 | `~/.config/netcup-scp/credentials.json` (0600) | Full server lifecycle control; persisted via impermanence |
 | Backup JSON files | Sensitive | `~/.local/share/netcup-scp/backups/` | Contains firewall rule details; persisted via impermanence |
 | Firewall policy definitions | Public | `infra/firewall/*.json` in git | Infrastructure-as-code — port rules are not secret |
-| Script source | Public | `scripts/netcup-firewall.py` in git | No secrets embedded |
+| Script source | Public | `scripts/netcup_firewall.py` in git | No secrets embedded |
 
 ### Architecture
 
@@ -165,7 +165,7 @@ sequenceDiagram
 
 | Artifact | Path | Notes |
 |----------|------|-------|
-| CLI script | `scripts/netcup-firewall.py` | Single file, executable |
+| CLI script | `scripts/netcup_firewall.py` | Single file, executable |
 | Unit tests | `scripts/tests/test_netcup_firewall.py` | pytest + unittest.mock |
 | Test init | `scripts/tests/__init__.py` | Empty, enables pytest discovery |
 | Policy definitions | `infra/firewall/cupix001-lockdown.json` | Empty rules → DROP ALL (in git) |
@@ -187,13 +187,13 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ### Phase 0: Validation Strategy
 
-**Syntax validation**: `python3 -m py_compile scripts/netcup-firewall.py`
+**Syntax validation**: `python3 -m py_compile scripts/netcup_firewall.py`
 
 **Unit test validation**: `python3 -m pytest scripts/tests/test_netcup_firewall.py -v`
 
 **No NixOS build validation needed** — this is a standalone Python script, not a Nix module.
 
-**Rollback path**: Script is additive (new files only). Remove `scripts/netcup-firewall.py` and `scripts/tests/` to revert.
+**Rollback path**: Script is additive (new files only). Remove `scripts/netcup_firewall.py` and `scripts/tests/` to revert.
 
 **Dangerous change categories**: None — this script does not modify NixOS configuration, bootloader, or filesystem. It only talks to the external netcup SCP API from thiniel.
 
@@ -256,7 +256,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.2.2: Green — Create script with argparse skeleton
 
-- **File**: `scripts/netcup-firewall.py`
+- **File**: `scripts/netcup_firewall.py`
 - **What to implement**: 
   - Shebang `#!/usr/bin/env python3`
   - `argparse` with subcommands: `backup`, `lockdown`, `restore`, `apply`
@@ -292,7 +292,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.3.2: Green — Implement ScpAuth class
 
-- **File**: `scripts/netcup-firewall.py` (add `ScpAuth` class)
+- **File**: `scripts/netcup_firewall.py` (add `ScpAuth` class)
 - **What to implement**:
   - Constants: `TOKEN_URL`, `DEVICE_AUTH_URL`, `USERINFO_URL`, `CLIENT_ID = "scp"`, `SCOPES = "offline_access openid"`
   - `credentials_path` property → `~/.config/netcup-scp/credentials.json`
@@ -332,7 +332,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.4.2: Green — Implement ScpApiClient class
 
-- **File**: `scripts/netcup-firewall.py` (add `ScpApiClient` class)
+- **File**: `scripts/netcup_firewall.py` (add `ScpApiClient` class)
 - **What to implement**:
   - Constructor: `__init__(self, access_token: str)`, stores token, sets `BASE_URL`
   - `_headers()` → `{"Authorization": "Bearer {token}", "Content-Type": "application/json"}`
@@ -372,7 +372,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.5.2: Green — Implement backup command
 
-- **File**: `scripts/netcup-firewall.py` (add `cmd_backup` function)
+- **File**: `scripts/netcup_firewall.py` (add `cmd_backup` function)
 - **What to implement**:
   - Authenticate via `ScpAuth`
   - Get user ID via `auth.get_user_id()`
@@ -408,7 +408,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.6.2: Green — Implement lockdown command
 
-- **File**: `scripts/netcup-firewall.py` (add `cmd_lockdown` function)
+- **File**: `scripts/netcup_firewall.py` (add `cmd_lockdown` function)
 - **What to implement**:
   - Authenticate, get user ID, find server, get interfaces
   - **Auto-backup**: call `cmd_backup()` first (safety net)
@@ -420,7 +420,7 @@ This aligns with Epic 17 which also needs pytest + requests.
   - Verify: `get_firewall(server_id, mac)` → confirm lockdown policy is assigned
   - Print: `"LOCKDOWN ACTIVE — all traffic to {server_name} blocked via SCP external firewall"`
   - Print: `"Backup saved to: {backup_path}"`
-  - Print: `"To restore: python3 scripts/netcup-firewall.py restore --server {server_name} --file {backup_path}"`
+  - Print: `"To restore: python3 scripts/netcup_firewall.py restore --server {server_name} --file {backup_path}"`
 - **Verify**: `python3 -m pytest scripts/tests/test_netcup_firewall.py -v -k lockdown` → PASS
 - **Expected**: PASS
 
@@ -449,7 +449,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.7.2: Green — Implement restore command
 
-- **File**: `scripts/netcup-firewall.py` (add `cmd_restore` function)
+- **File**: `scripts/netcup_firewall.py` (add `cmd_restore` function)
 - **What to implement**:
   - Load and parse backup JSON from `--file` path
   - Validate: `version == 1`, `server.name == args.server`
@@ -488,7 +488,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 ##### Step 15a.8.2: Green — Fix any integration issues + update scripts/README.md
 
-- **File**: `scripts/netcup-firewall.py` (fix any issues from integration test)
+- **File**: `scripts/netcup_firewall.py` (fix any issues from integration test)
 - **File**: `scripts/README.md` (append section documenting netcup-firewall.py usage)
 - **What to implement**:
   - Fix any issues surfaced by full workflow test
@@ -503,7 +503,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 | Command | Purpose |
 |---------|---------|
-| `python3 -m py_compile scripts/netcup-firewall.py` | Syntax check |
+| `python3 -m py_compile scripts/netcup_firewall.py` | Syntax check |
 | `python3 -m pytest scripts/tests/test_netcup_firewall.py -v` | All unit tests |
 | `python3 -m pytest scripts/tests/test_netcup_firewall.py -v -k auth` | Auth tests only |
 | `python3 -m pytest scripts/tests/test_netcup_firewall.py -v -k api_client` | API client tests only |
@@ -517,7 +517,7 @@ This aligns with Epic 17 which also needs pytest + requests.
 
 This epic adds files only — no existing files are modified except `scripts/README.md` (append), devShell deps, and `home/dan/features/linux/impermanence.nix` (add persist paths).
 
-- **Full rollback**: `git rm scripts/netcup-firewall.py scripts/tests/test_netcup_firewall.py scripts/tests/__init__.py` + revert devShell + impermanence changes
+- **Full rollback**: `git rm scripts/netcup_firewall.py scripts/tests/test_netcup_firewall.py scripts/tests/__init__.py` + revert devShell + impermanence changes
 - **Lockdown rollback on live system**: Use `restore` subcommand with the auto-saved backup, OR manually re-assign policies via netcup SCP web UI
 
 ### Current Status
@@ -525,15 +525,24 @@ This epic adds files only — no existing files are modified except `scripts/REA
 | Phase | Status |
 |-------|--------|
 | Phase 0: Validation Strategy | ✅ Defined |
-| Phase 1: DevShell + Impermanence | ⬜ Not started |
-| Phase 2: CLI Skeleton | ⬜ Not started |
-| Phase 3: Auth Module | ⬜ Not started |
-| Phase 4: API Client | ⬜ Not started |
-| Phase 5: Backup Command | ⬜ Not started |
-| Phase 6: Lockdown Command | ⬜ Not started |
-| Phase 7: Restore Command | ⬜ Not started |
-| Phase 8: Integration & Docs | ⬜ Not started |
+| Phase 1: DevShell + Impermanence | ✅ Complete |
+| Phase 2: CLI Skeleton | ✅ Complete |
+| Phase 3: Auth Module | ✅ Complete |
+| Phase 4: API Client | ✅ Complete |
+| Phase 5: Backup Command | ✅ Complete |
+| Phase 6: Lockdown Command | ✅ Complete |
+| Phase 7: Restore Command | ✅ Complete |
+| Phase 8: Integration & Docs | ✅ Complete |
 
 ### Completion Log
 
-(To be filled during implementation)
+| Phase | Duration | Notes |
+|-------|----------|-------|
+| Phase 1 | - | devShell + impermanence persist paths |
+| Phase 2 | - | argparse with 4 subcommands, 10 tests |
+| Phase 3 | - | ScpAuth OIDC device code + refresh, 10 tests |
+| Phase 4 | - | ScpApiClient REST client, 11 tests |
+| Phase 5 | - | cmd_backup to JSON, 5 tests |
+| Phase 6 | - | cmd_lockdown kill switch, 8 tests |
+| Phase 7 | - | cmd_restore from backup, 9 tests |
+| Phase 8 | - | Workflow integration test + README, 1 test |

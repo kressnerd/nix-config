@@ -1007,3 +1007,97 @@ class TestWorkflow:
         # The last set_firewall call should have the restored policy
         last_set_call = mock_client.set_firewall.call_args
         assert last_set_call[0][1] == "aa:bb:cc:dd:ee:ff"  # Same interface
+
+
+class TestErrorPaths:
+    """Test error handling and edge cases."""
+
+    @patch("time.sleep")
+    @patch("requests.post")
+    def test_poll_for_token_timeout(self, mock_post, mock_sleep):
+        """poll_for_token raises TimeoutError when device code expires."""
+        from netcup_firewall import ScpAuth
+        auth = ScpAuth()
+        pending_resp = MagicMock()
+        pending_resp.status_code = 400
+        pending_resp.json.return_value = {"error": "authorization_pending"}
+        mock_post.return_value = pending_resp
+        with pytest.raises(TimeoutError):
+            auth.poll_for_token("dc-123", interval=1, expires_in=2)
+
+    @patch("time.sleep")
+    @patch("requests.post")
+    def test_poll_for_token_unknown_error(self, mock_post, mock_sleep):
+        """poll_for_token raises RuntimeError on unknown OIDC error."""
+        from netcup_firewall import ScpAuth
+        auth = ScpAuth()
+        error_resp = MagicMock()
+        error_resp.status_code = 400
+        error_resp.json.return_value = {"error": "access_denied"}
+        mock_post.return_value = error_resp
+        with pytest.raises(RuntimeError, match="access_denied"):
+            auth.poll_for_token("dc-123", interval=1, expires_in=600)
+
+    @patch("time.sleep")
+    def test_wait_for_task_failed(self, mock_sleep):
+        """wait_for_task raises RuntimeError when task fails."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            failed_resp = MagicMock()
+            failed_resp.status_code = 200
+            failed_resp.json.return_value = {"status": "FAILED"}
+            # raise_for_status is a no-op on MagicMock
+            mock_get.return_value = failed_resp
+            with pytest.raises(RuntimeError, match="failed"):
+                client.wait_for_task("task-uuid")
+
+    @patch("requests.post")
+    def test_get_access_token_expired_refresh_falls_back(self, mock_post):
+        """get_access_token falls back to device flow when refresh token is expired."""
+        from netcup_firewall import ScpAuth
+        import requests as req
+        auth = ScpAuth()
+
+        # Stored credentials exist
+        auth.load_credentials = MagicMock(return_value={"refresh_token": "rt-expired"})
+        auth.save_credentials = MagicMock()
+
+        # First call (refresh): fails with 400
+        refresh_resp = MagicMock()
+        refresh_resp.status_code = 400
+        refresh_resp.raise_for_status.side_effect = req.HTTPError("400 Client Error")
+
+        # Second call (device code): succeeds
+        device_resp = MagicMock()
+        device_resp.status_code = 200
+        device_resp.json.return_value = {
+            "device_code": "dc-new",
+            "user_code": "NEW-CODE",
+            "verification_uri": "https://example.com/device",
+            "interval": 1,
+            "expires_in": 10,
+        }
+
+        # Third call (token poll): succeeds
+        token_resp = MagicMock()
+        token_resp.status_code = 200
+        token_resp.json.return_value = {
+            "access_token": "at-fresh",
+            "refresh_token": "rt-fresh",
+        }
+
+        mock_post.side_effect = [refresh_resp, device_resp, token_resp]
+
+        result = auth.get_access_token()
+        assert result == "at-fresh"
+        auth.save_credentials.assert_called()
+
+    def test_apply_exits_not_implemented(self):
+        """apply command exits with code 1 and 'not implemented' message."""
+        from netcup_firewall import cmd_apply
+        import argparse
+        args = argparse.Namespace(server="cupix001", policy="bootstrap", command="apply")
+        with pytest.raises(SystemExit) as exc_info:
+            cmd_apply(args)
+        assert exc_info.value.code == 1

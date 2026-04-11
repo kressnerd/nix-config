@@ -57,9 +57,9 @@ class ScpAuth:
         """Save tokens to credentials file with 0600 permissions."""
         creds_dir = os.path.dirname(self._credentials_path)
         os.makedirs(creds_dir, mode=0o700, exist_ok=True)
-        with open(self._credentials_path, "w") as f:
+        fd = os.open(self._credentials_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
             json.dump(tokens, f, indent=2)
-        os.chmod(self._credentials_path, 0o600)
 
     def device_code_flow(self):
         """Initiate OIDC device code flow. Returns device auth response."""
@@ -108,10 +108,13 @@ class ScpAuth:
         """Get valid access token. Uses stored refresh or initiates device flow."""
         creds = self.load_credentials()
         if creds and "refresh_token" in creds:
-            tokens = self.refresh_access_token(creds["refresh_token"])
-            self.save_credentials(tokens)
-            return tokens["access_token"]
-        # No stored credentials — initiate device code flow
+            try:
+                tokens = self.refresh_access_token(creds["refresh_token"])
+                self.save_credentials(tokens)
+                return tokens["access_token"]
+            except requests.HTTPError:
+                print("Refresh token expired, starting device code flow...")
+        # No stored credentials or refresh failed — initiate device code flow
         device_resp = self.device_code_flow()
         print(f"\nOpen this URL in your browser: {device_resp['verification_uri']}")
         print(f"Enter this code: {device_resp['user_code']}\n")
@@ -150,16 +153,24 @@ class ScpApiClient:
         }
 
     def _get(self, path):
-        return requests.get(BASE_URL + path, headers=self._headers())
+        resp = requests.get(BASE_URL + path, headers=self._headers())
+        resp.raise_for_status()
+        return resp
 
     def _post(self, path, json_data):
-        return requests.post(BASE_URL + path, headers=self._headers(), json=json_data)
+        resp = requests.post(BASE_URL + path, headers=self._headers(), json=json_data)
+        resp.raise_for_status()
+        return resp
 
     def _put(self, path, json_data):
-        return requests.put(BASE_URL + path, headers=self._headers(), json=json_data)
+        resp = requests.put(BASE_URL + path, headers=self._headers(), json=json_data)
+        resp.raise_for_status()
+        return resp
 
     def _delete(self, path):
-        return requests.delete(BASE_URL + path, headers=self._headers())
+        resp = requests.delete(BASE_URL + path, headers=self._headers())
+        resp.raise_for_status()
+        return resp
 
     def find_server(self, name):
         """Find a server by name and return its ID."""
@@ -301,7 +312,7 @@ def parse_args(argv=None):
 # ---------------------------------------------------------------------------
 
 
-def cmd_backup(args, backup_dir=None):
+def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None):
     """Export current firewall state to JSON backup file."""
     from datetime import datetime, timezone
 
@@ -311,11 +322,12 @@ def cmd_backup(args, backup_dir=None):
             os.path.expanduser("~"), ".local", "share", "netcup-scp", "backups"
         )
 
-    # Authenticate
-    auth = ScpAuth()
-    access_token = auth.get_access_token()
-    user_id = auth.get_user_id(access_token)
-    client = ScpApiClient(access_token)
+    # Authenticate (or reuse provided instances)
+    if auth is None or client is None or user_id is None:
+        auth = ScpAuth()
+        access_token = auth.get_access_token()
+        user_id = auth.get_user_id(access_token)
+        client = ScpApiClient(access_token)
 
     # Gather data
     server_id = client.find_server(args.server)
@@ -348,11 +360,12 @@ def cmd_backup(args, backup_dir=None):
     }
 
     # Write backup file
-    os.makedirs(backup_dir, exist_ok=True)
+    os.makedirs(backup_dir, mode=0o700, exist_ok=True)
     timestamp_str = now.strftime("%Y%m%d-%H%M%S")
     filename = f"{args.server}-{timestamp_str}.json"
     filepath = os.path.join(backup_dir, filename)
-    with open(filepath, "w") as f:
+    fd = os.open(filepath, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
         json.dump(backup, f, indent=2)
 
     print(f"Backup saved to: {filepath}")
@@ -371,16 +384,16 @@ def cmd_lockdown(args):
             print("Aborted.")
             sys.exit(1)
 
-    # Auto-backup first (safety net)
-    print(f"Creating automatic backup before lockdown...")
-    backup_path = cmd_backup(args)
-    print(f"Backup saved to: {backup_path}")
-
-    # Authenticate
+    # Authenticate once
     auth = ScpAuth()
     access_token = auth.get_access_token()
     user_id = auth.get_user_id(access_token)
     client = ScpApiClient(access_token)
+
+    # Auto-backup first (safety net) — share auth to avoid double login
+    print("Creating automatic backup before lockdown...")
+    backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id)
+    print(f"Backup saved to: {backup_path}")
 
     # Find server and interfaces
     server_id = client.find_server(args.server)
