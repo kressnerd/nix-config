@@ -312,7 +312,7 @@ def parse_args(argv=None):
 # ---------------------------------------------------------------------------
 
 
-def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None):
+def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None, quiet=False):
     """Export current firewall state to JSON backup file."""
     from datetime import datetime, timezone
 
@@ -368,7 +368,8 @@ def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None):
     with os.fdopen(fd, "w") as f:
         json.dump(backup, f, indent=2)
 
-    print(f"Backup saved to: {filepath}")
+    if not quiet:
+        print(f"Backup saved to: {filepath}")
     return filepath
 
 
@@ -392,8 +393,7 @@ def cmd_lockdown(args):
 
     # Auto-backup first (safety net) — share auth to avoid double login
     print("Creating automatic backup before lockdown...")
-    backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id)
-    print(f"Backup saved to: {backup_path}")
+    backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id, quiet=True)
 
     # Find server and interfaces
     server_id = client.find_server(args.server)
@@ -474,7 +474,10 @@ def cmd_restore(args):
         rules = policy.get("rules", [])
 
         if name in existing_by_name:
-            # Reuse existing policy
+            # Reuse existing policy — rules are NOT updated here.
+            # TODO Epic 15: PUT the backed-up rules to the existing policy so that
+            # restore is fully correct even when the policy already exists but has
+            # diverged from the backup (requires PATCH/PUT policy-rules endpoint).
             new_id = existing_by_name[name]["id"]
             print(f"Policy '{name}' already exists (id: {new_id}), reusing")
         else:
