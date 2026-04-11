@@ -21,6 +21,9 @@ _: {
       ".config/Code"
       # ownCloud client
       ".config/ownCloud"
+      # netcup SCP firewall tool (Epic 15a)
+      ".config/netcup-scp"
+      ".local/share/netcup-scp"
       ".local/share/ownCloud"
       # gnome-keyring encrypted keyring files
       ".local/share/keyrings"
