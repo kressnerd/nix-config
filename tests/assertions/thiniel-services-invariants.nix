@@ -50,8 +50,8 @@
         message = "programs.hyprland.withUWSM must be true for proper Hyprland session management via UWSM";
       }
       {
-        assertion = !config.home-manager.users.dan.wayland.windowManager.hyprland.systemd.enable;
-        message = "HM wayland.windowManager.hyprland.systemd.enable must be false when UWSM manages systemd targets";
+        assertion = config.home-manager.users.dan.wayland.windowManager.hyprland.systemd.enable;
+        message = "Hyprland systemd integration must be enabled for session-target-dependent services (waybar)";
       }
       {
         assertion = config.virtualisation.oci-containers.containers ? qdrant_roo;
