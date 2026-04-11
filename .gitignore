@@ -1,2 +1,3 @@
 result*
 hosts/cupix001/private.nix
+.pytest_cache/

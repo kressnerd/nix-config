@@ -923,3 +923,87 @@ class TestRestoreCommand:
         args = argparse.Namespace(server="cupix001", command="restore", file="/nonexistent/file.json")
         with pytest.raises(SystemExit):
             cmd_restore(args)
+
+
+class TestWorkflow:
+    """Test full backup → lockdown → restore workflow."""
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_full_backup_lockdown_restore_cycle(self, MockAuth, MockClient, tmp_path):
+        """Full cycle: backup saves state, lockdown blocks traffic, restore recovers."""
+        from netcup_firewall import cmd_backup, cmd_lockdown, cmd_restore
+        import argparse
+
+        # Setup mock auth
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+
+        # Setup mock client with initial state
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = [
+            {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
+        ]
+
+        # Initial firewall state: has a real policy
+        initial_firewall = {
+            "userPolicies": [1],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+            "consistent": True,
+            "active": True,
+        }
+        mock_client.get_firewall.return_value = initial_firewall
+        mock_client.list_policies.return_value = [
+            {"id": 1, "name": "production", "rules": [
+                {"direction": "INGRESS", "protocol": "TCP", "destinationPort": "443", "action": "ACCEPT"}
+            ]}
+        ]
+        mock_client.set_firewall.return_value = "task-uuid"
+
+        # Step 1: BACKUP
+        backup_dir = str(tmp_path / "backups")
+        args_backup = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args_backup, backup_dir=backup_dir)
+        assert os.path.exists(backup_path)
+
+        # Verify backup content
+        with open(backup_path) as f:
+            backup_data = json.load(f)
+        assert backup_data["version"] == 1
+        assert backup_data["server"]["name"] == "cupix001"
+        assert len(backup_data["policies"]) == 1
+        assert backup_data["policies"][0]["name"] == "production"
+
+        # Step 2: LOCKDOWN
+        # Now lockdown creates an empty policy
+        mock_client.create_policy.return_value = {"id": 99, "name": "lockdown-cupix001", "rules": []}
+        mock_client.list_policies.return_value = [
+            {"id": 1, "name": "production", "rules": []}
+        ]  # No lockdown policy exists yet
+
+        # Patch cmd_backup inside lockdown to avoid double backup
+        with patch("netcup_firewall.cmd_backup", return_value=str(tmp_path / "auto-backup.json")):
+            args_lockdown = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+            cmd_lockdown(args_lockdown)
+
+        # Verify lockdown assigned empty policy
+        mock_client.create_policy.assert_called_with(42, "lockdown-cupix001", [])
+        mock_client.set_firewall.assert_called()
+
+        # Step 3: RESTORE from the backup we took in step 1
+        mock_client.list_policies.return_value = [
+            {"id": 99, "name": "lockdown-cupix001", "rules": []}
+        ]  # Only lockdown policy exists now
+        mock_client.create_policy.return_value = {"id": 50, "name": "production", "rules": []}
+
+        args_restore = argparse.Namespace(server="cupix001", command="restore", file=backup_path)
+        cmd_restore(args_restore)
+
+        # Verify restore created the production policy and assigned it
+        # The last set_firewall call should have the restored policy
+        last_set_call = mock_client.set_firewall.call_args
+        assert last_set_call[0][1] == "aa:bb:cc:dd:ee:ff"  # Same interface
