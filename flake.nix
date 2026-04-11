@@ -223,6 +223,36 @@
         };
       };
 
+      # ── Dev shells ─────────────────────────────────────────────────────────
+      devShells = builtins.listToAttrs (
+        map
+          (system: {
+            name = system;
+            value =
+              let
+                pkgs = nixpkgs.legacyPackages.${system};
+              in
+              {
+                default = pkgs.mkShell {
+                  NIX_CONFIG = "extra-experimental-features = nix-command flakes";
+                  nativeBuildInputs = [
+                    pkgs.nix
+                    pkgs.home-manager
+                    pkgs.git
+                    pkgs.python3
+                    pkgs.python3Packages.requests
+                    pkgs.python3Packages.pytest
+                  ];
+                };
+              };
+          })
+          [
+            "x86_64-linux"
+            "aarch64-linux"
+            "aarch64-darwin"
+          ]
+      );
+
       # ── Formatter (nix fmt) ────────────────────────────────────────────────
       formatter = builtins.listToAttrs (
         map
