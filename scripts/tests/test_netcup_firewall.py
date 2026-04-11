@@ -235,3 +235,155 @@ class TestScpAuth:
         assert result == "at-new"
         auth.refresh_access_token.assert_called_once_with("rt-stored")
         auth.save_credentials.assert_called_once()
+
+
+class TestScpApiClient:
+    """Test SCP REST API client."""
+
+    def test_find_server(self):
+        """find_server returns server ID by name."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = [{"id": 12345, "name": "cupix001"}]
+            mock_get.return_value = mock_resp
+            result = client.find_server("cupix001")
+        assert result == 12345
+
+    def test_find_server_not_found(self):
+        """find_server raises ValueError when server not found."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = []
+            mock_get.return_value = mock_resp
+            with pytest.raises(ValueError, match="not found"):
+                client.find_server("nonexistent")
+
+    def test_get_interfaces(self):
+        """get_interfaces returns list of interface dicts."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = [{"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}]
+            mock_get.return_value = mock_resp
+            result = client.get_interfaces(12345)
+        assert len(result) == 1
+        assert result[0]["mac"] == "aa:bb:cc:dd:ee:ff"
+
+    def test_get_firewall(self):
+        """get_firewall returns firewall state dict."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {
+                "userPolicies": [1],
+                "copiedPolicies": [],
+                "ingressImplicitRule": "DROP",
+                "egressImplicitRule": "DROP",
+                "consistent": True,
+                "active": True,
+            }
+            mock_get.return_value = mock_resp
+            result = client.get_firewall(12345, "aa:bb:cc:dd:ee:ff")
+        assert result["active"] is True
+        assert result["ingressImplicitRule"] == "DROP"
+
+    def test_set_firewall(self):
+        """set_firewall PUTs payload and returns task UUID."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.put") as mock_put:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 202
+            mock_resp.json.return_value = {"uuid": "task-uuid-123"}
+            mock_put.return_value = mock_resp
+            result = client.set_firewall(12345, "aa:bb:cc:dd:ee:ff", {"userPolicies": [99]})
+        assert result == "task-uuid-123"
+
+    def test_list_policies(self):
+        """list_policies returns list of policy dicts."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = [
+                {"id": 1, "name": "my-policy", "rules": []},
+                {"id": 2, "name": "other-policy", "rules": []},
+            ]
+            mock_get.return_value = mock_resp
+            result = client.list_policies(42)
+        assert len(result) == 2
+
+    def test_get_policy(self):
+        """get_policy returns single policy dict."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.json.return_value = {"id": 1, "name": "my-policy", "rules": []}
+            mock_get.return_value = mock_resp
+            result = client.get_policy(42, 1)
+        assert result["name"] == "my-policy"
+
+    def test_create_policy(self):
+        """create_policy POSTs and returns created policy."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.post") as mock_post:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 201
+            mock_resp.json.return_value = {"id": 99, "name": "lockdown", "rules": []}
+            mock_post.return_value = mock_resp
+            result = client.create_policy(42, "lockdown", [])
+        assert result["id"] == 99
+        assert result["name"] == "lockdown"
+
+    def test_delete_policy(self):
+        """delete_policy sends DELETE request."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.delete") as mock_delete:
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_delete.return_value = mock_resp
+            client.delete_policy(42, 99)  # Should not raise
+        mock_delete.assert_called_once()
+
+    @patch("time.sleep")
+    def test_wait_for_task_success(self, mock_sleep):
+        """wait_for_task polls until COMPLETED."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            running_resp = MagicMock()
+            running_resp.status_code = 200
+            running_resp.json.return_value = {"status": "RUNNING"}
+            completed_resp = MagicMock()
+            completed_resp.status_code = 200
+            completed_resp.json.return_value = {"status": "COMPLETED"}
+            mock_get.side_effect = [running_resp, completed_resp]
+            client.wait_for_task("task-uuid-123")  # Should not raise
+
+    @patch("time.sleep")
+    def test_wait_for_task_timeout(self, mock_sleep):
+        """wait_for_task raises TimeoutError after max polls."""
+        from netcup_firewall import ScpApiClient
+        client = ScpApiClient("fake-token")
+        with patch("requests.get") as mock_get:
+            running_resp = MagicMock()
+            running_resp.status_code = 200
+            running_resp.json.return_value = {"status": "RUNNING"}
+            mock_get.return_value = running_resp
+            with pytest.raises(TimeoutError):
+                client.wait_for_task("task-uuid-123", max_polls=3, interval=0)

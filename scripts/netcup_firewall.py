@@ -20,6 +20,7 @@ import requests
 # OIDC / SCP auth constants
 # ---------------------------------------------------------------------------
 
+BASE_URL = "https://www.servercontrolpanel.de/scp-core/api/v1"
 TOKEN_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/token"
 DEVICE_AUTH_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/auth/device"
 USERINFO_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/userinfo"
@@ -129,6 +130,91 @@ class ScpAuth:
         })
         resp.raise_for_status()
         return resp.json()["id"]
+
+
+# ---------------------------------------------------------------------------
+# ScpApiClient — SCP REST API client
+# ---------------------------------------------------------------------------
+
+
+class ScpApiClient:
+    """REST API client for the netcup Server Control Panel."""
+
+    def __init__(self, access_token: str):
+        self._token = access_token
+
+    def _headers(self):
+        return {
+            "Authorization": f"Bearer {self._token}",
+            "Content-Type": "application/json",
+        }
+
+    def _get(self, path):
+        return requests.get(BASE_URL + path, headers=self._headers())
+
+    def _post(self, path, json_data):
+        return requests.post(BASE_URL + path, headers=self._headers(), json=json_data)
+
+    def _put(self, path, json_data):
+        return requests.put(BASE_URL + path, headers=self._headers(), json=json_data)
+
+    def _delete(self, path):
+        return requests.delete(BASE_URL + path, headers=self._headers())
+
+    def find_server(self, name):
+        """Find a server by name and return its ID."""
+        resp = self._get(f"/servers?name={name}")
+        servers = resp.json()
+        for server in servers:
+            if server.get("name") == name:
+                return server["id"]
+        raise ValueError(f"Server '{name}' not found")
+
+    def get_interfaces(self, server_id):
+        """Return list of interface dicts for a server."""
+        resp = self._get(f"/servers/{server_id}/interfaces")
+        return resp.json()
+
+    def get_firewall(self, server_id, mac):
+        """Return firewall state dict for a server interface."""
+        resp = self._get(f"/servers/{server_id}/interfaces/{mac}/firewall")
+        return resp.json()
+
+    def set_firewall(self, server_id, mac, payload):
+        """Apply firewall payload via PUT; return task UUID from 202 response."""
+        resp = self._put(f"/servers/{server_id}/interfaces/{mac}/firewall", payload)
+        return resp.json()["uuid"]
+
+    def list_policies(self, user_id):
+        """Return list of firewall policy dicts for a user."""
+        resp = self._get(f"/users/{user_id}/firewall-policies")
+        return resp.json()
+
+    def get_policy(self, user_id, policy_id):
+        """Return a single firewall policy dict."""
+        resp = self._get(f"/users/{user_id}/firewall-policies/{policy_id}")
+        return resp.json()
+
+    def create_policy(self, user_id, name, rules):
+        """Create a new firewall policy; return the created policy dict."""
+        resp = self._post(f"/users/{user_id}/firewall-policies", {"name": name, "rules": rules})
+        return resp.json()
+
+    def delete_policy(self, user_id, policy_id):
+        """Delete a firewall policy."""
+        self._delete(f"/users/{user_id}/firewall-policies/{policy_id}")
+
+    def wait_for_task(self, task_uuid, max_polls=30, interval=2):
+        """Poll task endpoint until COMPLETED, FAILED, or max_polls exceeded."""
+        for _ in range(max_polls):
+            resp = self._get(f"/tasks/{task_uuid}")
+            status = resp.json()["status"]
+            if status == "COMPLETED":
+                return
+            if status == "FAILED":
+                raise RuntimeError(f"Task {task_uuid} failed")
+            time.sleep(interval)
+        raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
 
 
 def parse_args(argv=None):
