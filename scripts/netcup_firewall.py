@@ -301,10 +301,62 @@ def parse_args(argv=None):
 # ---------------------------------------------------------------------------
 
 
-def cmd_backup(args):
-    """Handle the backup subcommand."""
-    print("Not implemented")
-    sys.exit(1)
+def cmd_backup(args, backup_dir=None):
+    """Export current firewall state to JSON backup file."""
+    from datetime import datetime, timezone
+
+    # Default backup directory
+    if backup_dir is None:
+        backup_dir = os.path.join(
+            os.path.expanduser("~"), ".local", "share", "netcup-scp", "backups"
+        )
+
+    # Authenticate
+    auth = ScpAuth()
+    access_token = auth.get_access_token()
+    user_id = auth.get_user_id(access_token)
+    client = ScpApiClient(access_token)
+
+    # Gather data
+    server_id = client.find_server(args.server)
+    interfaces = client.get_interfaces(server_id)
+
+    # Get firewall state for each interface
+    interface_data = []
+    for iface in interfaces:
+        mac = iface["mac"]
+        firewall = client.get_firewall(server_id, mac)
+        interface_data.append({
+            "mac": mac,
+            "firewall": firewall,
+        })
+
+    # Get all user policies
+    policies = client.list_policies(user_id)
+
+    # Assemble backup
+    now = datetime.now(timezone.utc)
+    backup = {
+        "version": 1,
+        "timestamp": now.isoformat(),
+        "server": {
+            "id": server_id,
+            "name": args.server,
+        },
+        "interfaces": interface_data,
+        "policies": policies,
+    }
+
+    # Write backup file
+    os.makedirs(backup_dir, exist_ok=True)
+    timestamp_str = now.strftime("%Y%m%d-%H%M%S")
+    filename = f"{args.server}-{timestamp_str}.json"
+    filepath = os.path.join(backup_dir, filename)
+    with open(filepath, "w") as f:
+        json.dump(backup, f, indent=2)
+
+    print(f"Backup saved to: {filepath}")
+    return filepath
 
 
 def cmd_lockdown(args):
