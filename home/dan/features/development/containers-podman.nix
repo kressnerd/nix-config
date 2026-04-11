@@ -90,6 +90,8 @@
       # Registries configuration
       ".config/containers/registries.conf".text = ''
         # v2 format for registries.conf
+        unqualified-search-registries = ["docker.io", "quay.io", "ghcr.io"]
+
         # Search registries
         [[registry]]
         location = "docker.io"
