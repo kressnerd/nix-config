@@ -360,9 +360,63 @@ def cmd_backup(args, backup_dir=None):
 
 
 def cmd_lockdown(args):
-    """Handle the lockdown subcommand."""
-    print("Not implemented")
-    sys.exit(1)
+    """Kill switch: block ALL traffic via empty firewall policy."""
+    # Confirmation prompt unless --yes
+    if not args.yes:
+        answer = input(
+            f"WARNING: This will block ALL network traffic to {args.server}. "
+            f"Continue? [y/N] "
+        )
+        if answer.lower() != "y":
+            print("Aborted.")
+            sys.exit(1)
+
+    # Auto-backup first (safety net)
+    print(f"Creating automatic backup before lockdown...")
+    backup_path = cmd_backup(args)
+    print(f"Backup saved to: {backup_path}")
+
+    # Authenticate
+    auth = ScpAuth()
+    access_token = auth.get_access_token()
+    user_id = auth.get_user_id(access_token)
+    client = ScpApiClient(access_token)
+
+    # Find server and interfaces
+    server_id = client.find_server(args.server)
+    interfaces = client.get_interfaces(server_id)
+
+    # Find or create lockdown policy
+    lockdown_name = f"lockdown-{args.server}"
+    policies = client.list_policies(user_id)
+    lockdown_policy = None
+    for p in policies:
+        if p["name"] == lockdown_name:
+            lockdown_policy = p
+            break
+
+    if lockdown_policy is None:
+        print(f"Creating lockdown policy '{lockdown_name}' (empty rules = DROP ALL)...")
+        lockdown_policy = client.create_policy(user_id, lockdown_name, [])
+    else:
+        print(f"Reusing existing lockdown policy '{lockdown_name}' (id: {lockdown_policy['id']})")
+
+    # Assign lockdown policy to each interface
+    for iface in interfaces:
+        mac = iface["mac"]
+        print(f"Assigning lockdown policy to interface {mac}...")
+        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": [lockdown_policy["id"]]})
+        client.wait_for_task(task_uuid)
+
+        # Verify
+        state = client.get_firewall(server_id, mac)
+        print(f"  Interface {mac}: active={state.get('active')}, "
+              f"ingress={state.get('ingressImplicitRule')}, "
+              f"egress={state.get('egressImplicitRule')}")
+
+    print(f"\nLOCKDOWN ACTIVE — all traffic to {args.server} blocked via SCP external firewall")
+    print(f"Backup saved to: {backup_path}")
+    print(f"To restore: python3 scripts/netcup_firewall.py restore --server {args.server} --file {backup_path}")
 
 
 def cmd_restore(args):
