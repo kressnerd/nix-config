@@ -59,6 +59,14 @@
           builtins.elem "fnm" hmPkgNames;
         message = "thiniel: fnm (Fast Node Manager) must be installed for Node.js development";
       }
+      {
+        assertion =
+          let
+            hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home-manager.users.dan.home.packages;
+          in
+          builtins.elem "podman" hmPkgNames;
+        message = "thiniel: Podman must be installed via Home Manager for container development";
+      }
     ];
   };
 }

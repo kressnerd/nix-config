@@ -24,6 +24,8 @@ _: {
       ".local/share/ownCloud"
       # gnome-keyring encrypted keyring files
       ".local/share/keyrings"
+      # Rootless Podman container images, layers, and volumes
+      ".local/share/containers"
       # SweetHome3D
       ".eteks"
     ];

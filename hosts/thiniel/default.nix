@@ -131,6 +131,7 @@
       "/var/log"
       #      "/var/lib/bluetooth"
       "/var/lib/nixos" # contains important state
+      "/var/lib/containers" # Podman container images and layers (system-level)
       "/var/lib/systemd/coredump"
       "/etc/NetworkManager/system-connections"
       #      "/etc/mullvad-vpn"
@@ -348,6 +349,13 @@
       withUWSM = true;
       # portalPackage is typically not needed when using pkgs-unstable.hyprland
     };
+  };
+
+  # Podman container runtime
+  virtualisation.podman = {
+    enable = true;
+    dockerCompat = false; # HM aliases handle docker → podman mapping
+    defaultNetwork.settings.dns_enabled = true;
   };
 
   # Open ports in the firewall.
