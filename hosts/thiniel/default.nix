@@ -233,6 +233,7 @@
 
     greetd = {
       enable = true;
+      useTextGreeter = true; # Clear boot messages from login TTY
       settings = {
         default_session = {
           command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --remember-session --sessions ${pkgs-unstable.hyprland}/share/wayland-sessions";
