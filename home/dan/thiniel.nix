@@ -12,9 +12,9 @@
     ./features/cli/vim.nix
     ./features/development/claude-code.nix
     ./features/development/containers.nix
-    ./features/development/fnm.nix
     ./features/development/formatters.nix
     ./features/development/go.nix
+    ./features/development/nodejs.nix
     ./features/development/python-tools.nix
     ./features/linux/fonts.nix
     ./features/linux/gnome-keyring.nix
