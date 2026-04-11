@@ -1,4 +1,9 @@
-{ pkgs, pkgs-unstable, ... }:
+{
+  pkgs,
+  pkgs-unstable,
+  lib,
+  ...
+}:
 let
   startupScript = pkgs.writeShellScriptBin "start" ''
     ${pkgs.wl-clipboard}/bin/wl-paste --type text --watch ${pkgs.cliphist}/bin/cliphist store & # Stores only text data
@@ -7,7 +12,7 @@ let
   assign-workspaces = pkgs.writeShellScriptBin "assign-workspaces" ''
     set -euo pipefail
     export PATH="${
-      pkgs.lib.makeBinPath [
+      lib.makeBinPath [
         pkgs.jq
         pkgs.socat
         pkgs-unstable.hyprland
@@ -35,14 +40,19 @@ let
     sleep 2
     assign_workspaces
 
-    SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
-    socat -U - UNIX-CONNECT:"$SOCKET" | while IFS= read -r line; do
-      case "$line" in
-        monitoradded*|monitorremoved*)
-          sleep 1
-          assign_workspaces
-          ;;
-      esac
+    # Long-running listener — relax strict mode for resilience
+    set +e
+    while true; do
+      SOCKET="$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock"
+      socat -U - UNIX-CONNECT:"$SOCKET" | while IFS= read -r line; do
+        case "$line" in
+          monitoradded*|monitorremoved*)
+            sleep 1
+            assign_workspaces
+            ;;
+        esac
+      done
+      sleep 2  # backoff before reconnect
     done
   '';
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''

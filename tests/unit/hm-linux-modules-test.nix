@@ -28,7 +28,7 @@ let
     if pkgs.stdenv.isLinux then
       let
         hyprlandModule = import ../../home/dan/features/linux/hyprland.nix {
-          inherit pkgs;
+          inherit pkgs lib;
           pkgs-unstable = pkgs;
         };
         waybarModule = import ../../home/dan/features/linux/waybar.nix {
@@ -96,6 +96,11 @@ let
         testHyprlandRounding = {
           expr = hyprSettings.decoration.rounding;
           expected = 8;
+        };
+
+        testHyprlandNoStaticWorkspace = {
+          expr = !(hyprSettings ? workspace);
+          expected = true;
         };
 
         # ── waybar ──────────────────────────────────────────────────────────
