@@ -44,6 +44,35 @@
           == config.programs.hyprland.package;
         message = "HM Hyprland package must match system-level programs.hyprland.package to prevent version mismatch";
       }
+      {
+        assertion =
+          builtins.length config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor == 2;
+        message = "thiniel: Hyprland monitor rules must contain exactly 2 entries (catch-all + eDP-1 only)";
+      }
+      {
+        assertion =
+          !(config.home-manager.users.dan.wayland.windowManager.hyprland.settings ? workspace)
+          || config.home-manager.users.dan.wayland.windowManager.hyprland.settings.workspace == [ ];
+        message = "thiniel: Hyprland must not have static workspace rules (dynamic assignment via script)";
+      }
+      {
+        assertion =
+          let
+            hmHyprSettings = config.home-manager.users.dan.wayland.windowManager.hyprland.settings;
+          in
+          (hmHyprSettings ? env) && builtins.any (e: e == "AQ_NO_MODIFIERS,1") hmHyprSettings.env;
+        message = "thiniel: Hyprland env must include AQ_NO_MODIFIERS,1 to fix DRM modifier negotiation";
+      }
+      {
+        assertion =
+          let
+            hmHyprSettings = config.home-manager.users.dan.wayland.windowManager.hyprland.settings;
+            execOnce = lib.toList (hmHyprSettings.exec-once or [ ]);
+          in
+          (hmHyprSettings ? exec-once)
+          && builtins.any (cmd: builtins.match ".*assign-workspaces.*" cmd != null) execOnce;
+        message = "thiniel: Hyprland exec-once must include assign-workspaces daemon for dynamic workspace distribution";
+      }
     ];
   };
 }
