@@ -11,6 +11,7 @@
     ./features/cli/starship.nix
     ./features/cli/vim.nix
     ./features/development/claude-code.nix
+    ./features/development/containers.nix
     ./features/development/fnm.nix
     ./features/development/formatters.nix
     ./features/development/go.nix

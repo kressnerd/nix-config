@@ -62,6 +62,15 @@
           assertion = hmHasDir ".local/share/keyrings";
           message = "Thiniel invariant violated: .local/share/keyrings must be in HM persistence (gnome-keyring for VS Code credential storage)";
         }
+        # Podman container data persistence
+        {
+          assertion = hasDir "/var/lib/containers";
+          message = "thiniel: /var/lib/containers must be persisted for Podman container data";
+        }
+        {
+          assertion = hmHasDir ".local/share/containers";
+          message = "thiniel: .local/share/containers must be persisted for rootless Podman data";
+        }
       ];
   };
 }

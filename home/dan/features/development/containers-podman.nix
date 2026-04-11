@@ -125,23 +125,10 @@
   # Shell integration and aliases
   programs.fish = {
     shellAliases = {
-      # Podman aliases with Docker compatibility
-      "docker" = "podman";
-      "docker-compose" = "podman-compose";
-
-      # Podman shortcuts
-      "prun" = "podman run --rm -it";
-      "pexec" = "podman exec -it";
-      "plogs" = "podman logs -f";
-
       # Container development shortcuts (using podman directly)
       "dev-ubuntu" = "podman run -it --name dev-ubuntu ubuntu:22.04 /bin/bash";
       "dev-fedora" = "podman run -it --name dev-fedora fedora:latest /bin/bash";
       "dev-arch" = "podman run -it --name dev-arch archlinux:latest /bin/bash";
-
-      # Container cleanup
-      "container-cleanup" = "podman system prune -af && podman volume prune -f";
-      "container-reset" = "podman system reset";
     };
 
     interactiveShellInit = ''

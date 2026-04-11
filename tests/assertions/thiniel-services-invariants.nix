@@ -42,6 +42,10 @@
         message = "Thiniel invariant violated: virtualisation.libvirtd.enable must be true (VM support)";
       }
       {
+        assertion = config.virtualisation.podman.enable;
+        message = "thiniel: Podman virtualisation must be enabled for container development";
+      }
+      {
         assertion = config.programs.hyprland.withUWSM;
         message = "programs.hyprland.withUWSM must be true for proper Hyprland session management via UWSM";
       }

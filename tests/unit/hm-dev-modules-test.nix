@@ -22,6 +22,9 @@ let
   # ── python-tools.nix ────────────────────────────────────────────────────────
   pythonModule = import ../../home/dan/features/development/python-tools.nix { inherit pkgs; };
   pythonPkgNames = builtins.map (p: p.pname or p.name or "") pythonModule.home.packages;
+
+  # ── containers-podman.nix: raw source (uses config.home.homeDirectory, cannot be imported) ─
+  podmanRawContent = builtins.readFile ../../home/dan/features/development/containers-podman.nix;
 in
 lib.debug.runTests {
 
@@ -113,5 +116,44 @@ lib.debug.runTests {
   testPythonHasUv = {
     expr = builtins.elem "uv" pythonPkgNames;
     expected = true;
+  };
+
+  # ── containers-podman: no duplicate aliases already defined in containers-common ─
+  # These aliases are canonical in containers-common.nix; containers-podman.nix
+  # must NOT redefine them. Each test checks the raw file content for the known
+  # duplicate alias key string. Expected = false means "not present" = no duplicate.
+  testPodmanNoDuplicateAliasDocker = {
+    expr = lib.strings.hasInfix "\"docker\"" podmanRawContent;
+    expected = false;
+  };
+
+  testPodmanNoDuplicateAliasDockerCompose = {
+    expr = lib.strings.hasInfix "\"docker-compose\"" podmanRawContent;
+    expected = false;
+  };
+
+  testPodmanNoDuplicateAliasPrun = {
+    expr = lib.strings.hasInfix "\"prun\"" podmanRawContent;
+    expected = false;
+  };
+
+  testPodmanNoDuplicateAliasPexec = {
+    expr = lib.strings.hasInfix "\"pexec\"" podmanRawContent;
+    expected = false;
+  };
+
+  testPodmanNoDuplicateAliasPlogs = {
+    expr = lib.strings.hasInfix "\"plogs\"" podmanRawContent;
+    expected = false;
+  };
+
+  testPodmanNoDuplicateAliasContainerCleanup = {
+    expr = lib.strings.hasInfix "\"container-cleanup\"" podmanRawContent;
+    expected = false;
+  };
+
+  testPodmanNoDuplicateAliasContainerReset = {
+    expr = lib.strings.hasInfix "\"container-reset\"" podmanRawContent;
+    expected = false;
   };
 }
