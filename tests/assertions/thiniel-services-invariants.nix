@@ -53,6 +53,10 @@
         assertion = !config.home-manager.users.dan.wayland.windowManager.hyprland.systemd.enable;
         message = "HM wayland.windowManager.hyprland.systemd.enable must be false when UWSM manages systemd targets";
       }
+      {
+        assertion = config.virtualisation.oci-containers.containers ? qdrant_roo;
+        message = "thiniel: qdrant_roo OCI container must be defined for roo-code vector database";
+      }
     ];
   };
 }

@@ -358,6 +358,17 @@
     defaultNetwork.settings.dns_enabled = true;
   };
 
+  # OCI containers (Podman backend)
+  virtualisation.oci-containers = {
+    backend = "podman";
+    containers.qdrant_roo = {
+      image = "qdrant/qdrant:latest";
+      ports = [ "6333:6333" ];
+      volumes = [ "qdrant_storage:/qdrant/storage" ];
+      autoStart = true;
+    };
+  };
+
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
