@@ -420,9 +420,68 @@ def cmd_lockdown(args):
 
 
 def cmd_restore(args):
-    """Handle the restore subcommand."""
-    print("Not implemented")
-    sys.exit(1)
+    """Restore firewall state from a backup JSON file."""
+    # Load backup file
+    try:
+        with open(args.file) as f:
+            backup = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: Backup file not found: {args.file}")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in backup file: {e}")
+        sys.exit(1)
+
+    # Validate backup
+    if backup.get("version") != 1:
+        print(f"Error: Unsupported backup version: {backup.get('version')} (expected 1)")
+        sys.exit(1)
+    if backup.get("server", {}).get("name") != args.server:
+        backup_server = backup.get("server", {}).get("name", "unknown")
+        print(f"Error: Backup is for server '{backup_server}', not '{args.server}'")
+        sys.exit(1)
+
+    # Authenticate
+    auth = ScpAuth()
+    access_token = auth.get_access_token()
+    user_id = auth.get_user_id(access_token)
+    client = ScpApiClient(access_token)
+
+    # Find server
+    server_id = client.find_server(args.server)
+
+    # Restore policies: map old IDs to new IDs
+    existing_policies = client.list_policies(user_id)
+    existing_by_name = {p["name"]: p for p in existing_policies}
+    id_map = {}  # old_id → new_id
+
+    for policy in backup.get("policies", []):
+        old_id = policy["id"]
+        name = policy["name"]
+        rules = policy.get("rules", [])
+
+        if name in existing_by_name:
+            # Reuse existing policy
+            new_id = existing_by_name[name]["id"]
+            print(f"Policy '{name}' already exists (id: {new_id}), reusing")
+        else:
+            # Create new policy
+            created = client.create_policy(user_id, name, rules)
+            new_id = created["id"]
+            print(f"Created policy '{name}' (id: {new_id})")
+        id_map[old_id] = new_id
+
+    # Restore interface firewall assignments
+    for iface_backup in backup.get("interfaces", []):
+        mac = iface_backup["mac"]
+        old_policy_ids = iface_backup.get("firewall", {}).get("userPolicies", [])
+        new_policy_ids = [id_map.get(old_id, old_id) for old_id in old_policy_ids]
+
+        print(f"Assigning policies {new_policy_ids} to interface {mac}...")
+        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": new_policy_ids})
+        client.wait_for_task(task_uuid)
+
+    print(f"\nRESTORE COMPLETE — firewall state restored from {args.file}")
 
 
 def cmd_apply(args):

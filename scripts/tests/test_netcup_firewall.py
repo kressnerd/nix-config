@@ -715,3 +715,211 @@ class TestLockdownCommand:
 
         # Should have proceeded with lockdown
         mock_client.set_firewall.assert_called_once()
+
+
+class TestRestoreCommand:
+    """Test restore subcommand."""
+
+    def _make_backup_file(self, tmp_path, server_name="cupix001", version=1):
+        """Helper: create a valid backup JSON file."""
+        backup = {
+            "version": version,
+            "timestamp": "2026-04-11T15:00:00+00:00",
+            "server": {"id": 12345, "name": server_name},
+            "interfaces": [
+                {
+                    "mac": "aa:bb:cc:dd:ee:ff",
+                    "firewall": {
+                        "userPolicies": [1],
+                        "copiedPolicies": [],
+                        "ingressImplicitRule": "DROP",
+                        "egressImplicitRule": "DROP",
+                        "consistent": True,
+                        "active": True,
+                    },
+                }
+            ],
+            "policies": [
+                {
+                    "id": 1,
+                    "name": "my-policy",
+                    "rules": [
+                        {
+                            "direction": "INGRESS",
+                            "protocol": "TCP",
+                            "sourceIp": "0.0.0.0/0",
+                            "destinationPort": "22",
+                            "action": "ACCEPT",
+                        }
+                    ],
+                }
+            ],
+        }
+        backup_file = tmp_path / "backup.json"
+        backup_file.write_text(json.dumps(backup))
+        return str(backup_file)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_loads_backup(self, MockAuth, MockClient, tmp_path):
+        """restore loads and parses backup JSON file."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.list_policies.return_value = []
+        mock_client.create_policy.return_value = {"id": 50, "name": "my-policy", "rules": []}
+        mock_client.set_firewall.return_value = "task-uuid"
+
+        backup_file = self._make_backup_file(tmp_path)
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        cmd_restore(args)
+
+        mock_client.find_server.assert_called_once_with("cupix001")
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_validates_version(self, MockAuth, MockClient, tmp_path):
+        """restore rejects backup with wrong version."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        backup_file = self._make_backup_file(tmp_path, version=99)
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        with pytest.raises(SystemExit):
+            cmd_restore(args)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_validates_server_name(self, MockAuth, MockClient, tmp_path):
+        """restore rejects backup for wrong server."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        backup_file = self._make_backup_file(tmp_path, server_name="other-server")
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        with pytest.raises(SystemExit):
+            cmd_restore(args)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_creates_missing_policies(self, MockAuth, MockClient, tmp_path):
+        """restore creates policies that don't exist yet."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.list_policies.return_value = []  # No existing policies
+        mock_client.create_policy.return_value = {"id": 50, "name": "my-policy", "rules": []}
+        mock_client.set_firewall.return_value = "task-uuid"
+
+        backup_file = self._make_backup_file(tmp_path)
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        cmd_restore(args)
+
+        mock_client.create_policy.assert_called_once()
+        call_args = mock_client.create_policy.call_args
+        assert call_args[0][1] == "my-policy"  # name
+        assert len(call_args[0][2]) == 1  # rules list has 1 rule
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_reuses_existing_policies(self, MockAuth, MockClient, tmp_path):
+        """restore reuses policies that already exist by name."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.list_policies.return_value = [
+            {"id": 77, "name": "my-policy", "rules": []}  # Already exists
+        ]
+        mock_client.set_firewall.return_value = "task-uuid"
+
+        backup_file = self._make_backup_file(tmp_path)
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        cmd_restore(args)
+
+        # Should NOT create a new policy
+        mock_client.create_policy.assert_not_called()
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_assigns_policies_to_interfaces(self, MockAuth, MockClient, tmp_path):
+        """restore assigns mapped policies to interfaces."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.list_policies.return_value = [
+            {"id": 77, "name": "my-policy", "rules": []}  # Existing, maps old id 1 → 77
+        ]
+        mock_client.set_firewall.return_value = "task-uuid"
+
+        backup_file = self._make_backup_file(tmp_path)
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        cmd_restore(args)
+
+        mock_client.set_firewall.assert_called_once()
+        call_args = mock_client.set_firewall.call_args
+        assert call_args[0][0] == 12345  # server_id
+        assert call_args[0][1] == "aa:bb:cc:dd:ee:ff"  # mac
+        # The mapped policy ID should be 77 (not the old backup ID 1)
+        assert 77 in call_args[0][2]["userPolicies"]
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_restore_waits_for_task(self, MockAuth, MockClient, tmp_path):
+        """restore waits for firewall assignment task."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.list_policies.return_value = []
+        mock_client.create_policy.return_value = {"id": 50, "name": "my-policy", "rules": []}
+        mock_client.set_firewall.return_value = "task-uuid-456"
+
+        backup_file = self._make_backup_file(tmp_path)
+        args = argparse.Namespace(server="cupix001", command="restore", file=backup_file)
+        cmd_restore(args)
+
+        mock_client.wait_for_task.assert_called_once_with("task-uuid-456")
+
+    def test_restore_invalid_json(self, tmp_path):
+        """restore fails gracefully on invalid JSON."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        bad_file = tmp_path / "bad.json"
+        bad_file.write_text("not valid json {{{")
+        args = argparse.Namespace(server="cupix001", command="restore", file=str(bad_file))
+        with pytest.raises(SystemExit):
+            cmd_restore(args)
+
+    def test_restore_missing_file(self):
+        """restore fails gracefully on missing file."""
+        from netcup_firewall import cmd_restore
+        import argparse
+
+        args = argparse.Namespace(server="cupix001", command="restore", file="/nonexistent/file.json")
+        with pytest.raises(SystemExit):
+            cmd_restore(args)
