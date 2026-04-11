@@ -546,3 +546,172 @@ class TestBackupCommand:
         filename = os.path.basename(backup_path)
         assert filename.startswith("cupix001-")
         assert filename.endswith(".json")
+
+
+class TestLockdownCommand:
+    """Test lockdown (kill switch) subcommand."""
+
+    def _make_mock_setup(self, MockAuth, MockClient):
+        """Helper to set up common mocks for lockdown tests."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = [
+            {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
+        ]
+        mock_client.list_policies.return_value = []  # No existing lockdown policy
+        mock_client.create_policy.return_value = {"id": 99, "name": "lockdown-cupix001", "rules": []}
+        mock_client.set_firewall.return_value = "task-uuid-123"
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [99],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+            "consistent": True,
+            "active": True,
+        }
+        return mock_auth, mock_client
+
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_creates_auto_backup(self, MockAuth, MockClient, mock_backup, tmp_path):
+        """lockdown creates automatic backup before lockdown."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        self._make_mock_setup(MockAuth, MockClient)
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+        cmd_lockdown(args)
+
+        mock_backup.assert_called_once()
+
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_creates_empty_policy(self, MockAuth, MockClient, mock_backup, tmp_path):
+        """lockdown creates policy with empty rules (DROP ALL)."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        _, mock_client = self._make_mock_setup(MockAuth, MockClient)
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+        cmd_lockdown(args)
+
+        mock_client.create_policy.assert_called_once_with(42, "lockdown-cupix001", [])
+
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_reuses_existing_policy(self, MockAuth, MockClient, mock_backup, tmp_path):
+        """lockdown reuses existing lockdown policy instead of creating new one."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        _, mock_client = self._make_mock_setup(MockAuth, MockClient)
+        # Existing lockdown policy
+        mock_client.list_policies.return_value = [
+            {"id": 77, "name": "lockdown-cupix001", "rules": []},
+            {"id": 1, "name": "other-policy", "rules": [{"direction": "INGRESS"}]},
+        ]
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+        cmd_lockdown(args)
+
+        # Should NOT create a new policy
+        mock_client.create_policy.assert_not_called()
+        # Should assign existing policy ID 77
+        mock_client.set_firewall.assert_called_once()
+        call_args = mock_client.set_firewall.call_args
+        assert 77 in call_args[0][2]["userPolicies"]  # payload contains policy 77
+
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_assigns_policy_to_interface(self, MockAuth, MockClient, mock_backup, tmp_path):
+        """lockdown assigns lockdown policy to server interface."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        _, mock_client = self._make_mock_setup(MockAuth, MockClient)
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+        cmd_lockdown(args)
+
+        mock_client.set_firewall.assert_called_once_with(
+            12345, "aa:bb:cc:dd:ee:ff", {"userPolicies": [99]}
+        )
+
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_waits_for_task(self, MockAuth, MockClient, mock_backup, tmp_path):
+        """lockdown waits for firewall assignment task to complete."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        _, mock_client = self._make_mock_setup(MockAuth, MockClient)
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+        cmd_lockdown(args)
+
+        mock_client.wait_for_task.assert_called_once_with("task-uuid-123")
+
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_verifies_state(self, MockAuth, MockClient, mock_backup, tmp_path):
+        """lockdown verifies firewall state after assignment."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        _, mock_client = self._make_mock_setup(MockAuth, MockClient)
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
+        cmd_lockdown(args)
+
+        # get_firewall called to verify
+        mock_client.get_firewall.assert_called_with(12345, "aa:bb:cc:dd:ee:ff")
+
+    @patch("builtins.input", return_value="n")
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_aborts_without_yes(self, MockAuth, MockClient, mock_backup, mock_input):
+        """lockdown aborts when user says no to confirmation."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        self._make_mock_setup(MockAuth, MockClient)
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=False)
+        with pytest.raises(SystemExit):
+            cmd_lockdown(args)
+
+    @patch("builtins.input", return_value="y")
+    @patch("netcup_firewall.cmd_backup")
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_lockdown_proceeds_with_yes_input(self, MockAuth, MockClient, mock_backup, mock_input, tmp_path):
+        """lockdown proceeds when user confirms with 'y'."""
+        from netcup_firewall import cmd_lockdown
+        import argparse
+
+        _, mock_client = self._make_mock_setup(MockAuth, MockClient)
+        mock_backup.return_value = str(tmp_path / "backup.json")
+
+        args = argparse.Namespace(server="cupix001", command="lockdown", yes=False)
+        cmd_lockdown(args)
+
+        # Should have proceeded with lockdown
+        mock_client.set_firewall.assert_called_once()
