@@ -31,7 +31,7 @@ in
   wayland.windowManager.hyprland = {
     enable = true;
     package = pkgs-unstable.hyprland;
-    systemd.enable = false;
+    systemd.enable = true;
 
     settings = {
       general = {
