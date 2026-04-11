@@ -240,6 +240,16 @@ let
           expr = builtins.elem "rofi-power-menu" hyprPkgNames;
           expected = true;
         };
+
+        testHyprlandEnvHasAqNoModifiers = {
+          expr = builtins.any (e: e == "AQ_NO_MODIFIERS,1") hyprSettings.env;
+          expected = true;
+        };
+
+        testHyprlandExecOnceIsList = {
+          expr = builtins.isList hyprSettings.exec-once;
+          expected = true;
+        };
       }
     else
       [ ]; # skip all hyprland tests on Darwin
