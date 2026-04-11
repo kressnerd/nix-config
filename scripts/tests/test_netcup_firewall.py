@@ -387,3 +387,162 @@ class TestScpApiClient:
             mock_get.return_value = running_resp
             with pytest.raises(TimeoutError):
                 client.wait_for_task("task-uuid-123", max_polls=3, interval=0)
+
+
+class TestBackupCommand:
+    """Test backup subcommand."""
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_backup_calls_api_methods(self, MockAuth, MockClient, tmp_path):
+        """backup calls find_server, get_interfaces, get_firewall, list_policies."""
+        from netcup_firewall import cmd_backup
+        import argparse
+
+        # Setup mocks
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = [
+            {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
+        ]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [1],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+            "consistent": True,
+            "active": True,
+        }
+        mock_client.list_policies.return_value = [
+            {"id": 1, "name": "my-policy", "rules": [{"direction": "INGRESS", "protocol": "TCP", "destinationPort": "22", "action": "ACCEPT"}]}
+        ]
+
+        args = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args, backup_dir=str(tmp_path))
+
+        mock_client.find_server.assert_called_once_with("cupix001")
+        mock_client.get_interfaces.assert_called_once_with(12345)
+        mock_client.get_firewall.assert_called_once()
+        mock_client.list_policies.assert_called_once_with(42)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_backup_writes_valid_json(self, MockAuth, MockClient, tmp_path):
+        """backup writes a valid JSON file."""
+        from netcup_firewall import cmd_backup
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = [
+            {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
+        ]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [1],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+            "consistent": True,
+            "active": True,
+        }
+        mock_client.list_policies.return_value = []
+
+        args = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args, backup_dir=str(tmp_path))
+
+        assert os.path.exists(backup_path)
+        with open(backup_path) as f:
+            data = json.load(f)
+        assert data["version"] == 1
+        assert "timestamp" in data
+        assert data["server"]["id"] == 12345
+        assert data["server"]["name"] == "cupix001"
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_backup_includes_interfaces_and_firewall(self, MockAuth, MockClient, tmp_path):
+        """backup JSON includes interface firewall state."""
+        from netcup_firewall import cmd_backup
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = [
+            {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
+        ]
+        firewall_state = {
+            "userPolicies": [1, 2],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+            "consistent": True,
+            "active": True,
+        }
+        mock_client.get_firewall.return_value = firewall_state
+        mock_client.list_policies.return_value = [
+            {"id": 1, "name": "policy-a", "rules": []},
+            {"id": 2, "name": "policy-b", "rules": []},
+        ]
+
+        args = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args, backup_dir=str(tmp_path))
+
+        with open(backup_path) as f:
+            data = json.load(f)
+        assert len(data["interfaces"]) == 1
+        assert data["interfaces"][0]["mac"] == "aa:bb:cc:dd:ee:ff"
+        assert data["interfaces"][0]["firewall"] == firewall_state
+        assert len(data["policies"]) == 2
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_backup_creates_directory(self, MockAuth, MockClient, tmp_path):
+        """backup creates backup directory if it doesn't exist."""
+        from netcup_firewall import cmd_backup
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = []
+        mock_client.list_policies.return_value = []
+
+        nested_dir = str(tmp_path / "sub" / "dir")
+        args = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args, backup_dir=nested_dir)
+
+        assert os.path.exists(backup_path)
+        assert os.path.isdir(nested_dir)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_backup_filename_format(self, MockAuth, MockClient, tmp_path):
+        """backup filename contains server name and timestamp."""
+        from netcup_firewall import cmd_backup
+        import argparse
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "at-test"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 12345
+        mock_client.get_interfaces.return_value = []
+        mock_client.list_policies.return_value = []
+
+        args = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args, backup_dir=str(tmp_path))
+
+        filename = os.path.basename(backup_path)
+        assert filename.startswith("cupix001-")
+        assert filename.endswith(".json")
