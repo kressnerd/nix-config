@@ -114,6 +114,8 @@ graph TD
 - [Epic 13: Colmena Integration](13-colmena.md)
 - [Epic 14: Deployment Documentation](14-deployment-docs.md)
 - [Epic 15: Netcup External Firewall](15-netcup-firewall.md)
+  - [Epic 15a: Kill Switch & Backup](15a-netcup-firewall-killswitch.md)
+  - [Epic 15b: SSH Access & Shared Firewall Policies](15b-netcup-firewall-ssh-and-policies.md)
 - [Epic 16: Automated Snapshot](16-automated-snapshot.md)
 - [Epic 17: Post-Deploy Tests](17-post-deploy-tests.md)
 
