@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -26,11 +27,6 @@ from netcup_firewall import (
     main,
     parse_args,
 )
-
-
-# ---------------------------------------------------------------------------
-# Argument parsing
-# ---------------------------------------------------------------------------
 
 
 class TestArgParsing:
@@ -80,20 +76,18 @@ class TestArgParsing:
         with pytest.raises(SystemExit):
             parse_args(["apply", "--server", "cupix001", "--policy", "invalid"])
 
-    def test_missing_server_raises(self) -> None:
-        """Missing --server raises SystemExit."""
+    @pytest.mark.parametrize(
+        "argv",
+        [
+            [],
+            ["backup"],
+            ["restore", "--server", "cupix001"],
+        ],
+    )
+    def test_invalid_args_raise_system_exit(self, argv: list[str]) -> None:
+        """Missing required arguments raise SystemExit."""
         with pytest.raises(SystemExit):
-            parse_args(["backup"])
-
-    def test_restore_missing_file_raises(self) -> None:
-        """restore without --file raises SystemExit."""
-        with pytest.raises(SystemExit):
-            parse_args(["restore", "--server", "cupix001"])
-
-    def test_no_subcommand_raises(self) -> None:
-        """No subcommand raises SystemExit."""
-        with pytest.raises(SystemExit):
-            parse_args([])
+            parse_args(argv)
 
     def test_help_raises_systemexit_0(self) -> None:
         """--help raises SystemExit with code 0."""
@@ -131,11 +125,6 @@ class TestArgParsing:
         """parse_args sets args.func to cmd_restore for restore subcommand."""
         args = parse_args(["restore", "--server", "s", "--file", "f.json"])
         assert args.func is cmd_restore
-
-
-# ---------------------------------------------------------------------------
-# ScpAuth
-# ---------------------------------------------------------------------------
 
 
 class TestScpAuth:
@@ -237,7 +226,7 @@ class TestScpAuth:
         mock_post.side_effect = [slow_resp, success_resp]
         result = auth.poll_for_token("dc-123", interval=5, expires_in=600)
         assert result["access_token"] == "at-slow"
-        mock_sleep.assert_any_call(10)  # 5 + 5
+        mock_sleep.assert_any_call(10)
 
     @patch("requests.post")
     def test_refresh_access_token(self, mock_post: MagicMock) -> None:
@@ -286,18 +275,13 @@ class TestScpAuth:
         auth.save_credentials.assert_called_once()
 
 
-# ---------------------------------------------------------------------------
-# ScpApiClient
-# ---------------------------------------------------------------------------
-
-
 class TestScpApiClient:
     """Test SCP REST API client."""
 
     def test_find_server(self) -> None:
         """find_server returns server ID by name."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = [{"id": 12345, "name": "cupix001"}]
@@ -308,7 +292,7 @@ class TestScpApiClient:
     def test_find_server_not_found(self) -> None:
         """find_server raises ValueError when server not found."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = []
@@ -319,7 +303,7 @@ class TestScpApiClient:
     def test_get_interfaces(self) -> None:
         """get_interfaces returns list of interface dicts."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = [
@@ -333,7 +317,7 @@ class TestScpApiClient:
     def test_get_firewall(self) -> None:
         """get_firewall returns firewall state dict."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = {
@@ -352,7 +336,7 @@ class TestScpApiClient:
     def test_set_firewall(self) -> None:
         """set_firewall PUTs payload and returns task UUID."""
         client = ScpApiClient("fake-token")
-        with patch("requests.put") as mock_put:
+        with patch.object(client._session, "put") as mock_put:
             mock_resp = MagicMock()
             mock_resp.status_code = 202
             mock_resp.json.return_value = {"uuid": "task-uuid-123"}
@@ -365,7 +349,7 @@ class TestScpApiClient:
     def test_list_policies(self) -> None:
         """list_policies returns list of policy dicts."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = [
@@ -379,7 +363,7 @@ class TestScpApiClient:
     def test_get_policy(self) -> None:
         """get_policy returns single policy dict."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_resp.json.return_value = {"id": 1, "name": "my-policy", "rules": []}
@@ -390,7 +374,7 @@ class TestScpApiClient:
     def test_create_policy(self) -> None:
         """create_policy POSTs and returns created policy."""
         client = ScpApiClient("fake-token")
-        with patch("requests.post") as mock_post:
+        with patch.object(client._session, "post") as mock_post:
             mock_resp = MagicMock()
             mock_resp.status_code = 201
             mock_resp.json.return_value = {"id": 99, "name": "lockdown", "rules": []}
@@ -402,18 +386,18 @@ class TestScpApiClient:
     def test_delete_policy(self) -> None:
         """delete_policy sends DELETE request."""
         client = ScpApiClient("fake-token")
-        with patch("requests.delete") as mock_delete:
+        with patch.object(client._session, "delete") as mock_delete:
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             mock_delete.return_value = mock_resp
-            client.delete_policy(42, 99)  # Should not raise
+            client.delete_policy(42, 99)
         mock_delete.assert_called_once()
 
     @patch("time.sleep")
     def test_wait_for_task_success(self, mock_sleep: MagicMock) -> None:
         """wait_for_task polls until COMPLETED."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             running_resp = MagicMock()
             running_resp.status_code = 200
             running_resp.json.return_value = {"status": "RUNNING"}
@@ -421,24 +405,19 @@ class TestScpApiClient:
             completed_resp.status_code = 200
             completed_resp.json.return_value = {"status": "COMPLETED"}
             mock_get.side_effect = [running_resp, completed_resp]
-            client.wait_for_task("task-uuid-123")  # Should not raise
+            client.wait_for_task("task-uuid-123")
 
     @patch("time.sleep")
     def test_wait_for_task_timeout(self, mock_sleep: MagicMock) -> None:
         """wait_for_task raises TimeoutError after max polls."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             running_resp = MagicMock()
             running_resp.status_code = 200
             running_resp.json.return_value = {"status": "RUNNING"}
             mock_get.return_value = running_resp
             with pytest.raises(TimeoutError):
                 client.wait_for_task("task-uuid-123", max_polls=3, interval=0)
-
-
-# ---------------------------------------------------------------------------
-# cmd_backup
-# ---------------------------------------------------------------------------
 
 
 class TestBackupCommand:
@@ -620,16 +599,10 @@ class TestBackupCommand:
             user_id=7,
         )
 
-        # Should NOT have instantiated new ScpAuth/ScpApiClient
         MockAuth.assert_not_called()
         MockClient.assert_not_called()
         injected_client.find_server.assert_called_once_with("myserver")
         injected_client.list_policies.assert_called_once_with(7)
-
-
-# ---------------------------------------------------------------------------
-# cmd_lockdown
-# ---------------------------------------------------------------------------
 
 
 class TestLockdownCommand:
@@ -799,13 +772,16 @@ class TestLockdownCommand:
         MockClient: MagicMock,
         mock_backup: MagicMock,
         mock_input: MagicMock,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """lockdown aborts when user says no to confirmation."""
         self._make_mock_setup(MockAuth, MockClient)
 
         args = argparse.Namespace(server="cupix001", command="lockdown", yes=False)
-        with pytest.raises(SystemExit):
+        with caplog.at_level(logging.ERROR), pytest.raises(SystemExit) as exc_info:
             cmd_lockdown(args)
+        assert exc_info.value.code == 1
+        assert "aborted" in caplog.text.lower()
 
     @patch("builtins.input", return_value="y")
     @patch("netcup_firewall.cmd_backup")
@@ -859,11 +835,6 @@ class TestLockdownCommand:
         MockAuth.assert_not_called()
         MockClient.assert_not_called()
         injected_client.find_server.assert_called_once_with("s")
-
-
-# ---------------------------------------------------------------------------
-# cmd_restore
-# ---------------------------------------------------------------------------
 
 
 class TestRestoreCommand:
@@ -950,14 +921,17 @@ class TestRestoreCommand:
         MockAuth: MagicMock,
         MockClient: MagicMock,
         tmp_path: Path,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """restore rejects backup with wrong version."""
         backup_file = self._make_backup_file(tmp_path, version=99)
         args = argparse.Namespace(
             server="cupix001", command="restore", file=backup_file
         )
-        with pytest.raises(SystemExit):
+        with caplog.at_level(logging.ERROR), pytest.raises(SystemExit) as exc_info:
             cmd_restore(args)
+        assert exc_info.value.code == 1
+        assert "version" in caplog.text.lower()
 
     @patch("netcup_firewall.ScpApiClient")
     @patch("netcup_firewall.ScpAuth")
@@ -966,14 +940,17 @@ class TestRestoreCommand:
         MockAuth: MagicMock,
         MockClient: MagicMock,
         tmp_path: Path,
+        caplog: pytest.LogCaptureFixture,
     ) -> None:
         """restore rejects backup for wrong server."""
         backup_file = self._make_backup_file(tmp_path, server_name="other-server")
         args = argparse.Namespace(
             server="cupix001", command="restore", file=backup_file
         )
-        with pytest.raises(SystemExit):
+        with caplog.at_level(logging.ERROR), pytest.raises(SystemExit) as exc_info:
             cmd_restore(args)
+        assert exc_info.value.code == 1
+        assert "server" in caplog.text.lower()
 
     @patch("netcup_firewall.ScpApiClient")
     @patch("netcup_firewall.ScpAuth")
@@ -1096,23 +1073,29 @@ class TestRestoreCommand:
 
         mock_client.wait_for_task.assert_called_once_with("task-uuid-456")
 
-    def test_restore_invalid_json(self, tmp_path: Path) -> None:
+    def test_restore_invalid_json(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """restore fails gracefully on invalid JSON."""
         bad_file = tmp_path / "bad.json"
         bad_file.write_text("not valid json {{{")
         args = argparse.Namespace(
             server="cupix001", command="restore", file=str(bad_file)
         )
-        with pytest.raises(SystemExit):
+        with caplog.at_level(logging.ERROR), pytest.raises(SystemExit) as exc_info:
             cmd_restore(args)
+        assert exc_info.value.code == 1
+        assert "json" in caplog.text.lower()
 
-    def test_restore_missing_file(self) -> None:
+    def test_restore_missing_file(self, caplog: pytest.LogCaptureFixture) -> None:
         """restore fails gracefully on missing file."""
         args = argparse.Namespace(
             server="cupix001", command="restore", file="/nonexistent/file.json"
         )
-        with pytest.raises(SystemExit):
+        with caplog.at_level(logging.ERROR), pytest.raises(SystemExit) as exc_info:
             cmd_restore(args)
+        assert exc_info.value.code == 1
+        assert "not found" in caplog.text.lower()
 
     @patch("netcup_firewall.ScpApiClient")
     @patch("netcup_firewall.ScpAuth")
@@ -1145,11 +1128,6 @@ class TestRestoreCommand:
         injected_client.find_server.assert_called_once_with("cupix001")
 
 
-# ---------------------------------------------------------------------------
-# cmd_apply
-# ---------------------------------------------------------------------------
-
-
 class TestApplyCommand:
     """Test apply subcommand."""
 
@@ -1163,11 +1141,6 @@ class TestApplyCommand:
         assert exc_info.value.code == 1
 
 
-# ---------------------------------------------------------------------------
-# main() dispatch
-# ---------------------------------------------------------------------------
-
-
 class TestMain:
     """Test main() entry point dispatch."""
 
@@ -1179,18 +1152,11 @@ class TestMain:
             "sys.argv",
             ["netcup-firewall", "backup", "--server", "cupix001"],
         ):
-            # main() will call cmd_backup; it may raise because auth is not
-            # mocked — but we only care that args.func is invoked.
             try:
                 main()
             except Exception:
                 pass
         mock_backup.assert_called_once()
-
-
-# ---------------------------------------------------------------------------
-# Error paths
-# ---------------------------------------------------------------------------
 
 
 class TestErrorPaths:
@@ -1228,7 +1194,7 @@ class TestErrorPaths:
     def test_wait_for_task_failed(self, mock_sleep: MagicMock) -> None:
         """wait_for_task raises RuntimeError when task fails."""
         client = ScpApiClient("fake-token")
-        with patch("requests.get") as mock_get:
+        with patch.object(client._session, "get") as mock_get:
             failed_resp = MagicMock()
             failed_resp.status_code = 200
             failed_resp.json.return_value = {"status": "FAILED"}
@@ -1273,11 +1239,6 @@ class TestErrorPaths:
         result = auth.get_access_token()
         assert result == "at-fresh"
         auth.save_credentials.assert_called()
-
-
-# ---------------------------------------------------------------------------
-# Full workflow
-# ---------------------------------------------------------------------------
 
 
 class TestWorkflow:
@@ -1327,7 +1288,6 @@ class TestWorkflow:
         ]
         mock_client.set_firewall.return_value = "task-uuid"
 
-        # Step 1: BACKUP
         backup_dir = str(tmp_path / "backups")
         args_backup = argparse.Namespace(server="cupix001", command="backup")
         backup_path = cmd_backup(args_backup, backup_dir=backup_dir)
@@ -1340,7 +1300,6 @@ class TestWorkflow:
         assert len(backup_data["policies"]) == 1
         assert backup_data["policies"][0]["name"] == "production"
 
-        # Step 2: LOCKDOWN
         mock_client.create_policy.return_value = {
             "id": 99,
             "name": "lockdown-cupix001",
@@ -1362,7 +1321,6 @@ class TestWorkflow:
         mock_client.create_policy.assert_called_with(42, "lockdown-cupix001", [])
         mock_client.set_firewall.assert_called()
 
-        # Step 3: RESTORE
         mock_client.list_policies.return_value = [
             {"id": 99, "name": "lockdown-cupix001", "rules": []}
         ]
