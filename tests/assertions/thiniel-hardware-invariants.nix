@@ -4,6 +4,11 @@
 { config, lib, ... }:
 {
   config = lib.mkIf (config.networking.hostName == "thiniel") {
-    assertions = [ ];
+    assertions = [
+      {
+        assertion = config.hardware.bluetooth.enable;
+        message = "thiniel: Bluetooth must be enabled";
+      }
+    ];
   };
 }
