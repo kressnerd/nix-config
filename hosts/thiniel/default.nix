@@ -231,6 +231,9 @@
     # D-Bus Secret Service for credential storage (VS Code, etc.)
     gnome.gnome-keyring.enable = true;
 
+    # GVFS D-Bus service — required for trash (VS Code, GTK apps)
+    gvfs.enable = true;
+
     greetd = {
       enable = true;
       useTextGreeter = true; # Clear boot messages from login TTY
