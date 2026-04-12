@@ -65,3 +65,18 @@ Exceptions inherited from TEST-FIRST-001. Python-relevant exceptions:
 | `cd scripts && python3 -m pytest tests/ -v` | Run all Python tests |
 | `cd scripts && python3 -m pytest tests/test_<tool>.py -v` | Run tests for specific tool |
 | `cd scripts && python3 -m pytest tests/ -v --tb=short` | Run with short tracebacks |
+
+## Shared Fixtures
+
+- Shared fixtures and `sys.path` manipulation belong in `scripts/tests/conftest.py`.
+- Each test module imports fixtures by name; do not repeat fixture definitions across modules.
+
+## Parametrized Tests
+
+- Use `@pytest.mark.parametrize` for testing multiple invalid input variations of the same argument or command.
+- Avoids repetitive test methods for boundary conditions.
+
+## Error Message Assertions
+
+- Tests for error conditions SHOULD assert both exit code AND error message content using `capsys.readouterr()`.
+- Exit-code-only assertions leave error message regressions undetected.

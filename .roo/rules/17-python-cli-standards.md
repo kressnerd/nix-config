@@ -79,3 +79,65 @@ def cmd_action(
 - No hardcoded credentials in source.
 - Credential files stored at `~/.config/<tool>/` with `0o600` permissions.
 - Credential directories created with `0o700` permissions.
+
+## HTTP Requests
+
+- All HTTP requests MUST specify `timeout=(connect_s, read_s)`. Default: `timeout=(10, 30)`.
+- Never call `requests.*` without `timeout=`.
+- API clients MUST configure retry logic for transient failures (5xx, timeouts).
+- Use `urllib3.util.retry.Retry` with `backoff_factor >= 1` and `status_forcelist=[500, 502, 503, 504]`.
+- Never retry 4xx errors (except 429 with `Retry-After`).
+- Maximum 3 retries.
+
+## Error Handling
+
+- `main()` MUST catch `KeyboardInterrupt` and exit with code 130.
+- `main()` MUST catch unexpected `Exception` at the top level: log `str(exc)` to stderr and exit 1.
+- In `--verbose` mode, re-raise to show the full traceback.
+- Never show raw Python tracebacks to the user in normal mode.
+
+### Main Guard Pattern
+
+```python
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    # ... configure logging ...
+    try:
+        _DISPATCH[args.command](args)
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        sys.exit(130)
+    except Exception as exc:  # noqa: BLE001
+        if args.verbose:
+            raise
+        logger.error("%s", exc)
+        sys.exit(1)
+```
+
+## Exit Code Semantics
+
+- `0` — success
+- `1` — runtime error
+- `2` — argument/usage error (argparse default)
+- `130` — `KeyboardInterrupt` (SIGINT)
+
+## Destructive Operations
+
+- Commands that mutate remote state MUST provide `--yes` to skip interactive confirmation.
+- Consider `--dry-run` to print planned actions without executing.
+
+## Output Modes
+
+- For tools that fetch or list data, provide `--output {text,json}`.
+- In `json` mode: write a single JSON object to `stdout`, suppress all log output.
+- Use flat structures with `lowercase_underscore` keys for `jq` compatibility.
+
+## Environment Variable Fallback
+
+- Frequently-repeated args MAY support env var fallback via `os.environ.get("TOOL_ARGNAME")` as the `argparse` default.
+- Document env vars in `--help` output.
+- Precedence: CLI arg > env var > built-in default.
+
+## Help Text
+
+- Use `epilog=` with `formatter_class=argparse.RawDescriptionHelpFormatter` to include working usage examples in `--help`.
