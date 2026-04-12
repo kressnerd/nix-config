@@ -1,11 +1,8 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
   users.users.dan = {
     isNormalUser = true;
     description = lib.mkDefault "Dan";
-    extraGroups = [
-      "wheel"
-      "networkmanager"
-    ];
+    extraGroups = [ "wheel" ] ++ lib.optional config.networking.networkmanager.enable "networkmanager";
   };
 }
