@@ -79,6 +79,12 @@
         assertion = config.services.avahi.enable && config.services.avahi.nssmdns4;
         message = "thiniel: Avahi must be enabled with nssmdns4 for network printer discovery";
       }
+      {
+        assertion =
+          config.home-manager.users.dan.wayland.windowManager.hyprland.settings.gestures.workspace_swipe
+            or false;
+        message = "thiniel: Hyprland workspace swipe gesture must be enabled";
+      }
     ];
   };
 }

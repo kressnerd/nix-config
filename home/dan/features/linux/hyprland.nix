@@ -119,6 +119,11 @@ in
         };
       };
 
+      gestures = {
+        workspace_swipe = true;
+        workspace_swipe_fingers = 3;
+      };
+
       exec-once = [
         "${startupScript}/bin/start"
         "${assign-workspaces}/bin/assign-workspaces"

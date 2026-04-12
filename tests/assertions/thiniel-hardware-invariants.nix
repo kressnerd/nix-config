@@ -21,6 +21,10 @@
         assertion = !config.services.tlp.enable;
         message = "thiniel: TLP must not be enabled (conflicts with auto-cpufreq)";
       }
+      {
+        assertion = config.networking.modemmanager.enable;
+        message = "thiniel: ModemManager must be enabled for WWAN modem";
+      }
     ];
   };
 }
