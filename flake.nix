@@ -241,7 +241,10 @@
                     pkgs.git
                     pkgs.python3
                     pkgs.python3Packages.requests
+                    pkgs.python3Packages.types-requests
                     pkgs.python3Packages.pytest
+                    pkgs.python3Packages.mypy
+                    pkgs.ruff
                   ];
                 };
               };
