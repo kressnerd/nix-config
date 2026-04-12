@@ -1,20 +1,34 @@
 #!/usr/bin/env python3
 """netcup-firewall — CLI tool to manage netcup vServer firewall rules.
 
+This module provides a command-line interface for declaratively managing
+firewall rules on netcup vServer instances via the SCP REST API.
+Authentication uses the OIDC device code flow with offline refresh tokens.
+
 Subcommands:
-  backup    Save current firewall rules to a JSON file.
-  lockdown  Apply a deny-all inbound policy (kill-switch).
-  restore   Restore firewall rules from a previously saved JSON file.
-  apply     Apply a named policy template (bootstrap or production).
+    backup    Save current firewall rules to a JSON file.
+    lockdown  Apply a deny-all inbound policy (kill-switch).
+    restore   Restore firewall rules from a previously saved JSON file.
+    apply     Apply a named policy template (bootstrap or production).
 """
+
+from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 import time
+from typing import Any
 
 import requests
+
+# ---------------------------------------------------------------------------
+# Module-level logger
+# ---------------------------------------------------------------------------
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # OIDC / SCP auth constants
@@ -22,8 +36,12 @@ import requests
 
 BASE_URL = "https://www.servercontrolpanel.de/scp-core/api/v1"
 TOKEN_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/token"
-DEVICE_AUTH_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/auth/device"
-USERINFO_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/userinfo"
+DEVICE_AUTH_URL = (
+    "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/auth/device"
+)
+USERINFO_URL = (
+    "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/userinfo"
+)
 CLIENT_ID = "scp"
 SCOPES = "offline_access openid"
 
@@ -36,54 +54,102 @@ SCOPES = "offline_access openid"
 class ScpAuth:
     """OIDC authentication for the netcup Server Control Panel."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize ScpAuth with the default credentials file path."""
         self._credentials_path = os.path.join(
             os.path.expanduser("~"), ".config", "netcup-scp", "credentials.json"
         )
 
     @property
-    def credentials_path(self):
+    def credentials_path(self) -> str:
+        """Return the path to the stored credentials file.
+
+        Returns:
+            Absolute path to the credentials JSON file.
+        """
         return self._credentials_path
 
-    def load_credentials(self):
-        """Load stored credentials. Returns dict or None."""
+    def load_credentials(self) -> dict[str, Any] | None:
+        """Load stored credentials from disk.
+
+        Returns:
+            Parsed credentials dict, or None if the file is missing or invalid.
+        """
         try:
             with open(self._credentials_path) as f:
-                return json.load(f)
+                return json.load(f)  # type: ignore[no-any-return]
         except (FileNotFoundError, json.JSONDecodeError):
             return None
 
-    def save_credentials(self, tokens):
-        """Save tokens to credentials file with 0600 permissions."""
+    def save_credentials(self, tokens: dict[str, Any]) -> None:
+        """Save tokens to the credentials file with 0600 permissions.
+
+        Args:
+            tokens: Token dict to persist (access_token, refresh_token, etc.).
+        """
         creds_dir = os.path.dirname(self._credentials_path)
         os.makedirs(creds_dir, mode=0o700, exist_ok=True)
-        fd = os.open(self._credentials_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        fd = os.open(
+            self._credentials_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600
+        )
         with os.fdopen(fd, "w") as f:
             json.dump(tokens, f, indent=2)
 
-    def device_code_flow(self):
-        """Initiate OIDC device code flow. Returns device auth response."""
-        resp = requests.post(DEVICE_AUTH_URL, data={
-            "client_id": CLIENT_ID,
-            "scope": SCOPES,
-        })
-        resp.raise_for_status()
-        return resp.json()
+    def device_code_flow(self) -> dict[str, Any]:
+        """Initiate OIDC device code flow.
 
-    def poll_for_token(self, device_code, interval=5, expires_in=600):
-        """Poll token endpoint until user completes auth."""
+        Returns:
+            Device auth response dict containing device_code, user_code,
+            verification_uri, interval, and expires_in.
+
+        Raises:
+            requests.HTTPError: If the device authorization request fails.
+        """
+        resp = requests.post(
+            DEVICE_AUTH_URL,
+            data={
+                "client_id": CLIENT_ID,
+                "scope": SCOPES,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()  # type: ignore[no-any-return]
+
+    def poll_for_token(
+        self,
+        device_code: str,
+        interval: int = 5,
+        expires_in: int = 600,
+    ) -> dict[str, Any]:
+        """Poll the token endpoint until the user completes auth.
+
+        Args:
+            device_code: The device code from the device authorization response.
+            interval: Initial polling interval in seconds.
+            expires_in: Total seconds before the device code expires.
+
+        Returns:
+            Token dict containing access_token and refresh_token.
+
+        Raises:
+            RuntimeError: If the device code auth fails with an unexpected error.
+            TimeoutError: If the device code expires before auth completes.
+        """
         elapsed = 0
         current_interval = interval
         while elapsed < expires_in:
             time.sleep(current_interval)
             elapsed += current_interval
-            resp = requests.post(TOKEN_URL, data={
-                "client_id": CLIENT_ID,
-                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                "device_code": device_code,
-            })
+            resp = requests.post(
+                TOKEN_URL,
+                data={
+                    "client_id": CLIENT_ID,
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "device_code": device_code,
+                },
+            )
             if resp.status_code == 200:
-                return resp.json()
+                return resp.json()  # type: ignore[no-any-return]
             error = resp.json().get("error")
             if error == "authorization_pending":
                 continue
@@ -94,45 +160,83 @@ class ScpAuth:
                 raise RuntimeError(f"Device code auth failed: {error}")
         raise TimeoutError("Device code flow expired")
 
-    def refresh_access_token(self, refresh_token):
-        """Exchange refresh token for new access token."""
-        resp = requests.post(TOKEN_URL, data={
-            "client_id": CLIENT_ID,
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-        })
-        resp.raise_for_status()
-        return resp.json()
+    def refresh_access_token(self, refresh_token: str) -> dict[str, Any]:
+        """Exchange a refresh token for a new access token.
 
-    def get_access_token(self):
-        """Get valid access token. Uses stored refresh or initiates device flow."""
+        Args:
+            refresh_token: The refresh token to exchange.
+
+        Returns:
+            New token dict containing access_token and refresh_token.
+
+        Raises:
+            requests.HTTPError: If the token refresh request fails.
+        """
+        resp = requests.post(
+            TOKEN_URL,
+            data={
+                "client_id": CLIENT_ID,
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token,
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()  # type: ignore[no-any-return]
+
+    def get_access_token(self) -> str:
+        """Get a valid access token, using stored refresh or starting device flow.
+
+        Returns:
+            A valid access token string.
+
+        Raises:
+            TimeoutError: If the device code flow expires.
+            RuntimeError: If device code auth fails with an unexpected error.
+        """
         creds = self.load_credentials()
         if creds and "refresh_token" in creds:
             try:
                 tokens = self.refresh_access_token(creds["refresh_token"])
                 self.save_credentials(tokens)
-                return tokens["access_token"]
+                return tokens["access_token"]  # type: ignore[no-any-return]
             except requests.HTTPError:
-                print("Refresh token expired, starting device code flow...")
+                logger.info("Refresh token expired, starting device code flow...")
         # No stored credentials or refresh failed — initiate device code flow
         device_resp = self.device_code_flow()
-        print(f"\nOpen this URL in your browser: {device_resp['verification_uri']}")
-        print(f"Enter this code: {device_resp['user_code']}\n")
+        # User-facing interactive prompts must be visible regardless of log level
+        print(
+            f"\nOpen this URL in your browser: {device_resp['verification_uri']}",
+            file=sys.stderr,
+        )
+        print(f"Enter this code: {device_resp['user_code']}\n", file=sys.stderr)
         tokens = self.poll_for_token(
             device_resp["device_code"],
             interval=device_resp.get("interval", 5),
             expires_in=device_resp.get("expires_in", 600),
         )
         self.save_credentials(tokens)
-        return tokens["access_token"]
+        return tokens["access_token"]  # type: ignore[no-any-return]
 
-    def get_user_id(self, access_token):
-        """Get SCP user ID from userinfo endpoint."""
-        resp = requests.get(USERINFO_URL, headers={
-            "Authorization": f"Bearer {access_token}",
-        })
+    def get_user_id(self, access_token: str) -> int:
+        """Get the SCP user ID from the userinfo endpoint.
+
+        Args:
+            access_token: A valid access token.
+
+        Returns:
+            The integer user ID from the SCP userinfo response.
+
+        Raises:
+            requests.HTTPError: If the userinfo request fails.
+        """
+        resp = requests.get(
+            USERINFO_URL,
+            headers={
+                "Authorization": f"Bearer {access_token}",
+            },
+        )
         resp.raise_for_status()
-        return resp.json()["id"]
+        return resp.json()["id"]  # type: ignore[no-any-return]
 
 
 # ---------------------------------------------------------------------------
@@ -143,80 +247,176 @@ class ScpAuth:
 class ScpApiClient:
     """REST API client for the netcup Server Control Panel."""
 
-    def __init__(self, access_token: str):
+    def __init__(self, access_token: str) -> None:
+        """Initialize the API client with a valid access token.
+
+        Args:
+            access_token: A valid SCP OAuth2 access token.
+        """
         self._token = access_token
 
-    def _headers(self):
+    def _headers(self) -> dict[str, str]:
+        """Return HTTP headers for authenticated API requests."""
         return {
             "Authorization": f"Bearer {self._token}",
             "Content-Type": "application/json",
         }
 
-    def _get(self, path):
+    def _get(self, path: str) -> requests.Response:
+        """Send an authenticated GET request to the SCP API."""
         resp = requests.get(BASE_URL + path, headers=self._headers())
         resp.raise_for_status()
         return resp
 
-    def _post(self, path, json_data):
+    def _post(self, path: str, json_data: dict[str, Any]) -> requests.Response:
+        """Send an authenticated POST request to the SCP API."""
         resp = requests.post(BASE_URL + path, headers=self._headers(), json=json_data)
         resp.raise_for_status()
         return resp
 
-    def _put(self, path, json_data):
+    def _put(self, path: str, json_data: dict[str, Any]) -> requests.Response:
+        """Send an authenticated PUT request to the SCP API."""
         resp = requests.put(BASE_URL + path, headers=self._headers(), json=json_data)
         resp.raise_for_status()
         return resp
 
-    def _delete(self, path):
+    def _delete(self, path: str) -> requests.Response:
+        """Send an authenticated DELETE request to the SCP API."""
         resp = requests.delete(BASE_URL + path, headers=self._headers())
         resp.raise_for_status()
         return resp
 
-    def find_server(self, name):
-        """Find a server by name and return its ID."""
+    def find_server(self, name: str) -> int:
+        """Find a server by name and return its numeric ID.
+
+        Args:
+            name: The server name to search for.
+
+        Returns:
+            The integer server ID.
+
+        Raises:
+            ValueError: If no server with the given name is found.
+        """
         resp = self._get(f"/servers?name={name}")
         servers = resp.json()
         for server in servers:
             if server.get("name") == name:
-                return server["id"]
+                return server["id"]  # type: ignore[no-any-return]
         raise ValueError(f"Server '{name}' not found")
 
-    def get_interfaces(self, server_id):
-        """Return list of interface dicts for a server."""
+    def get_interfaces(self, server_id: int) -> list[dict[str, Any]]:
+        """Return list of interface dicts for a server.
+
+        Args:
+            server_id: The numeric server ID.
+
+        Returns:
+            List of interface dicts, each containing mac and type fields.
+        """
         resp = self._get(f"/servers/{server_id}/interfaces")
-        return resp.json()
+        return resp.json()  # type: ignore[no-any-return]
 
-    def get_firewall(self, server_id, mac):
-        """Return firewall state dict for a server interface."""
+    def get_firewall(self, server_id: int, mac: str) -> dict[str, Any]:
+        """Return the firewall state dict for a server interface.
+
+        Args:
+            server_id: The numeric server ID.
+            mac: The MAC address of the interface.
+
+        Returns:
+            Firewall state dict including userPolicies and implicit rules.
+        """
         resp = self._get(f"/servers/{server_id}/interfaces/{mac}/firewall")
-        return resp.json()
+        return resp.json()  # type: ignore[no-any-return]
 
-    def set_firewall(self, server_id, mac, payload):
-        """Apply firewall payload via PUT; return task UUID from 202 response."""
+    def set_firewall(self, server_id: int, mac: str, payload: dict[str, Any]) -> str:
+        """Apply a firewall payload via PUT and return the task UUID.
+
+        Args:
+            server_id: The numeric server ID.
+            mac: The MAC address of the interface.
+            payload: Firewall payload dict (e.g., {"userPolicies": [...]}).
+
+        Returns:
+            Task UUID string for polling the async task status.
+        """
         resp = self._put(f"/servers/{server_id}/interfaces/{mac}/firewall", payload)
-        return resp.json()["uuid"]
+        return resp.json()["uuid"]  # type: ignore[no-any-return]
 
-    def list_policies(self, user_id):
-        """Return list of firewall policy dicts for a user."""
+    def list_policies(self, user_id: int) -> list[dict[str, Any]]:
+        """Return list of firewall policy dicts for a user.
+
+        Args:
+            user_id: The numeric SCP user ID.
+
+        Returns:
+            List of firewall policy dicts.
+        """
         resp = self._get(f"/users/{user_id}/firewall-policies")
-        return resp.json()
+        return resp.json()  # type: ignore[no-any-return]
 
-    def get_policy(self, user_id, policy_id):
-        """Return a single firewall policy dict."""
+    def get_policy(self, user_id: int, policy_id: int) -> dict[str, Any]:
+        """Return a single firewall policy dict.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            policy_id: The numeric policy ID.
+
+        Returns:
+            Firewall policy dict including name and rules.
+        """
         resp = self._get(f"/users/{user_id}/firewall-policies/{policy_id}")
-        return resp.json()
+        return resp.json()  # type: ignore[no-any-return]
 
-    def create_policy(self, user_id, name, rules):
-        """Create a new firewall policy; return the created policy dict."""
-        resp = self._post(f"/users/{user_id}/firewall-policies", {"name": name, "rules": rules})
-        return resp.json()
+    def create_policy(
+        self,
+        user_id: int,
+        name: str,
+        rules: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Create a new firewall policy and return the created policy dict.
 
-    def delete_policy(self, user_id, policy_id):
-        """Delete a firewall policy."""
+        Args:
+            user_id: The numeric SCP user ID.
+            name: Name for the new policy.
+            rules: List of firewall rule dicts.
+
+        Returns:
+            Created policy dict including the server-assigned id.
+        """
+        resp = self._post(
+            f"/users/{user_id}/firewall-policies",
+            {"name": name, "rules": rules},
+        )
+        return resp.json()  # type: ignore[no-any-return]
+
+    def delete_policy(self, user_id: int, policy_id: int) -> None:
+        """Delete a firewall policy.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            policy_id: The numeric policy ID to delete.
+        """
         self._delete(f"/users/{user_id}/firewall-policies/{policy_id}")
 
-    def wait_for_task(self, task_uuid, max_polls=30, interval=2):
-        """Poll task endpoint until COMPLETED, FAILED, or max_polls exceeded."""
+    def wait_for_task(
+        self,
+        task_uuid: str,
+        max_polls: int = 30,
+        interval: int = 2,
+    ) -> None:
+        """Poll the task endpoint until COMPLETED, FAILED, or timeout.
+
+        Args:
+            task_uuid: The task UUID to poll.
+            max_polls: Maximum number of polling attempts.
+            interval: Seconds to wait between polls.
+
+        Raises:
+            RuntimeError: If the task status is FAILED.
+            TimeoutError: If max_polls is exceeded without completion.
+        """
         for _ in range(max_polls):
             resp = self._get(f"/tasks/{task_uuid}")
             status = resp.json()["status"]
@@ -228,92 +428,31 @@ class ScpApiClient:
         raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
 
 
-def parse_args(argv=None):
-    """Parse command-line arguments.
-
-    Args:
-        argv: List of argument strings. When None, sys.argv[1:] is used.
-
-    Returns:
-        argparse.Namespace with parsed arguments.
-    """
-    parser = argparse.ArgumentParser(
-        prog="netcup-firewall",
-        description="Manage netcup vServer firewall rules declaratively.",
-    )
-
-    subparsers = parser.add_subparsers(dest="command")
-    subparsers.required = True  # ensure missing subcommand raises SystemExit
-
-    # --- backup ---
-    backup_parser = subparsers.add_parser("backup", help="Save current firewall rules.")
-    backup_parser.add_argument(
-        "--server",
-        required=True,
-        help="Target server name.",
-    )
-    backup_parser.set_defaults(command="backup")
-
-    # --- lockdown ---
-    lockdown_parser = subparsers.add_parser(
-        "lockdown", help="Apply deny-all inbound policy."
-    )
-    lockdown_parser.add_argument(
-        "--server",
-        required=True,
-        help="Target server name.",
-    )
-    lockdown_parser.add_argument(
-        "--yes",
-        action="store_true",
-        default=False,
-        help="Skip confirmation prompt.",
-    )
-    lockdown_parser.set_defaults(command="lockdown")
-
-    # --- restore ---
-    restore_parser = subparsers.add_parser(
-        "restore", help="Restore firewall rules from a backup file."
-    )
-    restore_parser.add_argument(
-        "--server",
-        required=True,
-        help="Target server name.",
-    )
-    restore_parser.add_argument(
-        "--file",
-        required=True,
-        help="Path to the JSON backup file.",
-    )
-    restore_parser.set_defaults(command="restore")
-
-    # --- apply ---
-    apply_parser = subparsers.add_parser(
-        "apply", help="Apply a named policy template."
-    )
-    apply_parser.add_argument(
-        "--server",
-        required=True,
-        help="Target server name.",
-    )
-    apply_parser.add_argument(
-        "--policy",
-        required=True,
-        choices=["bootstrap", "production"],
-        help="Policy template to apply.",
-    )
-    apply_parser.set_defaults(command="apply")
-
-    return parser.parse_args(argv)
-
-
 # ---------------------------------------------------------------------------
 # Command handlers
 # ---------------------------------------------------------------------------
 
 
-def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None, quiet=False):
-    """Export current firewall state to JSON backup file."""
+def cmd_backup(
+    args: argparse.Namespace,
+    backup_dir: str | None = None,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+    user_id: int | None = None,
+) -> str:
+    """Export current firewall state to a JSON backup file.
+
+    Args:
+        args: Parsed CLI arguments (requires args.server).
+        backup_dir: Directory for backup files. Defaults to
+            ~/.local/share/netcup-scp/backups.
+        auth: ScpAuth instance. Created internally if not provided.
+        client: ScpApiClient instance. Created internally if not provided.
+        user_id: SCP user ID. Fetched internally if not provided.
+
+    Returns:
+        Absolute path to the written backup file.
+    """
     from datetime import datetime, timezone
 
     # Default backup directory
@@ -334,21 +473,23 @@ def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None, quie
     interfaces = client.get_interfaces(server_id)
 
     # Get firewall state for each interface
-    interface_data = []
+    interface_data: list[dict[str, Any]] = []
     for iface in interfaces:
         mac = iface["mac"]
         firewall = client.get_firewall(server_id, mac)
-        interface_data.append({
-            "mac": mac,
-            "firewall": firewall,
-        })
+        interface_data.append(
+            {
+                "mac": mac,
+                "firewall": firewall,
+            }
+        )
 
     # Get all user policies
     policies = client.list_policies(user_id)
 
     # Assemble backup
     now = datetime.now(timezone.utc)
-    backup = {
+    backup: dict[str, Any] = {
         "version": 1,
         "timestamp": now.isoformat(),
         "server": {
@@ -368,13 +509,24 @@ def cmd_backup(args, backup_dir=None, auth=None, client=None, user_id=None, quie
     with os.fdopen(fd, "w") as f:
         json.dump(backup, f, indent=2)
 
-    if not quiet:
-        print(f"Backup saved to: {filepath}")
+    logger.info("Backup saved to: %s", filepath)
     return filepath
 
 
-def cmd_lockdown(args):
-    """Kill switch: block ALL traffic via empty firewall policy."""
+def cmd_lockdown(
+    args: argparse.Namespace,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+    user_id: int | None = None,
+) -> None:
+    """Kill switch: block ALL traffic via an empty firewall policy.
+
+    Args:
+        args: Parsed CLI arguments (requires args.server, args.yes).
+        auth: ScpAuth instance. Created internally if not provided.
+        client: ScpApiClient instance. Created internally if not provided.
+        user_id: SCP user ID. Fetched internally if not provided.
+    """
     # Confirmation prompt unless --yes
     if not args.yes:
         answer = input(
@@ -382,18 +534,19 @@ def cmd_lockdown(args):
             f"Continue? [y/N] "
         )
         if answer.lower() != "y":
-            print("Aborted.")
+            logger.error("Aborted.")
             sys.exit(1)
 
-    # Authenticate once
-    auth = ScpAuth()
-    access_token = auth.get_access_token()
-    user_id = auth.get_user_id(access_token)
-    client = ScpApiClient(access_token)
+    # Authenticate once (or reuse provided instances)
+    if auth is None or client is None or user_id is None:
+        auth = ScpAuth()
+        access_token = auth.get_access_token()
+        user_id = auth.get_user_id(access_token)
+        client = ScpApiClient(access_token)
 
     # Auto-backup first (safety net) — share auth to avoid double login
-    print("Creating automatic backup before lockdown...")
-    backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id, quiet=True)
+    logger.info("Creating automatic backup before lockdown...")
+    backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id)
 
     # Find server and interfaces
     server_id = client.find_server(args.server)
@@ -402,63 +555,102 @@ def cmd_lockdown(args):
     # Find or create lockdown policy
     lockdown_name = f"lockdown-{args.server}"
     policies = client.list_policies(user_id)
-    lockdown_policy = None
+    lockdown_policy: dict[str, Any] | None = None
     for p in policies:
         if p["name"] == lockdown_name:
             lockdown_policy = p
             break
 
     if lockdown_policy is None:
-        print(f"Creating lockdown policy '{lockdown_name}' (empty rules = DROP ALL)...")
+        logger.info(
+            "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
+        )
         lockdown_policy = client.create_policy(user_id, lockdown_name, [])
     else:
-        print(f"Reusing existing lockdown policy '{lockdown_name}' (id: {lockdown_policy['id']})")
+        logger.info(
+            "Reusing existing lockdown policy '%s' (id: %s)",
+            lockdown_name,
+            lockdown_policy["id"],
+        )
 
     # Assign lockdown policy to each interface
     for iface in interfaces:
         mac = iface["mac"]
-        print(f"Assigning lockdown policy to interface {mac}...")
-        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": [lockdown_policy["id"]]})
+        logger.info("Assigning lockdown policy to interface %s...", mac)
+        task_uuid = client.set_firewall(
+            server_id, mac, {"userPolicies": [lockdown_policy["id"]]}
+        )
         client.wait_for_task(task_uuid)
 
         # Verify
         state = client.get_firewall(server_id, mac)
-        print(f"  Interface {mac}: active={state.get('active')}, "
-              f"ingress={state.get('ingressImplicitRule')}, "
-              f"egress={state.get('egressImplicitRule')}")
+        logger.info(
+            "  Interface %s: active=%s, ingress=%s, egress=%s",
+            mac,
+            state.get("active"),
+            state.get("ingressImplicitRule"),
+            state.get("egressImplicitRule"),
+        )
 
-    print(f"\nLOCKDOWN ACTIVE — all traffic to {args.server} blocked via SCP external firewall")
-    print(f"Backup saved to: {backup_path}")
-    print(f"To restore: python3 scripts/netcup_firewall.py restore --server {args.server} --file {backup_path}")
+    logger.info(
+        "\nLOCKDOWN ACTIVE — all traffic to %s blocked via SCP external firewall",
+        args.server,
+    )
+    logger.info("Backup saved to: %s", backup_path)
+    logger.info(
+        "To restore: python3 scripts/netcup_firewall.py restore --server %s --file %s",
+        args.server,
+        backup_path,
+    )
 
 
-def cmd_restore(args):
-    """Restore firewall state from a backup JSON file."""
+def cmd_restore(
+    args: argparse.Namespace,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+    user_id: int | None = None,
+) -> None:
+    """Restore firewall state from a backup JSON file.
+
+    Args:
+        args: Parsed CLI arguments (requires args.server, args.file).
+        auth: ScpAuth instance. Created internally if not provided.
+        client: ScpApiClient instance. Created internally if not provided.
+        user_id: SCP user ID. Fetched internally if not provided.
+
+    Raises:
+        SystemExit: If the backup file is missing, contains invalid JSON,
+            has an unsupported version, or targets a different server.
+    """
     # Load backup file
+    backup: dict[str, Any]
     try:
         with open(args.file) as f:
             backup = json.load(f)
     except FileNotFoundError:
-        print(f"Error: Backup file not found: {args.file}")
+        logger.error("Backup file not found: %s", args.file)
         sys.exit(1)
     except json.JSONDecodeError as e:
-        print(f"Error: Invalid JSON in backup file: {e}")
+        logger.error("Invalid JSON in backup file: %s", e)
         sys.exit(1)
 
     # Validate backup
     if backup.get("version") != 1:
-        print(f"Error: Unsupported backup version: {backup.get('version')} (expected 1)")
+        logger.error(
+            "Unsupported backup version: %s (expected 1)", backup.get("version")
+        )
         sys.exit(1)
     if backup.get("server", {}).get("name") != args.server:
         backup_server = backup.get("server", {}).get("name", "unknown")
-        print(f"Error: Backup is for server '{backup_server}', not '{args.server}'")
+        logger.error("Backup is for server '%s', not '%s'", backup_server, args.server)
         sys.exit(1)
 
-    # Authenticate
-    auth = ScpAuth()
-    access_token = auth.get_access_token()
-    user_id = auth.get_user_id(access_token)
-    client = ScpApiClient(access_token)
+    # Authenticate (or reuse provided instances)
+    if auth is None or client is None or user_id is None:
+        auth = ScpAuth()
+        access_token = auth.get_access_token()
+        user_id = auth.get_user_id(access_token)
+        client = ScpApiClient(access_token)
 
     # Find server
     server_id = client.find_server(args.server)
@@ -466,7 +658,7 @@ def cmd_restore(args):
     # Restore policies: map old IDs to new IDs
     existing_policies = client.list_policies(user_id)
     existing_by_name = {p["name"]: p for p in existing_policies}
-    id_map = {}  # old_id → new_id
+    id_map: dict[int, int] = {}  # old_id → new_id
 
     for policy in backup.get("policies", []):
         old_id = policy["id"]
@@ -479,12 +671,12 @@ def cmd_restore(args):
             # restore is fully correct even when the policy already exists but has
             # diverged from the backup (requires PATCH/PUT policy-rules endpoint).
             new_id = existing_by_name[name]["id"]
-            print(f"Policy '{name}' already exists (id: {new_id}), reusing")
+            logger.info("Policy '%s' already exists (id: %s), reusing", name, new_id)
         else:
             # Create new policy
             created = client.create_policy(user_id, name, rules)
             new_id = created["id"]
-            print(f"Created policy '{name}' (id: {new_id})")
+            logger.info("Created policy '%s' (id: %s)", name, new_id)
         id_map[old_id] = new_id
 
     # Restore interface firewall assignments
@@ -493,40 +685,143 @@ def cmd_restore(args):
         old_policy_ids = iface_backup.get("firewall", {}).get("userPolicies", [])
         new_policy_ids = [id_map.get(old_id, old_id) for old_id in old_policy_ids]
 
-        print(f"Assigning policies {new_policy_ids} to interface {mac}...")
-        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": new_policy_ids})
+        logger.info("Assigning policies %s to interface %s...", new_policy_ids, mac)
+        task_uuid = client.set_firewall(
+            server_id, mac, {"userPolicies": new_policy_ids}
+        )
         client.wait_for_task(task_uuid)
 
-    print(f"\nRESTORE COMPLETE — firewall state restored from {args.file}")
+    logger.info("\nRESTORE COMPLETE — firewall state restored from %s", args.file)
 
 
-def cmd_apply(args):
-    """Handle the apply subcommand."""
-    print("Not implemented — see Epic 15")
+def cmd_apply(args: argparse.Namespace) -> None:
+    """Handle the apply subcommand (not yet implemented).
+
+    Args:
+        args: Parsed CLI arguments.
+
+    Raises:
+        SystemExit: Always, with code 1.
+    """
+    logger.error("Not implemented — see Epic 15")
     sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Argument parsing
+# ---------------------------------------------------------------------------
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command-line arguments.
+
+    Args:
+        argv: List of argument strings. When None, sys.argv[1:] is used.
+
+    Returns:
+        argparse.Namespace with parsed arguments, including a ``func``
+        attribute pointing to the appropriate command handler.
+    """
+    parser = argparse.ArgumentParser(
+        prog="netcup-firewall",
+        description="Manage netcup vServer firewall rules declaratively.",
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Enable verbose output (INFO level logging).",
+    )
+    parser.add_argument(
+        "--quiet",
+        action="store_true",
+        default=False,
+        help="Suppress all output except errors (ERROR level logging).",
+    )
+
+    subparsers = parser.add_subparsers(dest="command")
+    subparsers.required = True  # ensure missing subcommand raises SystemExit
+
+    # --- backup ---
+    backup_parser = subparsers.add_parser("backup", help="Save current firewall rules.")
+    backup_parser.add_argument(
+        "--server",
+        required=True,
+        help="Target server name.",
+    )
+    backup_parser.set_defaults(command="backup", func=cmd_backup)
+
+    # --- lockdown ---
+    lockdown_parser = subparsers.add_parser(
+        "lockdown", help="Apply deny-all inbound policy."
+    )
+    lockdown_parser.add_argument(
+        "--server",
+        required=True,
+        help="Target server name.",
+    )
+    lockdown_parser.add_argument(
+        "--yes",
+        action="store_true",
+        default=False,
+        help="Skip confirmation prompt.",
+    )
+    lockdown_parser.set_defaults(command="lockdown", func=cmd_lockdown)
+
+    # --- restore ---
+    restore_parser = subparsers.add_parser(
+        "restore", help="Restore firewall rules from a backup file."
+    )
+    restore_parser.add_argument(
+        "--server",
+        required=True,
+        help="Target server name.",
+    )
+    restore_parser.add_argument(
+        "--file",
+        required=True,
+        help="Path to the JSON backup file.",
+    )
+    restore_parser.set_defaults(command="restore", func=cmd_restore)
+
+    # --- apply ---
+    apply_parser = subparsers.add_parser("apply", help="Apply a named policy template.")
+    apply_parser.add_argument(
+        "--server",
+        required=True,
+        help="Target server name.",
+    )
+    apply_parser.add_argument(
+        "--policy",
+        required=True,
+        choices=["bootstrap", "production"],
+        help="Policy template to apply.",
+    )
+    apply_parser.set_defaults(command="apply", func=cmd_apply)
+
+    return parser.parse_args(argv)
 
 
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
-_DISPATCH = {
-    "backup": cmd_backup,
-    "lockdown": cmd_lockdown,
-    "restore": cmd_restore,
-    "apply": cmd_apply,
-}
 
-
-def main():
-    """Parse arguments and dispatch to the appropriate command handler."""
+def main() -> None:
+    """Parse arguments, configure logging, and dispatch to the command handler."""
     args = parse_args()
-    handler = _DISPATCH.get(args.command)
-    if handler is None:
-        # Should not happen because subparsers.required = True, but be safe.
-        parse_args(["--help"])
-        sys.exit(1)
-    handler(args)
+
+    # Configure logging level based on verbosity flags
+    if args.verbose:
+        log_level = logging.INFO
+    elif args.quiet:
+        log_level = logging.ERROR
+    else:
+        log_level = logging.WARNING
+
+    logging.basicConfig(level=log_level, format="%(message)s")
+
+    args.func(args)
 
 
 if __name__ == "__main__":
