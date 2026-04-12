@@ -20,6 +20,7 @@ import logging
 import os
 import sys
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import requests
@@ -439,6 +440,317 @@ class ScpApiClient:
         raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
 
 
+def _authenticate_and_setup(
+    auth: ScpAuth | None,
+    client: ScpApiClient | None,
+    user_id: int | None,
+) -> tuple[ScpAuth, ScpApiClient, int]:
+    """Authenticate with SCP and return a ready-to-use auth, client, and user ID.
+
+    When all three arguments are already provided, they are returned unchanged.
+    When any is missing, a fresh authentication flow is performed for all three.
+
+    Args:
+        auth: Existing ScpAuth instance, or None to create one.
+        client: Existing ScpApiClient instance, or None to create one.
+        user_id: Known SCP user ID, or None to fetch from the userinfo endpoint.
+
+    Returns:
+        Tuple of (auth, client, user_id) ready for API calls.
+    """
+    if auth is None or client is None or user_id is None:
+        _auth = ScpAuth()
+        access_token = _auth.get_access_token()
+        _user_id = _auth.get_user_id(access_token)
+        _client = ScpApiClient(access_token)
+        return _auth, _client, _user_id
+    return auth, client, user_id
+
+
+def _gather_interface_firewall_state(
+    client: ScpApiClient,
+    server_id: int,
+    interfaces: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Fetch and return the current firewall state for each server interface.
+
+    Args:
+        client: Authenticated ScpApiClient instance.
+        server_id: The numeric server ID.
+        interfaces: List of interface dicts as returned by get_interfaces.
+
+    Returns:
+        List of dicts with 'mac' and 'firewall' keys for each interface.
+    """
+    interface_data: list[dict[str, Any]] = []
+    for iface in interfaces:
+        mac = iface["mac"]
+        firewall = client.get_firewall(server_id, mac)
+        interface_data.append({"mac": mac, "firewall": firewall})
+    return interface_data
+
+
+def _assemble_backup(
+    server_id: int,
+    server_name: str,
+    interface_data: list[dict[str, Any]],
+    policies: list[dict[str, Any]],
+    now: datetime,
+) -> dict[str, Any]:
+    """Assemble a versioned backup dict from current server state.
+
+    Args:
+        server_id: The numeric server ID.
+        server_name: The server name as it appears in SCP.
+        interface_data: Per-interface firewall state (from _gather_interface_firewall_state).
+        policies: List of all user firewall policies.
+        now: Timestamp for the backup metadata.
+
+    Returns:
+        Backup dict with version, timestamp, server, interfaces, and policies keys.
+    """
+    return {
+        "version": 1,
+        "timestamp": now.isoformat(),
+        "server": {
+            "id": server_id,
+            "name": server_name,
+        },
+        "interfaces": interface_data,
+        "policies": policies,
+    }
+
+
+def _write_backup_file(
+    backup: dict[str, Any],
+    backup_dir: str,
+    server_name: str,
+    now: datetime,
+) -> str:
+    """Write a backup dict to a timestamped JSON file with 0600 permissions.
+
+    Args:
+        backup: Backup data dict to serialize as JSON.
+        backup_dir: Directory where the file will be written (created if absent).
+        server_name: Server name used to form the filename prefix.
+        now: Timestamp used to form the filename suffix.
+
+    Returns:
+        Absolute path to the written backup file.
+    """
+    os.makedirs(backup_dir, mode=0o700, exist_ok=True)
+    timestamp_str = now.strftime("%Y%m%d-%H%M%S")
+    filename = f"{server_name}-{timestamp_str}.json"
+    filepath = os.path.join(backup_dir, filename)
+    fd = os.open(filepath, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w") as f:
+        json.dump(backup, f, indent=2)
+    return filepath
+
+
+def _find_or_create_lockdown_policy(
+    client: ScpApiClient,
+    user_id: int,
+    server_name: str,
+) -> dict[str, Any]:
+    """Return the lockdown policy for a server, creating it when absent.
+
+    The lockdown policy is named ``lockdown-<server_name>`` and contains no
+    rules, which causes the SCP external firewall to DROP all inbound traffic.
+
+    Args:
+        client: Authenticated ScpApiClient instance.
+        user_id: The numeric SCP user ID.
+        server_name: Server name used to derive the policy name.
+
+    Returns:
+        Lockdown policy dict (either an existing one or newly created).
+    """
+    lockdown_name = f"lockdown-{server_name}"
+    for p in client.list_policies(user_id):
+        if p["name"] == lockdown_name:
+            logger.info(
+                "Reusing existing lockdown policy '%s' (id: %s)",
+                lockdown_name,
+                p["id"],
+            )
+            return p
+    logger.info(
+        "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
+    )
+    return client.create_policy(user_id, lockdown_name, [])
+
+
+def _apply_lockdown_to_interfaces(
+    client: ScpApiClient,
+    server_id: int,
+    interfaces: list[dict[str, Any]],
+    lockdown_policy: dict[str, Any],
+) -> None:
+    """Assign the lockdown policy to every interface and log the resulting state.
+
+    Args:
+        client: Authenticated ScpApiClient instance.
+        server_id: The numeric server ID.
+        interfaces: List of interface dicts as returned by get_interfaces.
+        lockdown_policy: Policy dict to assign to each interface.
+    """
+    for iface in interfaces:
+        mac = iface["mac"]
+        logger.info("Assigning lockdown policy to interface %s...", mac)
+        task_uuid = client.set_firewall(
+            server_id, mac, {"userPolicies": [lockdown_policy["id"]]}
+        )
+        client.wait_for_task(task_uuid)
+        state = client.get_firewall(server_id, mac)
+        logger.info(
+            "  Interface %s: active=%s, ingress=%s, egress=%s",
+            mac,
+            state.get("active"),
+            state.get("ingressImplicitRule"),
+            state.get("egressImplicitRule"),
+        )
+
+
+def _load_backup_file(filepath: str) -> dict[str, Any]:
+    """Load and parse a backup JSON file, exiting on file or parse errors.
+
+    Args:
+        filepath: Path to the JSON backup file.
+
+    Returns:
+        Parsed backup dict.
+
+    Raises:
+        SystemExit: If the file is missing or contains invalid JSON.
+    """
+    try:
+        with open(filepath) as f:
+            return json.load(f)  # type: ignore[no-any-return]
+    except FileNotFoundError:
+        logger.error("Backup file not found: %s", filepath)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON in backup file: %s", e)
+        sys.exit(1)
+
+
+def _validate_backup_structure(backup: dict[str, Any], server_name: str) -> None:
+    """Validate backup dict structure and server name match, exiting on violations.
+
+    Checks that all required top-level keys are present, the version is
+    supported, the server name matches, and all interface and policy entries
+    contain the expected fields.
+
+    Args:
+        backup: Parsed backup dict to validate.
+        server_name: Expected server name from CLI args.
+
+    Raises:
+        SystemExit: If any required key is missing, the version is unsupported,
+            the server name mismatches, or interface/policy entries are malformed.
+    """
+    required_keys = {"version", "server", "interfaces", "policies"}
+    missing = required_keys - set(backup.keys())
+    if missing:
+        logger.error(
+            "Backup file missing required keys: %s", ", ".join(sorted(missing))
+        )
+        sys.exit(1)
+
+    if backup.get("version") != 1:
+        logger.error(
+            "Unsupported backup version: %s (expected 1)", backup.get("version")
+        )
+        sys.exit(1)
+
+    if backup.get("server", {}).get("name") != server_name:
+        backup_server = backup.get("server", {}).get("name", "unknown")
+        logger.error("Backup is for server '%s', not '%s'", backup_server, server_name)
+        sys.exit(1)
+
+    for iface in backup.get("interfaces", []):
+        if "mac" not in iface:
+            logger.error("Backup interface entry missing required key: mac")
+            sys.exit(1)
+
+    for policy in backup.get("policies", []):
+        missing_policy_keys = {"name", "rules"} - set(policy.keys())
+        if missing_policy_keys:
+            logger.error(
+                "Backup policy entry missing required keys: %s",
+                ", ".join(sorted(missing_policy_keys)),
+            )
+            sys.exit(1)
+
+
+def _restore_policies(
+    client: ScpApiClient,
+    user_id: int,
+    policies: list[dict[str, Any]],
+    existing_policies: list[dict[str, Any]],
+) -> dict[int, int]:
+    """Restore policies from backup, reusing existing ones where names match.
+
+    Args:
+        client: Authenticated ScpApiClient instance.
+        user_id: The numeric SCP user ID.
+        policies: Policy entries from the backup file.
+        existing_policies: Currently existing policies on the account.
+
+    Returns:
+        Mapping from old policy IDs (as stored in backup) to new policy IDs
+        (as assigned by the server after restore).
+    """
+    existing_by_name = {p["name"]: p for p in existing_policies}
+    id_map: dict[int, int] = {}
+
+    for policy in policies:
+        old_id = policy["id"]
+        name = policy["name"]
+        rules = policy.get("rules", [])
+
+        if name in existing_by_name:
+            # TODO Epic 15: PUT the backed-up rules to the existing policy so that
+            # restore is fully correct even when the policy already exists but has
+            # diverged from the backup (requires PATCH/PUT policy-rules endpoint).
+            new_id = existing_by_name[name]["id"]
+            logger.info("Policy '%s' already exists (id: %s), reusing", name, new_id)
+        else:
+            created = client.create_policy(user_id, name, rules)
+            new_id = created["id"]
+            logger.info("Created policy '%s' (id: %s)", name, new_id)
+        id_map[old_id] = new_id
+
+    return id_map
+
+
+def _reassign_firewall_interfaces(
+    client: ScpApiClient,
+    server_id: int,
+    interfaces_backup: list[dict[str, Any]],
+    id_map: dict[int, int],
+) -> None:
+    """Reassign firewall policies to each interface using the restored ID mapping.
+
+    Args:
+        client: Authenticated ScpApiClient instance.
+        server_id: The numeric server ID.
+        interfaces_backup: Interface entries from the backup file.
+        id_map: Mapping from old backup policy IDs to new server-assigned IDs.
+    """
+    for iface_backup in interfaces_backup:
+        mac = iface_backup["mac"]
+        old_policy_ids = iface_backup.get("firewall", {}).get("userPolicies", [])
+        new_policy_ids = [id_map.get(old_id, old_id) for old_id in old_policy_ids]
+
+        logger.info("Assigning policies %s to interface %s...", new_policy_ids, mac)
+        task_uuid = client.set_firewall(
+            server_id, mac, {"userPolicies": new_policy_ids}
+        )
+        client.wait_for_task(task_uuid)
+
+
 def cmd_backup(
     args: argparse.Namespace,
     backup_dir: str | None = None,
@@ -459,54 +771,21 @@ def cmd_backup(
     Returns:
         Absolute path to the written backup file.
     """
-    from datetime import datetime, timezone
-
     if backup_dir is None:
         backup_dir = os.path.join(
             os.path.expanduser("~"), ".local", "share", "netcup-scp", "backups"
         )
 
-    if auth is None or client is None or user_id is None:
-        auth = ScpAuth()
-        access_token = auth.get_access_token()
-        user_id = auth.get_user_id(access_token)
-        client = ScpApiClient(access_token)
+    now = datetime.now(timezone.utc)
+    auth, client, user_id = _authenticate_and_setup(auth, client, user_id)
 
     server_id = client.find_server(args.server)
     interfaces = client.get_interfaces(server_id)
-
-    interface_data: list[dict[str, Any]] = []
-    for iface in interfaces:
-        mac = iface["mac"]
-        firewall = client.get_firewall(server_id, mac)
-        interface_data.append(
-            {
-                "mac": mac,
-                "firewall": firewall,
-            }
-        )
-
+    interface_data = _gather_interface_firewall_state(client, server_id, interfaces)
     policies = client.list_policies(user_id)
 
-    now = datetime.now(timezone.utc)
-    backup: dict[str, Any] = {
-        "version": 1,
-        "timestamp": now.isoformat(),
-        "server": {
-            "id": server_id,
-            "name": args.server,
-        },
-        "interfaces": interface_data,
-        "policies": policies,
-    }
-
-    os.makedirs(backup_dir, mode=0o700, exist_ok=True)
-    timestamp_str = now.strftime("%Y%m%d-%H%M%S")
-    filename = f"{args.server}-{timestamp_str}.json"
-    filepath = os.path.join(backup_dir, filename)
-    fd = os.open(filepath, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w") as f:
-        json.dump(backup, f, indent=2)
+    backup = _assemble_backup(server_id, args.server, interface_data, policies, now)
+    filepath = _write_backup_file(backup, backup_dir, args.server, now)
 
     logger.info("Backup saved to: %s", filepath)
     return filepath
@@ -535,54 +814,15 @@ def cmd_lockdown(
             logger.error("Aborted.")
             sys.exit(1)
 
-    if auth is None or client is None or user_id is None:
-        auth = ScpAuth()
-        access_token = auth.get_access_token()
-        user_id = auth.get_user_id(access_token)
-        client = ScpApiClient(access_token)
+    auth, client, user_id = _authenticate_and_setup(auth, client, user_id)
 
     logger.info("Creating automatic backup before lockdown...")
     backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id)
 
     server_id = client.find_server(args.server)
     interfaces = client.get_interfaces(server_id)
-
-    lockdown_name = f"lockdown-{args.server}"
-    policies = client.list_policies(user_id)
-    lockdown_policy: dict[str, Any] | None = None
-    for p in policies:
-        if p["name"] == lockdown_name:
-            lockdown_policy = p
-            break
-
-    if lockdown_policy is None:
-        logger.info(
-            "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
-        )
-        lockdown_policy = client.create_policy(user_id, lockdown_name, [])
-    else:
-        logger.info(
-            "Reusing existing lockdown policy '%s' (id: %s)",
-            lockdown_name,
-            lockdown_policy["id"],
-        )
-
-    for iface in interfaces:
-        mac = iface["mac"]
-        logger.info("Assigning lockdown policy to interface %s...", mac)
-        task_uuid = client.set_firewall(
-            server_id, mac, {"userPolicies": [lockdown_policy["id"]]}
-        )
-        client.wait_for_task(task_uuid)
-
-        state = client.get_firewall(server_id, mac)
-        logger.info(
-            "  Interface %s: active=%s, ingress=%s, egress=%s",
-            mac,
-            state.get("active"),
-            state.get("ingressImplicitRule"),
-            state.get("egressImplicitRule"),
-        )
+    lockdown_policy = _find_or_create_lockdown_policy(client, user_id, args.server)
+    _apply_lockdown_to_interfaces(client, server_id, interfaces, lockdown_policy)
 
     logger.info(
         "\nLOCKDOWN ACTIVE — all traffic to %s blocked via SCP external firewall",
@@ -614,88 +854,19 @@ def cmd_restore(
         SystemExit: If the backup file is missing, contains invalid JSON,
             has an unsupported version, or targets a different server.
     """
-    backup: dict[str, Any]
-    try:
-        with open(args.file) as f:
-            backup = json.load(f)
-    except FileNotFoundError:
-        logger.error("Backup file not found: %s", args.file)
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        logger.error("Invalid JSON in backup file: %s", e)
-        sys.exit(1)
+    backup = _load_backup_file(args.file)
+    _validate_backup_structure(backup, args.server)
 
-    required_keys = {"version", "server", "interfaces", "policies"}
-    missing = required_keys - set(backup.keys())
-    if missing:
-        logger.error(
-            "Backup file missing required keys: %s", ", ".join(sorted(missing))
-        )
-        sys.exit(1)
-
-    if backup.get("version") != 1:
-        logger.error(
-            "Unsupported backup version: %s (expected 1)", backup.get("version")
-        )
-        sys.exit(1)
-    if backup.get("server", {}).get("name") != args.server:
-        backup_server = backup.get("server", {}).get("name", "unknown")
-        logger.error("Backup is for server '%s', not '%s'", backup_server, args.server)
-        sys.exit(1)
-
-    for iface in backup.get("interfaces", []):
-        if "mac" not in iface:
-            logger.error("Backup interface entry missing required key: mac")
-            sys.exit(1)
-
-    for policy in backup.get("policies", []):
-        missing_policy_keys = {"name", "rules"} - set(policy.keys())
-        if missing_policy_keys:
-            logger.error(
-                "Backup policy entry missing required keys: %s",
-                ", ".join(sorted(missing_policy_keys)),
-            )
-            sys.exit(1)
-
-    if auth is None or client is None or user_id is None:
-        auth = ScpAuth()
-        access_token = auth.get_access_token()
-        user_id = auth.get_user_id(access_token)
-        client = ScpApiClient(access_token)
+    auth, client, user_id = _authenticate_and_setup(auth, client, user_id)
 
     server_id = client.find_server(args.server)
-
     existing_policies = client.list_policies(user_id)
-    existing_by_name = {p["name"]: p for p in existing_policies}
-    id_map: dict[int, int] = {}
-
-    for policy in backup.get("policies", []):
-        old_id = policy["id"]
-        name = policy["name"]
-        rules = policy.get("rules", [])
-
-        if name in existing_by_name:
-            # TODO Epic 15: PUT the backed-up rules to the existing policy so that
-            # restore is fully correct even when the policy already exists but has
-            # diverged from the backup (requires PATCH/PUT policy-rules endpoint).
-            new_id = existing_by_name[name]["id"]
-            logger.info("Policy '%s' already exists (id: %s), reusing", name, new_id)
-        else:
-            created = client.create_policy(user_id, name, rules)
-            new_id = created["id"]
-            logger.info("Created policy '%s' (id: %s)", name, new_id)
-        id_map[old_id] = new_id
-
-    for iface_backup in backup.get("interfaces", []):
-        mac = iface_backup["mac"]
-        old_policy_ids = iface_backup.get("firewall", {}).get("userPolicies", [])
-        new_policy_ids = [id_map.get(old_id, old_id) for old_id in old_policy_ids]
-
-        logger.info("Assigning policies %s to interface %s...", new_policy_ids, mac)
-        task_uuid = client.set_firewall(
-            server_id, mac, {"userPolicies": new_policy_ids}
-        )
-        client.wait_for_task(task_uuid)
+    id_map = _restore_policies(
+        client, user_id, backup.get("policies", []), existing_policies
+    )
+    _reassign_firewall_interfaces(
+        client, server_id, backup.get("interfaces", []), id_map
+    )
 
     logger.info("\nRESTORE COMPLETE — firewall state restored from %s", args.file)
 
