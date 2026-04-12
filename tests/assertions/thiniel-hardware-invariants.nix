@@ -9,6 +9,10 @@
         assertion = config.hardware.bluetooth.enable;
         message = "thiniel: Bluetooth must be enabled";
       }
+      {
+        assertion = config.services.fwupd.enable;
+        message = "thiniel: fwupd firmware update service must be enabled";
+      }
     ];
   };
 }
