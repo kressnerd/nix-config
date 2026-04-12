@@ -25,6 +25,12 @@
         assertion = config.networking.modemmanager.enable;
         message = "thiniel: ModemManager must be enabled for WWAN modem";
       }
+      {
+        assertion = builtins.any (
+          p: (p.pname or p.name or "") == "NetworkManager-openvpn"
+        ) config.networking.networkmanager.plugins;
+        message = "thiniel: NetworkManager OpenVPN plugin must be installed";
+      }
     ];
   };
 }

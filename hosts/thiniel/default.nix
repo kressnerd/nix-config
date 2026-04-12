@@ -159,6 +159,8 @@
 
   # Networking
   networking.hostName = "thiniel";
+  networking.networkmanager.plugins = with pkgs; [ networkmanager-openvpn ];
+  # TODO: Mullvad VPN — intentionally not configured; evaluate when needed
 
   # Fix sops key permissions so home-manager (user dan) can read it
   systemd.tmpfiles.rules = [
