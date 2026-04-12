@@ -140,6 +140,7 @@
       #      "/var/cache/libvirt"
       #      "/var/cache/mullvad-vpn"
       "/var/lib/fwupd"
+      "/var/lib/ModemManager"
       "/var/cache/tuigreet"
       #      "/var/lib/OpenRGB"
       #      "/var/lib/alsa"

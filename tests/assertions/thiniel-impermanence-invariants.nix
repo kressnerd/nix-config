@@ -83,6 +83,10 @@
           assertion = hasDir "/var/lib/fwupd";
           message = "thiniel: /var/lib/fwupd must be persisted for firmware update state";
         }
+        {
+          assertion = hasDir "/var/lib/ModemManager";
+          message = "thiniel: /var/lib/ModemManager must be persisted for modem state";
+        }
       ];
   };
 }
