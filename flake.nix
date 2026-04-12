@@ -244,6 +244,7 @@
                     pkgs.python3Packages.types-requests
                     pkgs.python3Packages.pytest
                     pkgs.python3Packages.mypy
+                    pkgs.python3Packages.secretstorage
                     pkgs.ruff
                   ];
                 };

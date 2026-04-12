@@ -48,9 +48,9 @@ Python CLI tool for managing the netcup SCP external firewall. Runs on the opera
 
 ### Prerequisites
 
-- `nix develop` provides Python 3 + requests + pytest
+- `nix develop` provides Python 3 + requests + secretstorage + pytest
 - First run requires interactive browser auth (OIDC device code flow)
-- Credentials stored at `~/.config/netcup-scp/credentials.json`
+- Credentials stored at `~/.config/netcup-scp/credentials.json` (default) or gnome-keyring (see `--keyring`)
 
 ### Commands
 
@@ -76,6 +76,20 @@ python3 scripts/netcup_firewall.py restore --server cupix001 --file ~/.local/sha
 python3 scripts/netcup_firewall.py apply --server cupix001 --policy bootstrap
 # Not implemented yet
 ```
+
+### Credential Storage Backends
+
+By default credentials are stored in `~/.config/netcup-scp/credentials.json` (0600).
+
+To use **gnome-keyring** (Secret Service API) instead, add `--keyring` before the subcommand:
+
+```bash
+python3 scripts/netcup_firewall.py --keyring backup --server cupix001
+python3 scripts/netcup_firewall.py --keyring lockdown --server cupix001 --yes
+python3 scripts/netcup_firewall.py --keyring restore --server cupix001 --file backup.json
+```
+
+`--keyring` requires the `secretstorage` library (included in `nix develop`) and a running Secret Service daemon (gnome-keyring or kwallet). If the daemon is unavailable the tool exits with an error — it never silently falls back to the file backend.
 
 ### Security Notes
 
