@@ -34,6 +34,7 @@ The Orchestrator MUST select the appropriate test type based on the change:
 | Module option constraint | NixOS `assertions` | `tests/assertions/<name>-invariants.nix` | `nix flake check --no-build` |
 | Service behavior / firewall / networking | `testers.runNixOSTest` | `tests/integration/<name>-test.nix` | `nix build .#checks.<system>.<name>` |
 | Post-deployment state | `pytest-testinfra` | `tests/deploy/test_<host>.py` | `pytest --hosts=ssh://...` |
+| Python script logic | `pytest` | `scripts/tests/test_<tool>.py` | `cd scripts && python3 -m pytest tests/ -v` |
 
 ## Atomic Step Size
 

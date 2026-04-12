@@ -21,5 +21,6 @@ You MAY search for:
 - Nix language and flake best practices
 - Home Manager configuration patterns
 - Declarative system configuration principles
+- Python CLI tooling documentation (pytest, mypy, ruff, argparse, requests)
 
 Always generalize your search queries to focus on the technology, not the specific project implementation.

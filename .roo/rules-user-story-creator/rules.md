@@ -48,6 +48,7 @@ If this story is not implemented,
 - **Overlays/Packages**: Are overlays or custom packages involved?
 - **Host Configurations**: Are specific host profiles affected?
 - **Labels**: Are all relevant labels set?
+- **Python CLI Tools**: Are Python scripts in `scripts/` affected?
 
 ### Context and Scope
 
