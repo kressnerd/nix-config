@@ -160,6 +160,9 @@
   # Networking
   networking.hostName = "thiniel";
   networking.networkmanager.plugins = with pkgs; [ networkmanager-openvpn ];
+  # WWAN modem support — NetworkManager may enable ModemManager implicitly,
+  # but explicit declaration ensures it is always active and persisted.
+  networking.modemmanager.enable = true;
   # TODO: Mullvad VPN — intentionally not configured; evaluate when needed
 
   # Fix sops key permissions so home-manager (user dan) can read it
@@ -201,7 +204,7 @@
       enable = true;
       settings = {
         battery = {
-          governor = "powersafe";
+          governor = "powersave";
           turbo = "never";
           enable_thresholds = "true";
           start_threshold = 20;
@@ -441,9 +444,9 @@
     };
   };
 
-  # TODO: Backup solution — evaluate restic or borgbackup for automated backups
+  # TODO(2026-04): Backup solution — evaluate restic or borgbackup for automated backups
   # ownCloud provides sync but not versioned backup
-  # Priority: important but deferred
+  # Priority: important but deferred — create tracking issue when ready
 
   system.stateVersion = "25.11";
 }
