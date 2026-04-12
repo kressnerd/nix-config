@@ -71,6 +71,14 @@
           builtins.any (b: builtins.match ".*wlsunset.*" b != null) binds;
         message = "thiniel: Hyprland must have keybind to toggle wlsunset";
       }
+      {
+        assertion = config.services.printing.enable;
+        message = "thiniel: CUPS printing must be enabled";
+      }
+      {
+        assertion = config.services.avahi.enable && config.services.avahi.nssmdns4;
+        message = "thiniel: Avahi must be enabled with nssmdns4 for network printer discovery";
+      }
     ];
   };
 }

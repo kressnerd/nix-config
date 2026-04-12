@@ -75,6 +75,10 @@
           assertion = hasDir "/var/lib/bluetooth";
           message = "thiniel: /var/lib/bluetooth must be persisted for bluetooth pairings";
         }
+        {
+          assertion = hasDir "/var/lib/cups";
+          message = "thiniel: /var/lib/cups must be persisted for printer configuration";
+        }
       ];
   };
 }
