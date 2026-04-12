@@ -2,7 +2,7 @@
 
 ## Epic 15a: Netcup SCP Firewall Kill Switch & Backup
 
-**Status**: DRAFT
+**Status**: COMPLETED
 
 **Goal**: Implement a Python CLI tool that can backup, lockdown (kill switch), and restore the netcup SCP external firewall state for cupix001. This is a **safety prerequisite** before Epic 15's full firewall policy management.
 
@@ -16,17 +16,17 @@ The kill switch runs from **thiniel** (the operator's NixOS workstation with imp
 
 ### Acceptance Criteria
 
-- [ ] `scripts/netcup_firewall.py backup --server cupix001` exports all user firewall policies + server interface assignment to a timestamped JSON file
-- [ ] `scripts/netcup_firewall.py lockdown --server cupix001` creates an empty policy and assigns it, blocking all traffic (implicit DROP\_ALL)
-- [ ] `scripts/netcup_firewall.py restore --server cupix001 --file <backup.json>` restores policies and interface assignment from a backup file
-- [ ] `scripts/netcup_firewall.py apply --policy bootstrap` exits with "not implemented — see Epic 15" message
-- [ ] All offline unit tests pass: `python3 -m pytest scripts/tests/test_netcup_firewall.py -v`
-- [ ] Auth module handles device code flow (first-time) and refresh token flow (subsequent)
-- [ ] Credentials stored at `~/.config/netcup-scp/credentials.json` (mode 0600), never in git
-- [ ] Script requires only Python 3 stdlib + `requests` — no other dependencies
-- [ ] Code structured so Epic 15 can extend `apply` subcommand without refactoring
-- [ ] `~/.config/netcup-scp` and `~/.local/share/netcup-scp` added to thiniel impermanence persist paths
-- [ ] Firewall policy definitions stored in `infra/firewall/` in git (not secret — infrastructure-as-code)
+- [x] `scripts/netcup_firewall.py backup --server cupix001` exports all user firewall policies + server interface assignment to a timestamped JSON file
+- [x] `scripts/netcup_firewall.py lockdown --server cupix001` creates an empty policy and assigns it, blocking all traffic (implicit DROP\_ALL)
+- [x] `scripts/netcup_firewall.py restore --server cupix001 --file <backup.json>` restores policies and interface assignment from a backup file
+- [x] `scripts/netcup_firewall.py apply --policy bootstrap` exits with "not implemented — see Epic 15" message
+- [x] All offline unit tests pass: `python3 -m pytest scripts/tests/test_netcup_firewall.py -v`
+- [x] Auth module handles device code flow (first-time) and refresh token flow (subsequent)
+- [x] Credentials stored at `~/.config/netcup-scp/credentials.json` (mode 0600), never in git
+- [x] Script requires only Python 3 stdlib + `requests` — no other dependencies
+- [x] Code structured so Epic 15 can extend `apply` subcommand without refactoring
+- [x] `~/.config/netcup-scp` and `~/.local/share/netcup-scp` added to thiniel impermanence persist paths
+- [ ] Firewall policy definitions stored in `infra/firewall/` in git (not secret — infrastructure-as-code) — **DEVIATION**: lockdown policy created dynamically via API (empty rules = implicit DROP\_ALL); static policy files deferred to Epic 15 Story 15.1. See Deviation Log.
 
 ### Operator Environment
 
@@ -546,3 +546,27 @@ This epic adds files only — no existing files are modified except `scripts/REA
 | Phase 6 | - | cmd_lockdown kill switch, 8 tests |
 | Phase 7 | - | cmd_restore from backup, 9 tests |
 | Phase 8 | - | Workflow integration test + README, 1 test |
+
+### Deviation Log
+
+| Criterion | Deviation | Rationale |
+|-----------|-----------|-----------|
+| AC-11: `infra/firewall/` policy definitions | Not implemented — lockdown policy created dynamically via API with empty rules | The lockdown policy has zero rules (empty = implicit DROP_ALL). A static JSON file would contain `{"rules": []}` which adds no value. Static policy files for `bootstrap` and `production` are deferred to Epic 15 Story 15.1 where they have actual rules. |
+
+### Lessons Learned
+
+1. **Python rules must exist before implementation, not after.** The initial implementation predated rules PY-QUAL-001, PY-CLI-001, PY-TDD-001, and FUND-001. Retroactively applying rules required three full review-fix-validate cycles. Future Python tools should use the `create-python-cli-tool` skill from the start.
+
+2. **`requests.Session` with `HTTPAdapter` + `Retry` is mandatory, not optional.** The initial implementation used bare `requests.get()`/`requests.post()` without timeouts or retry logic. PY-CLI-001 mandates `timeout=(10, 30)` on every call and `urllib3.util.retry.Retry` with `backoff_factor=1` for 5xx errors. This should be in the initial implementation, not added in review.
+
+3. **`main()` error handling is a PY-CLI-001 requirement.** `KeyboardInterrupt` → exit 130, `Exception` → log + exit 1 (re-raise in `--verbose`). The initial implementation had no top-level exception handling. This pattern should be in every CLI tool from the start.
+
+4. **Clean Code means extract methods, not just remove comments.** Removing inline comments without extracting descriptive helper methods makes code harder to read, not easier. The refactoring from 52/83/102-line functions to 17/25/20-line orchestrators calling 10 well-named helpers was the correct approach. Apply FUND-001 §2 (Clean Code) by writing self-documenting methods from the start.
+
+5. **devShell must include `mypy`, `ruff`, and `types-requests` from the start.** The initial devShell only had `python3`, `requests`, and `pytest`. Quality gates could not run until `mypy` and `ruff` were added later. Include all tools from Phase 1.
+
+6. **Test mocking must match implementation architecture.** When `ScpApiClient` was refactored from bare `requests.*` to `self._session.*` (for retry logic), all 12 API client test patches had to change from `patch("requests.get")` to `patch.object(client._session, "get")`. DI via constructor-injected session would have avoided this coupling.
+
+7. **Backup file structure validation is a security requirement.** FUND-001 §7 (Security First) requires treating all external input as untrusted — including backup JSON files loaded from disk. Defensive key validation with clear error messages was added in the third review cycle. Include input validation from the first implementation.
+
+8. **`@pytest.mark.parametrize` reduces test bloat.** Three separate tests for invalid argument variations (missing server, missing file, no subcommand) were consolidated into one parametrized test. Use parametrized tests for repetitive pattern testing from the start.
