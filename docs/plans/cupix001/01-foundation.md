@@ -1,5 +1,7 @@
 ← [Back to Index](00-index.md)
 
+**Status**: ✅ COMPLETED — 2026-04-12
+
 ## Epic 1: Foundation
 
 **Goal**: Register `cupix001` in the flake, create skeleton host, declare the `networking.cupix001` option set, set up `private.nix` pattern, update `.gitignore` and `.sops.yaml`. End state: `nix flake check` passes with an empty-but-valid host.
@@ -126,3 +128,28 @@
 - **Expected**: PASS (already done in 1.1.2 — this is a validation checkpoint)
 
 **Note**: This step is a checkpoint, not a new Red-Green cycle.
+
+---
+
+## Completion Summary
+
+- **Completed Date**: 2026-04-12
+- **Stories Completed**: 1.1, 1.2, 1.3, 1.4, 1.5
+- **Deviations from Plan**:
+  - Story 1.2.1 Red (publicIPv4 assertion): Skipped as separate step — options use safe defaults (`""`) to support conditional `private.nix` loading via `lib.optional (builtins.pathExists ./private.nix)`, which is necessary for multi-developer workflows where `private.nix` may not exist
+  - Story 1.3.1 Red (.gitignore): Already present when implementation began — no change needed
+  - `common-global-invariants.nix`: Moved NetworkManager assertion to `thiniel-invariants.nix` — NM is a desktop concern, not universal for servers
+  - Review findings fixed: tautological hostname assertion replaced with firewall+NM assertions, DNS IPs in template replaced with RFC 5737 addresses
+- **Files Created**: `hosts/cupix001/default.nix`, `hosts/cupix001/hardware.nix`, `hosts/cupix001/options.nix`, `hosts/cupix001/private.nix.example`, `hosts/cupix001/secrets.yaml`, `home/dan/cupix001.nix`, `tests/assertions/cupix001-invariants.nix`
+- **Files Modified**: `flake.nix`, `tests/assertions/default.nix`, `tests/assertions/common-global-invariants.nix`, `tests/assertions/thiniel-invariants.nix`, `.sops.yaml`, `.gitignore` (already had entry), `README.md`
+- **Validation**: `nix flake check` PASS, all linters PASS
+- **Lessons Learned**:
+  - **Statix W10 vs convention**: The project rule mandates `{ config, pkgs, lib, ... }:` function signatures, but `statix` enforces W10 (`empty-pattern`) which rejects `{ ... }:` when no arguments are used. Resolution: use `_:` for modules that genuinely need no arguments (e.g. hardware stubs). Document this exception in the review rather than fighting the linter.
+  - **Universal assertions must be server-safe**: `common-global-invariants.nix` applies to ALL hosts. The NM assertion (`networking.networkmanager.enable`) was desktop-specific and broke the server host. Rule: only put truly universal invariants (timezone, locale, nix settings, firewall) in common assertions. Desktop-specific ones go in host-scoped invariants.
+  - **Conditional import for gitignored files**: Using `lib.optional (builtins.pathExists ./private.nix) ./private.nix` with safe option defaults (`default = ""`) allows `nix flake check` to pass for developers who haven't created `private.nix`. This pattern is essential for multi-developer repos with gitignored config files.
+  - **Plan Red-Green ordering vs file dependencies**: The plan specified Red-Green cycles for individual files (options.nix, hardware.nix, private.nix), but `default.nix` imports all of them. In practice, all host files must be created together in a single Green phase because they have import dependencies. Future plans should group tightly-coupled files into a single implementation step.
+  - **sops-nix `defaultSopsFile` has no default**: Unlike many NixOS options, `sops.defaultSopsFile` is mandatory with no fallback. Accessing it in an assertion before it's set causes an eval error (not an assertion failure). The Red phase still works — the eval error prevents `nix flake check` from passing — but the failure mode is different from a typical assertion failure.
+  - **Common modules must be server-safe**: `hosts/common/global/` is imported by every host. Desktop-only settings (NetworkManager, GUI tools) must be in `hosts/common/optional/` as opt-in modules. If a server host needs `lib.mkForce false` to undo a common setting, the common module is doing too much. Refactored NM into `hosts/common/optional/networkmanager.nix`.
+  - **Conditional group membership**: User group lists in shared modules should be conditional on the relevant service being enabled. Example: `extraGroups = ["wheel"] ++ lib.optional config.networking.networkmanager.enable "networkmanager"` — avoids harmless but noisy group references on servers where NM is disabled.
+  - **Option defaults must not leak operational details**: Default values in public `options.nix` are visible in git history. Non-standard ports (`sshBootstrapPort = 55809`), specific IP ranges, and other operational details should default to safe/standard values (e.g., `default = 22`) with actual values in the gitignored `private.nix`. The option TYPE declaration is safe to publish; the VALUE is not.
+  - **Architecture review as a gate**: Running a structured Q&A review after the initial implementation (before moving to the next epic) caught 2 actionable improvements (NM refactoring, UEFI boot) and 1 security issue (port default leak). This saved rework in later epics. Recommend as a standard practice after each epic.
