@@ -76,6 +76,7 @@ in
     brightnessctl
     grim
     slurp
+    satty
     rofiPowerMenu
   ];
 
@@ -245,6 +246,10 @@ in
 
         # Screenshot: region selection → clipboard
         "$mainMod, Print, exec, grim -g \"$(slurp)\" - | wl-copy"
+
+        # Screenshot annotation with satty
+        "$mainMod SHIFT, Print, exec, grim -g \"$(slurp)\" - | satty -f -"
+        "$mainMod ALT, Print, exec, grim - | satty -f -"
 
         # Lock screen
         "$mainMod, backspace, exec, hyprlock"
