@@ -87,6 +87,14 @@
           assertion = hasDir "/var/lib/ModemManager";
           message = "thiniel: /var/lib/ModemManager must be persisted for modem state";
         }
+        {
+          assertion = hmHasDir ".config/Signal";
+          message = "thiniel: .config/Signal must be persisted for Signal Desktop state";
+        }
+        {
+          assertion = hmHasDir ".config/Threema";
+          message = "thiniel: Threema Desktop config must be persisted";
+        }
       ];
   };
 }

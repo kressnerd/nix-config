@@ -33,6 +33,7 @@
     ./features/productivity/owncloud.nix
     ./features/productivity/sweethome3d.nix
     ./features/productivity/vscode-fhs.nix
+    ./features/productivity/messaging.nix
     ./features/productivity/mpv.nix
     ./features/productivity/zathura.nix
   ];

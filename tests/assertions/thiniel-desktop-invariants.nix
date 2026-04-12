@@ -85,6 +85,12 @@
             or false;
         message = "thiniel: Hyprland workspace swipe gesture must be enabled";
       }
+      {
+        assertion = builtins.any (
+          p: (p.pname or p.name or "") == "signal-desktop"
+        ) config.home-manager.users.dan.home.packages;
+        message = "thiniel: Signal Desktop must be installed";
+      }
     ];
   };
 }
