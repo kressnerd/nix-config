@@ -91,6 +91,10 @@
         ) config.home-manager.users.dan.home.packages;
         message = "thiniel: Signal Desktop must be installed";
       }
+      {
+        assertion = config.home-manager.users.dan.services.kanshi.enable;
+        message = "thiniel: kanshi monitor profiling service must be enabled";
+      }
     ];
   };
 }
