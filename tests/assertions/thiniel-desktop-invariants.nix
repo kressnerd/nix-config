@@ -29,6 +29,30 @@
           ) rules;
         message = "thiniel: Hyprland must have windowrule for Zathura";
       }
+      {
+        assertion = config.home-manager.users.dan.programs.mpv.enable;
+        message = "thiniel: MPV media player must be enabled";
+      }
+      {
+        assertion =
+          let
+            videoHandler = config.home-manager.users.dan.xdg.mimeApps.defaultApplications."video/mp4" or null;
+          in
+          videoHandler == "mpv.desktop"
+          || (builtins.isList videoHandler && builtins.elem "mpv.desktop" videoHandler);
+        message = "thiniel: video/mp4 must default to MPV";
+      }
+      {
+        assertion =
+          let
+            rules =
+              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.windowrule or [ ];
+          in
+          builtins.any (
+            r: builtins.match ".*mpv.*" (r."match:class" or "") != null
+          ) rules;
+        message = "thiniel: Hyprland must have windowrule for MPV";
+      }
     ];
   };
 }

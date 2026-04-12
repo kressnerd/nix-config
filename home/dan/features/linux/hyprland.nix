@@ -175,6 +175,11 @@ in
           opacity = "1.0 override 1.0 override";
           "match:class" = "^(org.pwmt.zathura)$";
         }
+        {
+          name = "opacity-mpv";
+          opacity = "1.0 override 1.0 override";
+          "match:class" = "^(mpv)$";
+        }
       ];
 
       "$mainMod" = "SUPER";
