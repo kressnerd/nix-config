@@ -29,7 +29,7 @@ Source specification: `docs/edge-all.md`
 Before any automated steps, the user must:
 
 1. **Gather VPS hardware info** — run reconnaissance commands from `docs/edge-all.md` on the Debian VPS
-2. **Determine boot mode** — UEFI vs BIOS (determines grub vs systemd-boot)
+2. **Determine boot mode** — ✅ Confirmed UEFI — using systemd-boot
 3. **Determine block device** — `/dev/vda` vs `/dev/sda`
 4. **Determine network interface** — `ens3`, `eth0`, etc.
 5. **Generate WireGuard keypair** — `wg genkey | tee wg-private.key | wg pubkey > wg-public.key`
