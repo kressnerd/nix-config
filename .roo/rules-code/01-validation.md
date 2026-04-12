@@ -22,6 +22,17 @@ Every task is only complete when the changed configuration has been validated.
 - Changes to `scripts/` shell scripts do not require Nix validation
 - Test step may be skipped if no tests exist for the changed area (report as SKIPPED)
 
+### Python Validation
+
+`.py` files in `scripts/` require Python-specific validation instead of Nix validation:
+
+| Command | Purpose |
+|---------|---------|
+| `cd scripts && python3 -m pytest tests/ -v` | Run all tests (PY-TDD-001) |
+| `cd scripts && mypy --strict *.py` | Type checking (PY-QUAL-001) |
+| `cd scripts && ruff check .` | Linting (PY-QUAL-001) |
+| `cd scripts && ruff format --check .` | Format verification (PY-QUAL-001) |
+
 ### Return Format
 
 Include validation results in the DONE response:

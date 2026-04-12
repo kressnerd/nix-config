@@ -143,3 +143,13 @@ If the delegated task specifies multiple tests or changes, Code Mode MUST:
 | Assertion | `nix flake check --no-build` |
 | Integration | `nix build .#checks.<system>.integration-<name>` |
 | All | `nix flake check` |
+
+## Python Tests (pytest)
+
+For Python code in `scripts/`, use `pytest` instead of Nix test tools. See PY-TDD-001 in [`.roo/rules/14-python-tdd.md`](../rules/14-python-tdd.md).
+
+- Test location: `scripts/tests/test_<tool>.py`
+- Framework: `pytest`
+- Verification: `cd scripts && python3 -m pytest tests/ -v`
+- Minimum coverage per CLI tool: unit tests (mocked APIs), exit code test, `--help` test
+- Template and scaffold: see [`create-python-cli-tool`](../skills/create-python-cli-tool/SKILL.md) skill

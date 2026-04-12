@@ -57,6 +57,8 @@ These changes require explicit warnings and rollback paths in the plan:
 
 Do NOT plan "write tests first" for Nix configuration. There are no unit tests for `.nix` files. Instead, define the validation commands that prove the configuration works.
 
+**Exception — Python code**: Python code in `scripts/` requires TDD (PY-TDD-001). The above anti-pattern applies to `.nix` files only. Plans for Python CLI tools MUST include test-first steps with `pytest`.
+
 ## Enforcement
 
 - Plans without Phase 0 (Validation Strategy) = rule violation

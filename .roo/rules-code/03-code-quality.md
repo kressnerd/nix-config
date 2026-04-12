@@ -55,3 +55,9 @@ QUALITY:
 
 - Lint failures block task completion unless explicitly overridden by the caller
 - If auto-fix changes semantics, report as BLOCKED with details
+
+## Python Code Quality
+
+For `.py` files in `scripts/`, see PY-QUAL-001 in [`.roo/rules/15-python-quality.md`](../rules/15-python-quality.md).
+
+Python quality gates: `mypy --strict`, `ruff check`, `ruff format`. These replace the Nix tools (`deadnix`, `statix`, `nixfmt`) for Python files.

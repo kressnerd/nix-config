@@ -101,3 +101,16 @@ Check each change across these categories:
 | Unused `let` bindings | Variables bound in `let` but never used (deadnix findings) | MEDIUM |
 | Missing `nix flake check` validation | Changes not validated with `nix flake check` | HIGH |
 | Missing host-specific build validation | Modified host not tested with `nixos-rebuild build` or `darwin-rebuild build` | MEDIUM |
+
+### Python-Specific Smells
+
+| Smell | Detection Criterion | Relevant Rule |
+|-------|---------------------|---------------|
+| Missing type hints | Function/method without parameter or return type annotations | PY-QUAL-001 |
+| Missing docstrings | Public function or module without docstring | PY-QUAL-001 |
+| Imperative dependency management | `pip install`, `uv add`, `requirements.txt`, `venv` present | PY-NIX-001 |
+| Global mutable state | Module-level mutable variables (lists, dicts) outside constants | PY-CLI-001 |
+| Missing injectable `argv` | `parse_args()` without `argv=None` parameter | PY-CLI-001 |
+| Real API calls in tests | Test code making HTTP requests without mocking | PY-TDD-001 |
+| `print()` instead of `logging` | Diagnostic output via `print()` instead of `logging` module | PY-CLI-001 |
+| Hardcoded credentials | API keys, tokens, passwords in source code | PY-NIX-001 |
