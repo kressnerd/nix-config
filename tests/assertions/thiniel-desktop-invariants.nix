@@ -101,6 +101,12 @@
         ) config.home-manager.users.dan.home.packages;
         message = "thiniel: satty screenshot annotation tool must be installed";
       }
+      {
+        assertion = builtins.any (
+          p: (p.pname or p.name or "") == "wf-recorder"
+        ) config.home-manager.users.dan.home.packages;
+        message = "thiniel: wf-recorder must be installed for screen recording";
+      }
     ];
   };
 }

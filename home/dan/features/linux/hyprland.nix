@@ -77,6 +77,7 @@ in
     grim
     slurp
     satty
+    wf-recorder
     rofiPowerMenu
   ];
 
@@ -250,6 +251,10 @@ in
         # Screenshot annotation with satty
         "$mainMod SHIFT, Print, exec, grim -g \"$(slurp)\" - | satty -f -"
         "$mainMod ALT, Print, exec, grim - | satty -f -"
+
+        # Screen recording with wf-recorder (toggle: stop if running, else start)
+        "$mainMod, F9, exec, pkill wf-recorder || wf-recorder -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
+        "$mainMod SHIFT, F9, exec, pkill wf-recorder || wf-recorder -g \"$(slurp)\" -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
 
         # Lock screen
         "$mainMod, backspace, exec, hyprlock"
