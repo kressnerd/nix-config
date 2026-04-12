@@ -1,6 +1,6 @@
 # Implementation Plan: cupix001 Edge Ingress Gateway
 
-## Status: DRAFT
+## Status: IN PROGRESS
 
 ## Goal
 
@@ -254,9 +254,9 @@ colmena apply --on @edge
 
 ## Current Status
 
-- **Status**: APPROVED — awaiting implementation
-- **Current Phase**: N/A — not started
-- **Completed Phases**: None
+- **Status**: IN PROGRESS
+- **Current Phase**: Epic 1 complete, ready for Epic 2
+- **Completed Phases**: Epic 1 (Foundation)
 
 ## Completion Log
 

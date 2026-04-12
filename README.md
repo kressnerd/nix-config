@@ -13,6 +13,7 @@ flake.nix / flake.lock
 │   │   └── users/          (shared NixOS user definition)
 │   ├── J6G6Y9JK7L/         (aarch64-darwin — macOS workstation)
 │   ├── thiniel/            (x86_64-linux — ThinkPad X270)
+│   ├── cupix001/            (x86_64-linux — netcup KVM VPS edge gateway)
 │   └── nixos-vm-minimal/   (aarch64-linux — minimal test VM)
 ├── home/
 │   └── dan/
@@ -27,6 +28,7 @@ flake.nix / flake.lock
 │       │   └── doom.d/     (Doom Emacs config)
 │       ├── J6G6Y9JK7L.nix
 │       ├── thiniel.nix
+│       ├── cupix001.nix
 │       └── nixos-vm-minimal.nix
 ├── lib/
 │   └── helpers.nix         (mkPkgsUnstable, mkFirefoxExtensions)
@@ -149,6 +151,17 @@ Managed via SOPS. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for setup det
 ### Host Customization
 
 Each host imports `hosts/common/global` (NixOS only) plus optional modules and features as needed. Check the layering structure in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+### Host Setup — cupix001
+
+cupix001 requires a `private.nix` file with host-specific network values that are not committed to git.
+
+1. Copy the template:
+   ```bash
+   cp hosts/cupix001/private.nix.example hosts/cupix001/private.nix
+   ```
+2. Fill in real values using the gathering commands documented in the template comments (run on the Debian VPS before NixOS install)
+3. `private.nix` is gitignored — it must exist on the build machine before `nix build` or `nix flake check` succeeds for cupix001
 
 ## Documentation
 
