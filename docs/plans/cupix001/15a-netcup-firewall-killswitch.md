@@ -23,7 +23,7 @@ The kill switch runs from **thiniel** (the operator's NixOS workstation with imp
 - [x] All offline unit tests pass: `python3 -m pytest scripts/tests/test_netcup_firewall.py -v`
 - [x] Auth module handles device code flow (first-time) and refresh token flow (subsequent)
 - [x] Credentials stored at `~/.config/netcup-scp/credentials.json` (mode 0600), never in git
-- [x] Script requires only Python 3 stdlib + `requests` — no other dependencies
+- [x] Script requires Python 3 stdlib + `requests`; optional `secretstorage` for `--keyring` gnome-keyring backend
 - [x] Code structured so Epic 15 can extend `apply` subcommand without refactoring
 - [x] `~/.config/netcup-scp` and `~/.local/share/netcup-scp` added to thiniel impermanence persist paths
 - [ ] Firewall policy definitions stored in `infra/firewall/` in git (not secret — infrastructure-as-code) — **DEVIATION**: lockdown policy created dynamically via API (empty rules = implicit DROP\_ALL); static policy files deferred to Epic 15 Story 15.1. See Deviation Log.
@@ -180,6 +180,7 @@ Add to devShell (in `flake.nix` or `shell.nix`):
 - `python3` (3.11+)
 - `python3Packages.requests`
 - `python3Packages.pytest`
+- `python3Packages.secretstorage` (optional — for `--keyring` gnome-keyring credential storage)
 
 This aligns with Epic 17 which also needs pytest + requests.
 
@@ -546,6 +547,7 @@ This epic adds files only — no existing files are modified except `scripts/REA
 | Phase 6 | - | cmd_lockdown kill switch, 8 tests |
 | Phase 7 | - | cmd_restore from backup, 9 tests |
 | Phase 8 | - | Workflow integration test + README, 1 test |
+| Post-completion | - | `--keyring` flag for gnome-keyring Secret Service credential storage, 12 tests |
 
 ### Deviation Log
 
