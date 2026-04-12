@@ -220,11 +220,20 @@ def main(argv: list[str] | None = None) -> None:
     else:
         logging.basicConfig(level=logging.WARNING)
 
-    handler = _DISPATCH.get(args.command)
-    if handler is None:
-        print(f"Unknown command: {args.command}", file=sys.stderr)
+    try:
+        handler = _DISPATCH.get(args.command)
+        if handler is None:
+            print(f"Unknown command: {args.command}", file=sys.stderr)
+            sys.exit(1)
+        handler(args)
+    except KeyboardInterrupt:
+        print("\nInterrupted.", file=sys.stderr)
+        sys.exit(130)
+    except Exception as exc:  # noqa: BLE001
+        if args.verbose:
+            raise
+        logger.error("%s", exc)
         sys.exit(1)
-    handler(args)
 
 
 if __name__ == "__main__":
