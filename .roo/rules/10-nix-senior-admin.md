@@ -77,6 +77,15 @@ in
 }
 ```
 
+### Option Default Values
+
+- Option TYPE declarations in public modules are safe to publish (they reveal schema, not values)
+- Option DEFAULT VALUES must not leak operational details:
+  - Non-standard ports → default to standard port (e.g., `default = 22`, not `default = 55809`)
+  - IP addresses → default to empty string or RFC 5737 documentation addresses
+  - Actual values go in gitignored files (e.g., `private.nix`)
+- If an option default reveals hosting provider, network topology, or security configuration, it's a leak
+
 ### Derivation Attributes
 
 - Required: `pname`, `version`, `src`, `buildInputs`, `installPhase`

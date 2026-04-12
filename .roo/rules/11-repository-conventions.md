@@ -54,6 +54,13 @@ nix-config/
 - `secrets.yaml` — SOPS-encrypted; always adjacent to `default.nix`
 - Server hosts split concerns into dedicated files per service (e.g., `firewall.nix`, `nginx.nix`, `headscale.nix`)
 
+### Server Safety Rule for Common Modules
+
+- `hosts/common/global/` is imported by ALL hosts (desktops, servers, VMs)
+- Only settings that are universally safe go in `global/` (timezone, locale, nix settings)
+- Desktop-specific settings (NetworkManager, GUI tools, sound) go in `hosts/common/optional/` as opt-in modules
+- If a server host needs `lib.mkForce false` to undo a common setting, the common module is wrong — refactor to optional
+
 ### Home Manager Profiles (`home/dan/<hostname>.nix`)
 
 - Each host has a dedicated profile file
