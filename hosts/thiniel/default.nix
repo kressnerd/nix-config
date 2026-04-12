@@ -191,6 +191,8 @@
     };
 
     # Power management
+    # Disable TLP — auto-cpufreq is used instead; nixos-hardware enables TLP by default
+    tlp.enable = false;
     thermald.enable = true;
     auto-cpufreq = {
       enable = true;
@@ -198,6 +200,9 @@
         battery = {
           governor = "powersafe";
           turbo = "never";
+          enable_thresholds = "true";
+          start_threshold = 20;
+          stop_threshold = 80;
         };
         charger = {
           governor = "performance";

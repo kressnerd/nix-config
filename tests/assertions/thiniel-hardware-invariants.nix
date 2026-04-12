@@ -13,6 +13,14 @@
         assertion = config.services.fwupd.enable;
         message = "thiniel: fwupd firmware update service must be enabled";
       }
+      {
+        assertion = (config.services.auto-cpufreq.settings.battery.enable_thresholds or "") == "true";
+        message = "thiniel: auto-cpufreq battery charge thresholds must be enabled";
+      }
+      {
+        assertion = !config.services.tlp.enable;
+        message = "thiniel: TLP must not be enabled (conflicts with auto-cpufreq)";
+      }
     ];
   };
 }
