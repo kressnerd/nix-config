@@ -48,34 +48,74 @@ Python CLI tool for managing the netcup SCP external firewall. Runs on the opera
 
 ### Prerequisites
 
-- `nix develop` provides Python 3 + requests + secretstorage + pytest
+- **Run all commands inside `nix develop`** — the script requires `requests` and `secretstorage`, which are only available in the flake's devShell. Running with the system Python will fail with `ModuleNotFoundError: No module named 'requests'`.
+- `nix develop` provides: Python 3, `requests`, `secretstorage`, `pytest`, `mypy`, `ruff`
 - First run requires interactive browser auth (OIDC device code flow)
 - Credentials stored at `~/.config/netcup-scp/credentials.json` (default) or gnome-keyring (see `--keyring`)
+
+`--server` is the **name of the vServer as it appears in the netcup Server Control Panel (SCP)**. The tool uses this name to look up the server's numeric ID via the SCP REST API.
 
 ### Commands
 
 **Backup** current firewall state:
 ```bash
+# Enter the devShell first (provides Python 3 + all dependencies)
+nix develop
+
+# Then run the command
 python3 scripts/netcup_firewall.py backup --server cupix001
 ```
 Saves all policies + interface assignments to `~/.local/share/netcup-scp/backups/cupix001-{timestamp}.json`.
 
 **Lockdown** (kill switch — block ALL traffic):
 ```bash
+# Enter the devShell first (provides Python 3 + all dependencies)
+nix develop
+
+# Then run the command
 python3 scripts/netcup_firewall.py lockdown --server cupix001 --yes
 ```
 Creates an empty policy (implicit DROP ALL) and assigns it. Auto-backup is created first.
 
 **Restore** from backup:
 ```bash
+# Enter the devShell first (provides Python 3 + all dependencies)
+nix develop
+
+# Then run the command
 python3 scripts/netcup_firewall.py restore --server cupix001 --file ~/.local/share/netcup-scp/backups/cupix001-20260411-150000.json
 ```
 
 **Apply** policy (stub — see Epic 15):
 ```bash
+# Enter the devShell first (provides Python 3 + all dependencies)
+nix develop
+
+# Then run the command
 python3 scripts/netcup_firewall.py apply --server cupix001 --policy bootstrap
 # Not implemented yet
 ```
+
+### CLI Reference
+
+> **Tip:** `python3 scripts/netcup_firewall.py --help` and `python3 scripts/netcup_firewall.py <subcommand> --help` show the full help text.
+
+**Global options** (apply to all subcommands):
+
+| Option | Description |
+|--------|-------------|
+| `--verbose` | Enable verbose output (INFO level logging) |
+| `--quiet` | Suppress all output except errors |
+| `--keyring` | Use gnome-keyring (Secret Service API) instead of file-based credential storage. Requires `secretstorage` |
+
+**Subcommands:**
+
+| Subcommand | Synopsis | Notes |
+|------------|----------|-------|
+| `backup` | `backup --server NAME` | Save current firewall rules to a timestamped JSON file |
+| `lockdown` | `lockdown --server NAME [--yes]` | Apply deny-all inbound policy (kill switch). `--yes` skips the interactive confirmation prompt |
+| `restore` | `restore --server NAME --file PATH` | Restore firewall rules from a backup JSON file |
+| `apply` | `apply --server NAME --policy {bootstrap,production}` | Apply a named policy template (not yet implemented) |
 
 ### Credential Storage Backends
 
@@ -84,6 +124,10 @@ By default credentials are stored in `~/.config/netcup-scp/credentials.json` (06
 To use **gnome-keyring** (Secret Service API) instead, add `--keyring` before the subcommand:
 
 ```bash
+# Enter the devShell first (provides Python 3 + all dependencies)
+nix develop
+
+# Then run the command
 python3 scripts/netcup_firewall.py --keyring backup --server cupix001
 python3 scripts/netcup_firewall.py --keyring lockdown --server cupix001 --yes
 python3 scripts/netcup_firewall.py --keyring restore --server cupix001 --file backup.json
@@ -101,5 +145,9 @@ python3 scripts/netcup_firewall.py --keyring restore --server cupix001 --file ba
 ### Running Tests
 
 ```bash
+# Enter the devShell first (provides Python 3 + all dependencies)
+nix develop
+
+# Then run the tests
 cd scripts && python3 -m pytest tests/test_netcup_firewall.py -v
 ```
