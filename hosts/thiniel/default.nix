@@ -131,6 +131,7 @@
       "/etc/nixos"
       "/var/log"
       "/var/lib/bluetooth"
+      "/var/lib/cups"
       "/var/lib/nixos" # contains important state
       "/var/lib/containers" # Podman container images and layers (system-level)
       "/var/lib/systemd/coredump"
@@ -212,7 +213,13 @@
     # xserver.xkb.options = "eurosign:e,caps:escape";
 
     # Enable CUPS to print documents.
-    # printing.enable = true;
+    printing.enable = true;
+
+    avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+    };
 
     # Enable sound.
     # hardware.pulseaudio.enable = true;
