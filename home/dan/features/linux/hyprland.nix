@@ -170,6 +170,11 @@ in
           idle_inhibit = "fullscreen";
           "match:class" = ".*";
         }
+        {
+          name = "opacity-zathura";
+          opacity = "1.0 override 1.0 override";
+          "match:class" = "^(org.pwmt.zathura)$";
+        }
       ];
 
       "$mainMod" = "SUPER";
