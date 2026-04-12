@@ -1,0 +1,42 @@
+# hosts/cupix001/private.nix.example — Template for private.nix
+#
+# Copy this file to private.nix and replace placeholder values with real ones:
+#   cp hosts/cupix001/private.nix.example hosts/cupix001/private.nix
+#
+# Gathering commands (run on the Debian VPS before NixOS install):
+#   Public IPv4/gateway:  ip -4 addr show ; ip -4 route show default
+#   Public IPv6/gateway:  ip -6 addr show scope global ; ip -6 route show default
+#   Prefix length:        ip -4 addr show (look for /XX after IP)
+#   DNS:                  cat /etc/resolv.conf
+#   Interface name:       ip -br link (look for the non-lo interface)
+#   WireGuard IPs:        Choose from a private range, e.g. 10.100.0.0/24
+{ ... }:
+{
+  networking.cupix001 = {
+    # Required — gather from VPS
+    publicIPv4 = "203.0.113.42"; # Replace with real public IPv4
+    prefixLengthV4 = 22; # Replace with real prefix length
+    gateway4 = "203.0.113.1"; # Replace with real default gateway
+    dns = [
+      "198.51.100.1" # Replace with real DNS resolvers (gather via: cat /etc/resolv.conf)
+      "198.51.100.2"
+    ];
+
+    # Optional — defaults shown
+    # publicIPv6 = "";         # Set if IPv6 is available
+    # prefixLengthV6 = 64;
+    # gateway6 = "";
+
+    # WireGuard tunnel — choose IPs from a private range
+    wgTunnelIPv4 = "10.100.0.1"; # This host's tunnel IP
+    wgPeerTunnelIPv4 = "10.100.0.2"; # Homelab peer's tunnel IP
+    # wgListenPort = 51820;   # Default WireGuard port
+
+    # Bootstrap SSH — disable after WireGuard is verified
+    # enablePublicSSH = true;
+    sshBootstrapPort = 55809; # Replace with your chosen non-standard SSH port
+
+    # Network interface — gather via 'ip -br link'
+    # interfaceName = "ens3";
+  };
+}

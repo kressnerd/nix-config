@@ -176,6 +176,45 @@
             }
           ];
         };
+        cupix001 = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+              inherit nixpkgs-unstable;
+              system = "x86_64-linux";
+            };
+          };
+          modules = [
+            {
+              nixpkgs.overlays = [
+                nur.overlays.default
+                (import ./overlays)
+              ];
+              nixpkgs.config.allowUnfree = true;
+            }
+            ./hosts/cupix001
+            disko.nixosModules.disko
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs outputs;
+                  pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+                    inherit nixpkgs-unstable;
+                    system = "x86_64-linux";
+                  };
+                };
+                users.dan = import ./home/dan/cupix001.nix;
+                sharedModules = [
+                  sops-nix.homeManagerModules.sops
+                ];
+              };
+            }
+          ];
+        };
       };
 
       darwinConfigurations = {
