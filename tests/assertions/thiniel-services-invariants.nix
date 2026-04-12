@@ -57,6 +57,10 @@
         assertion = config.virtualisation.oci-containers.containers ? qdrant_roo;
         message = "thiniel: qdrant_roo OCI container must be defined for roo-code vector database";
       }
+      {
+        assertion = config.services.gvfs.enable;
+        message = "thiniel: services.gvfs.enable must be true for VS Code trash functionality and GLib file operations";
+      }
     ];
   };
 }
