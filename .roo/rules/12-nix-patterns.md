@@ -66,6 +66,21 @@ services.foo.port = lib.mkDefault 8080;
 }
 ```
 
+### Conditional Group Membership
+
+When a user group depends on a service being enabled, make it conditional:
+
+```nix
+users.users.dan = {
+  extraGroups =
+    [ "wheel" ]
+    ++ lib.optional config.networking.networkmanager.enable "networkmanager"
+    ++ lib.optional config.virtualisation.libvirtd.enable "libvirtd";
+};
+```
+
+This avoids harmless but noisy group references on hosts where the service is disabled.
+
 ## Overlay Patterns
 
 ### Basic Overlay
