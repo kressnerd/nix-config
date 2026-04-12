@@ -95,6 +95,12 @@
         assertion = config.home-manager.users.dan.services.kanshi.enable;
         message = "thiniel: kanshi monitor profiling service must be enabled";
       }
+      {
+        assertion = builtins.any (
+          p: (p.pname or p.name or "") == "satty"
+        ) config.home-manager.users.dan.home.packages;
+        message = "thiniel: satty screenshot annotation tool must be installed";
+      }
     ];
   };
 }
