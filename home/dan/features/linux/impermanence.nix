@@ -31,6 +31,10 @@ _: {
       ".local/share/containers"
       # SweetHome3D
       ".eteks"
+      # Signal Desktop messaging state
+      ".config/Signal"
+      # Threema Desktop messaging state
+      ".config/Threema"
     ];
     files = [
       ".bash_history"
