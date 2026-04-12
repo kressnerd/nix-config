@@ -139,6 +139,7 @@
       #      "/etc/mullvad-vpn"
       #      "/var/cache/libvirt"
       #      "/var/cache/mullvad-vpn"
+      "/var/lib/fwupd"
       "/var/cache/tuigreet"
       #      "/var/lib/OpenRGB"
       #      "/var/lib/alsa"
@@ -235,6 +236,9 @@
     # libinput.enable = true;
 
     openssh.enable = true;
+
+    # Firmware updates via LVFS (ThinkPad X270 supports fwupd)
+    fwupd.enable = true;
 
     # D-Bus Secret Service for credential storage (VS Code, etc.)
     gnome.gnome-keyring.enable = true;

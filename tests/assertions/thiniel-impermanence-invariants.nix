@@ -79,6 +79,10 @@
           assertion = hasDir "/var/lib/cups";
           message = "thiniel: /var/lib/cups must be persisted for printer configuration";
         }
+        {
+          assertion = hasDir "/var/lib/fwupd";
+          message = "thiniel: /var/lib/fwupd must be persisted for firmware update state";
+        }
       ];
   };
 }
