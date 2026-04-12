@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import ipaddress
 import json
 import logging
 import os
@@ -655,6 +656,34 @@ def _write_backup_file(
     return filepath
 
 
+def validate_source_ip(source: str) -> str:
+    """Validate and normalize an IPv4 source address to CIDR notation.
+
+    Args:
+        source: A bare IPv4 address (e.g. ``"1.2.3.4"``) or IPv4 CIDR
+            notation (e.g. ``"10.0.0.0/24"``).
+
+    Returns:
+        The source address in CIDR notation. Bare addresses are returned
+        with ``/32`` appended.
+
+    Raises:
+        ValueError: If *source* is empty, is an IPv6 address, or is not
+            a valid IP address or CIDR block.
+    """
+    if not source:
+        raise ValueError("Source IP must not be empty")
+    try:
+        network = ipaddress.ip_network(source, strict=False)
+    except ValueError as exc:
+        raise ValueError(f"Invalid IP address: {source}") from exc
+    if network.version == 6:
+        raise ValueError(f"IPv6 not supported: {source}")
+    if "/" not in source:
+        return f"{source}/32"
+    return str(network)
+
+
 def _find_or_create_lockdown_policy(
     client: ScpApiClient,
     user_id: int,
@@ -686,6 +715,80 @@ def _find_or_create_lockdown_policy(
         "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
     )
     return client.create_policy(user_id, lockdown_name, [])
+
+
+def _get_current_policy_ids(
+    client: ScpApiClient, server_id: int, mac: str
+) -> list[int]:
+    """Read current userPolicies IDs assigned to a server interface.
+
+    Args:
+        client: Authenticated SCP API client.
+        server_id: Netcup server ID.
+        mac: Network interface MAC address.
+
+    Returns:
+        List of currently assigned user policy IDs, or empty list if none.
+    """
+    firewall_state = client.get_firewall(server_id, mac)
+    return list(firewall_state.get("userPolicies", []))
+
+
+def _find_policy_by_name(
+    client: ScpApiClient, user_id: int, name: str
+) -> dict[str, Any] | None:
+    """Find a firewall policy by name, returning the first match or None.
+
+    Args:
+        client: Authenticated SCP API client.
+        user_id: Netcup user ID.
+        name: Policy name to search for.
+
+    Returns:
+        First matching policy dict, or None if not found.
+    """
+    for policy in client.list_policies(user_id):
+        if policy.get("name") == name:
+            return policy
+    return None
+
+
+def _find_or_create_ssh_policy(
+    client: ScpApiClient,
+    user_id: int,
+    server_name: str,
+    source_cidr: str,
+    port: int,
+) -> dict[str, Any]:
+    """Create a temporary SSH access policy, deleting any stale one first.
+
+    Args:
+        client: Authenticated SCP API client.
+        user_id: Netcup user ID.
+        server_name: Server name for policy naming.
+        source_cidr: Source IP in CIDR notation.
+        port: Destination SSH port.
+
+    Returns:
+        Created policy dict with id, name, rules.
+    """
+    policy_name = f"ssh-temp-{server_name}"
+    existing = _find_policy_by_name(client, user_id, policy_name)
+    if existing is not None:
+        logger.info(
+            "Deleting stale SSH policy: %s (id=%d)", policy_name, existing["id"]
+        )
+        client.delete_policy(user_id, existing["id"])
+    rules = [
+        {
+            "direction": "INGRESS",
+            "protocol": "TCP",
+            "sourceIp": source_cidr,
+            "destinationPort": str(port),
+            "action": "ACCEPT",
+        }
+    ]
+    return client.create_policy(user_id, policy_name, rules)
 
 
 def _apply_lockdown_to_interfaces(
@@ -1000,6 +1103,138 @@ def cmd_apply(args: argparse.Namespace) -> None:
     sys.exit(1)
 
 
+def cmd_ssh_open(
+    args: argparse.Namespace,
+    *,
+    backup_dir: str | None = None,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+    user_id: int | None = None,
+) -> None:
+    """Open temporary SSH access from a specific source IP.
+
+    Args:
+        args: Parsed CLI arguments (requires args.server, args.source,
+            args.port, args.yes).
+        backup_dir: Directory for the auto-backup file. Defaults to
+            ~/.local/share/netcup-scp/backups.
+        auth: ScpAuth instance. Created internally if not provided.
+        client: ScpApiClient instance. Created internally if not provided.
+        user_id: SCP user ID. Fetched internally if not provided.
+
+    Raises:
+        SystemExit: If the source IP is invalid.
+    """
+    try:
+        source_cidr = validate_source_ip(args.source)
+    except ValueError as exc:
+        logger.error("%s", exc)
+        sys.exit(1)
+
+    use_keyring = getattr(args, "keyring", False)
+    auth, client, user_id = _authenticate_and_setup(
+        auth, client, user_id, use_keyring=use_keyring
+    )
+
+    server_name = args.server
+    port = getattr(args, "port", 22)
+
+    server_id = client.find_server(server_name)
+    interfaces = client.get_interfaces(server_id)
+
+    # Auto-backup before any changes
+    cmd_backup(
+        args,
+        backup_dir=backup_dir,
+        auth=auth,
+        client=client,
+        user_id=user_id,
+    )
+
+    ssh_policy = _find_or_create_ssh_policy(
+        client, user_id, server_name, source_cidr, port
+    )
+    ssh_policy_id = ssh_policy["id"]
+
+    for iface in interfaces:
+        mac = iface["mac"]
+        current_ids = _get_current_policy_ids(client, server_id, mac)
+        if ssh_policy_id in current_ids:
+            logger.info("SSH policy already assigned to %s — skipping", mac)
+            continue
+        new_ids = current_ids + [ssh_policy_id]
+        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": new_ids})
+        client.wait_for_task(task_uuid)
+
+    logger.info(
+        "SSH ACCESS OPEN — %s:%d accessible from %s via SCP external firewall",
+        server_name,
+        port,
+        source_cidr,
+    )
+
+
+def cmd_ssh_close(
+    args: argparse.Namespace,
+    *,
+    backup_dir: str | None = None,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+    user_id: int | None = None,
+) -> None:
+    """Close temporary SSH access and delete the policy.
+
+    Args:
+        args: Parsed CLI arguments (requires args.server).
+        backup_dir: Directory for the auto-backup file. Defaults to
+            ~/.local/share/netcup-scp/backups.
+        auth: ScpAuth instance. Created internally if not provided.
+        client: ScpApiClient instance. Created internally if not provided.
+        user_id: SCP user ID. Fetched internally if not provided.
+    """
+    use_keyring = getattr(args, "keyring", False)
+    auth, client, user_id = _authenticate_and_setup(
+        auth, client, user_id, use_keyring=use_keyring
+    )
+    server_name = args.server
+
+    server_id = client.find_server(server_name)
+    interfaces = client.get_interfaces(server_id)
+
+    policy_name = f"ssh-temp-{server_name}"
+    ssh_policy = _find_policy_by_name(client, user_id, policy_name)
+
+    if ssh_policy is None:
+        logger.info("No SSH policy '%s' found — nothing to close", policy_name)
+        return
+
+    ssh_policy_id = ssh_policy["id"]
+
+    # Auto-backup before changes
+    cmd_backup(
+        args,
+        backup_dir=backup_dir,
+        auth=auth,
+        client=client,
+        user_id=user_id,
+    )
+
+    # Unassign from all interfaces
+    for iface in interfaces:
+        mac = iface["mac"]
+        current_ids = _get_current_policy_ids(client, server_id, mac)
+        if ssh_policy_id not in current_ids:
+            continue
+        new_ids = [pid for pid in current_ids if pid != ssh_policy_id]
+        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": new_ids})
+        client.wait_for_task(task_uuid)
+
+    # Delete the temporary policy
+    client.delete_policy(user_id, ssh_policy_id)
+
+    logger.info("SSH ACCESS CLOSED — policy '%s' removed and deleted", policy_name)
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments.
 
@@ -1099,6 +1334,31 @@ examples:
     )
     apply_parser.set_defaults(command="apply", func=cmd_apply)
 
+    # ssh-open subcommand
+    ssh_open_parser = subparsers.add_parser(
+        "ssh-open",
+        help="Open temporary SSH access from a specific source IP",
+    )
+    ssh_open_parser.add_argument("--server", required=True, help="Server name")
+    ssh_open_parser.add_argument(
+        "--source", required=True, help="Source IP address (IPv4)"
+    )
+    ssh_open_parser.add_argument(
+        "--port", type=int, default=22, help="SSH port (default: 22)"
+    )
+    ssh_open_parser.add_argument(
+        "--yes", action="store_true", help="Skip confirmation prompt"
+    )
+    ssh_open_parser.set_defaults(command="ssh-open", func=cmd_ssh_open)
+
+    # ssh-close subcommand
+    ssh_close_parser = subparsers.add_parser(
+        "ssh-close",
+        help="Close temporary SSH access and remove the policy",
+    )
+    ssh_close_parser.add_argument("--server", required=True, help="Server name")
+    ssh_close_parser.set_defaults(command="ssh-close", func=cmd_ssh_close)
+
     return parser.parse_args(argv)
 
 
@@ -1125,6 +1385,50 @@ def main(argv: list[str] | None = None) -> None:
             raise
         logger.error("%s", exc)
         sys.exit(1)
+
+
+_REQUIRED_RULE_FIELDS = frozenset(
+    {"direction", "protocol", "sourceIp", "destinationPort", "action"}
+)
+
+
+def load_policy_file(path: str) -> dict[str, Any]:
+    """Load a firewall policy definition from a JSON file.
+
+    Args:
+        path: Path to the JSON policy file.
+
+    Returns:
+        Parsed policy dict with name, description, rules.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        ValueError: If the file contains invalid JSON.
+    """
+    try:
+        with open(path) as f:
+            return json.load(f)  # type: ignore[no-any-return]
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON in {path}: {exc}") from exc
+
+
+def validate_policy_schema(policy: dict[str, Any]) -> None:
+    """Validate a firewall policy dict has required fields.
+
+    Args:
+        policy: Policy dict to validate.
+
+    Raises:
+        ValueError: If required fields are missing.
+    """
+    if "name" not in policy:
+        raise ValueError("Policy missing required field: name")
+    if "rules" not in policy:
+        raise ValueError("Policy missing required field: rules")
+    for i, rule in enumerate(policy["rules"]):
+        for field in _REQUIRED_RULE_FIELDS:
+            if field not in rule:
+                raise ValueError(f"Rule {i} missing required field: {field}")
 
 
 if __name__ == "__main__":

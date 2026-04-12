@@ -1,0 +1,5 @@
+{
+  "name": "lockdown",
+  "description": "Block all traffic — empty rules trigger implicit DROP ALL",
+  "rules": []
+}

@@ -21,12 +21,19 @@ import pytest
 from netcup_firewall import (
     ScpApiClient,
     ScpAuth,
+    _find_or_create_ssh_policy,
+    _get_current_policy_ids,
     cmd_apply,
     cmd_backup,
     cmd_lockdown,
     cmd_restore,
+    cmd_ssh_close,
+    cmd_ssh_open,
+    load_policy_file,
     main,
     parse_args,
+    validate_policy_schema,
+    validate_source_ip,
 )
 
 
@@ -126,6 +133,71 @@ class TestArgParsing:
         """parse_args sets args.func to cmd_restore for restore subcommand."""
         args = parse_args(["restore", "--server", "s", "--file", "f.json"])
         assert args.func is cmd_restore
+
+    def test_ssh_open_requires_server_and_source(self) -> None:
+        """ssh-open requires --server and --source arguments."""
+        args = parse_args(["ssh-open", "--server", "cupix001", "--source", "1.2.3.4"])
+        assert args.command == "ssh-open"
+        assert args.server == "cupix001"
+        assert args.source == "1.2.3.4"
+
+    def test_ssh_open_default_port(self) -> None:
+        """ssh-open defaults to port 22."""
+        args = parse_args(["ssh-open", "--server", "cupix001", "--source", "1.2.3.4"])
+        assert args.port == 22
+
+    def test_ssh_open_custom_port(self) -> None:
+        """ssh-open accepts custom port."""
+        args = parse_args(
+            [
+                "ssh-open",
+                "--server",
+                "cupix001",
+                "--source",
+                "1.2.3.4",
+                "--port",
+                "55809",
+            ]
+        )
+        assert args.port == 55809
+
+    def test_ssh_open_yes_flag(self) -> None:
+        """ssh-open accepts --yes flag."""
+        args = parse_args(
+            ["ssh-open", "--server", "cupix001", "--source", "1.2.3.4", "--yes"]
+        )
+        assert args.yes is True
+
+    def test_ssh_open_missing_source_exits(self) -> None:
+        """ssh-open without --source exits with error."""
+        with pytest.raises(SystemExit):
+            parse_args(["ssh-open", "--server", "cupix001"])
+
+    def test_ssh_open_missing_server_exits(self) -> None:
+        """ssh-open without --server exits with error."""
+        with pytest.raises(SystemExit):
+            parse_args(["ssh-open", "--source", "1.2.3.4"])
+
+    def test_ssh_close_requires_server(self) -> None:
+        """ssh-close requires --server argument."""
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        assert args.command == "ssh-close"
+        assert args.server == "cupix001"
+
+    def test_ssh_close_missing_server_exits(self) -> None:
+        """ssh-close without --server exits with error."""
+        with pytest.raises(SystemExit):
+            parse_args(["ssh-close"])
+
+    def test_ssh_open_dispatches_to_handler(self) -> None:
+        """ssh-open args.func points to cmd_ssh_open."""
+        args = parse_args(["ssh-open", "--server", "cupix001", "--source", "1.2.3.4"])
+        assert args.func == cmd_ssh_open
+
+    def test_ssh_close_dispatches_to_handler(self) -> None:
+        """ssh-close args.func points to cmd_ssh_close."""
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        assert args.func == cmd_ssh_close
 
 
 class TestScpAuth:
@@ -1493,6 +1565,47 @@ class TestKeyringCredentials:
             with pytest.raises(RuntimeError, match="Secret Service unavailable"):
                 auth._load_from_keyring()
 
+
+class TestValidateSourceIp:
+    """Tests for validate_source_ip() — IPv4 CIDR normalization."""
+
+    def test_bare_ipv4_gets_slash32(self) -> None:
+        """Bare IPv4 address gets /32 appended."""
+        assert validate_source_ip("1.2.3.4") == "1.2.3.4/32"
+
+    def test_cidr_notation_preserved(self) -> None:
+        """IPv4 with CIDR notation is preserved as-is."""
+        assert validate_source_ip("10.0.0.0/24") == "10.0.0.0/24"
+
+    def test_slash32_preserved(self) -> None:
+        """IPv4 with /32 is preserved."""
+        assert validate_source_ip("192.168.1.1/32") == "192.168.1.1/32"
+
+    def test_ipv6_rejected(self) -> None:
+        """IPv6 addresses are rejected."""
+        with pytest.raises(ValueError, match="IPv6"):
+            validate_source_ip("::1")
+
+    def test_ipv6_cidr_rejected(self) -> None:
+        """IPv6 CIDR is rejected."""
+        with pytest.raises(ValueError, match="IPv6"):
+            validate_source_ip("2001:db8::/32")
+
+    def test_invalid_address_rejected(self) -> None:
+        """Invalid IP addresses are rejected."""
+        with pytest.raises(ValueError):
+            validate_source_ip("not-an-ip")
+
+    def test_empty_string_rejected(self) -> None:
+        """Empty string is rejected."""
+        with pytest.raises(ValueError):
+            validate_source_ip("")
+
+    def test_invalid_cidr_prefix_rejected(self) -> None:
+        """Invalid CIDR prefix length is rejected."""
+        with pytest.raises(ValueError):
+            validate_source_ip("1.2.3.4/33")
+
     def test_keyring_locked_raises_runtime_error(self) -> None:
         """_load_from_keyring raises RuntimeError when the keyring is locked."""
         from secretstorage.exceptions import LockedException
@@ -1510,3 +1623,580 @@ class TestKeyringCredentials:
         ):
             with pytest.raises(RuntimeError, match="Secret Service unavailable"):
                 auth._load_from_keyring()
+
+
+class TestGetCurrentPolicyIds:
+    """Tests for _get_current_policy_ids() — read current userPolicies from interface."""
+
+    def test_returns_policy_ids_from_firewall(self) -> None:
+        """Extracts userPolicies IDs from get_firewall response."""
+        client = MagicMock(spec=ScpApiClient)
+        client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        client.get_firewall.return_value = {
+            "userPolicies": [42, 99],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+        }
+        result = _get_current_policy_ids(client, 123, "aa:bb:cc:dd:ee:ff")
+        assert result == [42, 99]
+        client.get_firewall.assert_called_once_with(123, "aa:bb:cc:dd:ee:ff")
+
+    def test_returns_empty_list_when_no_policies(self) -> None:
+        """Returns empty list when no userPolicies are assigned."""
+        client = MagicMock(spec=ScpApiClient)
+        client.get_firewall.return_value = {
+            "userPolicies": [],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+            "egressImplicitRule": "DROP",
+        }
+        result = _get_current_policy_ids(client, 123, "aa:bb:cc:dd:ee:ff")
+        assert result == []
+
+    def test_handles_missing_user_policies_key(self) -> None:
+        """Returns empty list when userPolicies key is missing from response."""
+        client = MagicMock(spec=ScpApiClient)
+        client.get_firewall.return_value = {
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP",
+        }
+        result = _get_current_policy_ids(client, 123, "aa:bb:cc:dd:ee:ff")
+        assert result == []
+
+
+class TestFindOrCreateSshPolicy:
+    """Tests for _find_or_create_ssh_policy() — create-use-delete temporary SSH policy."""
+
+    def test_creates_new_policy_when_none_exists(self) -> None:
+        """Creates ssh-temp-{server} policy when no existing one found."""
+        client = MagicMock(spec=ScpApiClient)
+        client.list_policies.return_value = []
+        client.create_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "1.2.3.4/32",
+                    "destinationPort": "22",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+        result = _find_or_create_ssh_policy(client, 42, "cupix001", "1.2.3.4/32", 22)
+        assert result["id"] == 777
+        client.create_policy.assert_called_once()
+        call_args = client.create_policy.call_args
+        assert call_args[0][1] == "ssh-temp-cupix001"
+        rules = call_args[0][2]
+        assert len(rules) == 1
+        assert rules[0]["sourceIp"] == "1.2.3.4/32"
+        assert rules[0]["destinationPort"] == "22"
+
+    def test_deletes_stale_policy_and_recreates(self) -> None:
+        """If ssh-temp-{server} already exists (stale from crash), deletes and recreates."""
+        client = MagicMock(spec=ScpApiClient)
+        client.list_policies.return_value = [
+            {"id": 555, "name": "ssh-temp-cupix001", "rules": []}
+        ]
+        client.create_policy.return_value = {
+            "id": 888,
+            "name": "ssh-temp-cupix001",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "5.6.7.8/32",
+                    "destinationPort": "55809",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+        result = _find_or_create_ssh_policy(client, 42, "cupix001", "5.6.7.8/32", 55809)
+        assert result["id"] == 888
+        client.delete_policy.assert_called_once_with(42, 555)
+        client.create_policy.assert_called_once()
+
+    def test_uses_correct_port_in_rule(self) -> None:
+        """Destination port in rule matches the port argument."""
+        client = MagicMock(spec=ScpApiClient)
+        client.list_policies.return_value = []
+        client.create_policy.return_value = {
+            "id": 999,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
+        _find_or_create_ssh_policy(client, 42, "cupix001", "10.0.0.1/32", 55809)
+        call_args = client.create_policy.call_args
+        rules = call_args[0][2]
+        assert rules[0]["destinationPort"] == "55809"
+
+
+class TestSshOpenCommand:
+    """Tests for cmd_ssh_open() — open temporary SSH access."""
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_open_creates_policy_and_assigns(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-open creates SSH policy and additively assigns to all interfaces."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [50],
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = []
+        mock_client.create_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
+        mock_client.set_firewall.return_value = "task-uuid-1"
+
+        args = parse_args(
+            [
+                "ssh-open",
+                "--server",
+                "cupix001",
+                "--source",
+                "1.2.3.4",
+                "--port",
+                "22",
+                "--yes",
+            ]
+        )
+        cmd_ssh_open(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        mock_client.set_firewall.assert_called_once()
+        set_fw_call = mock_client.set_firewall.call_args
+        policy_ids = set_fw_call[0][2]["userPolicies"]
+        assert 50 in policy_ids
+        assert 777 in policy_ids
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_open_skips_assignment_if_already_assigned(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-open does not duplicate policy ID if already in userPolicies."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [777],
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = []
+        mock_client.create_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
+        mock_client.set_firewall.return_value = "task-uuid-1"
+
+        args = parse_args(
+            ["ssh-open", "--server", "cupix001", "--source", "1.2.3.4", "--yes"]
+        )
+        cmd_ssh_open(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        mock_client.set_firewall.assert_not_called()
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_open_creates_backup_first(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-open creates auto-backup before making changes."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [],
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = []
+        mock_client.create_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
+        mock_client.set_firewall.return_value = "task-uuid-1"
+
+        args = parse_args(
+            ["ssh-open", "--server", "cupix001", "--source", "1.2.3.4", "--yes"]
+        )
+        cmd_ssh_open(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        backup_files = list(tmp_path.glob("*.json"))
+        assert len(backup_files) >= 1
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_open_validates_source_ip(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-open validates the source IP and rejects invalid ones."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+
+        args = parse_args(
+            ["ssh-open", "--server", "cupix001", "--source", "not-an-ip", "--yes"]
+        )
+        with pytest.raises(SystemExit):
+            cmd_ssh_open(
+                args,
+                auth=mock_auth,
+                client=MockClient.return_value,
+                user_id=42,
+            )
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_open_with_di_skips_auth_setup(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """When DI params are passed, ssh-open does not instantiate auth/client."""
+        injected_auth = MagicMock(spec=ScpAuth)
+        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client.find_server.return_value = 123
+        injected_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        injected_client.get_firewall.return_value = {
+            "userPolicies": [],
+            "copiedPolicies": [],
+        }
+        injected_client.list_policies.return_value = []
+        injected_client.create_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
+        injected_client.set_firewall.return_value = "task-uuid-1"
+
+        args = parse_args(
+            ["ssh-open", "--server", "cupix001", "--source", "1.2.3.4", "--yes"]
+        )
+        cmd_ssh_open(
+            args,
+            backup_dir=str(tmp_path),
+            auth=injected_auth,
+            client=injected_client,
+            user_id=7,
+        )
+
+        MockAuth.assert_not_called()
+        MockClient.assert_not_called()
+
+
+class TestSshCloseCommand:
+    """Tests for cmd_ssh_close() — close temporary SSH access."""
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_close_removes_policy_and_deletes(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-close removes SSH policy from interfaces and deletes it."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [50, 777],  # 777 is the SSH policy
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = [
+            {"id": 777, "name": "ssh-temp-cupix001", "rules": []}
+        ]
+        mock_client.set_firewall.return_value = "task-uuid-1"
+
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        cmd_ssh_close(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        # Should set firewall WITHOUT the SSH policy (keep policy 50)
+        mock_client.set_firewall.assert_called_once()
+        set_fw_call = mock_client.set_firewall.call_args
+        policy_ids = set_fw_call[0][2]["userPolicies"]
+        assert 777 not in policy_ids
+        assert 50 in policy_ids
+
+        # Should delete the SSH policy
+        mock_client.delete_policy.assert_called_once_with(42, 777)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_close_no_policy_found(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-close when no ssh-temp-{server} policy exists logs info and exits cleanly."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.list_policies.return_value = []  # no SSH policy
+
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        # Should not raise, just log and return
+        cmd_ssh_close(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        mock_client.set_firewall.assert_not_called()
+        mock_client.delete_policy.assert_not_called()
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_close_policy_exists_but_not_assigned(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-close when policy exists but is not assigned to any interface still deletes it."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [50],  # SSH policy NOT in list
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = [
+            {"id": 777, "name": "ssh-temp-cupix001", "rules": []}
+        ]
+
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        cmd_ssh_close(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        # Should NOT call set_firewall (nothing to unassign)
+        mock_client.set_firewall.assert_not_called()
+        # Should still delete the orphaned policy
+        mock_client.delete_policy.assert_called_once_with(42, 777)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_close_creates_backup_first(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """ssh-close creates auto-backup before making changes."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [777],
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = [
+            {"id": 777, "name": "ssh-temp-cupix001", "rules": []}
+        ]
+        mock_client.set_firewall.return_value = "task-uuid-1"
+
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        cmd_ssh_close(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        # Verify backup was created
+        backup_files = list(tmp_path.glob("*.json"))
+        assert len(backup_files) >= 1
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_close_with_di_skips_auth_setup(
+        self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
+    ) -> None:
+        """When DI params are passed, ssh-close does not instantiate auth/client."""
+        injected_auth = MagicMock(spec=ScpAuth)
+        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client.find_server.return_value = 123
+        injected_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        injected_client.list_policies.return_value = []
+
+        args = parse_args(["ssh-close", "--server", "cupix001"])
+        cmd_ssh_close(
+            args,
+            backup_dir=str(tmp_path),
+            auth=injected_auth,
+            client=injected_client,
+            user_id=7,
+        )
+
+        MockAuth.assert_not_called()
+        MockClient.assert_not_called()
+
+
+class TestPolicyLoading:
+    """Tests for load_policy_file() and validate_policy_schema()."""
+
+    def test_load_valid_policy_file(self, tmp_path: Any) -> None:
+        """Loads and parses a valid policy JSON file."""
+        policy_file = tmp_path / "test-policy.json"
+        policy_file.write_text(
+            json.dumps(
+                {
+                    "name": "test-policy",
+                    "description": "Test policy",
+                    "rules": [
+                        {
+                            "direction": "INGRESS",
+                            "protocol": "TCP",
+                            "sourceIp": "0.0.0.0/0",
+                            "destinationPort": "443",
+                            "action": "ACCEPT",
+                        }
+                    ],
+                }
+            )
+        )
+        result = load_policy_file(str(policy_file))
+        assert result["name"] == "test-policy"
+        assert len(result["rules"]) == 1
+
+    def test_load_nonexistent_file_raises(self) -> None:
+        """Raises FileNotFoundError for missing policy file."""
+        with pytest.raises(FileNotFoundError):
+            load_policy_file("/nonexistent/path.json")
+
+    def test_load_invalid_json_raises(self, tmp_path: Any) -> None:
+        """Raises ValueError for invalid JSON."""
+        bad_file = tmp_path / "bad.json"
+        bad_file.write_text("not valid json {{{")
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            load_policy_file(str(bad_file))
+
+    def test_validate_valid_policy(self) -> None:
+        """Valid policy passes validation."""
+        policy = {
+            "name": "test",
+            "description": "desc",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+        validate_policy_schema(policy)  # Should not raise
+
+    def test_validate_empty_rules_valid(self) -> None:
+        """Policy with empty rules (lockdown) passes validation."""
+        policy = {"name": "lockdown", "description": "drop all", "rules": []}
+        validate_policy_schema(policy)  # Should not raise
+
+    def test_validate_missing_name_raises(self) -> None:
+        """Policy without name fails validation."""
+        policy = {"description": "desc", "rules": []}
+        with pytest.raises(ValueError, match="name"):
+            validate_policy_schema(policy)
+
+    def test_validate_missing_rules_raises(self) -> None:
+        """Policy without rules key fails validation."""
+        policy = {"name": "test", "description": "desc"}
+        with pytest.raises(ValueError, match="rules"):
+            validate_policy_schema(policy)
+
+    def test_validate_rule_missing_direction_raises(self) -> None:
+        """Rule without direction fails validation."""
+        policy = {
+            "name": "test",
+            "description": "desc",
+            "rules": [
+                {
+                    "protocol": "TCP",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="direction"):
+            validate_policy_schema(policy)
+
+    def test_validate_rule_missing_protocol_raises(self) -> None:
+        """Rule without protocol fails validation."""
+        policy = {
+            "name": "test",
+            "description": "desc",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+        with pytest.raises(ValueError, match="protocol"):
+            validate_policy_schema(policy)
+
+    def test_load_lockdown_json_from_infra(self) -> None:
+        """Loads the actual lockdown.json from infra/firewall/."""
+        repo_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        lockdown_path = os.path.join(repo_root, "infra", "firewall", "lockdown.json")
+        result = load_policy_file(lockdown_path)
+        validate_policy_schema(result)
+        assert result["name"] == "lockdown"
+        assert result["rules"] == []

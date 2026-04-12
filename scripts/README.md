@@ -116,6 +116,43 @@ python3 scripts/netcup_firewall.py apply --server cupix001 --policy bootstrap
 | `lockdown` | `lockdown --server NAME [--yes]` | Apply deny-all inbound policy (kill switch). `--yes` skips the interactive confirmation prompt |
 | `restore` | `restore --server NAME --file PATH` | Restore firewall rules from a backup JSON file |
 | `apply` | `apply --server NAME --policy {bootstrap,production}` | Apply a named policy template (not yet implemented) |
+| `ssh-open` | `ssh-open --server NAME --source IP [--port N] [--yes]` | Temporarily open SSH access from a specific source IP |
+| `ssh-close` | `ssh-close --server NAME` | Remove temporary SSH access and delete the temporary policy |
+
+### ssh-open — Temporary SSH Access
+
+Opens temporary SSH access from a specific source IP via the netcup SCP external firewall.
+
+```bash
+# Open SSH port 22 from your IP
+python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4
+
+# Open a custom SSH port
+python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4 --port 55809
+
+# Skip confirmation prompt
+python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4 --yes
+```
+
+The command:
+1. Creates an auto-backup (safety net)
+2. Creates a temporary `ssh-temp-{server}` policy with a single INGRESS TCP ACCEPT rule
+3. Additively assigns the policy alongside existing policies
+4. Reports the open port and source IP
+
+### ssh-close — Remove Temporary SSH Access
+
+Removes temporary SSH access and deletes the temporary policy.
+
+```bash
+python3 scripts/netcup_firewall.py ssh-close --server cupix001
+```
+
+The command:
+1. Creates an auto-backup
+2. Removes `ssh-temp-{server}` policy from all interface assignments
+3. Deletes the temporary policy at netcup
+4. If no SSH policy exists, exits cleanly with an info message
 
 ### Credential Storage Backends
 
