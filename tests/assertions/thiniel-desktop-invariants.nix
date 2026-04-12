@@ -53,6 +53,24 @@
           ) rules;
         message = "thiniel: Hyprland must have windowrule for MPV";
       }
+      {
+        assertion =
+          let
+            execOnce =
+              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.exec-once or [ ];
+          in
+          builtins.any (e: builtins.match ".*wlsunset.*" e != null) execOnce;
+        message = "thiniel: wlsunset must be started via Hyprland exec-once";
+      }
+      {
+        assertion =
+          let
+            binds =
+              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.bind or [ ];
+          in
+          builtins.any (b: builtins.match ".*wlsunset.*" b != null) binds;
+        message = "thiniel: Hyprland must have keybind to toggle wlsunset";
+      }
     ];
   };
 }
