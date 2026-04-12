@@ -65,7 +65,7 @@ let
 
         testHyprlandBindCount = {
           expr = builtins.length hyprSettings.bind;
-          expected = 42;
+          expected = 46;
         };
 
         testHyprlandBindeCount = {
@@ -80,7 +80,7 @@ let
 
         testHyprlandWindowruleCount = {
           expr = builtins.length hyprSettings.windowrule;
-          expected = 8;
+          expected = 10;
         };
 
         testHyprlandNoDeprecatedIdleinhibit = {
@@ -352,7 +352,7 @@ lib.debug.runTests {
 
   testImpermanenceDirCount = {
     expr = builtins.length impermanenceDirs;
-    expected = 19;
+    expected = 20;
   };
 
   # ── impermanence: files ───────────────────────────────────────────────────

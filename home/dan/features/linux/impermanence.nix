@@ -35,6 +35,8 @@ _: {
       ".config/Signal"
       # Threema Desktop messaging state
       ".config/Threema"
+      # Screen recordings (wf-recorder output)
+      "Videos"
     ];
     files = [
       ".bash_history"

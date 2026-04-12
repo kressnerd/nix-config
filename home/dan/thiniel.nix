@@ -21,6 +21,7 @@
     ./features/linux/fuzzel.nix
     ./features/linux/hypridle.nix
     ./features/linux/hyprland.nix
+    ./features/linux/kanshi.nix
     ./features/linux/hyprlock.nix
     ./features/linux/gtk-qt.nix
     ./features/linux/mako.nix
