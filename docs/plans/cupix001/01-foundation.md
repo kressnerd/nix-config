@@ -34,7 +34,7 @@
 #### Step 1.1.3: Green — Create hardware.nix stub
 
 - **File**: `hosts/cupix001/hardware.nix`
-- **What to implement**: KVM hardware stub — `boot.initrd.availableKernelModules = ["virtio_pci" "virtio_scsi" "virtio_blk" "virtio_net"]`, `boot.loader.grub.enable = true` (BIOS placeholder; will be updated to systemd-boot if UEFI confirmed in prerequisites). Add comment: `# Boot mode determined in prerequisites step 2; update to systemd-boot if UEFI`.
+- **What to implement**: KVM hardware stub — `boot.initrd.availableKernelModules = ["virtio_pci" "virtio_scsi" "virtio_blk" "virtio_net"]`. Boot mode confirmed as UEFI; using `boot.loader.systemd-boot.enable = true` + `boot.loader.efi.canTouchEfiVariables = true`. Placeholder `/boot` (vfat) and `/` (ext4) fileSystems entries required for NixOS eval; both will be replaced by disko in Epic 2.
 - **Verify**: `nix flake check`
 - **Expected**: PASS
 
