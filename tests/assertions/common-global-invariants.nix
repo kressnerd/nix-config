@@ -14,10 +14,6 @@
         message = "Global invariant violated: i18n.defaultLocale must be en_US.UTF-8";
       }
       {
-        assertion = config.networking.networkmanager.enable;
-        message = "Global invariant violated: networking.networkmanager.enable must be true";
-      }
-      {
         assertion = builtins.elem "flakes" config.nix.settings.experimental-features;
         message = "Global invariant violated: nix flakes experimental feature must be enabled";
       }

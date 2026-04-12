@@ -11,6 +11,10 @@
   config = lib.mkIf (config.networking.hostName == "thiniel") {
     assertions = [
       {
+        assertion = config.networking.networkmanager.enable;
+        message = "thiniel: networking.networkmanager must be enabled (desktop host)";
+      }
+      {
         assertion = config.programs.fish.enable;
         message = "thiniel: programs.fish.enable must be true (required for fish as login shell)";
       }
