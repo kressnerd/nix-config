@@ -441,5 +441,9 @@
     };
   };
 
+  # TODO: Backup solution — evaluate restic or borgbackup for automated backups
+  # ownCloud provides sync but not versioned backup
+  # Priority: important but deferred
+
   system.stateVersion = "25.11";
 }
