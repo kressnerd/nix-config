@@ -15,6 +15,7 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import os
@@ -26,6 +27,17 @@ from typing import Any
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+try:
+    import secretstorage
+    from secretstorage.exceptions import (
+        LockedException,
+        SecretServiceNotAvailableException,
+    )
+
+    _HAS_SECRETSTORAGE = True
+except ImportError:
+    _HAS_SECRETSTORAGE = False
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +53,32 @@ CLIENT_ID = "scp"
 SCOPES = "offline_access openid"
 
 
+_KEYRING_SERVICE = "netcup-scp"
+_KEYRING_USERNAME = "default"
+_KEYRING_LABEL = "netcup-scp credentials"
+
+
 class ScpAuth:
     """OIDC authentication for the netcup Server Control Panel."""
 
-    def __init__(self) -> None:
-        """Initialize ScpAuth with the default credentials file path."""
+    def __init__(self, use_keyring: bool = False) -> None:
+        """Initialize ScpAuth with file or keyring credential backend.
+
+        Args:
+            use_keyring: When True, use the Secret Service API (gnome-keyring)
+                instead of a JSON file. Requires secretstorage library.
+
+        Raises:
+            RuntimeError: If use_keyring is True but secretstorage is not installed.
+        """
         self._credentials_path = os.path.join(
             os.path.expanduser("~"), ".config", "netcup-scp", "credentials.json"
         )
+        self._use_keyring = use_keyring
+        if use_keyring and not _HAS_SECRETSTORAGE:
+            raise RuntimeError(
+                "--keyring requires the secretstorage library (not installed)"
+            )
 
     @property
     def credentials_path(self) -> str:
@@ -59,8 +89,8 @@ class ScpAuth:
         """
         return self._credentials_path
 
-    def load_credentials(self) -> dict[str, Any] | None:
-        """Load stored credentials from disk.
+    def _load_from_file(self) -> dict[str, Any] | None:
+        """Load credentials from the JSON file.
 
         Returns:
             Parsed credentials dict, or None if the file is missing or invalid.
@@ -71,7 +101,7 @@ class ScpAuth:
         except (FileNotFoundError, json.JSONDecodeError):
             return None
 
-    def save_credentials(self, tokens: dict[str, Any]) -> None:
+    def _save_to_file(self, tokens: dict[str, Any]) -> None:
         """Save tokens to the credentials file with 0600 permissions.
 
         Args:
@@ -84,6 +114,81 @@ class ScpAuth:
         )
         with os.fdopen(fd, "w") as f:
             json.dump(tokens, f, indent=2)
+
+    def _load_from_keyring(self) -> dict[str, Any] | None:
+        """Load credentials from the Secret Service keyring.
+
+        Returns:
+            Parsed credentials dict, or None if no entry exists.
+
+        Raises:
+            RuntimeError: If the Secret Service is unavailable or the keyring is locked.
+        """
+        try:
+            with contextlib.closing(secretstorage.dbus_init()) as conn:
+                collection = secretstorage.get_default_collection(conn)
+                items = list(
+                    collection.search_items(
+                        {"service": _KEYRING_SERVICE, "username": _KEYRING_USERNAME}
+                    )
+                )
+                if not items:
+                    return None
+                secret_bytes = items[0].get_secret()
+                return json.loads(secret_bytes.decode())  # type: ignore[no-any-return]
+        except SecretServiceNotAvailableException as exc:
+            raise RuntimeError(f"Secret Service unavailable: {exc}") from exc
+        except LockedException as exc:
+            raise RuntimeError(
+                f"Secret Service unavailable: keyring is locked: {exc}"
+            ) from exc
+
+    def _save_to_keyring(self, tokens: dict[str, Any]) -> None:
+        """Save tokens to the Secret Service keyring.
+
+        Args:
+            tokens: Token dict to persist (access_token, refresh_token, etc.).
+
+        Raises:
+            RuntimeError: If the Secret Service is unavailable or the keyring is locked.
+        """
+        try:
+            with contextlib.closing(secretstorage.dbus_init()) as conn:
+                collection = secretstorage.get_default_collection(conn)
+                secret_bytes = json.dumps(tokens).encode()
+                collection.create_item(
+                    _KEYRING_LABEL,
+                    {"service": _KEYRING_SERVICE, "username": _KEYRING_USERNAME},
+                    secret_bytes,
+                    replace=True,
+                )
+        except SecretServiceNotAvailableException as exc:
+            raise RuntimeError(f"Secret Service unavailable: {exc}") from exc
+        except LockedException as exc:
+            raise RuntimeError(
+                f"Secret Service unavailable: keyring is locked: {exc}"
+            ) from exc
+
+    def load_credentials(self) -> dict[str, Any] | None:
+        """Load stored credentials from the configured backend.
+
+        Returns:
+            Parsed credentials dict, or None if no credentials are stored.
+        """
+        if self._use_keyring:
+            return self._load_from_keyring()
+        return self._load_from_file()
+
+    def save_credentials(self, tokens: dict[str, Any]) -> None:
+        """Save tokens to the configured backend.
+
+        Args:
+            tokens: Token dict to persist (access_token, refresh_token, etc.).
+        """
+        if self._use_keyring:
+            self._save_to_keyring(tokens)
+        else:
+            self._save_to_file(tokens)
 
     def device_code_flow(self) -> dict[str, Any]:
         """Initiate OIDC device code flow.
@@ -444,6 +549,7 @@ def _authenticate_and_setup(
     auth: ScpAuth | None,
     client: ScpApiClient | None,
     user_id: int | None,
+    use_keyring: bool = False,
 ) -> tuple[ScpAuth, ScpApiClient, int]:
     """Authenticate with SCP and return a ready-to-use auth, client, and user ID.
 
@@ -454,12 +560,13 @@ def _authenticate_and_setup(
         auth: Existing ScpAuth instance, or None to create one.
         client: Existing ScpApiClient instance, or None to create one.
         user_id: Known SCP user ID, or None to fetch from the userinfo endpoint.
+        use_keyring: Pass to ScpAuth when creating a new instance.
 
     Returns:
         Tuple of (auth, client, user_id) ready for API calls.
     """
     if auth is None or client is None or user_id is None:
-        _auth = ScpAuth()
+        _auth = ScpAuth(use_keyring=use_keyring)
         access_token = _auth.get_access_token()
         _user_id = _auth.get_user_id(access_token)
         _client = ScpApiClient(access_token)
@@ -777,7 +884,10 @@ def cmd_backup(
         )
 
     now = datetime.now(timezone.utc)
-    auth, client, user_id = _authenticate_and_setup(auth, client, user_id)
+    use_keyring = getattr(args, "keyring", False)
+    auth, client, user_id = _authenticate_and_setup(
+        auth, client, user_id, use_keyring=use_keyring
+    )
 
     server_id = client.find_server(args.server)
     interfaces = client.get_interfaces(server_id)
@@ -814,7 +924,10 @@ def cmd_lockdown(
             logger.error("Aborted.")
             sys.exit(1)
 
-    auth, client, user_id = _authenticate_and_setup(auth, client, user_id)
+    use_keyring = getattr(args, "keyring", False)
+    auth, client, user_id = _authenticate_and_setup(
+        auth, client, user_id, use_keyring=use_keyring
+    )
 
     logger.info("Creating automatic backup before lockdown...")
     backup_path = cmd_backup(args, auth=auth, client=client, user_id=user_id)
@@ -857,7 +970,10 @@ def cmd_restore(
     backup = _load_backup_file(args.file)
     _validate_backup_structure(backup, args.server)
 
-    auth, client, user_id = _authenticate_and_setup(auth, client, user_id)
+    use_keyring = getattr(args, "keyring", False)
+    auth, client, user_id = _authenticate_and_setup(
+        auth, client, user_id, use_keyring=use_keyring
+    )
 
     server_id = client.find_server(args.server)
     existing_policies = client.list_policies(user_id)
@@ -916,6 +1032,15 @@ examples:
         action="store_true",
         default=False,
         help="Suppress all output except errors (ERROR level logging).",
+    )
+    parser.add_argument(
+        "--keyring",
+        action="store_true",
+        default=False,
+        help=(
+            "Store/retrieve credentials via gnome-keyring (Secret Service API) "
+            "instead of file. Requires secretstorage library."
+        ),
     )
 
     subparsers = parser.add_subparsers(dest="command")

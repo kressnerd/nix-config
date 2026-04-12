@@ -1,7 +1,8 @@
 """Tests for the netcup-firewall CLI tool.
 
 Covers argument parsing, OIDC authentication (ScpAuth), REST API client
-(ScpApiClient), and all command handlers (backup, lockdown, restore, apply).
+(ScpApiClient), all command handlers (backup, lockdown, restore, apply),
+and keyring credential storage via the Secret Service API.
 External HTTP calls are fully mocked — no real network access is made.
 """
 
@@ -1337,3 +1338,175 @@ class TestWorkflow:
 
         last_set_call = mock_client.set_firewall.call_args
         assert last_set_call[0][1] == "aa:bb:cc:dd:ee:ff"
+
+
+class TestKeyringCredentials:
+    """Test gnome-keyring (Secret Service) credential backend."""
+
+    def test_keyring_flag_parsed(self) -> None:
+        """--keyring flag is parsed and set on the namespace."""
+        args = parse_args(["--keyring", "backup", "--server", "cupix001"])
+        assert args.keyring is True
+
+    def test_keyring_flag_defaults_false(self) -> None:
+        """--keyring defaults to False when not supplied."""
+        args = parse_args(["backup", "--server", "cupix001"])
+        assert args.keyring is False
+
+    def test_keyring_missing_library_raises_error(self) -> None:
+        """ScpAuth raises RuntimeError when use_keyring=True but library is missing."""
+        import netcup_firewall as nf
+
+        original = nf._HAS_SECRETSTORAGE
+        try:
+            nf._HAS_SECRETSTORAGE = False
+            with pytest.raises(RuntimeError, match="secretstorage"):
+                ScpAuth(use_keyring=True)
+        finally:
+            nf._HAS_SECRETSTORAGE = original
+
+    def test_auth_uses_file_by_default(self, tmp_path: Path) -> None:
+        """Without --keyring, load_credentials delegates to _load_from_file."""
+        auth = ScpAuth(use_keyring=False)
+        auth._load_from_file = MagicMock(return_value={"refresh_token": "rt-file"})  # type: ignore[method-assign]
+        auth._load_from_keyring = MagicMock()  # type: ignore[method-assign]
+        result = auth.load_credentials()
+        auth._load_from_file.assert_called_once()
+        auth._load_from_keyring.assert_not_called()
+        assert result == {"refresh_token": "rt-file"}
+
+    def test_auth_uses_keyring_when_flag_set(self) -> None:
+        """With use_keyring=True, load_credentials delegates to _load_from_keyring."""
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+        auth._load_from_file = MagicMock()  # type: ignore[method-assign]
+        auth._load_from_keyring = MagicMock(return_value={"refresh_token": "rt-kr"})  # type: ignore[method-assign]
+        result = auth.load_credentials()
+        auth._load_from_keyring.assert_called_once()
+        auth._load_from_file.assert_not_called()
+        assert result == {"refresh_token": "rt-kr"}
+
+    def test_save_uses_file_by_default(self, tmp_path: Path) -> None:
+        """Without --keyring, save_credentials delegates to _save_to_file."""
+        auth = ScpAuth(use_keyring=False)
+        auth._save_to_file = MagicMock()  # type: ignore[method-assign]
+        auth._save_to_keyring = MagicMock()  # type: ignore[method-assign]
+        tokens: dict[str, str] = {"access_token": "at", "refresh_token": "rt"}
+        auth.save_credentials(tokens)
+        auth._save_to_file.assert_called_once_with(tokens)
+        auth._save_to_keyring.assert_not_called()
+
+    def test_save_uses_keyring_when_flag_set(self) -> None:
+        """With use_keyring=True, save_credentials delegates to _save_to_keyring."""
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+        auth._save_to_file = MagicMock()  # type: ignore[method-assign]
+        auth._save_to_keyring = MagicMock()  # type: ignore[method-assign]
+        tokens: dict[str, str] = {"access_token": "at", "refresh_token": "rt"}
+        auth.save_credentials(tokens)
+        auth._save_to_keyring.assert_called_once_with(tokens)
+        auth._save_to_file.assert_not_called()
+
+    def test_keyring_load_returns_tokens(self) -> None:
+        """_load_from_keyring returns token dict from Secret Service item."""
+        tokens: dict[str, str] = {"access_token": "at-kr", "refresh_token": "rt-kr"}
+        secret_bytes = json.dumps(tokens).encode()
+
+        mock_item = MagicMock()
+        mock_item.get_secret.return_value = secret_bytes
+
+        mock_collection = MagicMock()
+        mock_collection.search_items.return_value = iter([mock_item])
+
+        mock_conn = MagicMock()
+
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+
+        with (
+            patch("secretstorage.dbus_init", return_value=mock_conn),
+            patch("secretstorage.get_default_collection", return_value=mock_collection),
+        ):
+            result = auth._load_from_keyring()
+
+        assert result == tokens
+        mock_collection.search_items.assert_called_once_with(
+            {"service": "netcup-scp", "username": "default"}
+        )
+
+    def test_keyring_load_returns_none_when_no_item(self) -> None:
+        """_load_from_keyring returns None when no item exists in keyring."""
+        mock_collection = MagicMock()
+        mock_collection.search_items.return_value = iter([])
+        mock_conn = MagicMock()
+
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+
+        with (
+            patch("secretstorage.dbus_init", return_value=mock_conn),
+            patch("secretstorage.get_default_collection", return_value=mock_collection),
+        ):
+            result = auth._load_from_keyring()
+
+        assert result is None
+
+    def test_keyring_save_stores_secret(self) -> None:
+        """_save_to_keyring calls create_item with correct label and attributes."""
+        tokens: dict[str, str] = {"access_token": "at-kr", "refresh_token": "rt-kr"}
+
+        mock_collection = MagicMock()
+        mock_conn = MagicMock()
+
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+
+        with (
+            patch("secretstorage.dbus_init", return_value=mock_conn),
+            patch("secretstorage.get_default_collection", return_value=mock_collection),
+        ):
+            auth._save_to_keyring(tokens)
+
+        mock_collection.create_item.assert_called_once_with(
+            "netcup-scp credentials",
+            {"service": "netcup-scp", "username": "default"},
+            json.dumps(tokens).encode(),
+            replace=True,
+        )
+
+    def test_keyring_unavailable_raises_runtime_error(self) -> None:
+        """_load_from_keyring raises RuntimeError when SecretServiceNotAvailableException is raised."""
+        from secretstorage.exceptions import SecretServiceNotAvailableException
+
+        mock_conn = MagicMock()
+
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+
+        with (
+            patch("secretstorage.dbus_init", return_value=mock_conn),
+            patch(
+                "secretstorage.get_default_collection",
+                side_effect=SecretServiceNotAvailableException("no dbus"),
+            ),
+        ):
+            with pytest.raises(RuntimeError, match="Secret Service unavailable"):
+                auth._load_from_keyring()
+
+    def test_keyring_locked_raises_runtime_error(self) -> None:
+        """_load_from_keyring raises RuntimeError when the keyring is locked."""
+        from secretstorage.exceptions import LockedException
+
+        mock_collection = MagicMock()
+        mock_collection.search_items.side_effect = LockedException("locked")
+        mock_conn = MagicMock()
+
+        with patch("netcup_firewall._HAS_SECRETSTORAGE", True):
+            auth = ScpAuth(use_keyring=True)
+
+        with (
+            patch("secretstorage.dbus_init", return_value=mock_conn),
+            patch("secretstorage.get_default_collection", return_value=mock_collection),
+        ):
+            with pytest.raises(RuntimeError, match="Secret Service unavailable"):
+                auth._load_from_keyring()
