@@ -71,6 +71,10 @@
           assertion = hmHasDir ".local/share/containers";
           message = "thiniel: .local/share/containers must be persisted for rootless Podman data";
         }
+        {
+          assertion = hasDir "/var/lib/bluetooth";
+          message = "thiniel: /var/lib/bluetooth must be persisted for bluetooth pairings";
+        }
       ];
   };
 }

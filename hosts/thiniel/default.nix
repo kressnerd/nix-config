@@ -130,7 +130,7 @@
     directories = [
       "/etc/nixos"
       "/var/log"
-      #      "/var/lib/bluetooth"
+      "/var/lib/bluetooth"
       "/var/lib/nixos" # contains important state
       "/var/lib/containers" # Podman container images and layers (system-level)
       "/var/lib/systemd/coredump"
@@ -252,6 +252,12 @@
 
   # PAM integration: required for Hyprlock to authenticate via PAM
   security.pam.services.hyprlock = { };
+
+  # Hardware
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
 
   # Power management
   powerManagement.enable = true;
