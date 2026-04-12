@@ -19,7 +19,6 @@
 
   networking = {
     hostName = "cupix001";
-    networkmanager.enable = lib.mkForce false;
     firewall.enable = true;
   };
 

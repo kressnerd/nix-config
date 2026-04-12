@@ -11,6 +11,7 @@
     ../common/global
     ../common/users/dan.nix
     ../common/optional/virtualisation.nix
+    ../common/optional/networkmanager.nix
     ./hardware.nix
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
     inputs.sops-nix.nixosModules.sops
