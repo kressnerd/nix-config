@@ -10,6 +10,8 @@
     ./thiniel-rice-invariants.nix
     ./thiniel-sleep-invariants.nix
     ./thiniel-keyboard-invariants.nix
+    ./thiniel-hardware-invariants.nix
+    ./thiniel-desktop-invariants.nix
     ./nixos-vm-minimal-invariants.nix
     ./cupix001-invariants.nix
   ];
