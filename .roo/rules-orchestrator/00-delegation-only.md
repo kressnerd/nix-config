@@ -68,6 +68,7 @@ Each subtask receives ONLY the context it needs:
 - **No** history that is irrelevant to the current task
 - **Clear** task description with expected outcomes
 - **References** to relevant files and paths instead of file contents
+- **Pin concrete values**: Include exact file paths, option names, port numbers, hostnames, coordinates, and package versions in every subtask message. The delegated mode must not guess or look up values the Orchestrator already has
 
 ## Enforcement
 

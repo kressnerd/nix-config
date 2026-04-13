@@ -70,6 +70,21 @@ Subtask 7:         Refactor if needed → all tests still pass
 - ✅ `"Write one assertion: SSH root login must be disabled"` (atomic)
 - ✅ `"Implement: set PermitRootLogin = no to pass the assertion"` (atomic)
 
+## Batching Similar Features
+
+The default is **one change per Red-Green pair**. The Orchestrator MAY batch multiple features into a single subtask when ALL conditions hold:
+
+- All features follow an **identical pattern** (same option path, same test structure)
+- No feature has a unique failure mode (homogeneous pass/fail)
+- The batch constitutes a **single logical change** (e.g., "add 3 messaging apps with persistence")
+- The batch remains **small** (≤ 5 items); larger groups must be split
+
+### Prohibited Batching
+
+- Features with different configuration structures or option paths
+- Features that could fail independently
+- Mixed change types (e.g., package addition + service enable + firewall rule)
+
 ## Subtask Message Templates
 
 ### Red Phase (Write Failing Test)

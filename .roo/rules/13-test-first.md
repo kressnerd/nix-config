@@ -45,6 +45,7 @@ Cycle 5: Refactor → extract SSH config into reusable module
 - ❌ Creating an entire service module, then writing tests after
 - ❌ Skipping Red phase because "the test is obvious"
 - ❌ Combining unrelated changes in one cycle
+- ❌ Writing assertions that check **exact counts** of list members (e.g., "package list must have exactly 5 entries") — these break whenever an unrelated item is added or removed. Assert presence or absence of **specific named items** instead
 
 ### Granularity Guide
 
