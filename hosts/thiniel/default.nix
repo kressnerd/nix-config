@@ -366,6 +366,7 @@
     };
     git.enable = true;
     fuse.userAllowOther = true;
+    seahorse.enable = true; # GUI for gnome-keyring management
 
     # Some programs need SUID wrappers, can be configured further or are
     # started in user sessions.
