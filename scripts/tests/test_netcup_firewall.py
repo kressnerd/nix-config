@@ -2552,9 +2552,9 @@ class TestOpenApiDownloadCommand:
     """Test the cmd_openapi_download handler."""
 
     def test_download_saves_spec_to_file(
-        self, capsys: pytest.CaptureFixture[str], tmp_path: Path
+        self, caplog: pytest.LogCaptureFixture, tmp_path: Path
     ) -> None:
-        """Download spec is written to file and confirmation printed to stdout."""
+        """Download spec is written to file and confirmation logged at INFO."""
         output_file = str(tmp_path / "spec.json")
         args = argparse.Namespace(
             output=output_file,
@@ -2567,14 +2567,16 @@ class TestOpenApiDownloadCommand:
         spec_data: dict[str, Any] = {"openapi": "3.0.3", "info": {"title": "SCP API"}}
         mock_client.get_openapi_spec.return_value = spec_data
 
-        cmd_openapi_download(args, auth=mock_auth, client=mock_client)
+        import logging
+
+        with caplog.at_level(logging.INFO):
+            cmd_openapi_download(args, auth=mock_auth, client=mock_client)
 
         with open(output_file) as f:
             saved = json.load(f)
         assert saved == spec_data
 
-        captured = capsys.readouterr()
-        assert f"Saved OpenAPI spec to {output_file}" in captured.out
+        assert f"Saved OpenAPI spec to {output_file}" in caplog.text
 
         mock_client.get_openapi_spec.assert_called_once()
 
