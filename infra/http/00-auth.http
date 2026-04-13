@@ -1,17 +1,22 @@
 # Netcup SCP — OIDC Authentication (Device Code Flow)
 #
-# Flow:
-#   1. Initiate device authorization → get device_code + user_code
-#   2. Visit verification_uri and enter user_code in browser
-#   3. Poll token endpoint every 5s until access_token is returned
-#   4. Fetch userinfo to extract user_id for /users/{user_id}/... endpoints
+# Workflow (run once per VS Code session):
+#   1. Run "Initiate Device Authorization" → device_code auto-captured
+#   2. Visit verification_uri in browser, enter user_code
+#   3. Run "Poll for Token" → access_token, refresh_token, id_token auto-captured
+#   4. Run "Get User Info" → user_id auto-captured
 #
-# After obtaining access_token, set it in http-client.env.json.
-# The user_id from the userinfo response is an integer (NOT the customer number).
+# All captured values are stored in $global (session-scoped).
+# Subsequent .http files use {{access_token}} etc. without manual env file edits.
+#
+# When access_token expires mid-session, run "Refresh Token" (request 3).
+#
+# Semi-static values (server_id, server_name, interface_mac, policy_id)
+# remain in http-client.private.env.json.
 
 ### 1 — Initiate Device Authorization
 # Opens a device authorization session. Returns:
-#   device_code     — use in request 2
+#   device_code     — auto-captured into $global for request 2
 #   user_code       — enter at verification_uri in your browser
 #   verification_uri — URL to visit for authorization
 POST {{oidc_base}}/auth/device
@@ -19,27 +24,59 @@ Content-Type: application/x-www-form-urlencoded
 
 client_id={{client_id}}&scope=offline_access%20openid
 
+{{
+  $global.device_code = response.parsedBody.device_code;
+  console.info("device_code captured — visit:", response.parsedBody.verification_uri_complete || response.parsedBody.verification_uri);
+  console.info("user_code:", response.parsedBody.user_code);
+}}
+
 ### 2 — Poll for Token
 # Poll every 5 seconds until authorization_pending stops.
-# Replace REPLACE_WITH_DEVICE_CODE with the device_code from request 1.
-# Success: returns access_token + refresh_token.
+# device_code is auto-populated from request 1 via $global.
+# Success: captures access_token, refresh_token, id_token into $global.
 # Pending: {"error": "authorization_pending"} — keep polling.
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
 
-client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=REPLACE_WITH_DEVICE_CODE
+client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code={{device_code}}
+
+{{
+  if (response.parsedBody.access_token) {
+    $global.access_token = response.parsedBody.access_token;
+    $global.refresh_token = response.parsedBody.refresh_token;
+    $global.id_token = response.parsedBody.id_token;
+    console.info("Tokens captured. access_token, refresh_token, id_token are now available.");
+  } else {
+    console.warn("authorization_pending — poll again in 5s");
+  }
+}}
 
 ### 3 — Refresh Token
-# Use when access_token expires. Replace REPLACE_WITH_REFRESH_TOKEN with
-# the refresh_token received in request 2.
+# Use when access_token expires mid-session.
+# refresh_token is auto-populated from $global (set by request 2).
+# Captures new access_token, refresh_token, id_token into $global.
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
 
 client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 
+{{
+  if (response.parsedBody.access_token) {
+    $global.access_token = response.parsedBody.access_token;
+    $global.refresh_token = response.parsedBody.refresh_token;
+    $global.id_token = response.parsedBody.id_token;
+    console.info("Tokens refreshed. access_token, refresh_token, id_token updated.");
+  }
+}}
+
 ### 4 — Get User Info (extracts user_id)
 # Returns the SCP user profile. The `id` field (integer) is the user_id
 # required for /users/{user_id}/... endpoints — NOT the customer number.
-# Copy the `id` value into http-client.env.json as `user_id`.
+# user_id is auto-captured into $global.
 GET {{oidc_base}}/userinfo
 Authorization: Bearer {{access_token}}
+
+{{
+  $global.user_id = response.parsedBody.id;
+  console.info("user_id captured:", response.parsedBody.id);
+}}
