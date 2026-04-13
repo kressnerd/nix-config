@@ -1051,7 +1051,8 @@ def cmd_backup(
     server_id = client.find_server(args.server)
     interfaces = client.get_interfaces(server_id)
     interface_data = _gather_interface_firewall_state(client, server_id, interfaces)
-    policies = client.list_policies(user_id)
+    policy_summaries = client.list_policies(user_id)
+    policies = [client.get_policy(user_id, p["id"]) for p in policy_summaries]
 
     backup = _assemble_backup(server_id, args.server, interface_data, policies, now)
     filepath = _write_backup_file(backup, backup_dir, args.server, now)
