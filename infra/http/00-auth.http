@@ -1,0 +1,45 @@
+# Netcup SCP — OIDC Authentication (Device Code Flow)
+#
+# Flow:
+#   1. Initiate device authorization → get device_code + user_code
+#   2. Visit verification_uri and enter user_code in browser
+#   3. Poll token endpoint every 5s until access_token is returned
+#   4. Fetch userinfo to extract user_id for /users/{user_id}/... endpoints
+#
+# After obtaining access_token, set it in http-client.env.json.
+# The user_id from the userinfo response is an integer (NOT the customer number).
+
+### 1 — Initiate Device Authorization
+# Opens a device authorization session. Returns:
+#   device_code     — use in request 2
+#   user_code       — enter at verification_uri in your browser
+#   verification_uri — URL to visit for authorization
+POST {{oidc_base}}/auth/device
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{client_id}}&scope=offline_access%20openid
+
+### 2 — Poll for Token
+# Poll every 5 seconds until authorization_pending stops.
+# Replace REPLACE_WITH_DEVICE_CODE with the device_code from request 1.
+# Success: returns access_token + refresh_token.
+# Pending: {"error": "authorization_pending"} — keep polling.
+POST {{oidc_base}}/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=REPLACE_WITH_DEVICE_CODE
+
+### 3 — Refresh Token
+# Use when access_token expires. Replace REPLACE_WITH_REFRESH_TOKEN with
+# the refresh_token received in request 2.
+POST {{oidc_base}}/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id={{client_id}}&grant_type=refresh_token&refresh_token=REPLACE_WITH_REFRESH_TOKEN
+
+### 4 — Get User Info (extracts user_id)
+# Returns the SCP user profile. The `id` field (integer) is the user_id
+# required for /users/{user_id}/... endpoints — NOT the customer number.
+# Copy the `id` value into http-client.env.json as `user_id`.
+GET {{oidc_base}}/userinfo
+Authorization: Bearer {{access_token}}

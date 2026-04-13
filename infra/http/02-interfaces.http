@@ -1,0 +1,12 @@
+# Netcup SCP — Network Interfaces
+#
+# Requires: access_token, server_id
+# The interface_mac returned here is needed for firewall and rDNS requests.
+# Copy the MAC address of the primary interface into http-client.env.json as `interface_mac`.
+
+### 1 — List Network Interfaces
+# Returns all network interfaces attached to the server.
+# Response includes MAC addresses, IP assignments, and VLAN info.
+# Use the MAC of the primary interface as interface_mac in subsequent requests.
+GET {{base_url}}/servers/{{server_id}}/interfaces
+Authorization: Bearer {{access_token}}

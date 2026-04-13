@@ -1,0 +1,24 @@
+# Netcup SCP — Async Task Status
+#
+# Requires: access_token, task_uuid
+# Several SCP operations are asynchronous and return HTTP 202 with a task UUID.
+# Poll this endpoint until status is COMPLETED or FAILED.
+#
+# Status values:
+#   RUNNING   — operation in progress, continue polling
+#   COMPLETED — operation finished successfully
+#   FAILED    — operation failed, check response for details
+#
+# Set task_uuid in http-client.env.json after receiving it from an async operation
+# (e.g., firewall apply in 03-firewall.http).
+
+### 1 — List Tasks
+# Returns all tasks for the account (recent history).
+GET {{base_url}}/tasks
+Authorization: Bearer {{access_token}}
+
+### 2 — Get Task Status
+# Poll this endpoint after any async operation (HTTP 202 response).
+# Replace task_uuid in http-client.env.json with the UUID from the 202 response.
+GET {{base_url}}/tasks/{{task_uuid}}
+Authorization: Bearer {{access_token}}

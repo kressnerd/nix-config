@@ -1,0 +1,21 @@
+# Netcup SCP — Server Listing and Details
+#
+# Requires: access_token, server_id (for detail/management requests)
+# Set server_id in http-client.env.json after discovering it via request 1 or 2.
+
+### 1 — List All Servers
+# Returns all servers associated with the account.
+GET {{base_url}}/servers
+Authorization: Bearer {{access_token}}
+
+### 2 — Find Server by Name
+# Filters servers by name. Useful for discovering server_id by known hostname.
+# Set server_name in http-client.env.json (default: cupix001).
+GET {{base_url}}/servers?name={{server_name}}
+Authorization: Bearer {{access_token}}
+
+### 3 — Get Server Details
+# Returns full server details including state, specs, and interfaces.
+# Requires server_id to be set in http-client.env.json.
+GET {{base_url}}/servers/{{server_id}}
+Authorization: Bearer {{access_token}}

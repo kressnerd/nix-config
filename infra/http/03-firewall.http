@@ -1,0 +1,33 @@
+# Netcup SCP — Firewall State per Interface
+#
+# Requires: access_token, server_id, interface_mac
+# Firewall is applied per network interface (identified by MAC address).
+#
+# Response fields:
+#   userPolicies        — list of applied policy IDs (from 04-policies.http)
+#   ingressImplicitRule — default action for unmatched ingress traffic
+#   egressImplicitRule  — default action for unmatched egress traffic
+#   consistent          — whether firewall state matches applied policies
+#   active              — whether firewall is currently enforced
+#
+# Apply operations are async and return HTTP 202 with a task UUID.
+# Poll the task via 05-tasks.http to confirm completion.
+
+### 1 — Get Firewall State
+# Returns current firewall configuration for the specified interface.
+# Check `consistent` and `active` fields to verify enforcement status.
+GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall
+Authorization: Bearer {{access_token}}
+
+### 2 — Apply Firewall Policies (async)
+# Replaces the current policy set on the interface.
+# Returns HTTP 202 with {"uuid": "task-uuid"} — poll via 05-tasks.http.
+# Set policy_id in http-client.env.json (discover via 04-policies.http).
+# WARNING: Empty userPolicies [] results in DROP ALL (lockdown).
+PUT {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "userPolicies": [{{policy_id}}]
+}

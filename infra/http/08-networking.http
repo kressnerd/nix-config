@@ -1,0 +1,55 @@
+# Netcup SCP — Networking (rDNS, VLANs, Failover IPs)
+#
+# Requires: access_token, server_id, user_id
+# Interface-specific operations also require interface_mac.
+# VLAN and failover IP management are account-level resources under /users/{user_id}/.
+
+### 1 — Get rDNS Records
+# Returns current reverse DNS (PTR) records for the interface's IP addresses.
+GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/rdns
+Authorization: Bearer {{access_token}}
+
+### 2 — Set rDNS Records
+# Replaces the PTR records for IPv4 and/or IPv6 on the specified interface.
+# Both fields are optional — omit one to leave it unchanged.
+PUT {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/rdns
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "ipv4Ptr": "my.reverse.dns.example.com",
+  "ipv6Ptr": "my.reverse.dns.example.com"
+}
+
+### 3 — Create VLAN Interface
+# Attaches a VLAN interface to the server.
+# Replace REPLACE_WITH_VLAN_ID with the VLAN ID (discover via request 5).
+POST {{base_url}}/servers/{{server_id}}/interfaces
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "vlanId": "REPLACE_WITH_VLAN_ID"
+}
+
+### 4 — Delete VLAN Interface
+# Removes a VLAN interface from the server by MAC address.
+# Replace REPLACE_WITH_MAC with the MAC of the VLAN interface to remove.
+# WARNING: Do not delete the primary interface.
+DELETE {{base_url}}/servers/{{server_id}}/interfaces/REPLACE_WITH_MAC
+Authorization: Bearer {{access_token}}
+
+### 5 — List VLANs
+# Returns all VLANs available in the account for creating VLAN interfaces.
+GET {{base_url}}/users/{{user_id}}/vlans
+Authorization: Bearer {{access_token}}
+
+### 6 — List IPv4 Failover IPs
+# Returns all IPv4 failover IPs associated with the account.
+GET {{base_url}}/users/{{user_id}}/failoverips/v4
+Authorization: Bearer {{access_token}}
+
+### 7 — List IPv6 Failover IPs
+# Returns all IPv6 failover IPs associated with the account.
+GET {{base_url}}/users/{{user_id}}/failoverips/v6
+Authorization: Bearer {{access_token}}
