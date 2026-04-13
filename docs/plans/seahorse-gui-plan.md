@@ -109,6 +109,20 @@ Verify Seahorse launches: `seahorse` from terminal or app launcher.
 
 ## Current Status
 
-- [ ] Phase 1: Red — add assertion
-- [ ] Phase 2: Green — enable Seahorse
-- [ ] Phase 3: Apply & verify
+- [x] Phase 1: Red — add assertion
+- [x] Phase 2: Green — enable Seahorse
+- [ ] Phase 3: Apply & verify (pending on-host deployment)
+
+## Completion Summary
+
+**Date**: 2026-04-13
+
+All implementation steps completed with no deviations from the plan:
+
+- Assertion added to [`tests/assertions/thiniel-invariants.nix`](../../tests/assertions/thiniel-invariants.nix) (Red phase confirmed failing)
+- `programs.seahorse.enable = true;` added to [`hosts/thiniel/default.nix`](../../hosts/thiniel/default.nix) (Green phase confirmed passing)
+- `nix flake check` passed
+- `nixos-rebuild build --flake .#thiniel` passed
+- Committed as `feat(thiniel): enable seahorse as gnome-keyring GUI`
+
+Phase 3 (on-host `nixos-rebuild switch`) remains to be executed on the thiniel machine.
