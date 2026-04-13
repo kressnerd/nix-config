@@ -1,55 +1,85 @@
-# Netcup SCP — Networking (rDNS, VLANs, Failover IPs)
-#
-# Requires: access_token, server_id, user_id
-# Interface-specific operations also require interface_mac.
-# VLAN and failover IP management are account-level resources under /users/{user_id}/.
+### Netcup SCP API — Networking
+# rDNS management (by IP), VLANs, and failover IPs.
 
-### 1 — Get rDNS Records
-# Returns current reverse DNS (PTR) records for the interface's IP addresses.
-GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/rdns
+### Get rDNS for IPv4
+GET {{base_url}}/rdns/ipv4/REPLACE_WITH_IPV4_ADDRESS
 Authorization: Bearer {{access_token}}
 
-### 2 — Set rDNS Records
-# Replaces the PTR records for IPv4 and/or IPv6 on the specified interface.
-# Both fields are optional — omit one to leave it unchanged.
-PUT {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/rdns
+### Set rDNS for IPv4
+POST {{base_url}}/rdns/ipv4
 Authorization: Bearer {{access_token}}
 Content-Type: application/json
 
 {
-  "ipv4Ptr": "my.reverse.dns.example.com",
-  "ipv6Ptr": "my.reverse.dns.example.com"
+  "ip": "REPLACE_WITH_IPV4_ADDRESS",
+  "rdns": "ptr.example.com"
 }
 
-### 3 — Create VLAN Interface
-# Attaches a VLAN interface to the server.
-# Replace REPLACE_WITH_VLAN_ID with the VLAN ID (discover via request 5).
-POST {{base_url}}/servers/{{server_id}}/interfaces
+### Delete rDNS for IPv4
+DELETE {{base_url}}/rdns/ipv4/REPLACE_WITH_IPV4_ADDRESS
+Authorization: Bearer {{access_token}}
+
+### Get rDNS for IPv6
+GET {{base_url}}/rdns/ipv6/REPLACE_WITH_IPV6_ADDRESS
+Authorization: Bearer {{access_token}}
+
+### Set rDNS for IPv6
+POST {{base_url}}/rdns/ipv6
 Authorization: Bearer {{access_token}}
 Content-Type: application/json
 
 {
-  "vlanId": "REPLACE_WITH_VLAN_ID"
+  "ip": "REPLACE_WITH_IPV6_ADDRESS",
+  "rdns": "ptr.example.com"
 }
 
-### 4 — Delete VLAN Interface
-# Removes a VLAN interface from the server by MAC address.
-# Replace REPLACE_WITH_MAC with the MAC of the VLAN interface to remove.
-# WARNING: Do not delete the primary interface.
-DELETE {{base_url}}/servers/{{server_id}}/interfaces/REPLACE_WITH_MAC
+### Delete rDNS for IPv6
+DELETE {{base_url}}/rdns/ipv6/REPLACE_WITH_IPV6_ADDRESS
 Authorization: Bearer {{access_token}}
 
-### 5 — List VLANs
-# Returns all VLANs available in the account for creating VLAN interfaces.
+### List VLANs
 GET {{base_url}}/users/{{user_id}}/vlans
 Authorization: Bearer {{access_token}}
 
-### 6 — List IPv4 Failover IPs
-# Returns all IPv4 failover IPs associated with the account.
+### Get Single VLAN
+GET {{base_url}}/users/{{user_id}}/vlans/REPLACE_WITH_VLAN_ID
+Authorization: Bearer {{access_token}}
+
+### Update VLAN Name (server must be SHUTOFF)
+PUT {{base_url}}/users/{{user_id}}/vlans/REPLACE_WITH_VLAN_ID
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "name": "my-vlan"
+}
+
+### List IPv4 Failover IPs
 GET {{base_url}}/users/{{user_id}}/failoverips/v4
 Authorization: Bearer {{access_token}}
 
-### 7 — List IPv6 Failover IPs
-# Returns all IPv6 failover IPs associated with the account.
+### Filter IPv4 Failover IPs by Server
+GET {{base_url}}/users/{{user_id}}/failoverips/v4?serverId={{server_id}}
+Authorization: Bearer {{access_token}}
+
+### Route IPv4 Failover IP to Server
+PATCH {{base_url}}/users/{{user_id}}/failoverips/v4/REPLACE_WITH_FAILOVER_ID
+Authorization: Bearer {{access_token}}
+Content-Type: application/merge-patch+json
+
+{
+  "serverId": 0
+}
+
+### List IPv6 Failover IPs
 GET {{base_url}}/users/{{user_id}}/failoverips/v6
 Authorization: Bearer {{access_token}}
+
+### Route IPv6 Failover IP to Server
+PATCH {{base_url}}/users/{{user_id}}/failoverips/v6/REPLACE_WITH_FAILOVER_ID
+Authorization: Bearer {{access_token}}
+Content-Type: application/merge-patch+json
+
+{
+  "serverId": 0
+}

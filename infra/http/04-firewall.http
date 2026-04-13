@@ -1,33 +1,35 @@
-# Netcup SCP — Firewall State per Interface
-#
-# Requires: access_token, server_id, interface_mac
-# Firewall is applied per network interface (identified by MAC address).
-#
-# Response fields:
-#   userPolicies        — list of applied policy IDs (from 04-policies.http)
-#   ingressImplicitRule — default action for unmatched ingress traffic
-#   egressImplicitRule  — default action for unmatched egress traffic
-#   consistent          — whether firewall state matches applied policies
-#   active              — whether firewall is currently enforced
-#
-# Apply operations are async and return HTTP 202 with a task UUID.
-# Poll the task via 05-tasks.http to confirm completion.
+### Netcup SCP API — Firewall
+# Read and apply firewall state on server interfaces.
 
-### 1 — Get Firewall State
-# Returns current firewall configuration for the specified interface.
-# Check `consistent` and `active` fields to verify enforcement status.
+### Get Firewall State
+# Response: userPolicies, copiedPolicies, ingressImplicitRule, egressImplicitRule, consistent, active
 GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall
 Authorization: Bearer {{access_token}}
 
-### 2 — Apply Firewall Policies (async)
-# Replaces the current policy set on the interface.
-# Returns HTTP 202 with {"uuid": "task-uuid"} — poll via 05-tasks.http.
-# Set policy_id in http-client.env.json (discover via 04-policies.http).
-# WARNING: Empty userPolicies [] results in DROP ALL (lockdown).
+### Get Firewall State with Consistency Check
+# Forces live check — sets 'consistent' to true/false
+GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall?consistencyCheck=true
+Authorization: Bearer {{access_token}}
+
+### Apply Firewall Policies (async — returns task UUID)
+# userPolicies: array of {"id": N} objects (NOT bare integers)
+# copiedPolicies: required field (use [] to clear)
+# active: true to enforce, false to disable firewall
 PUT {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall
 Authorization: Bearer {{access_token}}
 Content-Type: application/json
 
 {
-  "userPolicies": [{{policy_id}}]
+  "copiedPolicies": [],
+  "userPolicies": [{"id": {{policy_id}}}],
+  "active": true
 }
+
+### Reapply Firewall (async — returns task UUID)
+# Use when policy update timed out due to long-running write operation (e.g., storage optimization)
+POST {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall:reapply
+Authorization: Bearer {{access_token}}
+
+### Restore Copied Policies (async — returns task UUID)
+POST {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}/firewall:restore-copied-policies
+Authorization: Bearer {{access_token}}

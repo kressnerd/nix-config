@@ -1,25 +1,34 @@
-# Netcup SCP — Server Metrics
-#
-# Requires: access_token, server_id
-# Returns time-series performance data for the specified server.
-# Response typically includes timestamps and measured values for the given metric type.
+### Netcup SCP API — Metrics
+# Server performance metrics. Up to 1440 hours of historical data.
 
-### 1 — CPU Metrics
-# Returns CPU utilization over time (percentage).
+### CPU Metrics
 GET {{base_url}}/servers/{{server_id}}/metrics/cpu
 Authorization: Bearer {{access_token}}
 
-### 2 — Disk Metrics
-# Returns disk I/O metrics (read/write throughput or IOPS).
+### CPU Metrics (last 24 hours)
+GET {{base_url}}/servers/{{server_id}}/metrics/cpu?hours=24
+Authorization: Bearer {{access_token}}
+
+### Disk Metrics
 GET {{base_url}}/servers/{{server_id}}/metrics/disk
 Authorization: Bearer {{access_token}}
 
-### 3 — Network Traffic Metrics
-# Returns network throughput in bytes per second (ingress/egress).
-GET {{base_url}}/servers/{{server_id}}/metrics/network-traffic
+### Disk Metrics (last 24 hours)
+GET {{base_url}}/servers/{{server_id}}/metrics/disk?hours=24
 Authorization: Bearer {{access_token}}
 
-### 4 — Network Packet Metrics
-# Returns packet counts per second (ingress/egress).
-GET {{base_url}}/servers/{{server_id}}/metrics/network-packets
+### Network Traffic Metrics
+GET {{base_url}}/servers/{{server_id}}/metrics/network
+Authorization: Bearer {{access_token}}
+
+### Network Traffic Metrics (last 24 hours)
+GET {{base_url}}/servers/{{server_id}}/metrics/network?hours=24
+Authorization: Bearer {{access_token}}
+
+### Network Packet Metrics
+GET {{base_url}}/servers/{{server_id}}/metrics/network/packet
+Authorization: Bearer {{access_token}}
+
+### Network Packet Metrics (last 24 hours)
+GET {{base_url}}/servers/{{server_id}}/metrics/network/packet?hours=24
 Authorization: Bearer {{access_token}}

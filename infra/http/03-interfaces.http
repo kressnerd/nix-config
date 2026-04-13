@@ -1,12 +1,44 @@
-# Netcup SCP — Network Interfaces
-#
-# Requires: access_token, server_id
-# The interface_mac returned here is needed for firewall and rDNS requests.
-# Copy the MAC address of the primary interface into http-client.env.json as `interface_mac`.
+### Netcup SCP API — Network Interfaces
+# Discover interfaces, IPs, rDNS, and manage interface attributes.
 
-### 1 — List Network Interfaces
-# Returns all network interfaces attached to the server.
-# Response includes MAC addresses, IP assignments, and VLAN info.
-# Use the MAC of the primary interface as interface_mac in subsequent requests.
+### List All Interfaces
 GET {{base_url}}/servers/{{server_id}}/interfaces
+Authorization: Bearer {{access_token}}
+
+### List Interfaces (skip rDNS resolution for speed)
+GET {{base_url}}/servers/{{server_id}}/interfaces?loadRdns=false
+Authorization: Bearer {{access_token}}
+
+### Get Single Interface
+GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}
+Authorization: Bearer {{access_token}}
+
+### Get Single Interface (with rDNS)
+GET {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}?loadRdns=true
+Authorization: Bearer {{access_token}}
+
+### Update Interface Driver (async — returns task UUID)
+# Valid networkDriver values: VIRTIO, E1000, E1000E, RTL8139, VMXNET3
+PUT {{base_url}}/servers/{{server_id}}/interfaces/{{interface_mac}}
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "driver": "VIRTIO"
+}
+
+### Create VLAN Interface (async — returns task UUID)
+# Max 10 interfaces per server
+# networkDriver is required: VIRTIO, E1000, E1000E, RTL8139, VMXNET3
+POST {{base_url}}/servers/{{server_id}}/interfaces
+Authorization: Bearer {{access_token}}
+Content-Type: application/merge-patch+json
+
+{
+  "vlanId": 0,
+  "networkDriver": "VIRTIO"
+}
+
+### Delete Interface (async — returns task UUID)
+DELETE {{base_url}}/servers/{{server_id}}/interfaces/REPLACE_WITH_MAC
 Authorization: Bearer {{access_token}}
