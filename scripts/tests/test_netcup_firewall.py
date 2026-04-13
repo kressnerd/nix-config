@@ -531,20 +531,19 @@ class TestBackupCommand:
     ) -> None:
         """backup calls find_server, get_interfaces, get_firewall, list_policies."""
         mock_auth, mock_client = self._mock_setup(MockAuth, MockClient)
-        mock_client.list_policies.return_value = [
-            {
-                "id": 1,
-                "name": "my-policy",
-                "rules": [
-                    {
-                        "direction": "INGRESS",
-                        "protocol": "TCP",
-                        "destinationPort": "22",
-                        "action": "ACCEPT",
-                    }
-                ],
-            }
-        ]
+        mock_client.list_policies.return_value = [{"id": 1, "name": "my-policy"}]
+        mock_client.get_policy.return_value = {
+            "id": 1,
+            "name": "my-policy",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "destinationPort": "22",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
 
         args = argparse.Namespace(server="cupix001", command="backup")
         cmd_backup(args, backup_dir=str(tmp_path))
@@ -553,6 +552,7 @@ class TestBackupCommand:
         mock_client.get_interfaces.assert_called_once_with(12345)
         mock_client.get_firewall.assert_called_once()
         mock_client.list_policies.assert_called_once_with(42)
+        mock_client.get_policy.assert_called_once_with(42, 1)
 
     @patch("netcup_firewall.ScpApiClient")
     @patch("netcup_firewall.ScpAuth")
@@ -596,6 +596,10 @@ class TestBackupCommand:
         }
         mock_client.get_firewall.return_value = firewall_state
         mock_client.list_policies.return_value = [
+            {"id": 1, "name": "policy-a"},
+            {"id": 2, "name": "policy-b"},
+        ]
+        mock_client.get_policy.side_effect = [
             {"id": 1, "name": "policy-a", "rules": []},
             {"id": 2, "name": "policy-b", "rules": []},
         ]
@@ -676,6 +680,49 @@ class TestBackupCommand:
         MockClient.assert_not_called()
         injected_client.find_server.assert_called_once_with("myserver")
         injected_client.list_policies.assert_called_once_with(7)
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_backup_fetches_full_policy_details(
+        self,
+        MockAuth: MagicMock,
+        MockClient: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """backup stores full policy details including rules.
+
+        list_policies() returns only summary data (id, name) without rules.
+        cmd_backup must call get_policy() for each policy to fetch full details.
+        """
+        _, mock_client = self._mock_setup(MockAuth, MockClient)
+        mock_client.list_policies.return_value = [{"id": 1, "name": "my-policy"}]
+        mock_client.get_policy.return_value = {
+            "id": 1,
+            "name": "my-policy",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+
+        args = argparse.Namespace(server="cupix001", command="backup")
+        backup_path = cmd_backup(args, backup_dir=str(tmp_path))
+
+        with open(backup_path) as f:
+            data = json.load(f)
+
+        assert len(data["policies"]) == 1
+        policy = data["policies"][0]
+        assert "rules" in policy, (
+            "backup must include full policy rules, not just summary"
+        )
+        assert len(policy["rules"]) == 1
+        assert policy["rules"][0]["direction"] == "INGRESS"
 
 
 class TestLockdownCommand:
@@ -1345,20 +1392,19 @@ class TestWorkflow:
             "active": True,
         }
         mock_client.get_firewall.return_value = initial_firewall
-        mock_client.list_policies.return_value = [
-            {
-                "id": 1,
-                "name": "production",
-                "rules": [
-                    {
-                        "direction": "INGRESS",
-                        "protocol": "TCP",
-                        "destinationPort": "443",
-                        "action": "ACCEPT",
-                    }
-                ],
-            }
-        ]
+        mock_client.list_policies.return_value = [{"id": 1, "name": "production"}]
+        mock_client.get_policy.return_value = {
+            "id": 1,
+            "name": "production",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
         mock_client.set_firewall.return_value = "task-uuid"
 
         backup_dir = str(tmp_path / "backups")
@@ -2013,8 +2059,13 @@ class TestSshCloseCommand:
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = [
-            {"id": 777, "name": "ssh-temp-cupix001", "rules": []}
+            {"id": 777, "name": "ssh-temp-cupix001"}
         ]
+        mock_client.get_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
         mock_client.set_firewall.return_value = "task-uuid-1"
 
         args = parse_args(["ssh-close", "--server", "cupix001"])
@@ -2080,8 +2131,13 @@ class TestSshCloseCommand:
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = [
-            {"id": 777, "name": "ssh-temp-cupix001", "rules": []}
+            {"id": 777, "name": "ssh-temp-cupix001"}
         ]
+        mock_client.get_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
 
         args = parse_args(["ssh-close", "--server", "cupix001"])
         cmd_ssh_close(
@@ -2114,8 +2170,13 @@ class TestSshCloseCommand:
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = [
-            {"id": 777, "name": "ssh-temp-cupix001", "rules": []}
+            {"id": 777, "name": "ssh-temp-cupix001"}
         ]
+        mock_client.get_policy.return_value = {
+            "id": 777,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
         mock_client.set_firewall.return_value = "task-uuid-1"
 
         args = parse_args(["ssh-close", "--server", "cupix001"])
