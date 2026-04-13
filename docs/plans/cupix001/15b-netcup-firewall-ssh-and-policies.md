@@ -652,7 +652,17 @@ The schema matches the SCP API `FirewallPolicy` payload exactly, with an additio
 
 ### Completion Log
 
-_(to be filled during implementation)_
+| Phase | Notes |
+|-------|-------|
+| Phase 1 | `validate_source_ip()` — 9 tests, strict=True (after F-001 fix) |
+| Phase 2 | `_get_current_policy_ids()` — 3 tests |
+| Phase 3 | argparse `ssh-open`/`ssh-close` — 11 tests |
+| Phase 4+5 | `cmd_ssh_open()` + `_find_or_create_ssh_policy()` — 8 tests |
+| Phase 6 | `cmd_ssh_close()` — 5 tests |
+| Phase 7+8 | `infra/firewall/` + `load_policy_file()`/`validate_policy_schema()` — 10 tests |
+| Phase 9 | Quality gates, docs, git commit |
+| Review | APPROVED — 7 findings (F-001–F-007), all fixed in 2 follow-up commits |
+| **Total** | **49 new tests (129 total), 3 commits** |
 
 ### Scope Boundary Notes
 
@@ -661,3 +671,21 @@ _(to be filled during implementation)_
 - The `infra/firewall/lockdown.json` exists in this epic as the canonical definition for future use by both the refactored `cmd_lockdown` and the `apply` subcommand.
 - SSH rules are **temporary**: each `ssh-open` creates a `ssh-temp-{server_name}` policy, each `ssh-close` deletes it. This is intentional — the dynamic source IP is not a reusable stored policy.
 - Each server gets its own temporary SSH policy (`ssh-temp-cupix001`, `ssh-temp-myserver`), so concurrent SSH access to multiple servers is supported without conflicts.
+
+### Lessons Learned
+
+1. **`ipaddress.ip_network(strict=False)` is dangerous in firewall tools.** The initial implementation used `strict=False` which silently normalizes host bits — input `10.0.0.5/24` becomes `10.0.0.0/24`, opening a /24 subnet instead of a single IP. In a firewall tool, this is a security issue. Use `strict=True` to reject ambiguous input and force the operator to provide the correct network address.
+
+2. **`set_firewall` replaces, not appends — additive assignment requires read-then-write.** The SCP API's `set_firewall` PUT endpoint replaces the entire `userPolicies` list. To add a policy without removing existing ones, the implementation must first read the current state via `get_firewall`, then write the merged list. This is the single most important API behavior to understand when extending the firewall script.
+
+3. **Temporary rules vs. persistent policies are fundamentally different lifecycles.** The initial plan confused these: SSH access (dynamic source IP, per-server, created and deleted per use) is not a stored policy. Lockdown/bootstrap/production (fixed rules, shared across servers, persisted at netcup) are policies. Mixing these into one model (the `DYNAMIC` placeholder approach) added complexity without benefit. Clean separation into create-use-delete (SSH) vs sync-assign-unassign (policies) resulted in simpler code.
+
+4. **PY-CLI-001 `--yes` flag must be implemented, not just parsed.** The argparse `--yes` flag was added but the confirmation prompt was never implemented. Review caught this — mutating remote firewall state without confirmation is a safety violation. Every destructive command handler must check `args.yes` before proceeding, matching the pattern established in `cmd_lockdown`.
+
+5. **Stale policy cleanup must unassign before deleting.** When cleaning up a stale `ssh-temp-*` policy (from a crashed previous run), the initial implementation called `delete_policy` directly. If the SCP API rejects deletion of an assigned policy, this fails. The fix was to unassign the stale policy from all interfaces before deleting — the same unassign-then-delete pattern used by `cmd_ssh_close`. Extract shared cleanup logic rather than duplicating the pattern.
+
+6. **DRY violations accumulate across epics.** Epic 15a introduced `_find_or_create_lockdown_policy()` with an inline name-lookup loop. Epic 15b introduced the generic `_find_policy_by_name()`. The review correctly identified the duplication (F-004). When adding a generic helper, refactor existing callers in the same commit to avoid leaving duplicated logic that diverges over time.
+
+7. **Function placement in the file matters for readability.** Utility functions (`load_policy_file`, `validate_policy_schema`) were initially placed after `main()` but before `if __name__`. While functionally harmless, this violates the convention that utilities precede command handlers. Review finding F-006 improved discoverability by grouping all validation/loading functions together before the command handler section.
+
+8. **User clarification can invalidate plan architecture — iterate fast.** The initial plan used a persistent shared `ssh-access` policy with `DYNAMIC` placeholders. User feedback ("the dynamic IP is not a stored policy") required a full architecture revision within the plan. Two plan revisions were needed before implementation began. This avoided implementing the wrong model and then refactoring — catching architectural mismatches during planning is orders of magnitude cheaper than during coding.

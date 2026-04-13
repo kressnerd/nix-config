@@ -124,6 +124,9 @@ def main(argv: list[str] | None = None) -> None:
 ## Destructive Operations
 
 - Commands that mutate remote state MUST provide `--yes` to skip interactive confirmation.
+- The `--yes` flag MUST be functionally checked in the command handler — adding the argparse argument without checking `args.yes` in the handler body is a rule violation.
+- Every destructive command handler MUST contain a confirmation prompt gated on `if not args.yes:` before making changes.
+- Tests MUST verify both paths: with `--yes` (proceeds) and without `--yes` (aborts on decline).
 - Consider `--dry-run` to print planned actions without executing.
 
 ## Output Modes

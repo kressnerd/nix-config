@@ -47,6 +47,7 @@
 - Nix: factor shared logic into `lib/`, overlays, or reusable modules. No copy-paste between host configs.
 - Python: extract shared functions into utility modules. No duplicated business logic across CLI commands.
 - Documentation: use cross-references instead of duplicating content (see DOC-STD-001).
+- **Refactoring obligation**: When introducing a generic helper function that replaces inline logic, refactor ALL existing callers to use the new helper in the same commit. Leaving duplicate implementations across code base creates drift risk.
 
 ### 5. KISS — Keep It Simple
 
