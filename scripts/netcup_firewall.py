@@ -674,7 +674,7 @@ def validate_source_ip(source: str) -> str:
     if not source:
         raise ValueError("Source IP must not be empty")
     try:
-        network = ipaddress.ip_network(source, strict=False)
+        network = ipaddress.ip_network(source, strict=True)
     except ValueError as exc:
         raise ValueError(f"Invalid IP address: {source}") from exc
     if network.version == 6:
@@ -759,6 +759,8 @@ def _find_or_create_ssh_policy(
     server_name: str,
     source_cidr: str,
     port: int,
+    server_id: int,
+    interfaces: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Create a temporary SSH access policy, deleting any stale one first.
 
@@ -768,6 +770,8 @@ def _find_or_create_ssh_policy(
         server_name: Server name for policy naming.
         source_cidr: Source IP in CIDR notation.
         port: Destination SSH port.
+        server_id: Netcup server ID (used to unassign stale policy from interfaces).
+        interfaces: List of interface dicts (used to unassign stale policy).
 
     Returns:
         Created policy dict with id, name, rules.
@@ -775,10 +779,18 @@ def _find_or_create_ssh_policy(
     policy_name = f"ssh-temp-{server_name}"
     existing = _find_policy_by_name(client, user_id, policy_name)
     if existing is not None:
-        logger.info(
-            "Deleting stale SSH policy: %s (id=%d)", policy_name, existing["id"]
-        )
-        client.delete_policy(user_id, existing["id"])
+        stale_id = existing["id"]
+        logger.info("Deleting stale SSH policy: %s (id=%d)", policy_name, stale_id)
+        for iface in interfaces:
+            mac = iface["mac"]
+            current_ids = _get_current_policy_ids(client, server_id, mac)
+            if stale_id in current_ids:
+                new_ids = [pid for pid in current_ids if pid != stale_id]
+                task_uuid = client.set_firewall(
+                    server_id, mac, {"userPolicies": new_ids}
+                )
+                client.wait_for_task(task_uuid)
+        client.delete_policy(user_id, stale_id)
     rules = [
         {
             "direction": "INGRESS",
@@ -1131,13 +1143,21 @@ def cmd_ssh_open(
         logger.error("%s", exc)
         sys.exit(1)
 
+    server_name = args.server
+    port = args.port
+
+    if not args.yes:
+        answer = input(
+            f"Open SSH port {port} on {server_name} from {source_cidr}? [y/N] "
+        )
+        if answer.lower() != "y":
+            logger.info("Aborted.")
+            return
+
     use_keyring = getattr(args, "keyring", False)
     auth, client, user_id = _authenticate_and_setup(
         auth, client, user_id, use_keyring=use_keyring
     )
-
-    server_name = args.server
-    port = getattr(args, "port", 22)
 
     server_id = client.find_server(server_name)
     interfaces = client.get_interfaces(server_id)
@@ -1152,7 +1172,7 @@ def cmd_ssh_open(
     )
 
     ssh_policy = _find_or_create_ssh_policy(
-        client, user_id, server_name, source_cidr, port
+        client, user_id, server_name, source_cidr, port, server_id, interfaces
     )
     ssh_policy_id = ssh_policy["id"]
 
@@ -1406,7 +1426,7 @@ def load_policy_file(path: str) -> dict[str, Any]:
         ValueError: If the file contains invalid JSON.
     """
     try:
-        with open(path) as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)  # type: ignore[no-any-return]
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid JSON in {path}: {exc}") from exc

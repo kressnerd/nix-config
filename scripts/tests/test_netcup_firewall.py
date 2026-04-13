@@ -1606,6 +1606,11 @@ class TestValidateSourceIp:
         with pytest.raises(ValueError):
             validate_source_ip("1.2.3.4/33")
 
+    def test_mismatched_host_bits_rejected(self) -> None:
+        """CIDR with host bits set is rejected (e.g., 10.0.0.5/24)."""
+        with pytest.raises(ValueError):
+            validate_source_ip("10.0.0.5/24")
+
     def test_keyring_locked_raises_runtime_error(self) -> None:
         """_load_from_keyring raises RuntimeError when the keyring is locked."""
         from secretstorage.exceptions import LockedException
@@ -1685,7 +1690,9 @@ class TestFindOrCreateSshPolicy:
                 }
             ],
         }
-        result = _find_or_create_ssh_policy(client, 42, "cupix001", "1.2.3.4/32", 22)
+        result = _find_or_create_ssh_policy(
+            client, 42, "cupix001", "1.2.3.4/32", 22, server_id=123, interfaces=[]
+        )
         assert result["id"] == 777
         client.create_policy.assert_called_once()
         call_args = client.create_policy.call_args
@@ -1714,7 +1721,9 @@ class TestFindOrCreateSshPolicy:
                 }
             ],
         }
-        result = _find_or_create_ssh_policy(client, 42, "cupix001", "5.6.7.8/32", 55809)
+        result = _find_or_create_ssh_policy(
+            client, 42, "cupix001", "5.6.7.8/32", 55809, server_id=123, interfaces=[]
+        )
         assert result["id"] == 888
         client.delete_policy.assert_called_once_with(42, 555)
         client.create_policy.assert_called_once()
@@ -1728,10 +1737,47 @@ class TestFindOrCreateSshPolicy:
             "name": "ssh-temp-cupix001",
             "rules": [],
         }
-        _find_or_create_ssh_policy(client, 42, "cupix001", "10.0.0.1/32", 55809)
+        _find_or_create_ssh_policy(
+            client, 42, "cupix001", "10.0.0.1/32", 55809, server_id=123, interfaces=[]
+        )
         call_args = client.create_policy.call_args
         rules = call_args[0][2]
         assert rules[0]["destinationPort"] == "55809"
+
+    def test_unassigns_stale_policy_before_deleting(self) -> None:
+        """Stale policy is unassigned from interfaces before deletion."""
+        client = MagicMock(spec=ScpApiClient)
+        client.list_policies.return_value = [
+            {"id": 555, "name": "ssh-temp-cupix001", "rules": []}
+        ]
+        client.get_firewall.return_value = {
+            "userPolicies": [555, 50],
+            "copiedPolicies": [],
+        }
+        client.set_firewall.return_value = "task-uuid"
+        client.create_policy.return_value = {
+            "id": 888,
+            "name": "ssh-temp-cupix001",
+            "rules": [],
+        }
+
+        interfaces = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        _find_or_create_ssh_policy(
+            client,
+            42,
+            "cupix001",
+            "5.6.7.8/32",
+            55809,
+            server_id=123,
+            interfaces=interfaces,
+        )
+
+        # Should unassign stale policy from interface first
+        client.set_firewall.assert_any_call(
+            123, "aa:bb:cc:dd:ee:ff", {"userPolicies": [50]}
+        )
+        # Then delete
+        client.delete_policy.assert_called_once_with(42, 555)
 
 
 class TestSshOpenCommand:
@@ -1918,6 +1964,33 @@ class TestSshOpenCommand:
 
         MockAuth.assert_not_called()
         MockClient.assert_not_called()
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    @patch("builtins.input", return_value="n")
+    def test_ssh_open_aborts_without_yes(
+        self,
+        mock_input: MagicMock,
+        MockAuth: MagicMock,
+        MockClient: MagicMock,
+        tmp_path: Any,
+    ) -> None:
+        """ssh-open aborts when user declines confirmation."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+
+        args = parse_args(["ssh-open", "--server", "cupix001", "--source", "1.2.3.4"])
+        cmd_ssh_open(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=MockClient.return_value,
+            user_id=42,
+        )
+
+        # Should NOT proceed to find_server etc.
+        MockClient.return_value.find_server.assert_not_called()
 
 
 class TestSshCloseCommand:
