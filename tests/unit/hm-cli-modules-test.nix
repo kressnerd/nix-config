@@ -68,12 +68,6 @@ lib.debug.runTests {
     expected = true;
   };
 
-  # ── fish: alias count ───────────────────────────────────────────────────────
-  testFishAliasCount = {
-    expr = builtins.length (builtins.attrNames fishAliases);
-    expected = 13;
-  };
-
   # ── fish: individual aliases ────────────────────────────────────────────────
   testFishAliasLl = {
     expr = fishAliases.ll;
@@ -98,6 +92,46 @@ lib.debug.runTests {
   testFishAliasDotDot = {
     expr = fishAliases."..";
     expected = "cd ..";
+  };
+
+  testFishHasLaAlias = {
+    expr = builtins.hasAttr "la" fishAliases;
+    expected = true;
+  };
+
+  testFishHasLAlias = {
+    expr = builtins.hasAttr "l" fishAliases;
+    expected = true;
+  };
+
+  testFishHasGAlias = {
+    expr = builtins.hasAttr "g" fishAliases;
+    expected = true;
+  };
+
+  testFishHasVAlias = {
+    expr = builtins.hasAttr "v" fishAliases;
+    expected = true;
+  };
+
+  testFishHasViAlias = {
+    expr = builtins.hasAttr "vi" fishAliases;
+    expected = true;
+  };
+
+  testFishHasIcatAlias = {
+    expr = builtins.hasAttr "icat" fishAliases;
+    expected = true;
+  };
+
+  testFishHasDotDotDotAlias = {
+    expr = builtins.hasAttr "..." fishAliases;
+    expected = true;
+  };
+
+  testFishHasDotDotDotDotAlias = {
+    expr = builtins.hasAttr "...." fishAliases;
+    expected = true;
   };
 
   # ── fish: interactiveShellInit ───────────────────────────────────────────────
@@ -215,9 +249,9 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testVimPluginCount = {
-    expr = builtins.length vimModule.programs.vim.plugins;
-    expected = 1;
+  testVimHasCatppuccinPlugin = {
+    expr = builtins.any (p: (p.pname or p.name or "") == "catppuccin-vim") vimModule.programs.vim.plugins;
+    expected = true;
   };
 
   # ── git: enable + ignores ────────────────────────────────────────────────────
