@@ -114,6 +114,38 @@ in
 - Verbose documentation; keep docs minimal and link upstream references
 - `nix-env -i` for persistent packages (use config instead)
 
+### nixos-hardware Module Awareness
+
+`nixos-hardware` modules can **implicitly activate services** (e.g., `services.fwupd`, `hardware.bluetooth.enable`, `services.tlp`, audio drivers) that are not visible in the host's own `default.nix`.
+
+Before importing any `nixos-hardware` profile:
+
+1. Read the module source in the `nixos-hardware` repository to enumerate all `services.*` and `hardware.*` attributes it sets
+2. Confirm each implicitly activated service is intentional for the target host class (desktop vs. server vs. VM)
+3. Override with `lib.mkForce false` for any service that must remain disabled
+4. Write an assertion for any service that MUST NOT be active (e.g., `services.tlp` on a host using auto-cpufreq)
+
+## Impermanence Configuration
+
+When enabling `impermanence` (ephemeral root via `environment.persistence`), **every path that must survive reboots must be explicitly listed**. A missing path causes silent data loss on next boot.
+
+### Persistence Path Checklist
+
+For each new feature that writes files, ask: *"Where does this tool write? Is that path persisted?"*
+
+**System state** (`environment.persistence."/persist".directories`):
+- `/var/lib/<service>` for each enabled service (e.g., cups, fwupd, bluetooth, ModemManager)
+- SSH host keys, machine-id, network leases
+
+**User state** (Home Manager `home.persistence`):
+- `.config/<app>/` for each app storing configuration or auth tokens
+- Data directories: `~/Videos`, `~/Documents`, `~/Projects` as needed
+- Shell history, SSH keys, GPG keys, browser profiles
+
+### Anti-Pattern
+
+Never add `/` or broad catch-all directories to persistence — this defeats the ephemeral root purpose. Persist only explicitly identified stateful paths.
+
 ## Quality Gates
 
 ### Before Completing Any Task
@@ -125,6 +157,7 @@ in
 - [ ] Rollback path documented for risky changes
 - [ ] `stateVersion` unchanged unless explicitly performing major upgrade
 - [ ] MCP queried for current option paths and package availability
+- [ ] `nixos-hardware` imports reviewed: implicit service activations confirmed or overridden
 
 ## Communication Guidelines
 
