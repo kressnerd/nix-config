@@ -1,0 +1,54 @@
+# Netcup SCP — Firewall Policies
+#
+# Requires: access_token, user_id
+# Policies are account-level resources (under /users/{user_id}/).
+# Apply policies to an interface via 03-firewall.http.
+#
+# Rule notes:
+#   direction     — INGRESS only for non-reseller accounts (EGRESS not available)
+#   protocol      — TCP, UDP, ICMP, or ALL
+#   sourceIp      — CIDR notation (e.g., 203.0.113.1/32 for single host)
+#   destinationPort — port number or range (e.g., "22", "8000-9000")
+#   action        — ACCEPT or DROP
+#
+# Lockdown pattern: apply policy with empty rules [] → DROP ALL ingress traffic.
+# See infra/firewall/lockdown.json for the lockdown policy definition.
+
+### 1 — List All Firewall Policies
+# Returns all policies in the account. Note policy IDs for use in other requests.
+GET {{base_url}}/users/{{user_id}}/firewall-policies
+Authorization: Bearer {{access_token}}
+
+### 2 — Get Single Policy
+# Returns full rule set for a specific policy.
+# Requires policy_id to be set in http-client.env.json.
+GET {{base_url}}/users/{{user_id}}/firewall-policies/{{policy_id}}
+Authorization: Bearer {{access_token}}
+
+### 3 — Create Policy (example: allow SSH from specific IP)
+# Creates a named policy with an ingress TCP rule for SSH on port 22.
+# sourceIp uses CIDR notation — use /32 for a single host.
+# Replace 203.0.113.1/32 with the actual allowed source IP.
+POST {{base_url}}/users/{{user_id}}/firewall-policies
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "name": "ssh-temp-test",
+  "rules": [
+    {
+      "direction": "INGRESS",
+      "protocol": "TCP",
+      "sourceIp": "203.0.113.1/32",
+      "destinationPort": "22",
+      "action": "ACCEPT"
+    }
+  ]
+}
+
+### 4 — Delete Policy
+# Permanently deletes the specified policy.
+# WARNING: Ensure the policy is not currently applied to any interface before deleting.
+# Requires policy_id to be set in http-client.env.json.
+DELETE {{base_url}}/users/{{user_id}}/firewall-policies/{{policy_id}}
+Authorization: Bearer {{access_token}}

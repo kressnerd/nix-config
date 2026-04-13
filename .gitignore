@@ -4,3 +4,4 @@ hosts/cupix001/private.nix
 .mypy_cache/
 .ruff_cache/
 __pycache__/
+infra/http/http-client.private.env.json

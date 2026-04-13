@@ -1,0 +1,31 @@
+# Netcup SCP — SSH Keys
+#
+# Requires: access_token, user_id
+# SSH keys are account-level resources used when provisioning or reinstalling servers.
+# Replace REPLACE_WITH_KEY_ID with the key ID returned by request 1.
+
+### 1 — List SSH Keys
+# Returns all SSH public keys registered in the account.
+# Note the key IDs for use in delete requests.
+GET {{base_url}}/users/{{user_id}}/ssh-keys
+Authorization: Bearer {{access_token}}
+
+### 2 — Add SSH Key
+# Registers a new SSH public key.
+# name — human-readable label for the key
+# key  — full SSH public key string including type prefix (e.g., ssh-ed25519 AAAA... user@host)
+POST {{base_url}}/users/{{user_id}}/ssh-keys
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "name": "my-key",
+  "key": "ssh-ed25519 AAAA... user@host"
+}
+
+### 3 — Delete SSH Key
+# Permanently removes the specified SSH key from the account.
+# Replace REPLACE_WITH_KEY_ID with the key ID from request 1.
+# WARNING: Keys in use by active servers may still work until server reinstall.
+DELETE {{base_url}}/users/{{user_id}}/ssh-keys/REPLACE_WITH_KEY_ID
+Authorization: Bearer {{access_token}}

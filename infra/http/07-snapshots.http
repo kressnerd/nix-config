@@ -1,0 +1,44 @@
+# Netcup SCP — Snapshots
+#
+# Requires: access_token, server_id
+# Snapshot operations may be asynchronous. If a task UUID is returned,
+# poll it via 05-tasks.http to confirm completion.
+#
+# Use dry-run first to verify a snapshot can be taken before committing.
+# WARNING: Revert is destructive — it replaces the current disk state.
+
+### 1 — List Snapshots
+# Returns all snapshots for the server with IDs, timestamps, and sizes.
+GET {{base_url}}/servers/{{server_id}}/snapshots
+Authorization: Bearer {{access_token}}
+
+### 2 — Create Snapshot
+# Takes a new snapshot of the current server state.
+# May return HTTP 202 with a task UUID if async.
+POST {{base_url}}/servers/{{server_id}}/snapshots
+Authorization: Bearer {{access_token}}
+
+### 3 — Delete Snapshot
+# Permanently deletes the specified snapshot.
+# Replace REPLACE_WITH_SNAPSHOT_ID with the snapshot ID from request 1.
+DELETE {{base_url}}/servers/{{server_id}}/snapshots/REPLACE_WITH_SNAPSHOT_ID
+Authorization: Bearer {{access_token}}
+
+### 4 — Revert to Snapshot
+# WARNING: Destructive operation — reverts the server disk to the snapshot state.
+# All changes since the snapshot was taken will be lost.
+# Replace REPLACE_WITH_SNAPSHOT_ID with the snapshot ID from request 1.
+POST {{base_url}}/servers/{{server_id}}/snapshots/REPLACE_WITH_SNAPSHOT_ID/revert
+Authorization: Bearer {{access_token}}
+
+### 5 — Export Snapshot
+# Initiates an export of the snapshot (e.g., for download or external storage).
+# Replace REPLACE_WITH_SNAPSHOT_ID with the snapshot ID from request 1.
+POST {{base_url}}/servers/{{server_id}}/snapshots/REPLACE_WITH_SNAPSHOT_ID/export
+Authorization: Bearer {{access_token}}
+
+### 6 — Dry Run (check if snapshot is possible)
+# Validates whether a snapshot can currently be created without actually creating one.
+# Run this before request 2 to avoid errors on unsupported server states.
+POST {{base_url}}/servers/{{server_id}}/snapshots/dry-run
+Authorization: Bearer {{access_token}}

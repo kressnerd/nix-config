@@ -1,0 +1,31 @@
+# Netcup SCP — Server Management (Power State & Nickname)
+#
+# Requires: access_token, server_id
+# PATCH requests use JSON Merge Patch (RFC 7396) — only specified fields are updated.
+# Power state changes may be asynchronous; check task status via 05-tasks.http
+# if a task UUID is returned in the response.
+
+### 1 — Update Server State (power on / off / restart)
+# Changes the power state of the server.
+# Possible state values:
+#   started   — power on
+#   stopped   — power off (graceful shutdown)
+#   restarted — reboot
+PATCH {{base_url}}/servers/{{server_id}}
+Authorization: Bearer {{access_token}}
+Content-Type: application/merge-patch+json
+
+{
+  "state": "started"
+}
+
+### 2 — Change Server Nickname
+# Sets a human-readable nickname for the server (display name only).
+# Does not affect the actual hostname of the OS.
+PATCH {{base_url}}/servers/{{server_id}}
+Authorization: Bearer {{access_token}}
+Content-Type: application/merge-patch+json
+
+{
+  "nickname": "my-server"
+}
