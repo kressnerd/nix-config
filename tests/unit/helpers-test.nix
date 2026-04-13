@@ -114,33 +114,6 @@ lib.debug.runTests {
     expected = true;
   };
 
-  # ── mkFirefoxExtensions — list lengths ──────────────────────────────────
-
-  testCommonLength = {
-    expr = builtins.length exts.common;
-    expected = 3;
-  };
-
-  testDevLength = {
-    expr = builtins.length exts.dev;
-    expected = 3;
-  };
-
-  testPrivacyLength = {
-    expr = builtins.length exts.privacy;
-    expected = 5;
-  };
-
-  testProductivityLength = {
-    expr = builtins.length exts.productivity;
-    expected = 4;
-  };
-
-  testConvenienceLength = {
-    expr = builtins.length exts.convenience;
-    expected = 5;
-  };
-
   # ── mkFirefoxExtensions — spot-check membership ──────────────────────────
 
   testCommonContainsUblockOrigin = {
@@ -163,6 +136,16 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testDevContainsOctotree = {
+    expr = builtins.elem "octotree" exts.dev;
+    expected = true;
+  };
+
+  testDevContainsWappalyzer = {
+    expr = builtins.elem "wappalyzer" exts.dev;
+    expected = true;
+  };
+
   testPrivacyContainsPrivacyBadger = {
     expr = builtins.elem "privacy-badger" exts.privacy;
     expected = true;
@@ -173,13 +156,58 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testPrivacyContainsDecentraleyes = {
+    expr = builtins.elem "decentraleyes" exts.privacy;
+    expected = true;
+  };
+
+  testPrivacyContainsClearurls = {
+    expr = builtins.elem "clearurls" exts.privacy;
+    expected = true;
+  };
+
+  testPrivacyContainsTemporaryContainers = {
+    expr = builtins.elem "temporary-containers" exts.privacy;
+    expected = true;
+  };
+
   testProductivityContainsTridactyl = {
     expr = builtins.elem "tridactyl" exts.productivity;
     expected = true;
   };
 
+  testProductivityContainsTreeStyleTab = {
+    expr = builtins.elem "tree-style-tab" exts.productivity;
+    expected = true;
+  };
+
+  testProductivityContainsLanguagetool = {
+    expr = builtins.elem "languagetool" exts.productivity;
+    expected = true;
+  };
+
+  testProductivityContainsSingleFile = {
+    expr = builtins.elem "single-file" exts.productivity;
+    expected = true;
+  };
+
   testConvenienceContainsSponsorblock = {
     expr = builtins.elem "sponsorblock" exts.convenience;
+    expected = true;
+  };
+
+  testConvenienceContainsReturnYoutubeDislikes = {
+    expr = builtins.elem "return-youtube-dislikes" exts.convenience;
+    expected = true;
+  };
+
+  testConvenienceContainsYoutubeShortsBlock = {
+    expr = builtins.elem "youtube-shorts-block" exts.convenience;
+    expected = true;
+  };
+
+  testConvenienceContainsRedditEnhancementSuite = {
+    expr = builtins.elem "reddit-enhancement-suite" exts.convenience;
     expected = true;
   };
 
