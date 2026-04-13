@@ -1,1 +1,2 @@
 hosts/cupix001/private.nix
+infra/http/http-client.private.env.json

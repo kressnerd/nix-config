@@ -35,7 +35,7 @@ client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
 
-client_id={{client_id}}&grant_type=refresh_token&refresh_token=REPLACE_WITH_REFRESH_TOKEN
+client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 
 ### 4 — Get User Info (extracts user_id)
 # Returns the SCP user profile. The `id` field (integer) is the user_id
