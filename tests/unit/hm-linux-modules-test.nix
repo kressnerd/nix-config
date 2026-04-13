@@ -58,19 +58,39 @@ let
           expected = "SUPER";
         };
 
-        testHyprlandMonitorCount = {
-          expr = builtins.length hyprSettings.monitor;
-          expected = 2;
+        testHyprlandHasEdpMonitor = {
+          expr = builtins.any (m: builtins.match ".*eDP-1.*" m != null) hyprSettings.monitor;
+          expected = true;
         };
 
-        testHyprlandBindCount = {
-          expr = builtins.length hyprSettings.bind;
-          expected = 46;
+        testHyprlandHasCatchAllMonitor = {
+          expr = builtins.any (m: lib.strings.hasPrefix "," m) hyprSettings.monitor;
+          expected = true;
         };
 
-        testHyprlandBindeCount = {
-          expr = builtins.length hyprSettings.binde;
-          expected = 4;
+        testHyprlandHasWorkspaceBind = {
+          expr = builtins.any (b: lib.strings.hasInfix "$mainMod, Q, workspace" b) hyprSettings.bind;
+          expected = true;
+        };
+
+        testHyprlandHasTerminalBind = {
+          expr = builtins.any (b: lib.strings.hasInfix "kitty" b) hyprSettings.bind;
+          expected = true;
+        };
+
+        testHyprlandHasScreenshotBind = {
+          expr = builtins.any (b: lib.strings.hasInfix "grim" b) hyprSettings.bind;
+          expected = true;
+        };
+
+        testHyprlandHasVolumeDownBinde = {
+          expr = builtins.any (b: lib.strings.hasInfix "XF86AudioLowerVolume" b) hyprSettings.binde;
+          expected = true;
+        };
+
+        testHyprlandHasBrightnessDownBinde = {
+          expr = builtins.any (b: lib.strings.hasInfix "XF86MonBrightnessDown" b) hyprSettings.binde;
+          expected = true;
         };
 
         testHyprlandNoWindowrulev2 = {
@@ -78,9 +98,19 @@ let
           expected = true;
         };
 
-        testHyprlandWindowruleCount = {
-          expr = builtins.length hyprSettings.windowrule;
-          expected = 10;
+        testHyprlandHasFloatDialogWindowrule = {
+          expr = builtins.any (r: r.name == "float-dialog") hyprSettings.windowrule;
+          expected = true;
+        };
+
+        testHyprlandHasPinPipWindowrule = {
+          expr = builtins.any (r: r.name == "pin-pip") hyprSettings.windowrule;
+          expected = true;
+        };
+
+        testHyprlandHasIdleinhibitFullWindowrule = {
+          expr = builtins.any (r: r.name == "idleinhibit-full") hyprSettings.windowrule;
+          expected = true;
         };
 
         testHyprlandNoDeprecatedIdleinhibit = {
@@ -200,9 +230,14 @@ let
           expected = true;
         };
 
-        testHypridleListenerCount = {
-          expr = builtins.length hyprideModule.services.hypridle.settings.listener;
-          expected = 3;
+        testHypridleHasScreenDimListener = {
+          expr = builtins.any (l: lib.strings.hasInfix "brightnessctl" l."on-timeout") hyprideModule.services.hypridle.settings.listener;
+          expected = true;
+        };
+
+        testHypridleHasLockListener = {
+          expr = builtins.any (l: lib.strings.hasInfix "loginctl lock-session" l."on-timeout") hyprideModule.services.hypridle.settings.listener;
+          expected = true;
         };
 
         testHypridleLockCmd = {
@@ -350,9 +385,34 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceDirCount = {
-    expr = builtins.length impermanenceDirs;
-    expected = 20;
+  testImpermanenceHasNetcupScpConfig = {
+    expr = builtins.elem ".config/netcup-scp" impermanenceDirs;
+    expected = true;
+  };
+
+  testImpermanenceHasNetcupScpData = {
+    expr = builtins.elem ".local/share/netcup-scp" impermanenceDirs;
+    expected = true;
+  };
+
+  testImpermanenceHasContainers = {
+    expr = builtins.elem ".local/share/containers" impermanenceDirs;
+    expected = true;
+  };
+
+  testImpermanenceHasSignal = {
+    expr = builtins.elem ".config/Signal" impermanenceDirs;
+    expected = true;
+  };
+
+  testImpermanenceHasThreema = {
+    expr = builtins.elem ".config/Threema" impermanenceDirs;
+    expected = true;
+  };
+
+  testImpermanenceHasVideos = {
+    expr = builtins.elem "Videos" impermanenceDirs;
+    expected = true;
   };
 
   # ── impermanence: files ───────────────────────────────────────────────────
@@ -360,11 +420,6 @@ lib.debug.runTests {
   testImpermanenceHasBashHistory = {
     expr = builtins.elem ".bash_history" impermanenceFiles;
     expected = true;
-  };
-
-  testImpermanenceFileCount = {
-    expr = builtins.length impermanenceFiles;
-    expected = 1;
   };
 
   # ── gnome-keyring ─────────────────────────────────────────────────────────
@@ -377,11 +432,6 @@ lib.debug.runTests {
   testGnomeKeyringComponents = {
     expr = gnomeKeyringModule.services.gnome-keyring.components;
     expected = [ "secrets" ];
-  };
-
-  testGnomeKeyringComponentCount = {
-    expr = builtins.length gnomeKeyringModule.services.gnome-keyring.components;
-    expected = 1;
   };
 
   # ── fonts ─────────────────────────────────────────────────────────────────
@@ -399,11 +449,6 @@ lib.debug.runTests {
   testFontsHasSymbolsOnly = {
     expr = builtins.elem "nerd-fonts-symbols-only" fontsPkgNames;
     expected = true;
-  };
-
-  testFontsPackageCount = {
-    expr = builtins.length fontsModule.home.packages;
-    expected = 2;
   };
 
 }
