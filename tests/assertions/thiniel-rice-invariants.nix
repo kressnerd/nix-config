@@ -46,8 +46,15 @@
       }
       {
         assertion =
-          builtins.length config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor == 2;
-        message = "thiniel: Hyprland monitor rules must contain exactly 2 entries (catch-all + eDP-1 only)";
+          builtins.any (m: builtins.match ".*eDP-1.*" m != null)
+            config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
+        message = "thiniel: Hyprland monitor rules must include eDP-1 internal display";
+      }
+      {
+        assertion =
+          builtins.any (m: builtins.match ",.*" m != null)
+            config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
+        message = "thiniel: Hyprland monitor rules must include a catch-all rule for unknown monitors";
       }
       {
         assertion =
