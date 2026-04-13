@@ -1,24 +1,33 @@
-# Netcup SCP — Async Task Status
-#
-# Requires: access_token, task_uuid
-# Several SCP operations are asynchronous and return HTTP 202 with a task UUID.
-# Poll this endpoint until status is COMPLETED or FAILED.
-#
-# Status values:
-#   RUNNING   — operation in progress, continue polling
-#   COMPLETED — operation finished successfully
-#   FAILED    — operation failed, check response for details
-#
-# Set task_uuid in http-client.env.json after receiving it from an async operation
-# (e.g., firewall apply in 03-firewall.http).
+### Netcup SCP API — Tasks
+# Async task tracking. Many operations return HTTP 202 with a task UUID.
 
-### 1 — List Tasks
-# Returns all tasks for the account (recent history).
+### List All Tasks
 GET {{base_url}}/tasks
 Authorization: Bearer {{access_token}}
 
-### 2 — Get Task Status
-# Poll this endpoint after any async operation (HTTP 202 response).
-# Replace task_uuid in http-client.env.json with the UUID from the 202 response.
+### List Tasks with Pagination
+GET {{base_url}}/tasks?limit=10&offset=0
+Authorization: Bearer {{access_token}}
+
+### Search Tasks
+GET {{base_url}}/tasks?q=REPLACE_WITH_SEARCH_TERM
+Authorization: Bearer {{access_token}}
+
+### Filter Tasks by Server
+GET {{base_url}}/tasks?serverId={{server_id}}
+Authorization: Bearer {{access_token}}
+
+### Filter Tasks by State
+# Valid states: PENDING, RUNNING, FINISHED, ERROR, WAITING_FOR_CANCEL, CANCELED, ROLLBACK
+GET {{base_url}}/tasks?state=RUNNING
+Authorization: Bearer {{access_token}}
+
+### Get Task Status
+# Status values: PENDING, RUNNING, FINISHED, ERROR, WAITING_FOR_CANCEL, CANCELED, ROLLBACK
 GET {{base_url}}/tasks/{{task_uuid}}
+Authorization: Bearer {{access_token}}
+
+### Cancel Running Task
+# Returns 202 if cancel started, 204 if task already finished
+PUT {{base_url}}/tasks/{{task_uuid}}:cancel
 Authorization: Bearer {{access_token}}

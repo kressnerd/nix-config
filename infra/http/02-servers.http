@@ -1,21 +1,35 @@
-# Netcup SCP — Server Listing and Details
-#
-# Requires: access_token, server_id (for detail/management requests)
-# Set server_id in http-client.env.json after discovering it via request 1 or 2.
+### Netcup SCP API — Servers
+# Server discovery and detail endpoints.
 
-### 1 — List All Servers
-# Returns all servers associated with the account.
+### List All Servers
 GET {{base_url}}/servers
 Authorization: Bearer {{access_token}}
 
-### 2 — Find Server by Name
-# Filters servers by name. Useful for discovering server_id by known hostname.
-# Set server_name in http-client.env.json (default: cupix001).
+### Find Server by Name
 GET {{base_url}}/servers?name={{server_name}}
 Authorization: Bearer {{access_token}}
 
-### 3 — Get Server Details
-# Returns full server details including state, specs, and interfaces.
-# Requires server_id to be set in http-client.env.json.
+### Search Servers (free-text across name, nickname, IPv4)
+GET {{base_url}}/servers?q=REPLACE_WITH_SEARCH_TERM
+Authorization: Bearer {{access_token}}
+
+### Filter Servers by IP
+GET {{base_url}}/servers?ip=REPLACE_WITH_IP_ADDRESS
+Authorization: Bearer {{access_token}}
+
+### Filter Servers by Firewall Policy
+GET {{base_url}}/servers?firewallPolicyId={{policy_id}}
+Authorization: Bearer {{access_token}}
+
+### List Servers with Pagination
+GET {{base_url}}/servers?limit=10&offset=0
+Authorization: Bearer {{access_token}}
+
+### Get Server Details
+# Set loadServerLiveInfo=false for faster response without live VM state
 GET {{base_url}}/servers/{{server_id}}
+Authorization: Bearer {{access_token}}
+
+### Get Server Details (skip live info)
+GET {{base_url}}/servers/{{server_id}}?loadServerLiveInfo=false
 Authorization: Bearer {{access_token}}

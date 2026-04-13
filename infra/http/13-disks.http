@@ -1,0 +1,33 @@
+### Netcup SCP API — Disks
+# Disk management, driver changes, and formatting.
+
+### List All Disks
+# Returns: name, allocationInMiB, capacityInMiB, storageDriver
+GET {{base_url}}/servers/{{server_id}}/disks
+Authorization: Bearer {{access_token}}
+
+### Get Single Disk
+GET {{base_url}}/servers/{{server_id}}/disks/REPLACE_WITH_DISK_NAME
+Authorization: Bearer {{access_token}}
+
+### Get Supported Storage Drivers
+# Returns list of supported drivers for this server's machine type
+# Values: VIRTIO, VIRTIO_SCSI, IDE, SATA
+GET {{base_url}}/servers/{{server_id}}/disks/supported-drivers
+Authorization: Bearer {{access_token}}
+
+### Change Disk Driver (async — returns task UUID)
+# Valid drivers: VIRTIO, VIRTIO_SCSI, IDE, SATA
+PATCH {{base_url}}/servers/{{server_id}}/disks
+Authorization: Bearer {{access_token}}
+Content-Type: application/merge-patch+json
+
+{
+  "driver": "VIRTIO"
+}
+
+### Format Disk (DESTRUCTIVE — async — returns task UUID)
+# WARNING: All data on the disk will be lost!
+# Server must be in SHUTOFF state
+POST {{base_url}}/servers/{{server_id}}/disks/REPLACE_WITH_DISK_NAME:format
+Authorization: Bearer {{access_token}}

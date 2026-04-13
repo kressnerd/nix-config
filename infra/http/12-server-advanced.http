@@ -1,0 +1,37 @@
+### Netcup SCP API — Server Advanced
+# Server logs, guest agent, GPU driver, rescue system, and storage optimization.
+
+### Get Server Logs
+GET {{base_url}}/servers/{{server_id}}/logs
+Authorization: Bearer {{access_token}}
+
+### Get Server Logs with Pagination
+GET {{base_url}}/servers/{{server_id}}/logs?limit=50&offset=0
+Authorization: Bearer {{access_token}}
+
+### Get Guest Agent Data
+# QEMU guest agent data (network, OS info, filesystem)
+GET {{base_url}}/servers/{{server_id}}/guest-agent
+Authorization: Bearer {{access_token}}
+
+### Get GPU Driver Download URL
+# Returns presigned S3 download URL for vGPU driver (if available)
+GET {{base_url}}/servers/{{server_id}}/gpu-driver
+Authorization: Bearer {{access_token}}
+
+### Get Rescue System Status
+GET {{base_url}}/servers/{{server_id}}/rescuesystem
+Authorization: Bearer {{access_token}}
+
+### Activate Rescue System (async — returns task UUID)
+POST {{base_url}}/servers/{{server_id}}/rescuesystem
+Authorization: Bearer {{access_token}}
+
+### Deactivate Rescue System (async — returns task UUID)
+DELETE {{base_url}}/servers/{{server_id}}/rescuesystem
+Authorization: Bearer {{access_token}}
+
+### Optimize Storage (async — returns task UUID)
+# Optional query params: ?disks=vda&startAfterOptimization=true
+POST {{base_url}}/servers/{{server_id}}/storageoptimization
+Authorization: Bearer {{access_token}}

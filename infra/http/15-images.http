@@ -1,0 +1,62 @@
+### Netcup SCP API — Images
+# Server image (re)installation, image flavours, and user-uploaded images.
+
+### List Available Image Flavours for Server
+# Only shows images whose storage driver is supported by the server's machine type
+GET {{base_url}}/servers/{{server_id}}/imageflavours
+Authorization: Bearer {{access_token}}
+
+### Install Image on Server (DESTRUCTIVE — async — returns task UUID)
+# WARNING: All data on the selected disk will be lost!
+POST {{base_url}}/servers/{{server_id}}/image
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "imageFlavourId": 0,
+  "diskName": "vda",
+  "rootPartitionFullDiskSize": true,
+  "hostname": "server.example.com",
+  "locale": "en_US.UTF-8",
+  "timezone": "Europe/Berlin",
+  "additionalUserUsername": null,
+  "additionalUserPassword": null,
+  "sshKeyIds": [],
+  "sshPasswordAuthentication": false,
+  "customScript": null,
+  "emailToExecutingUser": true
+}
+
+### Install User Image on Server (DESTRUCTIVE — async — returns task UUID)
+POST {{base_url}}/servers/{{server_id}}/user-image
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "key": "REPLACE_WITH_IMAGE_KEY",
+  "diskName": "vda"
+}
+
+### List User-Uploaded Images
+GET {{base_url}}/users/{{user_id}}/images
+Authorization: Bearer {{access_token}}
+
+### Get Presigned Download URL for User Image
+GET {{base_url}}/users/{{user_id}}/images/REPLACE_WITH_IMAGE_KEY
+Authorization: Bearer {{access_token}}
+
+### Prepare Image Upload
+POST {{base_url}}/users/{{user_id}}/images/REPLACE_WITH_IMAGE_KEY
+Authorization: Bearer {{access_token}}
+
+### Get Presigned URL for Image Upload Part
+GET {{base_url}}/users/{{user_id}}/images/REPLACE_WITH_IMAGE_KEY/REPLACE_WITH_UPLOAD_ID/parts/REPLACE_WITH_PART_NUMBER
+Authorization: Bearer {{access_token}}
+
+### Complete Multipart Image Upload
+PUT {{base_url}}/users/{{user_id}}/images/REPLACE_WITH_IMAGE_KEY/REPLACE_WITH_UPLOAD_ID
+Authorization: Bearer {{access_token}}
+
+### Delete User Image
+DELETE {{base_url}}/users/{{user_id}}/images/REPLACE_WITH_IMAGE_KEY
+Authorization: Bearer {{access_token}}

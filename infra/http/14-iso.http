@@ -1,0 +1,51 @@
+### Netcup SCP API — ISO Management
+# Attach, detach, and manage ISO images.
+
+### Get Attached ISO
+GET {{base_url}}/servers/{{server_id}}/iso
+Authorization: Bearer {{access_token}}
+
+### List Available ISO Images for Server
+GET {{base_url}}/servers/{{server_id}}/isoimages
+Authorization: Bearer {{access_token}}
+
+### Attach ISO to Server (async — returns task UUID)
+POST {{base_url}}/servers/{{server_id}}/iso
+Authorization: Bearer {{access_token}}
+Content-Type: application/json
+
+{
+  "isoImageId": 0
+}
+
+### Detach ISO from Server
+DELETE {{base_url}}/servers/{{server_id}}/iso
+Authorization: Bearer {{access_token}}
+
+### List User-Uploaded ISOs
+GET {{base_url}}/users/{{user_id}}/isos
+Authorization: Bearer {{access_token}}
+
+### Get Presigned Download URL for User ISO
+GET {{base_url}}/users/{{user_id}}/isos/REPLACE_WITH_ISO_KEY
+Authorization: Bearer {{access_token}}
+
+### Prepare ISO Upload (single part)
+POST {{base_url}}/users/{{user_id}}/isos/REPLACE_WITH_ISO_KEY?multipart=false
+Authorization: Bearer {{access_token}}
+
+### Prepare ISO Upload (multipart)
+POST {{base_url}}/users/{{user_id}}/isos/REPLACE_WITH_ISO_KEY?multipart=true
+Authorization: Bearer {{access_token}}
+
+### Get Presigned URL for Upload Part
+GET {{base_url}}/users/{{user_id}}/isos/REPLACE_WITH_ISO_KEY/REPLACE_WITH_UPLOAD_ID/parts/REPLACE_WITH_PART_NUMBER
+Authorization: Bearer {{access_token}}
+
+### Complete Multipart ISO Upload
+PUT {{base_url}}/users/{{user_id}}/isos/REPLACE_WITH_ISO_KEY/REPLACE_WITH_UPLOAD_ID
+Authorization: Bearer {{access_token}}
+
+### Delete User ISO
+DELETE {{base_url}}/users/{{user_id}}/isos/REPLACE_WITH_ISO_KEY
+Authorization: Bearer {{access_token}}
