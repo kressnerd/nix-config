@@ -467,6 +467,16 @@ class ScpApiClient:
         resp = self._put(f"/servers/{server_id}/interfaces/{mac}/firewall", payload)
         return resp.json()["uuid"]  # type: ignore[no-any-return]
 
+    def get_openapi_spec(self) -> dict[str, Any]:
+        """Download the full OpenAPI specification."""
+        resp = self._get("/openapi")
+        return resp.json()  # type: ignore[no-any-return]
+
+    def post_openapi_mcp(self, message: str) -> dict[str, Any]:
+        """Send a message to the OpenAPI MCP endpoint."""
+        resp = self._post("/openapi/mcp", {"message": message})
+        return resp.json()  # type: ignore[no-any-return]
+
     def list_policies(self, user_id: int) -> list[dict[str, Any]]:
         """Return list of firewall policy dicts for a user.
 
@@ -579,6 +589,32 @@ def _authenticate_and_setup(
         _client = ScpApiClient(access_token)
         return _auth, _client, _user_id
     return auth, client, user_id
+
+
+def _authenticate_and_setup_no_user(
+    auth: ScpAuth | None,
+    client: ScpApiClient | None,
+    use_keyring: bool = False,
+) -> tuple[ScpAuth, ScpApiClient]:
+    """Authenticate and create API client without resolving user ID.
+
+    Use for commands that do not need user-specific API endpoints.
+    When both auth and client are provided, returns them unchanged.
+
+    Args:
+        auth: Existing ScpAuth instance, or None to create one.
+        client: Existing ScpApiClient instance, or None to create one.
+        use_keyring: Pass to ScpAuth when creating a new instance.
+
+    Returns:
+        Tuple of (auth, client) ready for API calls.
+    """
+    if auth is None or client is None:
+        _auth = ScpAuth(use_keyring=use_keyring)
+        access_token = _auth.get_access_token()
+        _client = ScpApiClient(access_token)
+        return _auth, _client
+    return auth, client
 
 
 def _gather_interface_firewall_state(
@@ -1018,6 +1054,40 @@ def _reassign_firewall_interfaces(
         client.wait_for_task(task_uuid)
 
 
+def cmd_openapi_download(
+    args: argparse.Namespace,
+    *,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+) -> None:
+    """Download the SCP OpenAPI specification."""
+    auth, client = _authenticate_and_setup_no_user(
+        auth, client, use_keyring=getattr(args, "keyring", False)
+    )
+    spec = client.get_openapi_spec()
+    try:
+        with open(args.output, "w") as f:
+            json.dump(spec, f, indent=2)
+    except OSError as exc:
+        print(f"Failed to write {args.output}: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+    print(f"Saved OpenAPI spec to {args.output}")
+
+
+def cmd_openapi_mcp(
+    args: argparse.Namespace,
+    *,
+    auth: ScpAuth | None = None,
+    client: ScpApiClient | None = None,
+) -> None:
+    """Send a message to the SCP OpenAPI MCP endpoint."""
+    auth, client = _authenticate_and_setup_no_user(
+        auth, client, use_keyring=getattr(args, "keyring", False)
+    )
+    result = client.post_openapi_mcp(args.message)
+    print(json.dumps(result, indent=2))
+
+
 def cmd_backup(
     args: argparse.Namespace,
     backup_dir: str | None = None,
@@ -1424,6 +1494,21 @@ examples:
     )
     ssh_close_parser.add_argument("--server", required=True, help="Server name")
     ssh_close_parser.set_defaults(command="ssh-close", func=cmd_ssh_close)
+
+    # openapi subcommand group
+    openapi_parser = subparsers.add_parser("openapi", help="OpenAPI spec operations")
+    openapi_sub = openapi_parser.add_subparsers(dest="openapi_command")
+    openapi_sub.required = True
+
+    # openapi download
+    dl_parser = openapi_sub.add_parser("download", help="Download the SCP OpenAPI spec")
+    dl_parser.add_argument("--output", required=True, help="Output file path")
+    dl_parser.set_defaults(func=cmd_openapi_download)
+
+    # openapi mcp
+    mcp_parser = openapi_sub.add_parser("mcp", help="Query the OpenAPI MCP endpoint")
+    mcp_parser.add_argument("--message", required=True, help="Message to send")
+    mcp_parser.set_defaults(func=cmd_openapi_mcp)
 
     return parser.parse_args(argv)
 

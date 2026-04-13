@@ -21,11 +21,14 @@ import pytest
 from netcup_firewall import (
     ScpApiClient,
     ScpAuth,
+    _authenticate_and_setup_no_user,
     _find_or_create_ssh_policy,
     _get_current_policy_ids,
     cmd_apply,
     cmd_backup,
     cmd_lockdown,
+    cmd_openapi_download,
+    cmd_openapi_mcp,
     cmd_restore,
     cmd_ssh_close,
     cmd_ssh_open,
@@ -1309,6 +1312,18 @@ class TestMain:
                 pass
         mock_backup.assert_called_once()
 
+    @patch("netcup_firewall.cmd_openapi_download")
+    def test_main_dispatches_openapi_download(self, mock_cmd: MagicMock) -> None:
+        """main() dispatches openapi download subcommand."""
+        main(["openapi", "download", "--output", "/tmp/spec.json"])
+        mock_cmd.assert_called_once()
+
+    @patch("netcup_firewall.cmd_openapi_mcp")
+    def test_main_dispatches_openapi_mcp(self, mock_cmd: MagicMock) -> None:
+        """main() dispatches openapi mcp subcommand."""
+        main(["openapi", "mcp", "--message", "hello"])
+        mock_cmd.assert_called_once()
+
 
 class TestErrorPaths:
     """Test error handling and edge cases."""
@@ -2436,3 +2451,207 @@ class TestPolicyLoading:
         validate_policy_schema(result)
         assert result["name"] == "lockdown"
         assert result["rules"] == []
+
+
+class TestScpApiClientOpenapi:
+    """Test OpenAPI-related methods of ScpApiClient."""
+
+    def test_get_openapi_spec(self) -> None:
+        """get_openapi_spec returns parsed JSON from /openapi endpoint."""
+        client = ScpApiClient("fake-token")
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"openapi": "3.0.3", "info": {"title": "SCP API"}}
+        with patch.object(client._session, "get", return_value=mock_resp) as mock_get:
+            result = client.get_openapi_spec()
+            assert result == {"openapi": "3.0.3", "info": {"title": "SCP API"}}
+            call_args = mock_get.call_args
+            assert "/openapi" in call_args[0][0]
+            assert "Authorization" in call_args[1]["headers"]
+
+    def test_post_openapi_mcp(self) -> None:
+        """post_openapi_mcp sends message to /openapi/mcp and returns parsed JSON."""
+        client = ScpApiClient("fake-token")
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"tools": ["firewall", "server"]}
+        with patch.object(client._session, "post", return_value=mock_resp) as mock_post:
+            result = client.post_openapi_mcp("list available tools")
+            assert result == {"tools": ["firewall", "server"]}
+            call_args = mock_post.call_args
+            assert "/openapi/mcp" in call_args[0][0]
+            assert "Authorization" in call_args[1]["headers"]
+            assert call_args[1]["json"] == {"message": "list available tools"}
+
+
+class TestAuthenticateNoUser:
+    """Test _authenticate_and_setup_no_user() helper."""
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_creates_auth_and_client_when_none(
+        self, MockAuth: MagicMock, MockClient: MagicMock
+    ) -> None:
+        """Creates fresh auth and client when both are None."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "test-token"
+
+        auth, client = _authenticate_and_setup_no_user(None, None)
+
+        MockAuth.assert_called_once_with(use_keyring=False)
+        mock_auth.get_access_token.assert_called_once()
+        MockClient.assert_called_once_with("test-token")
+        mock_auth.get_user_id.assert_not_called()
+        assert auth is mock_auth
+        assert client is MockClient.return_value
+
+    def test_returns_provided_auth_and_client(self) -> None:
+        """Returns existing auth and client unchanged without making API calls."""
+        mock_auth = MagicMock(spec=ScpAuth)
+        mock_client = MagicMock(spec=ScpApiClient)
+
+        auth, client = _authenticate_and_setup_no_user(mock_auth, mock_client)
+
+        assert auth is mock_auth
+        assert client is mock_client
+        mock_auth.get_access_token.assert_not_called()
+
+
+class TestOpenApiArgParsing:
+    """Test CLI argument parsing for the openapi subcommand group."""
+
+    def test_openapi_download_subcommand(self) -> None:
+        """openapi download sets output and dispatches to cmd_openapi_download."""
+        args = parse_args(["openapi", "download", "--output", "/tmp/spec.json"])
+        assert args.output == "/tmp/spec.json"
+        assert args.func is cmd_openapi_download
+
+    def test_openapi_download_requires_output(self) -> None:
+        """openapi download exits when --output is missing."""
+        with pytest.raises(SystemExit):
+            parse_args(["openapi", "download"])
+
+    def test_openapi_mcp_subcommand(self) -> None:
+        """openapi mcp sets message and dispatches to cmd_openapi_mcp."""
+        args = parse_args(["openapi", "mcp", "--message", "list tools"])
+        assert args.message == "list tools"
+        assert args.func is cmd_openapi_mcp
+
+    def test_openapi_mcp_requires_message(self) -> None:
+        """openapi mcp exits when --message is missing."""
+        with pytest.raises(SystemExit):
+            parse_args(["openapi", "mcp"])
+
+    def test_openapi_requires_subcommand(self) -> None:
+        """openapi group exits when no sub-subcommand is given."""
+        with pytest.raises(SystemExit):
+            parse_args(["openapi"])
+
+
+class TestOpenApiDownloadCommand:
+    """Test the cmd_openapi_download handler."""
+
+    def test_download_saves_spec_to_file(
+        self, capsys: pytest.CaptureFixture[str], tmp_path: Path
+    ) -> None:
+        """Download spec is written to file and confirmation printed to stdout."""
+        output_file = str(tmp_path / "spec.json")
+        args = argparse.Namespace(
+            output=output_file,
+            keyring=False,
+            verbose=False,
+            quiet=False,
+        )
+        mock_auth = MagicMock(spec=ScpAuth)
+        mock_client = MagicMock(spec=ScpApiClient)
+        spec_data: dict[str, Any] = {"openapi": "3.0.3", "info": {"title": "SCP API"}}
+        mock_client.get_openapi_spec.return_value = spec_data
+
+        cmd_openapi_download(args, auth=mock_auth, client=mock_client)
+
+        with open(output_file) as f:
+            saved = json.load(f)
+        assert saved == spec_data
+
+        captured = capsys.readouterr()
+        assert f"Saved OpenAPI spec to {output_file}" in captured.out
+
+        mock_client.get_openapi_spec.assert_called_once()
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_download_auth_failure_no_file_created(
+        self,
+        MockAuth: MagicMock,
+        MockClient: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Auth failure exits with code 1 and does not create the output file."""
+        import requests as req
+
+        output_file = str(tmp_path / "spec.json")
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.side_effect = req.HTTPError("401 Unauthorized")
+
+        with pytest.raises(SystemExit) as exc_info:
+            main(["openapi", "download", "--output", output_file])
+
+        assert exc_info.value.code == 1
+        assert not Path(output_file).exists()
+
+    def test_download_unwritable_path(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """Unwritable output path exits with code 1 and prints error."""
+        args = argparse.Namespace(
+            output="/nonexistent_dir_xyz/impossible/spec.json",
+            keyring=False,
+            verbose=False,
+            quiet=False,
+        )
+        mock_auth = MagicMock(spec=ScpAuth)
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.get_openapi_spec.return_value = {"openapi": "3.0.3"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            cmd_openapi_download(args, auth=mock_auth, client=mock_client)
+
+        assert exc_info.value.code == 1
+        captured = capsys.readouterr()
+        assert "Failed to write" in captured.err or "Failed to write" in captured.out
+
+
+class TestOpenApiMcpCommand:
+    """Tests for the openapi mcp command handler."""
+
+    def test_mcp_prints_response_json(self, capsys: pytest.CaptureFixture[str]) -> None:
+        """MCP endpoint prints JSON response to stdout and exits 0."""
+        args = argparse.Namespace(
+            message="list available tools",
+            keyring=False,
+            verbose=False,
+            quiet=False,
+        )
+        mock_auth = MagicMock(spec=ScpAuth)
+        mock_client = MagicMock(spec=ScpApiClient)
+        mcp_response = {"tools": ["firewall", "server"]}
+        mock_client.post_openapi_mcp.return_value = mcp_response
+
+        cmd_openapi_mcp(args, auth=mock_auth, client=mock_client)
+
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        assert output == mcp_response
+        mock_client.post_openapi_mcp.assert_called_once_with("list available tools")
+
+    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpAuth")
+    def test_mcp_auth_failure(self, MockAuth: MagicMock, MockClient: MagicMock) -> None:
+        """Auth failure exits with code 1."""
+        import requests as req
+
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.side_effect = req.HTTPError("401 Unauthorized")
+
+        with pytest.raises(SystemExit) as exc_info:
+            main(["openapi", "mcp", "--message", "hello"])
+
+        assert exc_info.value.code == 1
