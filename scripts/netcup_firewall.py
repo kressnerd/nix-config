@@ -684,54 +684,48 @@ def validate_source_ip(source: str) -> str:
     return str(network)
 
 
-def _find_or_create_lockdown_policy(
-    client: ScpApiClient,
-    user_id: int,
-    server_name: str,
-) -> dict[str, Any]:
-    """Return the lockdown policy for a server, creating it when absent.
+_REQUIRED_RULE_FIELDS = frozenset(
+    {"direction", "protocol", "sourceIp", "destinationPort", "action"}
+)
 
-    The lockdown policy is named ``lockdown-<server_name>`` and contains no
-    rules, which causes the SCP external firewall to DROP all inbound traffic.
+
+def load_policy_file(path: str) -> dict[str, Any]:
+    """Load a firewall policy definition from a JSON file.
 
     Args:
-        client: Authenticated ScpApiClient instance.
-        user_id: The numeric SCP user ID.
-        server_name: Server name used to derive the policy name.
+        path: Path to the JSON policy file.
 
     Returns:
-        Lockdown policy dict (either an existing one or newly created).
+        Parsed policy dict with name, description, rules.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        ValueError: If the file contains invalid JSON.
     """
-    lockdown_name = f"lockdown-{server_name}"
-    for p in client.list_policies(user_id):
-        if p["name"] == lockdown_name:
-            logger.info(
-                "Reusing existing lockdown policy '%s' (id: %s)",
-                lockdown_name,
-                p["id"],
-            )
-            return p
-    logger.info(
-        "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
-    )
-    return client.create_policy(user_id, lockdown_name, [])
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)  # type: ignore[no-any-return]
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON in {path}: {exc}") from exc
 
 
-def _get_current_policy_ids(
-    client: ScpApiClient, server_id: int, mac: str
-) -> list[int]:
-    """Read current userPolicies IDs assigned to a server interface.
+def validate_policy_schema(policy: dict[str, Any]) -> None:
+    """Validate a firewall policy dict has required fields.
 
     Args:
-        client: Authenticated SCP API client.
-        server_id: Netcup server ID.
-        mac: Network interface MAC address.
+        policy: Policy dict to validate.
 
-    Returns:
-        List of currently assigned user policy IDs, or empty list if none.
+    Raises:
+        ValueError: If required fields are missing.
     """
-    firewall_state = client.get_firewall(server_id, mac)
-    return list(firewall_state.get("userPolicies", []))
+    if "name" not in policy:
+        raise ValueError("Policy missing required field: name")
+    if "rules" not in policy:
+        raise ValueError("Policy missing required field: rules")
+    for i, rule in enumerate(policy["rules"]):
+        for field in _REQUIRED_RULE_FIELDS:
+            if field not in rule:
+                raise ValueError(f"Rule {i} missing required field: {field}")
 
 
 def _find_policy_by_name(
@@ -751,6 +745,56 @@ def _find_policy_by_name(
         if policy.get("name") == name:
             return policy
     return None
+
+
+def _get_current_policy_ids(
+    client: ScpApiClient, server_id: int, mac: str
+) -> list[int]:
+    """Read current userPolicies IDs assigned to a server interface.
+
+    Args:
+        client: Authenticated SCP API client.
+        server_id: Netcup server ID.
+        mac: Network interface MAC address.
+
+    Returns:
+        List of currently assigned user policy IDs, or empty list if none.
+    """
+    firewall_state = client.get_firewall(server_id, mac)
+    return list(firewall_state.get("userPolicies", []))
+
+
+def _find_or_create_lockdown_policy(
+    client: ScpApiClient,
+    user_id: int,
+    server_name: str,
+) -> dict[str, Any]:
+    """Return the lockdown policy for a server, creating it when absent.
+
+    The lockdown policy is named ``lockdown-<server_name>`` and contains no
+    rules, which causes the SCP external firewall to DROP all inbound traffic.
+
+    Args:
+        client: Authenticated ScpApiClient instance.
+        user_id: The numeric SCP user ID.
+        server_name: Server name used to derive the policy name.
+
+    Returns:
+        Lockdown policy dict (either an existing one or newly created).
+    """
+    lockdown_name = f"lockdown-{server_name}"
+    existing = _find_policy_by_name(client, user_id, lockdown_name)
+    if existing is not None:
+        logger.info(
+            "Reusing existing lockdown policy '%s' (id: %s)",
+            lockdown_name,
+            existing["id"],
+        )
+        return existing
+    logger.info(
+        "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
+    )
+    return client.create_policy(user_id, lockdown_name, [])
 
 
 def _find_or_create_ssh_policy(
@@ -1405,50 +1449,6 @@ def main(argv: list[str] | None = None) -> None:
             raise
         logger.error("%s", exc)
         sys.exit(1)
-
-
-_REQUIRED_RULE_FIELDS = frozenset(
-    {"direction", "protocol", "sourceIp", "destinationPort", "action"}
-)
-
-
-def load_policy_file(path: str) -> dict[str, Any]:
-    """Load a firewall policy definition from a JSON file.
-
-    Args:
-        path: Path to the JSON policy file.
-
-    Returns:
-        Parsed policy dict with name, description, rules.
-
-    Raises:
-        FileNotFoundError: If the file does not exist.
-        ValueError: If the file contains invalid JSON.
-    """
-    try:
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)  # type: ignore[no-any-return]
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Invalid JSON in {path}: {exc}") from exc
-
-
-def validate_policy_schema(policy: dict[str, Any]) -> None:
-    """Validate a firewall policy dict has required fields.
-
-    Args:
-        policy: Policy dict to validate.
-
-    Raises:
-        ValueError: If required fields are missing.
-    """
-    if "name" not in policy:
-        raise ValueError("Policy missing required field: name")
-    if "rules" not in policy:
-        raise ValueError("Policy missing required field: rules")
-    for i, rule in enumerate(policy["rules"]):
-        for field in _REQUIRED_RULE_FIELDS:
-            if field not in rule:
-                raise ValueError(f"Rule {i} missing required field: {field}")
 
 
 if __name__ == "__main__":
