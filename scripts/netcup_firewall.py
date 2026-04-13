@@ -1071,7 +1071,7 @@ def cmd_openapi_download(
     except OSError as exc:
         print(f"Failed to write {args.output}: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
-    print(f"Saved OpenAPI spec to {args.output}")
+    logger.info("Saved OpenAPI spec to %s", args.output)
 
 
 def cmd_openapi_mcp(
@@ -1503,12 +1503,12 @@ examples:
     # openapi download
     dl_parser = openapi_sub.add_parser("download", help="Download the SCP OpenAPI spec")
     dl_parser.add_argument("--output", required=True, help="Output file path")
-    dl_parser.set_defaults(func=cmd_openapi_download)
+    dl_parser.set_defaults(command="openapi-download", func=cmd_openapi_download)
 
     # openapi mcp
     mcp_parser = openapi_sub.add_parser("mcp", help="Query the OpenAPI MCP endpoint")
     mcp_parser.add_argument("--message", required=True, help="Message to send")
-    mcp_parser.set_defaults(func=cmd_openapi_mcp)
+    mcp_parser.set_defaults(command="openapi-mcp", func=cmd_openapi_mcp)
 
     return parser.parse_args(argv)
 

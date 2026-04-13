@@ -46,12 +46,12 @@ Current commands mix concerns: `backup`/`restore` handle both server firewall st
 
 The restructuring proceeds in four sequential phases:
 
-| Phase | Deliverable |
-|-------|-------------|
-| 1 | `openapi` command group: download spec, explore MCP endpoint |
-| 2 | Generated Python API client from the downloaded OpenAPI spec |
-| 3a | `server firewall` command group: get/set per-interface firewall state |
-| 3b | `policy` command group: full CRUD for user-owned firewall policies |
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| 1 | `openapi` command group: download spec, explore MCP endpoint | ✅ Completed |
+| 2 | Generated Python API client from the downloaded OpenAPI spec | Not Started |
+| 3a | `server firewall` command group: get/set per-interface firewall state | Not Started |
+| 3b | `policy` command group: full CRUD for user-owned firewall policies | Not Started |
 
 **Out of Scope:**
 
