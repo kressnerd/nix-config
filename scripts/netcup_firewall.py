@@ -447,17 +447,23 @@ class ScpApiClient:
         resp = self._get(f"/servers/{server_id}/interfaces/{mac}/firewall")
         return resp.json()  # type: ignore[no-any-return]
 
-    def set_firewall(self, server_id: int, mac: str, payload: dict[str, Any]) -> str:
-        """Apply a firewall payload via PUT and return the task UUID.
+    def set_firewall(self, server_id: int, mac: str, policy_ids: list[int]) -> str:
+        """Apply a firewall configuration via PUT and return the task UUID.
+
+        Builds the ServerFirewallSave payload (IdentifierInt-wrapped IDs).
 
         Args:
             server_id: The numeric server ID.
             mac: The MAC address of the interface.
-            payload: Firewall payload dict (e.g., {"userPolicies": [...]}).
+            policy_ids: List of policy IDs to assign as userPolicies.
 
         Returns:
             Task UUID string for polling the async task status.
         """
+        payload = {
+            "userPolicies": [{"id": pid} for pid in policy_ids],
+            "copiedPolicies": [],
+        }
         resp = self._put(f"/servers/{server_id}/interfaces/{mac}/firewall", payload)
         return resp.json()["uuid"]  # type: ignore[no-any-return]
 
@@ -761,7 +767,7 @@ def _get_current_policy_ids(
         List of currently assigned user policy IDs, or empty list if none.
     """
     firewall_state = client.get_firewall(server_id, mac)
-    return list(firewall_state.get("userPolicies", []))
+    return [p["id"] for p in firewall_state.get("userPolicies", [])]
 
 
 def _find_or_create_lockdown_policy(
@@ -830,9 +836,7 @@ def _find_or_create_ssh_policy(
             current_ids = _get_current_policy_ids(client, server_id, mac)
             if stale_id in current_ids:
                 new_ids = [pid for pid in current_ids if pid != stale_id]
-                task_uuid = client.set_firewall(
-                    server_id, mac, {"userPolicies": new_ids}
-                )
+                task_uuid = client.set_firewall(server_id, mac, new_ids)
                 client.wait_for_task(task_uuid)
         client.delete_policy(user_id, stale_id)
     rules = [
@@ -864,9 +868,7 @@ def _apply_lockdown_to_interfaces(
     for iface in interfaces:
         mac = iface["mac"]
         logger.info("Assigning lockdown policy to interface %s...", mac)
-        task_uuid = client.set_firewall(
-            server_id, mac, {"userPolicies": [lockdown_policy["id"]]}
-        )
+        task_uuid = client.set_firewall(server_id, mac, [lockdown_policy["id"]])
         client.wait_for_task(task_uuid)
         state = client.get_firewall(server_id, mac)
         logger.info(
@@ -1007,13 +1009,12 @@ def _reassign_firewall_interfaces(
     """
     for iface_backup in interfaces_backup:
         mac = iface_backup["mac"]
-        old_policy_ids = iface_backup.get("firewall", {}).get("userPolicies", [])
+        raw_policies = iface_backup.get("firewall", {}).get("userPolicies", [])
+        old_policy_ids = [p["id"] if isinstance(p, dict) else p for p in raw_policies]
         new_policy_ids = [id_map.get(old_id, old_id) for old_id in old_policy_ids]
 
         logger.info("Assigning policies %s to interface %s...", new_policy_ids, mac)
-        task_uuid = client.set_firewall(
-            server_id, mac, {"userPolicies": new_policy_ids}
-        )
+        task_uuid = client.set_firewall(server_id, mac, new_policy_ids)
         client.wait_for_task(task_uuid)
 
 
@@ -1228,7 +1229,7 @@ def cmd_ssh_open(
             logger.info("SSH policy already assigned to %s — skipping", mac)
             continue
         new_ids = current_ids + [ssh_policy_id]
-        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": new_ids})
+        task_uuid = client.set_firewall(server_id, mac, new_ids)
         client.wait_for_task(task_uuid)
 
     logger.info(
@@ -1291,7 +1292,7 @@ def cmd_ssh_close(
         if ssh_policy_id not in current_ids:
             continue
         new_ids = [pid for pid in current_ids if pid != ssh_policy_id]
-        task_uuid = client.set_firewall(server_id, mac, {"userPolicies": new_ids})
+        task_uuid = client.set_firewall(server_id, mac, new_ids)
         client.wait_for_task(task_uuid)
 
     # Delete the temporary policy
