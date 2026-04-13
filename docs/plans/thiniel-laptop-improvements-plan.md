@@ -1128,3 +1128,54 @@ wayland.windowManager.hyprland.settings.bind = [
 ## Completion Log
 
 *(Updated as phases are completed)*
+
+## Lessons Learned
+
+### 1. nixos-hardware modules can silently enable conflicting services
+
+`nixos-hardware.nixosModules.lenovo-thinkpad-x270` implicitly enables TLP, which directly conflicts with auto-cpufreq. Without the TDD regression-guard assertion (`services.tlp.enable == false`), this conflict would have gone undetected until runtime.
+
+**Action**: When using `nixos-hardware` modules, always check which services are implicitly enabled. Add explicit `= false` overrides and regression-guard assertions for known conflicts.
+
+### 2. TDD commit granularity must be squashed before merge
+
+Strict TDD with separate Red/Green commits produced ~55 commits for 15 features. This granularity is useful during development but too noisy for the Git history.
+
+**Action**: TDD cycles are committed separately during work, but squashed per feature before merging into the main branch. Each feature = 1 commit containing both test and implementation.
+
+### 3. Impermanence completeness requires systematic checking
+
+`~/Videos` was not persisted — wf-recorder recordings would have been lost on reboot. The review caught this, but it should have been identified during feature design.
+
+**Action**: For every new feature that writes files, immediately ask: *"Where does this tool write? Is that path persisted?"* Checklist:
+- System state → `/var/lib/<service>` → `environment.persistence`
+- User config → `.config/<app>` → HM `home.persistence`
+- User data → `~/Videos`, `~/Documents` etc. → HM `home.persistence`
+
+### 4. Count-based unit tests are fragile
+
+Existing unit tests in `tests/unit/hm-linux-modules-test.nix` count Hyprland binds, windowrules, and impermanence directories. Adding new entries requires updating these counts manually. This is a maintenance burden.
+
+**Action**: Consider refactoring count-based tests to check for existence of specific entries rather than total counts.
+
+### 5. Subtask delegation requires explicit value pinning
+
+A subtask changed wlsunset coordinates from Brussels to Berlin without being asked. Subtasks can "hallucinate" values when context is not explicit enough.
+
+**Action**: When delegating subtasks, explicitly state all concrete values that must not be changed. Do not rely on the subtask knowing the overall context.
+
+### 6. Batch similar features after pattern is established
+
+The last 7 features were batched into a single subtask — instead of 14 individual subtasks (7× Red + 7× Green). This was significantly more efficient without sacrificing TDD quality. The initial atomic approach (1 subtask = 1 assertion) was instructive for the first features but unnecessarily granular once the pattern was established.
+
+**Action**: Use atomic subtask delegation for the first 2–3 features of a new pattern. Then batch similar features into one subtask once the pattern is proven.
+
+### 7. Code review after implementation finds real bugs
+
+Confirmed findings from the review phase:
+- Governor typo `powersafe` → `powersave` (runtime error on battery)
+- TLP conflict from nixos-hardware module (service conflict)
+- Unpersisted `~/Videos` directory (data loss on reboot)
+- Stale unit test counts (CI failure)
+
+**Action**: The review phase is not a formality — it caught 4 bugs with real runtime impact. Always run a review subtask before completing a feature branch.
