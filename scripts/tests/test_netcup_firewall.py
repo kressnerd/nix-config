@@ -407,17 +407,36 @@ class TestScpApiClient:
         assert result["ingressImplicitRule"] == "DROP"
 
     def test_set_firewall(self) -> None:
-        """set_firewall PUTs payload and returns task UUID."""
+        """set_firewall PUTs ServerFirewallSave payload and returns task UUID."""
         client = ScpApiClient("fake-token")
-        with patch.object(client._session, "put") as mock_put:
+        with patch.object(client, "_put") as mock_put:
             mock_resp = MagicMock()
-            mock_resp.status_code = 202
             mock_resp.json.return_value = {"uuid": "task-uuid-123"}
             mock_put.return_value = mock_resp
-            result = client.set_firewall(
-                12345, "aa:bb:cc:dd:ee:ff", {"userPolicies": [99]}
-            )
+            result = client.set_firewall(12345, "aa:bb:cc:dd:ee:ff", [99])
         assert result == "task-uuid-123"
+        mock_put.assert_called_once_with(
+            "/servers/12345/interfaces/aa:bb:cc:dd:ee:ff/firewall",
+            {"userPolicies": [{"id": 99}], "copiedPolicies": []},
+        )
+
+    def test_set_firewall_sends_server_firewall_save_format(self) -> None:
+        """set_firewall builds ServerFirewallSave payload with IdentifierInt wrapping."""
+        client = ScpApiClient("fake-token")
+        with patch.object(client, "_put") as mock_put:
+            mock_resp = MagicMock()
+            mock_resp.json.return_value = {"uuid": "task-uuid-123"}
+            mock_put.return_value = mock_resp
+            client.set_firewall(
+                server_id=123, mac="aa:bb:cc:dd:ee:ff", policy_ids=[42, 99]
+            )
+        mock_put.assert_called_once_with(
+            "/servers/123/interfaces/aa:bb:cc:dd:ee:ff/firewall",
+            {
+                "userPolicies": [{"id": 42}, {"id": 99}],
+                "copiedPolicies": [],
+            },
+        )
 
     def test_list_policies(self) -> None:
         """list_policies returns list of policy dicts."""
@@ -511,7 +530,9 @@ class TestBackupCommand:
             {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
         ]
         mock_client.get_firewall.return_value = {
-            "userPolicies": [1],
+            "userPolicies": [
+                {"id": 1, "name": "default-policy", "description": None, "rules": []}
+            ],
             "copiedPolicies": [],
             "ingressImplicitRule": "DROP",
             "egressImplicitRule": "DROP",
@@ -587,7 +608,10 @@ class TestBackupCommand:
         """backup JSON includes interface firewall state."""
         _, mock_client = self._mock_setup(MockAuth, MockClient)
         firewall_state: dict[str, Any] = {
-            "userPolicies": [1, 2],
+            "userPolicies": [
+                {"id": 1, "name": "policy-a", "description": None, "rules": []},
+                {"id": 2, "name": "policy-b", "description": None, "rules": []},
+            ],
             "copiedPolicies": [],
             "ingressImplicitRule": "DROP",
             "egressImplicitRule": "DROP",
@@ -750,7 +774,14 @@ class TestLockdownCommand:
         }
         mock_client.set_firewall.return_value = "task-uuid-123"
         mock_client.get_firewall.return_value = {
-            "userPolicies": [99],
+            "userPolicies": [
+                {
+                    "id": 99,
+                    "name": "lockdown-cupix001",
+                    "description": None,
+                    "rules": [],
+                }
+            ],
             "copiedPolicies": [],
             "ingressImplicitRule": "DROP",
             "egressImplicitRule": "DROP",
@@ -821,7 +852,7 @@ class TestLockdownCommand:
         mock_client.create_policy.assert_not_called()
         mock_client.set_firewall.assert_called_once()
         call_args = mock_client.set_firewall.call_args
-        assert 77 in call_args[0][2]["userPolicies"]
+        assert 77 in call_args[0][2]
 
     @patch("netcup_firewall.cmd_backup")
     @patch("netcup_firewall.ScpApiClient")
@@ -841,7 +872,7 @@ class TestLockdownCommand:
         cmd_lockdown(args)
 
         mock_client.set_firewall.assert_called_once_with(
-            12345, "aa:bb:cc:dd:ee:ff", {"userPolicies": [99]}
+            12345, "aa:bb:cc:dd:ee:ff", [99]
         )
 
     @patch("netcup_firewall.cmd_backup")
@@ -1161,7 +1192,7 @@ class TestRestoreCommand:
         call_args = mock_client.set_firewall.call_args
         assert call_args[0][0] == 12345
         assert call_args[0][1] == "aa:bb:cc:dd:ee:ff"
-        assert 77 in call_args[0][2]["userPolicies"]
+        assert 77 in call_args[0][2]
 
     @patch("netcup_firewall.ScpApiClient")
     @patch("netcup_firewall.ScpAuth")
@@ -1384,7 +1415,9 @@ class TestWorkflow:
         ]
 
         initial_firewall: dict[str, Any] = {
-            "userPolicies": [1],
+            "userPolicies": [
+                {"id": 1, "name": "production", "description": None, "rules": []}
+            ],
             "copiedPolicies": [],
             "ingressImplicitRule": "DROP",
             "egressImplicitRule": "DROP",
@@ -1684,7 +1717,10 @@ class TestGetCurrentPolicyIds:
         client = MagicMock(spec=ScpApiClient)
         client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         client.get_firewall.return_value = {
-            "userPolicies": [42, 99],
+            "userPolicies": [
+                {"id": 42, "name": "prod-policy", "description": None, "rules": []},
+                {"id": 99, "name": "ssh-policy", "description": None, "rules": []},
+            ],
             "copiedPolicies": [],
             "ingressImplicitRule": "DROP",
             "egressImplicitRule": "DROP",
@@ -1714,6 +1750,40 @@ class TestGetCurrentPolicyIds:
         }
         result = _get_current_policy_ids(client, 123, "aa:bb:cc:dd:ee:ff")
         assert result == []
+
+    def test_get_current_policy_ids_extracts_ids_from_objects(self) -> None:
+        """Extracts integer IDs from full FirewallPolicy objects in userPolicies."""
+        client = MagicMock(spec=ScpApiClient)
+        client.get_firewall.return_value = {
+            "userPolicies": [
+                {
+                    "id": 42,
+                    "name": "prod-policy",
+                    "description": None,
+                    "rules": [
+                        {
+                            "id": 1,
+                            "action": "ACCEPT",
+                            "protocol": "TCP",
+                            "srcIp": "0.0.0.0/0",
+                            "srcPort": None,
+                            "dstIp": None,
+                            "dstPort": "443",
+                            "direction": "INGRESS",
+                            "comment": None,
+                        }
+                    ],
+                },
+                {"id": 99, "name": "ssh-policy", "description": None, "rules": []},
+            ],
+            "copiedPolicies": [],
+            "ingressImplicitRule": "DROP_ALL",
+            "egressImplicitRule": "ACCEPT_ALL",
+            "consistent": True,
+            "active": True,
+        }
+        result = _get_current_policy_ids(client, server_id=123, mac="aa:bb:cc:dd:ee:ff")
+        assert result == [42, 99]
 
 
 class TestFindOrCreateSshPolicy:
@@ -1797,7 +1867,15 @@ class TestFindOrCreateSshPolicy:
             {"id": 555, "name": "ssh-temp-cupix001", "rules": []}
         ]
         client.get_firewall.return_value = {
-            "userPolicies": [555, 50],
+            "userPolicies": [
+                {
+                    "id": 555,
+                    "name": "ssh-temp-cupix001",
+                    "description": None,
+                    "rules": [],
+                },
+                {"id": 50, "name": "prod-policy", "description": None, "rules": []},
+            ],
             "copiedPolicies": [],
         }
         client.set_firewall.return_value = "task-uuid"
@@ -1819,9 +1897,7 @@ class TestFindOrCreateSshPolicy:
         )
 
         # Should unassign stale policy from interface first
-        client.set_firewall.assert_any_call(
-            123, "aa:bb:cc:dd:ee:ff", {"userPolicies": [50]}
-        )
+        client.set_firewall.assert_any_call(123, "aa:bb:cc:dd:ee:ff", [50])
         # Then delete
         client.delete_policy.assert_called_once_with(42, 555)
 
@@ -1842,7 +1918,9 @@ class TestSshOpenCommand:
         mock_client.find_server.return_value = 123
         mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         mock_client.get_firewall.return_value = {
-            "userPolicies": [50],
+            "userPolicies": [
+                {"id": 50, "name": "prod-policy", "description": None, "rules": []}
+            ],
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = []
@@ -1875,7 +1953,7 @@ class TestSshOpenCommand:
 
         mock_client.set_firewall.assert_called_once()
         set_fw_call = mock_client.set_firewall.call_args
-        policy_ids = set_fw_call[0][2]["userPolicies"]
+        policy_ids = set_fw_call[0][2]
         assert 50 in policy_ids
         assert 777 in policy_ids
 
@@ -1892,7 +1970,14 @@ class TestSshOpenCommand:
         mock_client.find_server.return_value = 123
         mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         mock_client.get_firewall.return_value = {
-            "userPolicies": [777],
+            "userPolicies": [
+                {
+                    "id": 777,
+                    "name": "ssh-temp-cupix001",
+                    "description": None,
+                    "rules": [],
+                }
+            ],
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = []
@@ -2055,7 +2140,15 @@ class TestSshCloseCommand:
         mock_client.find_server.return_value = 123
         mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         mock_client.get_firewall.return_value = {
-            "userPolicies": [50, 777],  # 777 is the SSH policy
+            "userPolicies": [
+                {"id": 50, "name": "prod-policy", "description": None, "rules": []},
+                {
+                    "id": 777,
+                    "name": "ssh-temp-cupix001",
+                    "description": None,
+                    "rules": [],
+                },
+            ],  # 777 is the SSH policy
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = [
@@ -2080,7 +2173,7 @@ class TestSshCloseCommand:
         # Should set firewall WITHOUT the SSH policy (keep policy 50)
         mock_client.set_firewall.assert_called_once()
         set_fw_call = mock_client.set_firewall.call_args
-        policy_ids = set_fw_call[0][2]["userPolicies"]
+        policy_ids = set_fw_call[0][2]
         assert 777 not in policy_ids
         assert 50 in policy_ids
 
@@ -2127,7 +2220,9 @@ class TestSshCloseCommand:
         mock_client.find_server.return_value = 123
         mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         mock_client.get_firewall.return_value = {
-            "userPolicies": [50],  # SSH policy NOT in list
+            "userPolicies": [
+                {"id": 50, "name": "prod-policy", "description": None, "rules": []}
+            ],  # SSH policy NOT in list
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = [
@@ -2166,7 +2261,14 @@ class TestSshCloseCommand:
         mock_client.find_server.return_value = 123
         mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         mock_client.get_firewall.return_value = {
-            "userPolicies": [777],
+            "userPolicies": [
+                {
+                    "id": 777,
+                    "name": "ssh-temp-cupix001",
+                    "description": None,
+                    "rules": [],
+                }
+            ],
             "copiedPolicies": [],
         }
         mock_client.list_policies.return_value = [
