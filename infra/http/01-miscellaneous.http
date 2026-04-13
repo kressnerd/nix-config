@@ -1,0 +1,20 @@
+### Netcup SCP API — Miscellaneous
+# Health checks, maintenance status, and API specification endpoints.
+# Most of these do NOT require authentication.
+
+### Ping
+# Check if the SCP API is available (no auth required)
+GET https://www.servercontrolpanel.de/scp-core/api/ping
+
+### Get Maintenance Information
+# Returns maintenance window information for the system
+GET {{base_url}}/maintenance
+Authorization: Bearer {{access_token}}
+
+### Get OpenAPI Specification
+# Returns the OpenAPI 3.0.3 spec (no auth required)
+GET {{base_url}}/openapi
+
+### MCP Server
+# SCP OpenAPI Spec MCP Server endpoint
+POST {{base_url}}/openapi/mcp
