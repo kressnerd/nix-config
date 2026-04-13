@@ -242,6 +242,45 @@ if __name__ == "__main__":
 
 ---
 
+## Patterns from netcup_firewall.py
+
+### Dependency Injection for Testability
+
+Command handlers accept `auth`, `client`, and `user_id` as optional keyword-only parameters:
+
+```python
+def cmd_action(
+    args: argparse.Namespace,
+    *,
+    auth: AuthClass | None = None,
+    client: ApiClient | None = None,
+    user_id: int | None = None,
+) -> None:
+```
+
+When DI params are provided, the handler skips internal auth/client setup. Tests inject mocks directly, avoiding module-level patching.
+
+### Auto-Backup Before Destructive Operations
+
+Commands that mutate external state (firewall rules, server config) MUST create an automatic backup before making changes. This provides a rollback path independent of the external system's state.
+
+Pattern:
+1. Authenticate and resolve server
+2. Create backup (safety net)
+3. Perform mutation
+4. Verify result
+
+### Read-Then-Write for Non-Atomic APIs
+
+When an API replaces state rather than appending (e.g., `set_firewall` replaces the entire policy list), the handler MUST:
+1. Read current state
+2. Merge the desired change
+3. Write the merged result
+
+Never assume the current state is empty — always read first.
+
+---
+
 ## Completion Checklist
 
 - [ ] Test file exists at `scripts/tests/test_<tool_name>.py`
