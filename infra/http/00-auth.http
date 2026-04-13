@@ -44,8 +44,7 @@ client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&
   if (response.parsedBody.access_token) {
     $global.access_token = response.parsedBody.access_token;
     $global.refresh_token = response.parsedBody.refresh_token;
-    $global.id_token = response.parsedBody.id_token;
-    console.info("Tokens captured. access_token, refresh_token, id_token are now available.");
+    console.info("Tokens captured. access_token, refresh_token are now available.");
   } else {
     console.warn("authorization_pending — poll again in 5s");
   }
@@ -64,8 +63,9 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
   if (response.parsedBody.access_token) {
     $global.access_token = response.parsedBody.access_token;
     $global.refresh_token = response.parsedBody.refresh_token;
-    $global.id_token = response.parsedBody.id_token;
-    console.info("Tokens refreshed. access_token, refresh_token, id_token updated.");
+    console.info("Tokens refreshed. access_token, refresh_token updated.");
+  } else {
+    console.warn("Token refresh failed:", response.parsedBody.error || response.statusCode);
   }
 }}
 
