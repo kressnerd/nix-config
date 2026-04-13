@@ -56,6 +56,10 @@
         message = "thiniel: security.pam.services.greetd.enableGnomeKeyring must be true for PAM keyring auto-unlock on login.";
       }
       {
+        assertion = config.programs.seahorse.enable;
+        message = "thiniel: Seahorse (GNOME keyring GUI) must be enabled";
+      }
+      {
         assertion = config.services.greetd.useTextGreeter;
         message = "thiniel: greetd must use useTextGreeter to clear boot messages from the login TTY";
       }
