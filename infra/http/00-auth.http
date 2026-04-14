@@ -3,18 +3,21 @@
 # Setup (one-time):
 #   1. Run "Initiate Device Authorization" → device_code auto-captured
 #   2. Visit verification_uri in browser, enter user_code
-#   3. Run "Poll for Token" → access_token auto-captured into $global
-#      Copy refresh_token from response into http-client.private.env.json (one-time)
+#   3. Run "Poll for Token" → tokens captured + saved to gnome-keyring
 #   4. Run "Get User Info" → user_id auto-captured
-#      Copy user_id from response into http-client.private.env.json (one-time)
 #
 # Per-session workflow:
-#   1. Run "Refresh Token" (request 3) → fresh access_token auto-captured
+#   1. Run "Refresh Token" (request 3) → fresh access_token from gnome-keyring
 #   2. All .http files use {{access_token}} from $global — no manual edits
 #   3. When access_token expires mid-session, re-run "Refresh Token"
 #
-# refresh_token is long-lived and persisted in http-client.private.env.json.
-# access_token is short-lived and auto-captured into $global (session-scoped).
+# Token storage:
+#   - gnome-keyring: shared with scripts/netcup_firewall.py --keyring
+#     (service=netcup-scp, username=default, label="netcup-scp credentials")
+#   - $global: session-scoped access_token for httpYac requests
+#   - http-client.private.env.json: semi-static values only (server_id, etc.)
+#
+# httpyac.config.js loads refresh_token from gnome-keyring automatically.
 
 ### 1 — Initiate Device Authorization
 # Opens a device authorization session. Returns:
@@ -35,9 +38,7 @@ client_id={{client_id}}&scope=offline_access%20openid
 ### 2 — Poll for Token
 # Poll every 5 seconds until authorization_pending stops.
 # device_code is auto-populated from request 1 via $global.
-# Success: access_token auto-captured into $global.
-# IMPORTANT: Copy refresh_token from the response body into
-# http-client.private.env.json (one-time — it does not expire).
+# Success: tokens captured into $global and saved to gnome-keyring.
 # Pending: {"error": "authorization_pending"} — keep polling.
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
@@ -47,17 +48,27 @@ client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&
 {{
   if (response.parsedBody.access_token) {
     $global.access_token = response.parsedBody.access_token;
-    console.info("access_token captured into $global.");
-    console.info("SAVE refresh_token to http-client.private.env.json:", response.parsedBody.refresh_token);
+    $global.refresh_token = response.parsedBody.refresh_token;
+    console.info("Tokens captured into $global.");
+    try {
+      const { execSync } = require('child_process');
+      const secret = JSON.stringify(response.parsedBody);
+      execSync(
+        'secret-tool store --label="netcup-scp credentials" service netcup-scp username default',
+        { input: secret, encoding: 'utf8', timeout: 5000 }
+      );
+      console.info("Tokens saved to gnome-keyring (shared with netcup_firewall.py).");
+    } catch (e) {
+      console.warn("Failed to save to gnome-keyring:", e.message);
+    }
   } else {
     console.warn("authorization_pending — poll again in 5s");
   }
 }}
 
 ### 3 — Refresh Token (run once per session)
-# Reads refresh_token from http-client.private.env.json (persisted, long-lived).
-# Captures fresh access_token into $global.
-# Also updates refresh_token in $global in case the server rotates it.
+# refresh_token is loaded from gnome-keyring via httpyac.config.js.
+# Captures fresh access_token into $global and updates gnome-keyring.
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
 
@@ -66,10 +77,18 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 {{
   if (response.parsedBody.access_token) {
     $global.access_token = response.parsedBody.access_token;
+    $global.refresh_token = response.parsedBody.refresh_token;
     console.info("access_token refreshed and captured into $global.");
-    if (response.parsedBody.refresh_token) {
-      $global.refresh_token = response.parsedBody.refresh_token;
-      console.info("refresh_token rotated — update http-client.private.env.json if changed.");
+    try {
+      const { execSync } = require('child_process');
+      const secret = JSON.stringify(response.parsedBody);
+      execSync(
+        'secret-tool store --label="netcup-scp credentials" service netcup-scp username default',
+        { input: secret, encoding: 'utf8', timeout: 5000 }
+      );
+      console.info("Updated tokens in gnome-keyring.");
+    } catch (e) {
+      console.warn("Failed to update gnome-keyring:", e.message);
     }
   } else {
     console.warn("Token refresh failed:", response.parsedBody.error || response.statusCode);
@@ -80,12 +99,10 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 # Returns the SCP user profile. The `id` field (integer) is the user_id
 # required for /users/{user_id}/... endpoints — NOT the customer number.
 # user_id is auto-captured into $global.
-# IMPORTANT: Also copy user_id into http-client.private.env.json (one-time).
 GET {{oidc_base}}/userinfo
 Authorization: Bearer {{access_token}}
 
 {{
   $global.user_id = response.parsedBody.id;
   console.info("user_id captured:", response.parsedBody.id);
-  console.info("SAVE user_id to http-client.private.env.json:", response.parsedBody.id);
 }}
