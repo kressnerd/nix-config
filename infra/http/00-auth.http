@@ -4,7 +4,7 @@
 #   1. Run "Initiate Device Authorization" → device_code auto-captured
 #   2. Visit verification_uri in browser, enter user_code
 #   3. Run "Poll for Token" → tokens captured + saved to gnome-keyring
-#   4. Run "Get User Info" → user_id auto-captured
+#   4. Run "Get User Info" → user_id captured + saved to gnome-keyring
 #
 # Per-session workflow:
 #   1. Run "Refresh Token" (request 3) → fresh access_token from gnome-keyring
@@ -17,7 +17,7 @@
 #   - $global: session-scoped access_token for httpYac requests
 #   - http-client.private.env.json: semi-static values only (server_id, etc.)
 #
-# httpyac.config.js loads refresh_token from gnome-keyring automatically.
+# httpyac.config.js loads refresh_token and user_id from gnome-keyring.
 
 ### 1 — Initiate Device Authorization
 # Opens a device authorization session. Returns:
@@ -48,19 +48,13 @@ client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&
 {{
   if (response.parsedBody.access_token) {
     $global.access_token = response.parsedBody.access_token;
-    $global.refresh_token = response.parsedBody.refresh_token;
-    console.info("Tokens captured into $global.");
-    try {
-      const { execSync } = require('child_process');
-      const secret = JSON.stringify(response.parsedBody);
-      execSync(
-        'secret-tool store --label="netcup-scp credentials" service netcup-scp username default',
-        { input: secret, encoding: 'utf8', timeout: 5000 }
-      );
-      console.info("Tokens saved to gnome-keyring (shared with netcup_firewall.py).");
-    } catch (e) {
-      console.warn("Failed to save to gnome-keyring:", e.message);
+    if (response.parsedBody.refresh_token) {
+      $global.refresh_token = response.parsedBody.refresh_token;
     }
+    console.info("Tokens captured into $global.");
+    const config = require('./httpyac.config.js');
+    config.saveToKeyring(response.parsedBody);
+    console.info("Tokens saved to gnome-keyring (shared with netcup_firewall.py).");
   } else {
     console.warn("authorization_pending — poll again in 5s");
   }
@@ -77,19 +71,13 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 {{
   if (response.parsedBody.access_token) {
     $global.access_token = response.parsedBody.access_token;
-    $global.refresh_token = response.parsedBody.refresh_token;
-    console.info("access_token refreshed and captured into $global.");
-    try {
-      const { execSync } = require('child_process');
-      const secret = JSON.stringify(response.parsedBody);
-      execSync(
-        'secret-tool store --label="netcup-scp credentials" service netcup-scp username default',
-        { input: secret, encoding: 'utf8', timeout: 5000 }
-      );
-      console.info("Updated tokens in gnome-keyring.");
-    } catch (e) {
-      console.warn("Failed to update gnome-keyring:", e.message);
+    if (response.parsedBody.refresh_token) {
+      $global.refresh_token = response.parsedBody.refresh_token;
     }
+    console.info("access_token refreshed and captured into $global.");
+    const config = require('./httpyac.config.js');
+    config.mergeAndSave(response.parsedBody);
+    console.info("Updated tokens in gnome-keyring.");
   } else {
     console.warn("Token refresh failed:", response.parsedBody.error || response.statusCode);
   }
@@ -98,11 +86,14 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 ### 4 — Get User Info (extracts user_id)
 # Returns the SCP user profile. The `id` field (integer) is the user_id
 # required for /users/{user_id}/... endpoints — NOT the customer number.
-# user_id is auto-captured into $global.
+# user_id is auto-captured into $global and saved to gnome-keyring.
 GET {{oidc_base}}/userinfo
 Authorization: Bearer {{access_token}}
 
 {{
   $global.user_id = response.parsedBody.id;
   console.info("user_id captured:", response.parsedBody.id);
+  const config = require('./httpyac.config.js');
+  config.mergeAndSave({ user_id: response.parsedBody.id });
+  console.info("user_id saved to gnome-keyring.");
 }}
