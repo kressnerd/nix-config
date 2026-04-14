@@ -45,15 +45,15 @@
         message = "HM Hyprland package must match system-level programs.hyprland.package to prevent version mismatch";
       }
       {
-        assertion =
-          builtins.any (m: builtins.match ".*eDP-1.*" m != null)
-            config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
+        assertion = builtins.any (
+          m: builtins.match ".*eDP-1.*" m != null
+        ) config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
         message = "thiniel: Hyprland monitor rules must include eDP-1 internal display";
       }
       {
-        assertion =
-          builtins.any (m: builtins.match ",.*" m != null)
-            config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
+        assertion = builtins.any (
+          m: builtins.match ",.*" m != null
+        ) config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
         message = "thiniel: Hyprland monitor rules must include a catch-all rule for unknown monitors";
       }
       {

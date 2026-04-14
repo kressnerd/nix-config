@@ -158,11 +158,13 @@
   };
 
   # Networking
-  networking.hostName = "thiniel";
-  networking.networkmanager.plugins = with pkgs; [ networkmanager-openvpn ];
-  # WWAN modem support — NetworkManager may enable ModemManager implicitly,
-  # but explicit declaration ensures it is always active and persisted.
-  networking.modemmanager.enable = true;
+  networking = {
+    hostName = "thiniel";
+    networkmanager.plugins = with pkgs; [ networkmanager-openvpn ];
+    # WWAN modem support — NetworkManager may enable ModemManager implicitly,
+    # but explicit declaration ensures it is always active and persisted.
+    modemmanager.enable = true;
+  };
   # TODO: Mullvad VPN — intentionally not configured; evaluate when needed
 
   # Fix sops key permissions so home-manager (user dan) can read it

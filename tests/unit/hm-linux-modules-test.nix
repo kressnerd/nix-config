@@ -231,17 +231,23 @@ let
         };
 
         testHypridleHasScreenDimListener = {
-          expr = builtins.any (l: lib.strings.hasInfix "brightnessctl" l."on-timeout") hyprideModule.services.hypridle.settings.listener;
+          expr = builtins.any (
+            l: lib.strings.hasInfix "brightnessctl" l."on-timeout"
+          ) hyprideModule.services.hypridle.settings.listener;
           expected = true;
         };
 
         testHypridleHasLockListener = {
-          expr = builtins.any (l: lib.strings.hasInfix "loginctl lock-session" l."on-timeout") hyprideModule.services.hypridle.settings.listener;
+          expr = builtins.any (
+            l: lib.strings.hasInfix "loginctl lock-session" l."on-timeout"
+          ) hyprideModule.services.hypridle.settings.listener;
           expected = true;
         };
 
         testHypridleHasDpmsOffListener = {
-          expr = builtins.any (l: lib.strings.hasInfix "dpms off" l."on-timeout") hyprideModule.services.hypridle.settings.listener;
+          expr = builtins.any (
+            l: lib.strings.hasInfix "dpms off" l."on-timeout"
+          ) hyprideModule.services.hypridle.settings.listener;
           expected = true;
         };
 
