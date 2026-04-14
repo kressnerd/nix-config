@@ -276,9 +276,9 @@ let
           expected = true;
         };
 
-        testHyprlandEnvHasAqNoModifiers = {
-          expr = builtins.any (e: e == "AQ_NO_MODIFIERS,1") hyprSettings.env;
-          expected = true;
+        testHyprlandGestureIsSet = {
+          expr = hyprSettings.gesture or null;
+          expected = "3, horizontal, workspace";
         };
 
         testHyprlandExecOnceIsList = {
