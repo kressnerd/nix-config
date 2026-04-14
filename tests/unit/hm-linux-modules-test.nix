@@ -240,6 +240,11 @@ let
           expected = true;
         };
 
+        testHypridleHasDpmsOffListener = {
+          expr = builtins.any (l: lib.strings.hasInfix "dpms off" l."on-timeout") hyprideModule.services.hypridle.settings.listener;
+          expected = true;
+        };
+
         testHypridleLockCmd = {
           expr = hyprideModule.services.hypridle.settings.general.lock_cmd;
           expected = "pidof hyprlock || hyprlock";

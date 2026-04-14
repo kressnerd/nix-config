@@ -1,6 +1,6 @@
 # Refactor Count-Based Tests to Existence Checks
 
-## Status: APPROVED — ready for implementation
+## Status: COMPLETED
 
 ## Business Context
 
@@ -27,6 +27,11 @@
 No dangerous changes (boot, network, filesystem, auth, secrets) — test-only refactoring.
 
 ## Implementation Phases
+
+- [x] Phase 1: `tests/unit/helpers-test.nix` — 5 count tests removed, 13 existence tests added
+- [x] Phase 2: `tests/unit/hm-cli-modules-test.nix` — 2 count tests removed, 9 existence tests added
+- [x] Phase 3: `tests/unit/hm-linux-modules-test.nix` — 9 count tests removed, 15 existence tests added
+- [x] Phase 4: `tests/assertions/thiniel-rice-invariants.nix` — 1 count assertion removed, 2 existence assertions added
 
 ### Phase 1: `tests/unit/helpers-test.nix` — 5 count tests
 
@@ -139,4 +144,12 @@ testVimHasCatppuccinPlugin = {
 
 ## Completion Log
 
-_To be updated during implementation._
+- Phase 1 complete: removed 5 `builtins.length` checks from `helpers-test.nix`, added 13 `builtins.elem` existence checks
+- Phase 2 complete: removed `testFishAliasCount` and `testVimPluginCount` from `hm-cli-modules-test.nix`, added 8 `builtins.hasAttr` alias checks + 1 `builtins.any` plugin check
+- Phase 3 complete: removed 9 count tests from `hm-linux-modules-test.nix`, added 15 existence checks across Hyprland, Hypridle, Impermanence, Gnome-keyring, and Fonts sections
+- Phase 4 complete: replaced monitor count assertion in `thiniel-rice-invariants.nix` with two `builtins.any` existence assertions
+
+## Completion Summary
+- **Completed Date**: 2026-04-14
+- **Deviations**: Review finding F-001 identified a missing DPMS-off hypridle listener check — addressed in a follow-up commit
+- **Results**: All 17 count-based assertions removed across 4 files, replaced with ~40 targeted existence checks. Zero `builtins.length` assertions remain in any test file. `nix flake check` passes.
