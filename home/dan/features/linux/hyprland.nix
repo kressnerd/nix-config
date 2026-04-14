@@ -121,10 +121,7 @@ in
         };
       };
 
-      gestures = {
-        workspace_swipe = true;
-        workspace_swipe_fingers = 3;
-      };
+      gesture = "3, horizontal, workspace";
 
       exec-once = [
         "${startupScript}/bin/start"
@@ -275,9 +272,6 @@ in
         ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
       ];
 
-      env = [
-        "AQ_NO_MODIFIERS,1"
-      ];
     };
   };
 }

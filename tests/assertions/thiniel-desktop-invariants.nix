@@ -12,7 +12,8 @@
       {
         assertion =
           let
-            pdfHandler = config.home-manager.users.dan.xdg.mimeApps.defaultApplications."application/pdf" or null;
+            pdfHandler =
+              config.home-manager.users.dan.xdg.mimeApps.defaultApplications."application/pdf" or null;
           in
           pdfHandler == "org.pwmt.zathura.desktop"
           || (builtins.isList pdfHandler && builtins.elem "org.pwmt.zathura.desktop" pdfHandler);
@@ -21,12 +22,9 @@
       {
         assertion =
           let
-            rules =
-              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.windowrule or [ ];
+            rules = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.windowrule or [ ];
           in
-          builtins.any (
-            r: builtins.match ".*org\\.pwmt\\.zathura.*" (r."match:class" or "") != null
-          ) rules;
+          builtins.any (r: builtins.match ".*org\\.pwmt\\.zathura.*" (r."match:class" or "") != null) rules;
         message = "thiniel: Hyprland must have windowrule for Zathura";
       }
       {
@@ -45,19 +43,15 @@
       {
         assertion =
           let
-            rules =
-              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.windowrule or [ ];
+            rules = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.windowrule or [ ];
           in
-          builtins.any (
-            r: builtins.match ".*mpv.*" (r."match:class" or "") != null
-          ) rules;
+          builtins.any (r: builtins.match ".*mpv.*" (r."match:class" or "") != null) rules;
         message = "thiniel: Hyprland must have windowrule for MPV";
       }
       {
         assertion =
           let
-            execOnce =
-              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.exec-once or [ ];
+            execOnce = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.exec-once or [ ];
           in
           builtins.any (e: builtins.match ".*wlsunset.*" e != null) execOnce;
         message = "thiniel: wlsunset must be started via Hyprland exec-once";
@@ -65,8 +59,7 @@
       {
         assertion =
           let
-            binds =
-              config.home-manager.users.dan.wayland.windowManager.hyprland.settings.bind or [ ];
+            binds = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.bind or [ ];
           in
           builtins.any (b: builtins.match ".*wlsunset.*" b != null) binds;
         message = "thiniel: Hyprland must have keybind to toggle wlsunset";
@@ -81,9 +74,11 @@
       }
       {
         assertion =
-          config.home-manager.users.dan.wayland.windowManager.hyprland.settings.gestures.workspace_swipe
-            or false;
-        message = "thiniel: Hyprland workspace swipe gesture must be enabled";
+          let
+            hmHyprSettings = config.home-manager.users.dan.wayland.windowManager.hyprland.settings;
+          in
+          (hmHyprSettings ? gesture) && hmHyprSettings.gesture == "3, horizontal, workspace";
+        message = "thiniel: Hyprland workspace swipe gesture must be enabled (v0.51+ syntax)";
       }
       {
         assertion = builtins.any (
