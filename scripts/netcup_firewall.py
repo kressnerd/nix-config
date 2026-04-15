@@ -1413,6 +1413,12 @@ examples:
             "instead of file. Requires secretstorage library."
         ),
     )
+    parser.add_argument(
+        "--output",
+        choices=["text", "json"],
+        default="text",
+        help="output format (default: text)",
+    )
 
     subparsers = parser.add_subparsers(dest="command")
     subparsers.required = True

@@ -203,6 +203,23 @@ class TestArgParsing:
         assert args.func == cmd_ssh_close
 
 
+class TestOutputFlagArgParsing:
+    def test_output_flag_default(self) -> None:
+        """--output defaults to 'text' when not specified."""
+        args = parse_args(["backup", "--server", "x"])
+        assert args.output == "text"
+
+    def test_output_flag_json(self) -> None:
+        """--output json is accepted and parsed."""
+        args = parse_args(["--output", "json", "backup", "--server", "x"])
+        assert args.output == "json"
+
+    def test_output_flag_invalid(self) -> None:
+        """--output with invalid value raises SystemExit."""
+        with pytest.raises(SystemExit):
+            parse_args(["--output", "xml", "backup", "--server", "x"])
+
+
 class TestScpAuth:
     """Test OIDC authentication module."""
 
