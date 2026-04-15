@@ -31,6 +31,18 @@
         ) config.networking.networkmanager.plugins;
         message = "thiniel: NetworkManager OpenVPN plugin must be installed";
       }
+      {
+        assertion = builtins.match ".*bInterfaceClass.*03.*" config.services.udev.extraRules != null;
+        message = "thiniel: udev must disable USB autosuspend for HID input devices (bInterfaceClass==03)";
+      }
+      {
+        assertion = builtins.match ".*power/control.*" config.powerManagement.powertop.postStart != null;
+        message = "thiniel: powertop postStart must re-apply USB HID autosuspend disable after auto-tune";
+      }
+      {
+        assertion = config.powerManagement.powertop.enable;
+        message = "thiniel: powertop auto-tune must remain enabled for power savings";
+      }
     ];
   };
 }
