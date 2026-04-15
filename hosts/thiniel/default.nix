@@ -284,8 +284,31 @@
   };
 
   # Power management
-  powerManagement.enable = true;
-  powerManagement.powertop.enable = true;
+  powerManagement = {
+    enable = true;
+    powertop.enable = true;
+    powertop.postStart = ''
+      # Re-apply autosuspend disable for USB HID devices after powertop --auto-tune
+      for iface in /sys/bus/usb/devices/*/bInterfaceClass; do
+        if [ "$(cat "$iface" 2>/dev/null)" = "03" ]; then
+          dev_dir="$(dirname "$iface")"
+          parent_dir="$(dirname "$dev_dir")"
+          if [ -f "$parent_dir/power/control" ]; then
+            echo on > "$parent_dir/power/control"
+          fi
+        fi
+      done
+    '';
+  };
+
+  # USB HID autosuspend exceptions — prevent powertop from suspending input devices
+  services.udev.extraRules = ''
+    # Disable autosuspend for all USB HID devices (keyboards, mice, tablets)
+    ACTION=="add|change", SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="03", RUN+="${pkgs.bash}/bin/bash -c 'echo on > /sys$(dirname $DEVPATH)/power/control'"
+    # Vendor:product-specific overrides (uncomment and replace XXXX:YYYY after running lsusb)
+    # ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="XXXX", ATTR{idProduct}=="YYYY", ATTR{power/control}="on"
+    # ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="XXXX", ATTR{idProduct}=="YYYY", ATTR{power/autosuspend}="-1"
+  '';
 
   # OPAL SED FDE: lid close must not suspend — encryption key is lost on sleep/hibernate
   services.logind.settings.Login = {
