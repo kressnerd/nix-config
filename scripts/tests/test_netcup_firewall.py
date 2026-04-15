@@ -17,6 +17,7 @@ from typing import Any
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
+import requests
 
 from netcup_firewall import (
     ScpApiClient,
@@ -530,6 +531,56 @@ class TestScpApiClient:
             mock_get.return_value = running_resp
             with pytest.raises(TimeoutError):
                 client.wait_for_task("task-uuid-123", max_polls=3, interval=0)
+
+    def test_update_policy_success(self) -> None:
+        """update_policy sends PUT and returns response dict."""
+        client = ScpApiClient(access_token="test-token")
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {
+            "id": 123,
+            "name": "updated-policy",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+        mock_resp.raise_for_status = MagicMock()
+        with patch.object(client._session, "put", return_value=mock_resp) as mock_put:
+            result = client.update_policy(
+                user_id=42,
+                policy_id=123,
+                name="updated-policy",
+                rules=[
+                    {
+                        "direction": "INGRESS",
+                        "protocol": "TCP",
+                        "sourceIp": "0.0.0.0/0",
+                        "destinationPort": "443",
+                        "action": "ACCEPT",
+                    }
+                ],
+            )
+        mock_put.assert_called_once()
+        call_url = mock_put.call_args[0][0]
+        assert "/users/42/firewall-policies/123" in call_url
+        call_json = mock_put.call_args[1]["json"]
+        assert call_json["name"] == "updated-policy"
+        assert len(call_json["rules"]) == 1
+        assert result == mock_resp.json.return_value
+
+    def test_update_policy_http_error(self) -> None:
+        """update_policy propagates HTTP errors from the API."""
+        client = ScpApiClient(access_token="test-token")
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
+        with patch.object(client._session, "put", return_value=mock_resp):
+            with pytest.raises(requests.HTTPError, match="404 Not Found"):
+                client.update_policy(user_id=42, policy_id=999, name="x", rules=[])
 
 
 class TestBackupCommand:

@@ -524,6 +524,31 @@ class ScpApiClient:
         )
         return resp.json()  # type: ignore[no-any-return]
 
+    def update_policy(
+        self,
+        user_id: int,
+        policy_id: int,
+        name: str,
+        rules: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Update an existing user firewall policy via PUT.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            policy_id: The numeric policy ID to update.
+            name: New name for the policy.
+            rules: Updated list of firewall rule dicts.
+
+        Returns:
+            Updated policy dict as returned by the API.
+        """
+        resp = self._put(
+            f"/users/{user_id}/firewall-policies/{policy_id}",
+            json_data={"name": name, "rules": rules},
+        )
+        result: dict[str, Any] = resp.json()
+        return result
+
     def delete_policy(self, user_id: int, policy_id: int) -> None:
         """Delete a firewall policy.
 
