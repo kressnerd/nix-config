@@ -31,6 +31,8 @@ from netcup_firewall import (
     cmd_openapi_download,
     cmd_openapi_mcp,
     cmd_restore,
+    cmd_server_firewall_get,
+    cmd_server_firewall_set,
     cmd_ssh_close,
     cmd_ssh_open,
     load_policy_file,
@@ -219,6 +221,66 @@ class TestOutputFlagArgParsing:
         """--output with invalid value raises SystemExit."""
         with pytest.raises(SystemExit):
             parse_args(["--output", "xml", "backup", "--server", "x"])
+
+
+class TestServerFirewallArgParsing:
+    """Tests for server firewall get/set argument parsing."""
+
+    def test_server_firewall_get_args(self) -> None:
+        """Parse server firewall get with --server and --mac."""
+        args = parse_args(
+            [
+                "server",
+                "firewall",
+                "get",
+                "--server",
+                "cupix001",
+                "--mac",
+                "aa:bb:cc:dd:ee:ff",
+            ]
+        )
+        assert args.server == "cupix001"
+        assert args.mac == "aa:bb:cc:dd:ee:ff"
+        assert args.func == cmd_server_firewall_get
+
+    def test_server_firewall_set_args(self) -> None:
+        """Parse server firewall set with --server, --mac, --policy-ids, --yes."""
+        args = parse_args(
+            [
+                "server",
+                "firewall",
+                "set",
+                "--server",
+                "cupix001",
+                "--mac",
+                "aa:bb:cc:dd:ee:ff",
+                "--policy-ids",
+                "42,99",
+                "--yes",
+            ]
+        )
+        assert args.server == "cupix001"
+        assert args.mac == "aa:bb:cc:dd:ee:ff"
+        assert args.policy_ids == "42,99"
+        assert args.yes is True
+        assert args.func == cmd_server_firewall_set
+
+    def test_server_firewall_set_yes_default_false(self) -> None:
+        """--yes defaults to False when not specified."""
+        args = parse_args(
+            [
+                "server",
+                "firewall",
+                "set",
+                "--server",
+                "x",
+                "--mac",
+                "m",
+                "--policy-ids",
+                "1",
+            ]
+        )
+        assert args.yes is False
 
 
 class TestScpAuth:

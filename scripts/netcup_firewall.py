@@ -814,6 +814,26 @@ def _find_policy_by_name(
     return None
 
 
+def cmd_server_firewall_get(
+    args: argparse.Namespace,
+    *,
+    auth: "ScpAuth | None" = None,
+    client: "ScpApiClient | None" = None,
+) -> None:
+    """Get firewall state for a server interface."""
+    raise NotImplementedError
+
+
+def cmd_server_firewall_set(
+    args: argparse.Namespace,
+    *,
+    auth: "ScpAuth | None" = None,
+    client: "ScpApiClient | None" = None,
+) -> None:
+    """Set firewall state for a server interface."""
+    raise NotImplementedError
+
+
 def _get_current_policy_ids(
     client: ScpApiClient, server_id: int, mac: str
 ) -> list[int]:
@@ -1540,6 +1560,40 @@ examples:
     mcp_parser = openapi_sub.add_parser("mcp", help="Query the OpenAPI MCP endpoint")
     mcp_parser.add_argument("--message", required=True, help="Message to send")
     mcp_parser.set_defaults(command="openapi-mcp", func=cmd_openapi_mcp)
+
+    # -- server command group --
+    server_parser = subparsers.add_parser("server", help="server management commands")
+    server_sub = server_parser.add_subparsers(dest="server_command", required=True)
+
+    # server firewall
+    fw_parser = server_sub.add_parser("firewall", help="server firewall commands")
+    fw_sub = fw_parser.add_subparsers(dest="firewall_command", required=True)
+
+    # server firewall get
+    fw_get_parser = fw_sub.add_parser(
+        "get", help="get current firewall state for a server interface"
+    )
+    fw_get_parser.add_argument("--server", required=True, help="server name")
+    fw_get_parser.add_argument(
+        "--mac", required=True, help="network interface MAC address"
+    )
+    fw_get_parser.set_defaults(func=cmd_server_firewall_get)
+
+    # server firewall set
+    fw_set_parser = fw_sub.add_parser(
+        "set", help="set firewall policies for a server interface"
+    )
+    fw_set_parser.add_argument("--server", required=True, help="server name")
+    fw_set_parser.add_argument(
+        "--mac", required=True, help="network interface MAC address"
+    )
+    fw_set_parser.add_argument(
+        "--policy-ids", required=True, help="comma-separated policy IDs to assign"
+    )
+    fw_set_parser.add_argument(
+        "--yes", action="store_true", default=False, help="skip confirmation prompt"
+    )
+    fw_set_parser.set_defaults(func=cmd_server_firewall_set)
 
     return parser.parse_args(argv)
 
