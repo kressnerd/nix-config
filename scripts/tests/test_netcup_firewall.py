@@ -13,7 +13,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -281,6 +281,99 @@ class TestServerFirewallArgParsing:
             ]
         )
         assert args.yes is False
+
+
+class TestServerFirewallGetCommand:
+    """Tests for cmd_server_firewall_get handler."""
+
+    _SAMPLE_FIREWALL: ClassVar[dict[str, Any]] = {
+        "userPolicies": [{"id": 42, "name": "lockdown", "rules": []}],
+        "copiedPolicies": [],
+        "ingressImplicitRule": "DROP_ALL",
+        "egressImplicitRule": "ACCEPT_ALL",
+        "consistent": True,
+        "active": True,
+    }
+
+    def test_get_firewall_text_output(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Get firewall in text mode prints pretty JSON."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.return_value = 12345
+        mock_client.get_firewall.return_value = self._SAMPLE_FIREWALL
+
+        args = argparse.Namespace(
+            server="cupix001",
+            mac="aa:bb:cc:dd:ee:ff",
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_server_firewall_get(args, client=mock_client)
+
+        captured = capsys.readouterr()
+        assert '"userPolicies"' in captured.out
+        assert '"lockdown"' in captured.out
+        mock_client.find_server.assert_called_once_with("cupix001")
+        mock_client.get_firewall.assert_called_once_with(12345, "aa:bb:cc:dd:ee:ff")
+
+    def test_get_firewall_json_output(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Get firewall in json mode prints snake_case keys."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.return_value = 12345
+        mock_client.get_firewall.return_value = self._SAMPLE_FIREWALL
+
+        args = argparse.Namespace(
+            server="cupix001",
+            mac="aa:bb:cc:dd:ee:ff",
+            output="json",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_server_firewall_get(args, client=mock_client)
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert "user_policies" in data
+        assert "copied_policies" in data
+        assert "ingress_implicit_rule" in data
+        assert "egress_implicit_rule" in data
+        assert "consistent" in data
+        assert "active" in data
+        # Must NOT contain camelCase keys
+        assert "userPolicies" not in data
+        assert "copiedPolicies" not in data
+
+    def test_get_firewall_server_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Server not found prints error and exits 1."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.side_effect = ValueError(
+            "Server 'nonexistent' not found"
+        )
+
+        args = argparse.Namespace(
+            server="nonexistent",
+            mac="aa:bb:cc:dd:ee:ff",
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with pytest.raises(SystemExit, match="1"):
+            cmd_server_firewall_get(args, client=mock_client)
+
+        captured = capsys.readouterr()
+        assert "nonexistent" in captured.err
 
 
 class TestScpAuth:

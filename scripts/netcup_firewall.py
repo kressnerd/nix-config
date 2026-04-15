@@ -20,6 +20,7 @@ import ipaddress
 import json
 import logging
 import os
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -814,6 +815,22 @@ def _find_policy_by_name(
     return None
 
 
+def _camel_to_snake(name: str) -> str:
+    """Convert camelCase to snake_case."""
+    return re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", name).lower()
+
+
+def _convert_keys_to_snake_case(obj: Any) -> Any:
+    """Recursively convert dict keys from camelCase to snake_case."""
+    if isinstance(obj, dict):
+        return {
+            _camel_to_snake(k): _convert_keys_to_snake_case(v) for k, v in obj.items()
+        }
+    if isinstance(obj, list):
+        return [_convert_keys_to_snake_case(item) for item in obj]
+    return obj
+
+
 def cmd_server_firewall_get(
     args: argparse.Namespace,
     *,
@@ -821,7 +838,31 @@ def cmd_server_firewall_get(
     client: "ScpApiClient | None" = None,
 ) -> None:
     """Get firewall state for a server interface."""
-    raise NotImplementedError
+    _client: ScpApiClient
+    if client is not None:
+        _client = client
+    else:
+        _, _client = _authenticate_and_setup_no_user(
+            auth,
+            None,
+            use_keyring=args.keyring,
+        )
+    try:
+        server_id = _client.find_server(args.server)
+    except ValueError:
+        print(
+            f"Error: server '{args.server}' not found",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    data = _client.get_firewall(server_id, args.mac)
+
+    if args.output == "json":
+        converted = _convert_keys_to_snake_case(data)
+        print(json.dumps(converted))
+    else:
+        print(json.dumps(data, indent=2))
 
 
 def cmd_server_firewall_set(
