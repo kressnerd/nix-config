@@ -285,6 +285,11 @@
                     pkgs.python3Packages.mypy
                     pkgs.python3Packages.secretstorage
                     pkgs.ruff
+                    # Phase 2: OpenAPI client generation
+                    pkgs.openapi-python-client
+                    pkgs.python3Packages.httpx
+                    pkgs.python3Packages.attrs
+                    pkgs.python3Packages.python-dateutil
                   ];
                 };
               };
