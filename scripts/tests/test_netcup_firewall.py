@@ -20,6 +20,7 @@ import pytest
 import requests
 
 from netcup_firewall import (
+    ScpApi,
     ScpApiClient,
     ScpAuth,
     _authenticate_and_setup_no_user,
@@ -3687,3 +3688,83 @@ class TestOpenApiMcpCommand:
             main(["openapi", "mcp", "--message", "hello"])
 
         assert exc_info.value.code == 1
+
+
+class TestScpApi:
+    """Tests for the new ScpApi adapter class."""
+
+    def test_scpapi_constructor(self) -> None:
+        """ScpApi constructor creates an AuthenticatedClient with correct settings."""
+        from scp_client.client import AuthenticatedClient
+
+        api = ScpApi("test-token")
+
+        assert isinstance(api._client, AuthenticatedClient)
+        assert api._client.token == "test-token"
+        assert api._client._base_url == "https://www.servercontrolpanel.de/scp-core"
+        assert api._client.raise_on_unexpected_status is True
+
+    @patch("netcup_firewall.time.sleep")
+    def test_retry_on_5xx_retries_and_succeeds(self, mock_sleep: MagicMock) -> None:
+        """_retry_on_5xx retries on 5xx and returns result on eventual success."""
+        from scp_client.errors import UnexpectedStatus
+
+        api = ScpApi("test-token")
+        call_count = 0
+
+        def flaky_fn() -> str:
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise UnexpectedStatus(status_code=500, content=b"")
+            return "ok"
+
+        result = api._retry_on_5xx(flaky_fn)
+
+        assert result == "ok"
+        assert call_count == 3
+
+    @patch("netcup_firewall.time.sleep")
+    def test_retry_on_5xx_raises_after_max_retries(self, mock_sleep: MagicMock) -> None:
+        """_retry_on_5xx raises UnexpectedStatus after 4 total calls (1 + 3 retries)."""
+        from scp_client.errors import UnexpectedStatus
+
+        api = ScpApi("test-token")
+        call_count = 0
+
+        def always_fails() -> str:
+            nonlocal call_count
+            call_count += 1
+            raise UnexpectedStatus(status_code=502, content=b"")
+
+        with pytest.raises(UnexpectedStatus):
+            api._retry_on_5xx(always_fails)
+
+        assert call_count == 4
+
+    @patch("netcup_firewall.time.sleep")
+    def test_retry_on_5xx_no_retry_on_4xx(self, mock_sleep: MagicMock) -> None:
+        """_retry_on_5xx does not retry on 4xx errors."""
+        from scp_client.errors import UnexpectedStatus
+
+        api = ScpApi("test-token")
+        call_count = 0
+
+        def not_found() -> str:
+            nonlocal call_count
+            call_count += 1
+            raise UnexpectedStatus(status_code=404, content=b"")
+
+        with pytest.raises(UnexpectedStatus):
+            api._retry_on_5xx(not_found)
+
+        assert call_count == 1
+
+    def test_scpapi_transport_retries(self) -> None:
+        """ScpApi constructor configures httpx transport with connection retries."""
+        import httpx
+
+        api = ScpApi("tok")
+
+        assert "transport" in api._client._httpx_args
+        assert isinstance(api._client._httpx_args["transport"], httpx.HTTPTransport)
