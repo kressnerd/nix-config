@@ -3768,3 +3768,58 @@ class TestScpApi:
 
         assert "transport" in api._client._httpx_args
         assert isinstance(api._client._httpx_args["transport"], httpx.HTTPTransport)
+
+    @patch("scp_client.api.servers.get_api_v1_servers.sync")
+    def test_find_server_success(self, mock_sync: MagicMock) -> None:
+        """find_server returns server ID when found by name."""
+        mock_server = MagicMock()
+        mock_server.name = "cupix001"
+        mock_server.id = 42
+        mock_sync.return_value = [mock_server]
+
+        api = ScpApi("test-token")
+        result = api.find_server("cupix001")
+
+        assert result == 42
+        mock_sync.assert_called_once_with(client=api._client, name="cupix001")
+
+    @patch("scp_client.api.servers.get_api_v1_servers.sync")
+    def test_find_server_not_found(self, mock_sync: MagicMock) -> None:
+        """find_server raises ValueError when server name not in response."""
+        mock_sync.return_value = []
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="not found"):
+            api.find_server("nonexistent")
+
+    @patch("scp_client.api.servers.get_api_v1_servers.sync")
+    def test_find_server_missing_id(self, mock_sync: MagicMock) -> None:
+        """find_server raises ValueError when server id is Unset."""
+        from scp_client.types import UNSET
+
+        mock_server = MagicMock()
+        mock_server.name = "cupix001"
+        mock_server.id = UNSET
+        mock_sync.return_value = [mock_server]
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="missing 'id'"):
+            api.find_server("cupix001")
+
+    @patch(
+        "scp_client.api.server_networking.get_api_v_1_servers_server_id_interfaces.sync"
+    )
+    def test_get_interfaces_success(self, mock_sync: MagicMock) -> None:
+        """get_interfaces returns list of dicts from interface to_dict()."""
+        mock_iface = MagicMock()
+        mock_iface.to_dict.return_value = {
+            "mac": "aa:bb:cc:dd:ee:ff",
+            "driver": "virtio",
+        }
+        mock_sync.return_value = [mock_iface]
+
+        api = ScpApi("test-token")
+        result = api.get_interfaces(42)
+
+        assert result == [{"mac": "aa:bb:cc:dd:ee:ff", "driver": "virtio"}]
+        mock_sync.assert_called_once_with(42, client=api._client)

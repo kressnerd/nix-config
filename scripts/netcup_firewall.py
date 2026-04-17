@@ -31,6 +31,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from scp_client.client import AuthenticatedClient
 from scp_client.errors import UnexpectedStatus
+from scp_client.types import Unset
 from urllib3.util.retry import Retry
 
 try:
@@ -632,6 +633,58 @@ class ScpApi:
                     raise
                 time.sleep(attempt)  # 0s, 1s, 2s backoff
         raise RuntimeError("unreachable")  # satisfy mypy
+
+    def find_server(self, name: str) -> int:
+        """Find a server by name and return its numeric ID.
+
+        Args:
+            name: The server name to search for.
+
+        Returns:
+            The numeric server ID.
+
+        Raises:
+            ValueError: If the server is not found or its ID field is missing.
+        """
+        from scp_client.api.servers import get_api_v1_servers
+
+        result = self._retry_on_5xx(
+            get_api_v1_servers.sync, client=self._client, name=name
+        )
+        if not isinstance(result, list):
+            raise ValueError(f"Unexpected response when searching for server '{name}'")
+        for server in result:
+            server_name = server.name
+            if isinstance(server_name, Unset) or server_name is None:
+                continue
+            if server_name == name:
+                server_id = server.id
+                if isinstance(server_id, Unset) or server_id is None:
+                    raise ValueError(f"Server '{name}' response missing 'id' field")
+                return server_id
+        raise ValueError(f"Server '{name}' not found")
+
+    def get_interfaces(self, server_id: int) -> list[dict[str, Any]]:
+        """Return list of interface dicts for a server.
+
+        Args:
+            server_id: The numeric server ID.
+
+        Returns:
+            A list of interface attribute dicts.
+        """
+        from scp_client.api.server_networking import (
+            get_api_v_1_servers_server_id_interfaces,
+        )
+
+        result = self._retry_on_5xx(
+            get_api_v_1_servers_server_id_interfaces.sync,
+            server_id,
+            client=self._client,
+        )
+        if not isinstance(result, list):
+            return []
+        return [iface.to_dict() for iface in result]
 
 
 def _authenticate_and_setup(
