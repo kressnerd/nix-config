@@ -24,10 +24,13 @@ import re
 import sys
 import time
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable, TypeVar
 
+import httpx
 import requests
 from requests.adapters import HTTPAdapter
+from scp_client.client import AuthenticatedClient
+from scp_client.errors import UnexpectedStatus
 from urllib3.util.retry import Retry
 
 try:
@@ -586,6 +589,49 @@ class ScpApiClient:
                 raise RuntimeError(f"Task {task_uuid} failed")
             time.sleep(interval)
         raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
+
+
+_T = TypeVar("_T")
+
+
+class ScpApi:
+    """REST API client for the netcup SCP, backed by the generated scp_client package."""
+
+    def __init__(self, access_token: str) -> None:
+        """Initialize the API client with a valid access token.
+
+        Args:
+            access_token: A valid SCP OAuth2 access token.
+        """
+        self._client = AuthenticatedClient(
+            base_url="https://www.servercontrolpanel.de/scp-core",
+            token=access_token,
+            raise_on_unexpected_status=True,
+            httpx_args={"transport": httpx.HTTPTransport(retries=3)},
+        )
+
+    def _retry_on_5xx(self, fn: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
+        """Retry on 5xx UnexpectedStatus, up to 3 retries with backoff.
+
+        Args:
+            fn: Callable to invoke.
+            *args: Positional arguments forwarded to fn.
+            **kwargs: Keyword arguments forwarded to fn.
+
+        Returns:
+            The return value of fn on success.
+
+        Raises:
+            UnexpectedStatus: On 4xx immediately, or on 5xx after exhausting retries.
+        """
+        for attempt in range(4):  # initial + 3 retries
+            try:
+                return fn(*args, **kwargs)
+            except UnexpectedStatus as exc:
+                if exc.status_code < 500 or attempt == 3:
+                    raise
+                time.sleep(attempt)  # 0s, 1s, 2s backoff
+        raise RuntimeError("unreachable")  # satisfy mypy
 
 
 def _authenticate_and_setup(
