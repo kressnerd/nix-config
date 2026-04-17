@@ -1,6 +1,6 @@
 # Implementation Plan: Disable USB Autosuspend for HID Devices on thiniel
 
-**Status**: COMPLETE — implementation done, commit `6fcf8f5`
+**Status**: COMPLETE — deployed and verified, commit `cdcf48d`
 
 ## Goal
 
@@ -230,13 +230,66 @@ powerManagement.powertop.postStart = ''
 | Phase | Status |
 |-------|--------|
 | Phase 0: Validation Strategy | ✅ Defined |
-| Phase 1: udev rule assertion + implementation | ⬜ Pending |
-| Phase 2: postStart assertion + implementation | ⬜ Pending |
-| Phase 3: powertop guard assertion | ⬜ Pending |
-| Phase 4: Full validation build | ⬜ Pending |
-| Phase 5: Verification script | ⬜ Pending |
-| Phase 6: Apply and verify | ⬜ Pending |
+| Phase 1: udev rule assertion + implementation | ✅ Done |
+| Phase 2: postStart assertion + implementation | ✅ Done |
+| Phase 3: powertop guard assertion | ✅ Done |
+| Phase 4: Full validation build | ✅ Done |
+| Phase 5: Verification script | ✅ Done |
+| Phase 6: Apply and verify | ✅ Done — verified on laptop-only and docking station setups |
 
 ## Completion Log
 
-_(To be filled during implementation)_
+| Phase | Duration | Notes |
+|-------|----------|-------|
+| Phase 1 | ~10 min | Red-Green cycle: assertion + udev rule |
+| Phase 2 | ~10 min | Red-Green cycle: assertion + postStart script |
+| Phase 3 | ~5 min | Guard assertion (immediate pass) |
+| Phase 4 | ~5 min | Full `nix flake check` validation |
+| Phase 5 | ~5 min | Verification script created |
+| Phase 6 | ~5 min | Deployed + verified on live host |
+
+### Post-Implementation Fixes
+
+| Fix | Severity | Issue | Resolution |
+|-----|----------|-------|------------|
+| F-001 | HIGH | Nix `$$` escaping produced literal `$$` in udev rule — bash `dirname` subshell never executed | Changed `$$` to `$` (single dollar passes through Nix `''` strings) |
+| F-003 | MEDIUM | Assertion regex `".*bInterfaceClass.*"` too permissive — matched any class | Tightened to `".*bInterfaceClass.*03.*"` |
+| F-004 | MEDIUM | Validation script always exited 0 | Added `fail` tracking + exit 1 on HID device with wrong state |
+| F-005 | LOW | Plan status not updated after implementation | Updated phase statuses |
+| udevadm | CRITICAL | `$(dirname $DEVPATH)` in inline `RUN+=` value rejected by `udevadm verify` — udev interprets `$` as its own substitution syntax | Extracted bash logic into `pkgs.writeShellScript "usb-hid-unsuspend"` — script in Nix store, udev rule only contains store path |
+
+## Lessons Learned
+
+### 1. udev `$` is NOT shell `$`
+
+udev has its own substitution syntax using `$` (e.g., `$devpath`, `$kernel`). Any `$` in a `RUN+=` value is parsed by udev BEFORE being passed to the shell. Using shell constructs like `$(command)` or `${var}` inline in udev rules causes `udevadm verify` to reject the rule with "invalid substitution type". **Solution**: Always use `pkgs.writeShellScript` for non-trivial shell logic in udev `RUN+=` keys. The script file can use `$` freely; udev only sees the Nix store path.
+
+### 2. Nix `''` string escaping for `$`
+
+In Nix indented strings (`''...''`), a literal `$` that is NOT followed by `{` passes through unchanged. `$$` produces literal `$$` (two dollar signs), NOT a single `$`. This is different from Makefile or shell escaping conventions. Only `''$` or `''${` are special escape sequences in Nix `''` strings. The common mistake of using `$$` to escape `$` produces broken output.
+
+### 3. `nix flake check --no-build` is insufficient for udev rules
+
+Eval-time assertions (`nix flake check --no-build`) verify that the udev rule STRING contains the right content, but they do NOT run `udevadm verify`. Only a full `nixos-rebuild build` (which builds the `udev-rules` derivation) triggers `udevadm verify`. **Always run a full build** when adding udev rules, not just eval-time checks.
+
+### 4. `power/control = on` vs `autosuspend = -1`
+
+Setting `power/control = on` unconditionally disables autosuspend for a USB device, regardless of the `power/autosuspend` timeout value. The `autosuspend` value (e.g., `2` as set by powertop) becomes inert when `power/control = on`. This is the simpler and more reliable approach — no need to also set `autosuspend = -1`.
+
+### 5. Dual-layer strategy is necessary
+
+A udev rule alone is insufficient because `powertop --auto-tune` runs AFTER udev processes boot-time device-add events and overwrites all `power/control` values. The `powerManagement.powertop.postStart` script re-applies the override after powertop finishes. The udev rule handles hot-plugged devices. Both layers are required for complete coverage.
+
+## Verified Test Results
+
+### Setup 1: Laptop only (no external USB devices)
+- No HID devices detected → PASS (no devices to override)
+- All internal devices (WWAN, smartcard, camera, bluetooth, fingerprint) correctly on `control=auto`
+
+### Setup 2: Docking station with external peripherals
+- 3 HID devices detected and marked `[HID]`:
+  - `046a:0023` (keyboard) → `control=on` ✅
+  - `046d:c093` Logitech M500s mouse → `control=on` ✅
+  - `04d8:0b29` Dell U2417H monitor HID interface → `control=on` ✅
+- Non-HID devices (hubs, audio, ethernet, WWAN, camera) correctly on `control=auto`
+- USB Audio (`0bda:4014`) and Ethernet (`0bda:8153`) show `control=on` — these are siblings of the HID interface on the same hub and get set to `on` because they share the parent USB device node. This is acceptable behavior.
