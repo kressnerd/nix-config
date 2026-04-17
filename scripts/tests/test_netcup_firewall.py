@@ -3935,3 +3935,152 @@ class TestScpApi:
         api = ScpApi("test-token")
         with pytest.raises(TimeoutError, match="did not complete"):
             api.wait_for_task("task-uuid-123", max_polls=2)
+
+    # --- Cycle 4.1: list_policies ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".get_api_v_1_users_user_id_firewall_policies.sync"
+    )
+    def test_list_policies_success(self, mock_sync: MagicMock) -> None:
+        """list_policies returns list of dicts from FirewallPolicy to_dict()."""
+        mock_policy = MagicMock()
+        mock_policy.to_dict.return_value = {"id": 42, "name": "lockdown", "rules": []}
+        mock_sync.return_value = [mock_policy]
+
+        api = ScpApi("test-token")
+        result = api.list_policies(123)
+
+        assert result == [{"id": 42, "name": "lockdown", "rules": []}]
+        mock_sync.assert_called_once_with(123, client=api._client)
+
+    # --- Cycle 4.2: get_policy ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".get_api_v_1_users_user_id_firewall_policies_id.sync"
+    )
+    def test_get_policy_success(self, mock_sync: MagicMock) -> None:
+        """get_policy returns dict from FirewallPolicy to_dict()."""
+        mock_policy = MagicMock()
+        mock_policy.to_dict.return_value = {"id": 42, "name": "test", "rules": []}
+        mock_sync.return_value = mock_policy
+
+        api = ScpApi("test-token")
+        result = api.get_policy(123, 42)
+
+        assert result == {"id": 42, "name": "test", "rules": []}
+        mock_sync.assert_called_once_with(123, 42, client=api._client)
+
+    # --- Cycle 4.3: _legacy_rule_to_firewall_rule (legacy format) ---
+
+    def test_legacy_rule_to_firewall_rule_legacy_format(self) -> None:
+        """_legacy_rule_to_firewall_rule converts legacy sourceIp/destinationPort dict."""
+        from scp_client.models.firewall_action import FirewallAction
+        from scp_client.models.firewall_protocol import FirewallProtocol
+        from scp_client.models.firewall_rule import FirewallRule
+        from scp_client.models.firewall_rule_direction import FirewallRuleDirection
+
+        rule_dict = {
+            "direction": "INGRESS",
+            "protocol": "TCP",
+            "action": "ACCEPT",
+            "sourceIp": "1.2.3.4/32",
+            "destinationPort": "22",
+        }
+        result = ScpApi._legacy_rule_to_firewall_rule(rule_dict)
+
+        assert isinstance(result, FirewallRule)
+        assert result.direction == FirewallRuleDirection.INGRESS
+        assert result.protocol == FirewallProtocol.TCP
+        assert result.action == FirewallAction.ACCEPT
+        assert result.sources == ["1.2.3.4/32"]
+        assert result.destination_ports == "22"
+
+    # --- Cycle 4.4: _legacy_rule_to_firewall_rule (new format) ---
+
+    def test_legacy_rule_to_firewall_rule_new_format(self) -> None:
+        """_legacy_rule_to_firewall_rule handles new-format sources/destination_ports keys."""
+        from scp_client.models.firewall_rule import FirewallRule
+
+        rule_dict = {
+            "direction": "EGRESS",
+            "protocol": "UDP",
+            "action": "DROP",
+            "sources": ["10.0.0.0/8"],
+            "destination_ports": "53",
+        }
+        result = ScpApi._legacy_rule_to_firewall_rule(rule_dict)
+
+        assert isinstance(result, FirewallRule)
+        assert result.sources == ["10.0.0.0/8"]
+        assert result.destination_ports == "53"
+
+    # --- Cycle 4.5: create_policy ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".post_api_v_1_users_user_id_firewall_policies.sync"
+    )
+    def test_create_policy_success(self, mock_sync: MagicMock) -> None:
+        """create_policy returns dict and calls sync directly (not via _retry_on_5xx)."""
+        mock_policy = MagicMock()
+        mock_policy.to_dict.return_value = {
+            "id": 123,
+            "name": "new-policy",
+            "rules": [],
+        }
+        mock_sync.return_value = mock_policy
+
+        api = ScpApi("test-token")
+        result = api.create_policy(
+            456,
+            "new-policy",
+            [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "action": "ACCEPT",
+                    "sourceIp": "1.2.3.4/32",
+                    "destinationPort": "22",
+                }
+            ],
+        )
+
+        assert result["id"] == 123
+        mock_sync.assert_called_once()
+
+    # --- Cycle 4.6: update_policy ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".put_api_v_1_users_user_id_firewall_policies_id.sync"
+    )
+    def test_update_policy_success(self, mock_sync: MagicMock) -> None:
+        """update_policy returns dict from FirewallPolicyUpdateResult.firewall_policy."""
+        mock_fp = MagicMock()
+        mock_fp.to_dict.return_value = {"id": 42, "name": "updated", "rules": []}
+        mock_result = MagicMock()
+        mock_result.firewall_policy = mock_fp
+        mock_sync.return_value = mock_result
+
+        api = ScpApi("test-token")
+        result = api.update_policy(456, 42, "updated", [])
+
+        assert result == {"id": 42, "name": "updated", "rules": []}
+        mock_sync.assert_called_once()
+
+    # --- Cycle 4.7: delete_policy ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".delete_api_v_1_users_user_id_firewall_policies_id.sync"
+    )
+    def test_delete_policy_success(self, mock_sync: MagicMock) -> None:
+        """delete_policy calls sync with correct args and returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        api.delete_policy(456, 42)  # must not raise
+
+        mock_sync.assert_called_once_with(456, 42, client=api._client)
