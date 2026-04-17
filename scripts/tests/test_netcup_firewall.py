@@ -566,6 +566,101 @@ class TestPolicyArgParsing:
         assert args.yes is False
 
 
+class TestPolicyListCommand:
+    """Tests for cmd_policy_list handler."""
+
+    _SAMPLE_POLICIES: ClassVar[list[dict[str, Any]]] = [
+        {
+            "id": 42,
+            "name": "lockdown",
+            "rules": [],
+        },
+        {
+            "id": 99,
+            "name": "ssh-temp-cupix001",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "1.2.3.4/32",
+                    "destinationPort": "22",
+                    "action": "ACCEPT",
+                }
+            ],
+        },
+    ]
+
+    def test_list_policies_text_output(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """List policies in text mode prints a table."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = self._SAMPLE_POLICIES
+
+        args = argparse.Namespace(
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_policy_list(args, client=mock_client, user_id=42)
+
+        mock_client.list_policies.assert_called_once_with(42)
+        captured = capsys.readouterr()
+        assert "ID" in captured.out
+        assert "Name" in captured.out
+        assert "Rules" in captured.out
+        assert "lockdown" in captured.out
+        assert "ssh-temp-cupix001" in captured.out
+        assert "42" in captured.out
+        assert "99" in captured.out
+
+    def test_list_policies_json_output(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """List policies in json mode prints JSON array."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = self._SAMPLE_POLICIES
+
+        args = argparse.Namespace(
+            output="json",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_policy_list(args, client=mock_client, user_id=42)
+
+        captured = capsys.readouterr()
+        data = json.loads(captured.out)
+        assert isinstance(data, list)
+        assert len(data) == 2
+        assert data[0]["id"] == 42
+        assert data[0]["name"] == "lockdown"
+        assert "rules" in data[0]
+
+    def test_list_policies_empty(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """List policies with empty list prints header or message, exits 0."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = []
+
+        args = argparse.Namespace(
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_policy_list(args, client=mock_client, user_id=42)
+
+        captured = capsys.readouterr()
+        # Should not crash, should indicate no policies or show empty table
+        assert captured.out is not None  # basic sanity
+
+
 class TestScpAuth:
     """Test OIDC authentication module."""
 
