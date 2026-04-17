@@ -518,8 +518,17 @@ Per rule 02-commits, commit after each completed Red-Green-Refactor cycle:
 | 3b-Create | `7a782b4` | 176 | cmd_policy_create handler |
 | 3b-Update | `30c7610` | 180 | cmd_policy_update handler |
 | 3b-Delete | `8381068` | 184 | cmd_policy_delete handler |
+| Refactor | `4efe5c5` | 196 | Fix review findings F-001–F-006 |
 
 **Completed Date**: 2026-04-17
-**Total Tests Added**: 36 (from 148 to 184)
+**Total Tests Added**: 48 (from 148 to 196)
 **Quality Gates**: All passed (mypy --strict, ruff check, ruff format)
-**Review**: APPROVED — 7 findings (0 Critical, 0 High, 5 Medium, 2 Low), all non-blocking
+**Review**: APPROVED — 7 findings (0 Critical, 0 High, 5 Medium, 2 Low); 6 fixed in `4efe5c5`, F-007 (LOW) deferred
+
+## Lessons Learned
+
+- **DRY violations accumulate fast during atomic TDD**: When each handler is implemented in a separate subtask, identical patterns (confirmation prompts, file load+validate) get copied rather than extracted. The refactoring obligation (FUND-001) should be explicitly checked after every 3rd handler that shares a pattern, not deferred to the review phase.
+- **Test coverage for shared code paths**: When `cmd_policy_create` and `cmd_policy_update` share the same `load → validate` boilerplate, the error-path tests for one don't automatically cover the other. Each handler needs its own error-path tests even when the code is identical — the refactoring to a shared helper only makes this less painful, not unnecessary.
+- **`--output json` consistency must be specified upfront**: The plan didn't explicitly state whether `policy list --output json` should apply snake_case conversion. This led to an inconsistency caught in review (F-006). Future plans should specify the `--output json` key format for every command that supports it.
+- **DI pattern diverges by auth helper**: Commands using `_authenticate_and_setup_no_user()` (2-tuple) need a different rebinding pattern than those using `_authenticate_and_setup()` (3-tuple). This structural difference is inherent and justified, but should be documented with a comment at each site (done in F-001).
+- **Existing handler patterns may not be refactorable**: `cmd_lockdown()` and `cmd_ssh_open()` use a different confirmation flow (`logger.error` + `return` vs `print` + `sys.exit`). The `_confirm_or_abort()` helper couldn't be applied to these without changing their behavior. Legacy code may need a separate cleanup pass.
