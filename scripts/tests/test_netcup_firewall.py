@@ -30,6 +30,10 @@ from netcup_firewall import (
     cmd_lockdown,
     cmd_openapi_download,
     cmd_openapi_mcp,
+    cmd_policy_create,
+    cmd_policy_delete,
+    cmd_policy_list,
+    cmd_policy_update,
     cmd_restore,
     cmd_server_firewall_get,
     cmd_server_firewall_set,
@@ -512,6 +516,54 @@ class TestServerFirewallSetCommand:
         mock_client.set_firewall.assert_not_called()
         captured = capsys.readouterr()
         assert "invalid" in captured.err.lower() or "integer" in captured.err.lower()
+
+
+class TestPolicyArgParsing:
+    """Tests for policy list/create/update/delete argument parsing."""
+
+    def test_policy_list_args(self) -> None:
+        """Parse policy list."""
+        args = parse_args(["policy", "list"])
+        assert args.func == cmd_policy_list
+
+    def test_policy_create_args(self) -> None:
+        """Parse policy create with --name and --rules-file."""
+        args = parse_args(
+            ["policy", "create", "--name", "test-policy", "--rules-file", "rules.json"]
+        )
+        assert args.name == "test-policy"
+        assert args.rules_file == "rules.json"
+        assert args.func == cmd_policy_create
+
+    def test_policy_update_args(self) -> None:
+        """Parse policy update with --name, --rules-file, --yes."""
+        args = parse_args(
+            [
+                "policy",
+                "update",
+                "--name",
+                "test-policy",
+                "--rules-file",
+                "rules.json",
+                "--yes",
+            ]
+        )
+        assert args.name == "test-policy"
+        assert args.rules_file == "rules.json"
+        assert args.yes is True
+        assert args.func == cmd_policy_update
+
+    def test_policy_delete_args(self) -> None:
+        """Parse policy delete with --name and --yes."""
+        args = parse_args(["policy", "delete", "--name", "test-policy", "--yes"])
+        assert args.name == "test-policy"
+        assert args.yes is True
+        assert args.func == cmd_policy_delete
+
+    def test_policy_update_yes_default_false(self) -> None:
+        """--yes defaults to False for policy update."""
+        args = parse_args(["policy", "update", "--name", "x", "--rules-file", "r.json"])
+        assert args.yes is False
 
 
 class TestScpAuth:

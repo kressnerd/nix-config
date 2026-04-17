@@ -916,6 +916,50 @@ def cmd_server_firewall_set(
     print(f"Firewall updated for {args.server} interface {args.mac}")
 
 
+def cmd_policy_list(
+    args: argparse.Namespace,
+    *,
+    auth: "ScpAuth | None" = None,
+    client: "ScpApiClient | None" = None,
+    user_id: int | None = None,
+) -> None:
+    """List all user firewall policies."""
+    raise NotImplementedError
+
+
+def cmd_policy_create(
+    args: argparse.Namespace,
+    *,
+    auth: "ScpAuth | None" = None,
+    client: "ScpApiClient | None" = None,
+    user_id: int | None = None,
+) -> None:
+    """Create a new user firewall policy."""
+    raise NotImplementedError
+
+
+def cmd_policy_update(
+    args: argparse.Namespace,
+    *,
+    auth: "ScpAuth | None" = None,
+    client: "ScpApiClient | None" = None,
+    user_id: int | None = None,
+) -> None:
+    """Update an existing user firewall policy."""
+    raise NotImplementedError
+
+
+def cmd_policy_delete(
+    args: argparse.Namespace,
+    *,
+    auth: "ScpAuth | None" = None,
+    client: "ScpApiClient | None" = None,
+    user_id: int | None = None,
+) -> None:
+    """Delete a user firewall policy."""
+    raise NotImplementedError
+
+
 def _get_current_policy_ids(
     client: ScpApiClient, server_id: int, mac: str
 ) -> list[int]:
@@ -1676,6 +1720,51 @@ examples:
         "--yes", action="store_true", default=False, help="skip confirmation prompt"
     )
     fw_set_parser.set_defaults(func=cmd_server_firewall_set)
+
+    # -- policy command group --
+    policy_parser = subparsers.add_parser(
+        "policy", help="firewall policy management commands"
+    )
+    policy_sub = policy_parser.add_subparsers(dest="policy_command", required=True)
+
+    # policy list
+    policy_list_parser = policy_sub.add_parser(
+        "list", help="list all user firewall policies"
+    )
+    policy_list_parser.set_defaults(func=cmd_policy_list)
+
+    # policy create
+    policy_create_parser = policy_sub.add_parser(
+        "create", help="create a new user firewall policy"
+    )
+    policy_create_parser.add_argument("--name", required=True, help="policy name")
+    policy_create_parser.add_argument(
+        "--rules-file", required=True, help="path to JSON rules file"
+    )
+    policy_create_parser.set_defaults(func=cmd_policy_create)
+
+    # policy update
+    policy_update_parser = policy_sub.add_parser(
+        "update", help="update an existing user firewall policy"
+    )
+    policy_update_parser.add_argument("--name", required=True, help="policy name")
+    policy_update_parser.add_argument(
+        "--rules-file", required=True, help="path to JSON rules file"
+    )
+    policy_update_parser.add_argument(
+        "--yes", action="store_true", default=False, help="skip confirmation prompt"
+    )
+    policy_update_parser.set_defaults(func=cmd_policy_update)
+
+    # policy delete
+    policy_delete_parser = policy_sub.add_parser(
+        "delete", help="delete a user firewall policy"
+    )
+    policy_delete_parser.add_argument("--name", required=True, help="policy name")
+    policy_delete_parser.add_argument(
+        "--yes", action="store_true", default=False, help="skip confirmation prompt"
+    )
+    policy_delete_parser.set_defaults(func=cmd_policy_delete)
 
     return parser.parse_args(argv)
 
