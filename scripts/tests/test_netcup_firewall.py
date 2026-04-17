@@ -23,6 +23,8 @@ from netcup_firewall import (
     ScpApiClient,
     ScpAuth,
     _authenticate_and_setup_no_user,
+    _camel_to_snake,
+    _convert_keys_to_snake_case,
     _find_or_create_ssh_policy,
     _get_current_policy_ids,
     cmd_apply,
@@ -620,7 +622,7 @@ class TestPolicyListCommand:
         self,
         capsys: pytest.CaptureFixture[str],
     ) -> None:
-        """List policies in json mode prints JSON array."""
+        """List policies in json mode prints JSON array with snake_case keys."""
         mock_client = MagicMock(spec=ScpApiClient)
         mock_client.list_policies.return_value = self._SAMPLE_POLICIES
 
@@ -639,6 +641,16 @@ class TestPolicyListCommand:
         assert data[0]["id"] == 42
         assert data[0]["name"] == "lockdown"
         assert "rules" in data[0]
+        # Nested rule keys must be converted to snake_case
+        second_policy_rules = data[1]["rules"]
+        assert len(second_policy_rules) == 1
+        rule = second_policy_rules[0]
+        assert "source_ip" in rule, "sourceIp should be converted to source_ip"
+        assert "destination_port" in rule, (
+            "destinationPort should be converted to destination_port"
+        )
+        assert "sourceIp" not in rule
+        assert "destinationPort" not in rule
 
     def test_list_policies_empty(
         self,
@@ -935,6 +947,67 @@ class TestPolicyUpdateCommand:
         mock_client.update_policy.assert_not_called()
         captured = capsys.readouterr()
         assert "Aborted" in captured.err
+
+    def test_update_policy_file_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Update policy fails when rules file doesn't exist."""
+        mock_client = MagicMock(spec=ScpApiClient)
+
+        args = argparse.Namespace(
+            name="test-policy",
+            rules_file="nonexistent.json",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            side_effect=FileNotFoundError("nonexistent.json not found"),
+        ):
+            with pytest.raises(SystemExit, match="1"):
+                cmd_policy_update(args, client=mock_client, user_id=42)
+
+        mock_client.update_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "not found" in captured.err.lower()
+
+    def test_update_policy_invalid_rules_schema(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Update policy fails when rules file has invalid schema."""
+        mock_client = MagicMock(spec=ScpApiClient)
+
+        args = argparse.Namespace(
+            name="test-policy",
+            rules_file="bad.json",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={
+                "name": "bad-policy",
+                "rules": [{"direction": "INGRESS", "action": "INVALID"}],
+            },
+        ):
+            with patch(
+                "netcup_firewall.validate_policy_schema",
+                side_effect=ValueError("Invalid rule: missing 'protocol'"),
+            ):
+                with pytest.raises(SystemExit, match="2"):
+                    cmd_policy_update(args, client=mock_client, user_id=42)
+
+        mock_client.update_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "invalid" in captured.err.lower() or "protocol" in captured.err.lower()
 
     def test_update_policy_not_found(
         self,
@@ -2211,6 +2284,45 @@ class TestApplyCommand:
         with pytest.raises(SystemExit) as exc_info:
             cmd_apply(args)
         assert exc_info.value.code == 1
+
+
+class TestCamelToSnake:
+    """Tests for _camel_to_snake and _convert_keys_to_snake_case helpers."""
+
+    @pytest.mark.parametrize(
+        ("input_name", "expected"),
+        [
+            ("camelCase", "camel_case"),
+            ("userPolicies", "user_policies"),
+            ("id", "id"),
+            ("ingressImplicitRule", "ingress_implicit_rule"),
+            ("egressImplicitRule", "egress_implicit_rule"),
+            ("copiedPolicies", "copied_policies"),
+            ("active", "active"),
+            ("consistent", "consistent"),
+        ],
+    )
+    def test_camel_to_snake(self, input_name: str, expected: str) -> None:
+        """Convert camelCase to snake_case."""
+        assert _camel_to_snake(input_name) == expected
+
+    def test_convert_keys_nested(self) -> None:
+        """Recursively convert dict keys."""
+        data: dict[str, Any] = {
+            "userPolicies": [{"policyName": "test", "ruleCount": 5}],
+            "ingressImplicitRule": "DROP_ALL",
+        }
+        result = _convert_keys_to_snake_case(data)
+        assert "user_policies" in result
+        assert "ingress_implicit_rule" in result
+        assert result["user_policies"][0]["policy_name"] == "test"
+
+    def test_convert_keys_preserves_values(self) -> None:
+        """Values are not modified, only keys."""
+        data: dict[str, Any] = {"someKey": "camelCaseValue", "count": 42}
+        result = _convert_keys_to_snake_case(data)
+        assert result["some_key"] == "camelCaseValue"
+        assert result["count"] == 42
 
 
 class TestMain:

@@ -831,6 +831,30 @@ def _convert_keys_to_snake_case(obj: Any) -> Any:
     return obj
 
 
+def _confirm_or_abort(prompt: str) -> None:
+    """Print confirmation prompt and abort if user declines."""
+    print(prompt, end="", flush=True)
+    answer = input()
+    if answer.lower() != "y":
+        print("Aborted.", file=sys.stderr)
+        sys.exit(1)
+
+
+def _load_and_validate_rules(rules_file: str) -> dict[str, Any]:
+    """Load a policy rules file and validate its schema."""
+    try:
+        policy_data = load_policy_file(rules_file)
+    except FileNotFoundError:
+        print(f"Error: rules file '{rules_file}' not found", file=sys.stderr)
+        sys.exit(1)
+    try:
+        validate_policy_schema(policy_data)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(2)
+    return policy_data
+
+
 def cmd_server_firewall_get(
     args: argparse.Namespace,
     *,
@@ -838,6 +862,7 @@ def cmd_server_firewall_get(
     client: "ScpApiClient | None" = None,
 ) -> None:
     """Get firewall state for a server interface."""
+    # Server commands use _authenticate_and_setup_no_user (no user_id needed)
     _client: ScpApiClient
     if client is not None:
         _client = client
@@ -872,6 +897,7 @@ def cmd_server_firewall_set(
     client: "ScpApiClient | None" = None,
 ) -> None:
     """Set firewall policies for a server interface."""
+    # Server commands use _authenticate_and_setup_no_user (no user_id needed)
     _client: ScpApiClient
     if client is not None:
         _client = client
@@ -901,15 +927,9 @@ def cmd_server_firewall_set(
         sys.exit(1)
 
     if not args.yes:
-        prompt = (
-            f"About to overwrite firewall for {args.server} "
-            f"({args.mac}). Proceed? [y/N] "
+        _confirm_or_abort(
+            f"About to overwrite firewall for {args.server} ({args.mac}). Proceed? [y/N] "
         )
-        print(prompt, end="", flush=True)
-        answer = input()
-        if answer.lower() != "y":
-            print("Aborted.", file=sys.stderr)
-            sys.exit(1)
 
     task_uuid = _client.set_firewall(server_id, args.mac, policy_ids)
     _client.wait_for_task(task_uuid)
@@ -934,7 +954,7 @@ def cmd_policy_list(
     policies = client.list_policies(user_id)
 
     if args.output == "json":
-        print(json.dumps(policies))
+        print(json.dumps(_convert_keys_to_snake_case(policies)))
     else:
         print(f"{'ID':<8} {'Name':<30} {'Rules':<6}")
         print("-" * 44)
@@ -959,20 +979,7 @@ def cmd_policy_create(
             use_keyring=args.keyring,
         )
 
-    try:
-        policy_data = load_policy_file(args.rules_file)
-    except FileNotFoundError:
-        print(
-            f"Error: rules file '{args.rules_file}' not found",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    try:
-        validate_policy_schema(policy_data)
-    except ValueError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        sys.exit(2)
+    policy_data = _load_and_validate_rules(args.rules_file)
 
     existing = _find_policy_by_name(client, user_id, args.name)
     if existing is not None:
@@ -1002,20 +1009,7 @@ def cmd_policy_update(
             use_keyring=args.keyring,
         )
 
-    try:
-        policy_data = load_policy_file(args.rules_file)
-    except FileNotFoundError:
-        print(
-            f"Error: rules file '{args.rules_file}' not found",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    try:
-        validate_policy_schema(policy_data)
-    except ValueError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        sys.exit(2)
+    policy_data = _load_and_validate_rules(args.rules_file)
 
     existing = _find_policy_by_name(client, user_id, args.name)
     if existing is None:
@@ -1028,14 +1022,9 @@ def cmd_policy_update(
     policy_id: int = existing["id"]
 
     if not args.yes:
-        prompt = (
+        _confirm_or_abort(
             f"About to update policy '{args.name}' (ID {policy_id}). Proceed? [y/N] "
         )
-        print(prompt, end="", flush=True)
-        answer = input()
-        if answer.lower() != "y":
-            print("Aborted.", file=sys.stderr)
-            sys.exit(1)
 
     client.update_policy(user_id, policy_id, args.name, policy_data.get("rules", []))
     print(f"Updated policy '{args.name}' (ID {policy_id})")
@@ -1068,14 +1057,9 @@ def cmd_policy_delete(
     policy_id: int = existing["id"]
 
     if not args.yes:
-        prompt = (
+        _confirm_or_abort(
             f"About to delete policy '{args.name}' (ID {policy_id}). Proceed? [y/N] "
         )
-        print(prompt, end="", flush=True)
-        answer = input()
-        if answer.lower() != "y":
-            print("Aborted.", file=sys.stderr)
-            sys.exit(1)
 
     client.delete_policy(user_id, policy_id)
     print(f"Deleted policy '{args.name}' (ID {policy_id})")
@@ -1438,6 +1422,8 @@ def cmd_lockdown(
         client: ScpApiClient instance. Created internally if not provided.
         user_id: SCP user ID. Fetched internally if not provided.
     """
+    # Uses input() inline with logger.error + sys.exit — differs from _confirm_or_abort
+    # (which uses print + sys.exit); intentionally distinct for lockdown severity.
     if not args.yes:
         answer = input(
             f"WARNING: This will block ALL network traffic to {args.server}. "
@@ -1554,6 +1540,8 @@ def cmd_ssh_open(
     server_name = args.server
     port = args.port
 
+    # Uses input() inline and returns on decline (not sys.exit) — differs from
+    # _confirm_or_abort; intentionally distinct because abort here is non-fatal.
     if not args.yes:
         answer = input(
             f"Open SSH port {port} on {server_name} from {source_cidr}? [y/N] "
