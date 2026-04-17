@@ -87,6 +87,10 @@ in
     systemd.enable = true;
 
     settings = {
+      env = [
+        "AQ_NO_MODIFIERS,1"
+      ];
+
       general = {
         gaps_in = 4;
         gaps_out = 8;
