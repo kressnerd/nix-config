@@ -661,6 +661,156 @@ class TestPolicyListCommand:
         assert captured.out is not None  # basic sanity
 
 
+class TestPolicyCreateCommand:
+    """Tests for cmd_policy_create handler."""
+
+    def test_create_policy_success(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Create policy succeeds when name doesn't exist."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = []
+        mock_client.create_policy.return_value = {
+            "id": 123,
+            "name": "cupix001-bootstrap",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+
+        args = argparse.Namespace(
+            name="cupix001-bootstrap",
+            rules_file="infra/firewall/cupix001-bootstrap.json",
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={
+                "name": "cupix001-bootstrap",
+                "rules": [
+                    {
+                        "direction": "INGRESS",
+                        "protocol": "TCP",
+                        "sourceIp": "0.0.0.0/0",
+                        "destinationPort": "443",
+                        "action": "ACCEPT",
+                    }
+                ],
+            },
+        ):
+            cmd_policy_create(args, client=mock_client, user_id=42)
+
+        mock_client.create_policy.assert_called_once()
+        captured = capsys.readouterr()
+        assert "Created policy" in captured.out
+        assert "cupix001-bootstrap" in captured.out
+        assert "123" in captured.out
+
+    def test_create_policy_duplicate_name(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Create policy fails when name already exists."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 42, "name": "lockdown", "rules": []},
+        ]
+
+        args = argparse.Namespace(
+            name="lockdown",
+            rules_file="infra/firewall/lockdown.json",
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={"name": "lockdown", "rules": []},
+        ):
+            with pytest.raises(SystemExit, match="1"):
+                cmd_policy_create(args, client=mock_client, user_id=42)
+
+        mock_client.create_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "already exists" in captured.err
+        assert "lockdown" in captured.err
+        assert "42" in captured.err
+
+    def test_create_policy_invalid_rules_file(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Create policy fails when rules file has invalid schema."""
+        mock_client = MagicMock(spec=ScpApiClient)
+
+        args = argparse.Namespace(
+            name="bad-policy",
+            rules_file="infra/firewall/bad.json",
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={
+                "name": "bad-policy",
+                "rules": [{"direction": "INGRESS", "action": "INVALID"}],
+            },
+        ):
+            with patch(
+                "netcup_firewall.validate_policy_schema",
+                side_effect=ValueError(
+                    "Invalid rule: missing required field 'protocol'"
+                ),
+            ):
+                with pytest.raises(SystemExit, match="2"):
+                    cmd_policy_create(args, client=mock_client, user_id=42)
+
+        mock_client.create_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "protocol" in captured.err.lower() or "invalid" in captured.err.lower()
+
+    def test_create_policy_file_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Create policy fails when rules file doesn't exist."""
+        mock_client = MagicMock(spec=ScpApiClient)
+
+        args = argparse.Namespace(
+            name="test-policy",
+            rules_file="nonexistent.json",
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            side_effect=FileNotFoundError("nonexistent.json not found"),
+        ):
+            with pytest.raises(SystemExit, match="1"):
+                cmd_policy_create(args, client=mock_client, user_id=42)
+
+        mock_client.create_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert (
+            "nonexistent" in captured.err.lower() or "not found" in captured.err.lower()
+        )
+
+
 class TestScpAuth:
     """Test OIDC authentication module."""
 
