@@ -376,6 +376,144 @@ class TestServerFirewallGetCommand:
         assert "nonexistent" in captured.err
 
 
+class TestServerFirewallSetCommand:
+    """Tests for cmd_server_firewall_set handler."""
+
+    def test_set_firewall_with_yes(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Set firewall with --yes skips confirmation, calls set_firewall."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.return_value = 12345
+        mock_client.set_firewall.return_value = "task-uuid-123"
+
+        args = argparse.Namespace(
+            server="cupix001",
+            mac="aa:bb:cc:dd:ee:ff",
+            policy_ids="42,99",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_server_firewall_set(args, client=mock_client)
+
+        mock_client.find_server.assert_called_once_with("cupix001")
+        mock_client.set_firewall.assert_called_once_with(
+            12345, "aa:bb:cc:dd:ee:ff", [42, 99]
+        )
+        mock_client.wait_for_task.assert_called_once_with("task-uuid-123")
+        captured = capsys.readouterr()
+        assert "cupix001" in captured.out
+        assert "aa:bb:cc:dd:ee:ff" in captured.out
+
+    def test_set_firewall_prompts_and_confirms(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Set firewall without --yes prompts, user confirms with 'y'."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.return_value = 12345
+        mock_client.set_firewall.return_value = "task-uuid-123"
+
+        args = argparse.Namespace(
+            server="cupix001",
+            mac="aa:bb:cc:dd:ee:ff",
+            policy_ids="42",
+            yes=False,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch("builtins.input", return_value="y"):
+            cmd_server_firewall_set(args, client=mock_client)
+
+        mock_client.set_firewall.assert_called_once()
+        captured = capsys.readouterr()
+        assert "Proceed?" in captured.out or "cupix001" in captured.out
+
+    def test_set_firewall_prompts_and_declines(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Set firewall without --yes, user declines, aborts."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.return_value = 12345
+
+        args = argparse.Namespace(
+            server="cupix001",
+            mac="aa:bb:cc:dd:ee:ff",
+            policy_ids="42",
+            yes=False,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch("builtins.input", return_value="n"):
+            with pytest.raises(SystemExit, match="1"):
+                cmd_server_firewall_set(args, client=mock_client)
+
+        mock_client.set_firewall.assert_not_called()
+        captured = capsys.readouterr()
+        assert "Aborted" in captured.err
+
+    def test_set_firewall_server_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Server not found prints error and exits 1."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.side_effect = ValueError(
+            "Server 'nonexistent' not found"
+        )
+
+        args = argparse.Namespace(
+            server="nonexistent",
+            mac="aa:bb:cc:dd:ee:ff",
+            policy_ids="42",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with pytest.raises(SystemExit, match="1"):
+            cmd_server_firewall_set(args, client=mock_client)
+
+        mock_client.set_firewall.assert_not_called()
+        captured = capsys.readouterr()
+        assert "nonexistent" in captured.err
+
+    def test_set_firewall_invalid_policy_ids(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Invalid (non-integer) policy IDs print error and exit 1."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.find_server.return_value = 12345
+
+        args = argparse.Namespace(
+            server="cupix001",
+            mac="aa:bb:cc:dd:ee:ff",
+            policy_ids="abc,def",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with pytest.raises(SystemExit, match="1"):
+            cmd_server_firewall_set(args, client=mock_client)
+
+        mock_client.set_firewall.assert_not_called()
+        captured = capsys.readouterr()
+        assert "invalid" in captured.err.lower() or "integer" in captured.err.lower()
+
+
 class TestScpAuth:
     """Test OIDC authentication module."""
 

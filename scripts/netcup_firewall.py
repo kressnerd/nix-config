@@ -871,8 +871,49 @@ def cmd_server_firewall_set(
     auth: "ScpAuth | None" = None,
     client: "ScpApiClient | None" = None,
 ) -> None:
-    """Set firewall state for a server interface."""
-    raise NotImplementedError
+    """Set firewall policies for a server interface."""
+    _client: ScpApiClient
+    if client is not None:
+        _client = client
+    else:
+        _, _client = _authenticate_and_setup_no_user(
+            auth,
+            None,
+            use_keyring=args.keyring,
+        )
+
+    try:
+        policy_ids = [int(x.strip()) for x in args.policy_ids.split(",")]
+    except ValueError:
+        print(
+            "Error: --policy-ids must be comma-separated integers",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        server_id = _client.find_server(args.server)
+    except ValueError:
+        print(
+            f"Error: server '{args.server}' not found",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    if not args.yes:
+        prompt = (
+            f"About to overwrite firewall for {args.server} "
+            f"({args.mac}). Proceed? [y/N] "
+        )
+        print(prompt, end="", flush=True)
+        answer = input()
+        if answer.lower() != "y":
+            print("Aborted.", file=sys.stderr)
+            sys.exit(1)
+
+    task_uuid = _client.set_firewall(server_id, args.mac, policy_ids)
+    _client.wait_for_task(task_uuid)
+    print(f"Firewall updated for {args.server} interface {args.mac}")
 
 
 def _get_current_policy_ids(
