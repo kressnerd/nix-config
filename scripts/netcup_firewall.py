@@ -1049,7 +1049,36 @@ def cmd_policy_delete(
     user_id: int | None = None,
 ) -> None:
     """Delete a user firewall policy."""
-    raise NotImplementedError
+    if client is None or user_id is None:
+        _, client, user_id = _authenticate_and_setup(
+            auth,
+            client,
+            user_id,
+            use_keyring=args.keyring,
+        )
+
+    existing = _find_policy_by_name(client, user_id, args.name)
+    if existing is None:
+        print(
+            f"Error: policy named '{args.name}' not found",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    policy_id: int = existing["id"]
+
+    if not args.yes:
+        prompt = (
+            f"About to delete policy '{args.name}' (ID {policy_id}). Proceed? [y/N] "
+        )
+        print(prompt, end="", flush=True)
+        answer = input()
+        if answer.lower() != "y":
+            print("Aborted.", file=sys.stderr)
+            sys.exit(1)
+
+    client.delete_policy(user_id, policy_id)
+    print(f"Deleted policy '{args.name}' (ID {policy_id})")
 
 
 def _get_current_policy_ids(
