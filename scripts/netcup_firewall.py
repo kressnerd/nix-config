@@ -951,7 +951,39 @@ def cmd_policy_create(
     user_id: int | None = None,
 ) -> None:
     """Create a new user firewall policy."""
-    raise NotImplementedError
+    if client is None or user_id is None:
+        _, client, user_id = _authenticate_and_setup(
+            auth,
+            client,
+            user_id,
+            use_keyring=args.keyring,
+        )
+
+    try:
+        policy_data = load_policy_file(args.rules_file)
+    except FileNotFoundError:
+        print(
+            f"Error: rules file '{args.rules_file}' not found",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        validate_policy_schema(policy_data)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    existing = _find_policy_by_name(client, user_id, args.name)
+    if existing is not None:
+        print(
+            f"Error: policy named '{args.name}' already exists (ID {existing['id']})",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    result = client.create_policy(user_id, args.name, policy_data.get("rules", []))
+    print(f"Created policy '{args.name}' with ID {result['id']}")
 
 
 def cmd_policy_update(
