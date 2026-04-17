@@ -924,7 +924,23 @@ def cmd_policy_list(
     user_id: int | None = None,
 ) -> None:
     """List all user firewall policies."""
-    raise NotImplementedError
+    if client is None or user_id is None:
+        _, client, user_id = _authenticate_and_setup(
+            auth,
+            client,
+            user_id,
+            use_keyring=args.keyring,
+        )
+    policies = client.list_policies(user_id)
+
+    if args.output == "json":
+        print(json.dumps(policies))
+    else:
+        print(f"{'ID':<8} {'Name':<30} {'Rules':<6}")
+        print("-" * 44)
+        for p in policies:
+            rule_count = len(p.get("rules", []))
+            print(f"{p['id']:<8} {p['name']:<30} {rule_count:<6}")
 
 
 def cmd_policy_create(
