@@ -3823,3 +3823,115 @@ class TestScpApi:
 
         assert result == [{"mac": "aa:bb:cc:dd:ee:ff", "driver": "virtio"}]
         mock_sync.assert_called_once_with(42, client=api._client)
+
+    # --- Cycle 3.1: get_firewall ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".get_api_v_1_servers_server_id_interfaces_mac_firewall.sync"
+    )
+    def test_get_firewall_success(self, mock_sync: MagicMock) -> None:
+        """get_firewall returns the dict from server firewall to_dict()."""
+        expected = {
+            "userPolicies": [{"id": 42}],
+            "copiedPolicies": [],
+            "active": True,
+            "consistent": True,
+            "ingressImplicitRule": "DROP_ALL",
+            "egressImplicitRule": "ACCEPT_ALL",
+        }
+        mock_firewall = MagicMock()
+        mock_firewall.to_dict.return_value = expected
+        mock_sync.return_value = mock_firewall
+
+        api = ScpApi("test-token")
+        result = api.get_firewall(1, "aa:bb:cc:dd:ee:ff")
+
+        assert result == expected
+        mock_sync.assert_called_once_with(1, "aa:bb:cc:dd:ee:ff", client=api._client)
+
+    # --- Cycle 3.2: set_firewall ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".put_api_v_1_servers_server_id_interfaces_mac_firewall.sync"
+    )
+    def test_set_firewall_success(self, mock_sync: MagicMock) -> None:
+        """set_firewall returns task UUID string from the PUT response."""
+        from scp_client.models.server_firewall_save import ServerFirewallSave
+
+        mock_task = MagicMock()
+        mock_task.uuid = "task-uuid-123"
+        mock_sync.return_value = mock_task
+
+        api = ScpApi("test-token")
+        result = api.set_firewall(1, "aa:bb:cc:dd:ee:ff", [42, 99])
+
+        assert result == "task-uuid-123"
+        mock_sync.assert_called_once()
+        call_kwargs = mock_sync.call_args
+        body = call_kwargs.kwargs["body"]
+        assert isinstance(body, ServerFirewallSave)
+        assert len(body.user_policies) == 2
+        assert body.user_policies[0].id == 42
+        assert body.user_policies[1].id == 99
+        assert body.copied_policies == []
+
+    # --- Cycle 3.3: wait_for_task success ---
+
+    @patch("netcup_firewall.time.sleep")
+    @patch("scp_client.api.tasks.get_api_v1_tasks_uuid.sync")
+    def test_wait_for_task_success(
+        self, mock_sync: MagicMock, mock_sleep: MagicMock
+    ) -> None:
+        """wait_for_task returns without exception when task reaches FINISHED."""
+        from scp_client.models.task_state import TaskState
+
+        running_task = MagicMock()
+        running_task.state = TaskState.RUNNING
+        finished_task = MagicMock()
+        finished_task.state = TaskState.FINISHED
+        mock_sync.side_effect = [running_task, finished_task]
+
+        api = ScpApi("test-token")
+        api.wait_for_task("task-uuid-123")  # must not raise
+
+        assert mock_sync.call_count == 2
+
+    # --- Cycle 3.4: wait_for_task error ---
+
+    @patch("netcup_firewall.time.sleep")
+    @patch("scp_client.api.tasks.get_api_v1_tasks_uuid.sync")
+    def test_wait_for_task_error(
+        self, mock_sync: MagicMock, mock_sleep: MagicMock
+    ) -> None:
+        """wait_for_task raises RuntimeError when task state is ERROR."""
+        from scp_client.models.task_state import TaskState
+
+        error_task = MagicMock()
+        error_task.state = TaskState.ERROR
+        mock_sync.return_value = error_task
+
+        api = ScpApi("test-token")
+        with pytest.raises(RuntimeError, match="failed"):
+            api.wait_for_task("task-uuid-123")
+
+        assert mock_sync.call_count == 1
+
+    # --- Cycle 3.5: wait_for_task timeout ---
+
+    @patch("netcup_firewall.time.sleep")
+    @patch("scp_client.api.tasks.get_api_v1_tasks_uuid.sync")
+    def test_wait_for_task_timeout(
+        self, mock_sync: MagicMock, mock_sleep: MagicMock
+    ) -> None:
+        """wait_for_task raises TimeoutError after max_polls exhausted."""
+        from scp_client.models.task_state import TaskState
+
+        running_task = MagicMock()
+        running_task.state = TaskState.RUNNING
+        mock_sync.return_value = running_task
+
+        api = ScpApi("test-token")
+        with pytest.raises(TimeoutError, match="did not complete"):
+            api.wait_for_task("task-uuid-123", max_polls=2)

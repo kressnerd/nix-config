@@ -686,6 +686,110 @@ class ScpApi:
             return []
         return [iface.to_dict() for iface in result]
 
+    def get_firewall(self, server_id: int, mac: str) -> dict[str, Any]:
+        """Return the firewall state dict for a server interface.
+
+        Args:
+            server_id: The numeric server ID.
+            mac: The MAC address of the interface.
+
+        Returns:
+            The firewall configuration as a dict.
+
+        Raises:
+            ValueError: If the API response is missing or has no to_dict method.
+        """
+        from scp_client.api.server_firewalls import (
+            get_api_v_1_servers_server_id_interfaces_mac_firewall,
+        )
+
+        result = self._retry_on_5xx(
+            get_api_v_1_servers_server_id_interfaces_mac_firewall.sync,
+            server_id,
+            mac,
+            client=self._client,
+        )
+        if result is None or not hasattr(result, "to_dict"):
+            raise ValueError(
+                f"Failed to get firewall for server {server_id} interface {mac}"
+            )
+        return result.to_dict()
+
+    def set_firewall(self, server_id: int, mac: str, policy_ids: list[int]) -> str:
+        """Apply a firewall configuration via PUT and return the task UUID.
+
+        Args:
+            server_id: The numeric server ID.
+            mac: The MAC address of the interface.
+            policy_ids: List of user policy IDs to apply.
+
+        Returns:
+            The task UUID string from the API response.
+
+        Raises:
+            ValueError: If the API response is missing or has no uuid field.
+        """
+        from scp_client.api.server_firewalls import (
+            put_api_v_1_servers_server_id_interfaces_mac_firewall,
+        )
+        from scp_client.models.identifier_int import IdentifierInt
+        from scp_client.models.server_firewall_save import ServerFirewallSave
+
+        body = ServerFirewallSave(
+            user_policies=[IdentifierInt(id=pid) for pid in policy_ids],
+            copied_policies=[],
+        )
+        result = self._retry_on_5xx(
+            put_api_v_1_servers_server_id_interfaces_mac_firewall.sync,
+            server_id,
+            mac,
+            client=self._client,
+            body=body,
+        )
+        if result is None or not hasattr(result, "uuid"):
+            raise ValueError(
+                f"Failed to set firewall for server {server_id} interface {mac}"
+            )
+        uuid_val = result.uuid
+        if isinstance(uuid_val, Unset) or uuid_val is None:
+            raise ValueError("Task UUID missing from firewall update response")
+        return uuid_val
+
+    def wait_for_task(
+        self,
+        task_uuid: str,
+        max_polls: int = 30,
+        interval: int = 2,
+    ) -> None:
+        """Poll the task endpoint until FINISHED, ERROR, or timeout.
+
+        Args:
+            task_uuid: The UUID of the task to poll.
+            max_polls: Maximum number of poll attempts before raising TimeoutError.
+            interval: Seconds to sleep between polls.
+
+        Raises:
+            RuntimeError: If the task reaches ERROR state.
+            TimeoutError: If max_polls is exhausted without a terminal state.
+        """
+        from scp_client.api.tasks import get_api_v1_tasks_uuid
+        from scp_client.models.task_state import TaskState
+
+        for _ in range(max_polls):
+            result = self._retry_on_5xx(
+                get_api_v1_tasks_uuid.sync,
+                task_uuid,
+                client=self._client,
+            )
+            if result is not None and hasattr(result, "state"):
+                state = result.state
+                if state == TaskState.FINISHED:
+                    return
+                if state == TaskState.ERROR:
+                    raise RuntimeError(f"Task {task_uuid} failed")
+            time.sleep(interval)
+        raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
+
 
 def _authenticate_and_setup(
     auth: ScpAuth | None,
