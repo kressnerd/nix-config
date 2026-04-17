@@ -966,6 +966,111 @@ class TestPolicyUpdateCommand:
         assert "nonexistent" in captured.err
 
 
+class TestPolicyDeleteCommand:
+    """Tests for cmd_policy_delete handler."""
+
+    def test_delete_policy_with_yes(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Delete policy with --yes skips confirmation."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 99, "name": "ssh-temp-cupix001", "rules": []},
+        ]
+
+        args = argparse.Namespace(
+            name="ssh-temp-cupix001",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        cmd_policy_delete(args, client=mock_client, user_id=42)
+
+        mock_client.delete_policy.assert_called_once_with(42, 99)
+        captured = capsys.readouterr()
+        assert "Deleted policy" in captured.out
+        assert "ssh-temp-cupix001" in captured.out
+        assert "99" in captured.out
+
+    def test_delete_policy_prompts_and_confirms(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Delete policy without --yes prompts, user confirms."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 99, "name": "ssh-temp-cupix001", "rules": []},
+        ]
+
+        args = argparse.Namespace(
+            name="ssh-temp-cupix001",
+            yes=False,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch("builtins.input", return_value="y"):
+            cmd_policy_delete(args, client=mock_client, user_id=42)
+
+        mock_client.delete_policy.assert_called_once_with(42, 99)
+        captured = capsys.readouterr()
+        assert "Proceed?" in captured.out or "Deleted" in captured.out
+
+    def test_delete_policy_prompts_and_declines(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Delete policy without --yes, user declines."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 99, "name": "ssh-temp-cupix001", "rules": []},
+        ]
+
+        args = argparse.Namespace(
+            name="ssh-temp-cupix001",
+            yes=False,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch("builtins.input", return_value="n"):
+            with pytest.raises(SystemExit, match="1"):
+                cmd_policy_delete(args, client=mock_client, user_id=42)
+
+        mock_client.delete_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "Aborted" in captured.err
+
+    def test_delete_policy_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Delete policy fails when name doesn't exist."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = []
+
+        args = argparse.Namespace(
+            name="nonexistent-policy",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with pytest.raises(SystemExit, match="1"):
+            cmd_policy_delete(args, client=mock_client, user_id=42)
+
+        mock_client.delete_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "not found" in captured.err
+        assert "nonexistent-policy" in captured.err
+
+
 class TestScpAuth:
     """Test OIDC authentication module."""
 
