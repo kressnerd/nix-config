@@ -1,6 +1,6 @@
 # Implementation Plan: CUP-018 Phase 3 — Server Firewall & Policy CRUD Commands
 
-**Status:** NOT STARTED
+**Status:** COMPLETED
 **Parent Story:** [CUP-018 SCP CLI Restructuring](18-scp-cli-restructuring.md)
 **Phases Covered:** 3a (server firewall get/set), 3b (policy list/create/update/delete)
 
@@ -492,18 +492,34 @@ Per rule 02-commits, commit after each completed Red-Green-Refactor cycle:
 
 ## Current Status
 
-- [ ] Phase 1: Global `--output` flag (cycles 1.1–1.3)
-- [ ] Phase 2: `update_policy()` API method (cycles 2.1–2.2)
-- [ ] Phase 3a-Parse: `server firewall get/set` argparse (cycles 3a.1–3a.3)
-- [ ] Phase 3a-Get: `cmd_server_firewall_get()` handler (cycles 3a.4–3a.6)
-- [ ] Phase 3a-Set: `cmd_server_firewall_set()` handler (cycles 3a.7–3a.11)
-- [ ] Phase 3b-Parse: `policy list/create/update/delete` argparse (cycles 3b.1–3b.5)
-- [ ] Phase 3b-List: `cmd_policy_list()` handler (cycles 3b.6–3b.8)
-- [ ] Phase 3b-Create: `cmd_policy_create()` handler (cycles 3b.9–3b.12)
-- [ ] Phase 3b-Update: `cmd_policy_update()` handler (cycles 3b.13–3b.16)
-- [ ] Phase 3b-Delete: `cmd_policy_delete()` handler (cycles 3b.17–3b.20)
-- [ ] Phase 4: Import wiring + quality gate (cycles 4.1–4.2)
+- [x] Phase 1: Global `--output` flag (cycles 1.1–1.3)
+- [x] Phase 2: `update_policy()` API method (cycles 2.1–2.2)
+- [x] Phase 3a-Parse: `server firewall get/set` argparse (cycles 3a.1–3a.3)
+- [x] Phase 3a-Get: `cmd_server_firewall_get()` handler (cycles 3a.4–3a.6)
+- [x] Phase 3a-Set: `cmd_server_firewall_set()` handler (cycles 3a.7–3a.11)
+- [x] Phase 3b-Parse: `policy list/create/update/delete` argparse (cycles 3b.1–3b.5)
+- [x] Phase 3b-List: `cmd_policy_list()` handler (cycles 3b.6–3b.8)
+- [x] Phase 3b-Create: `cmd_policy_create()` handler (cycles 3b.9–3b.12)
+- [x] Phase 3b-Update: `cmd_policy_update()` handler (cycles 3b.13–3b.16)
+- [x] Phase 3b-Delete: `cmd_policy_delete()` handler (cycles 3b.17–3b.20)
+- [x] Phase 4: Import wiring + quality gate (cycles 4.1–4.2)
 
 ## Completion Log
 
-(Empty — plan not yet started)
+| Phase | Commit | Tests | Notes |
+|-------|--------|-------|-------|
+| 1 | `49dffb9` | 151 | Global --output flag |
+| 2 | `85bd9a8` | 153 | update_policy() API method |
+| 3a-Parse | `3d184cf` | 156 | server firewall get/set argparse |
+| 3a-Get | `7686d82` | 159 | cmd_server_firewall_get handler |
+| 3a-Set | `0dd4498` | 164 | cmd_server_firewall_set handler |
+| 3b-Parse | `b97a119` | 169 | policy list/create/update/delete argparse |
+| 3b-List | `2fea167` | 172 | cmd_policy_list handler |
+| 3b-Create | `7a782b4` | 176 | cmd_policy_create handler |
+| 3b-Update | `30c7610` | 180 | cmd_policy_update handler |
+| 3b-Delete | `8381068` | 184 | cmd_policy_delete handler |
+
+**Completed Date**: 2026-04-17
+**Total Tests Added**: 36 (from 148 to 184)
+**Quality Gates**: All passed (mypy --strict, ruff check, ruff format)
+**Review**: APPROVED — 7 findings (0 Critical, 0 High, 5 Medium, 2 Low), all non-blocking
