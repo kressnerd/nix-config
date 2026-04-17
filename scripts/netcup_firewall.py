@@ -24,7 +24,10 @@ import re
 import sys
 import time
 from datetime import datetime, timezone
-from typing import Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
+
+if TYPE_CHECKING:
+    from scp_client.models.firewall_rule import FirewallRule
 
 import httpx
 import requests
@@ -789,6 +792,197 @@ class ScpApi:
                     raise RuntimeError(f"Task {task_uuid} failed")
             time.sleep(interval)
         raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
+
+    def list_policies(self, user_id: int) -> list[dict[str, Any]]:
+        """Return list of firewall policy dicts for a user.
+
+        Args:
+            user_id: The numeric SCP user ID.
+
+        Returns:
+            A list of firewall policy attribute dicts.
+        """
+        from scp_client.api.server_firewalls import (
+            get_api_v_1_users_user_id_firewall_policies,
+        )
+
+        result = self._retry_on_5xx(
+            get_api_v_1_users_user_id_firewall_policies.sync,
+            user_id,
+            client=self._client,
+        )
+        if result is None or not isinstance(result, list):
+            return []
+        return [p.to_dict() for p in result]
+
+    def get_policy(self, user_id: int, policy_id: int) -> dict[str, Any]:
+        """Return a single firewall policy dict.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            policy_id: The numeric policy ID.
+
+        Returns:
+            The firewall policy as a dict.
+
+        Raises:
+            ValueError: If the policy is not found or response is invalid.
+        """
+        from scp_client.api.server_firewalls import (
+            get_api_v_1_users_user_id_firewall_policies_id,
+        )
+
+        result = self._retry_on_5xx(
+            get_api_v_1_users_user_id_firewall_policies_id.sync,
+            user_id,
+            policy_id,
+            client=self._client,
+        )
+        if result is None or not hasattr(result, "to_dict"):
+            raise ValueError(f"Policy {policy_id} not found for user {user_id}")
+        return result.to_dict()
+
+    @staticmethod
+    def _legacy_rule_to_firewall_rule(rule: dict[str, Any]) -> "FirewallRule":
+        """Convert a legacy rule dict to a generated FirewallRule model.
+
+        Handles both legacy keys (sourceIp, destinationPort) and new-format
+        keys (sources, destination_ports).
+
+        Args:
+            rule: Rule dict with direction, protocol, action, and optional
+                source/destination fields.
+
+        Returns:
+            A FirewallRule model object.
+        """
+        from scp_client.models.firewall_action import FirewallAction
+        from scp_client.models.firewall_protocol import FirewallProtocol
+        from scp_client.models.firewall_rule import FirewallRule
+        from scp_client.models.firewall_rule_direction import FirewallRuleDirection
+        from scp_client.types import UNSET
+
+        sources: list[str] | Unset = UNSET
+        if "sourceIp" in rule and rule["sourceIp"]:
+            sources = [rule["sourceIp"]]
+        elif "sources" in rule:
+            sources = rule["sources"]
+
+        dest_ports: str | Unset = UNSET
+        if "destinationPort" in rule:
+            dest_ports = rule["destinationPort"]
+        elif "destination_ports" in rule:
+            dest_ports = rule["destination_ports"]
+
+        return FirewallRule(
+            direction=FirewallRuleDirection(rule["direction"]),
+            protocol=FirewallProtocol(rule["protocol"]),
+            action=FirewallAction(rule["action"]),
+            sources=sources,
+            destination_ports=dest_ports,
+        )
+
+    def create_policy(
+        self,
+        user_id: int,
+        name: str,
+        rules: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Create a new firewall policy and return the created policy dict.
+
+        Note: POST is not idempotent so _retry_on_5xx is NOT used here.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            name: The name for the new policy.
+            rules: List of rule dicts to include in the policy.
+
+        Returns:
+            The created firewall policy as a dict.
+
+        Raises:
+            ValueError: If the API response is missing or invalid.
+        """
+        from scp_client.api.server_firewalls import (
+            post_api_v_1_users_user_id_firewall_policies,
+        )
+        from scp_client.models.firewall_policy_save import FirewallPolicySave
+        from scp_client.types import UNSET
+
+        fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
+        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules else UNSET)
+        result = post_api_v_1_users_user_id_firewall_policies.sync(
+            user_id,
+            client=self._client,
+            body=body,
+        )
+        if result is None or not hasattr(result, "to_dict"):
+            raise ValueError(f"Failed to create policy '{name}'")
+        return result.to_dict()
+
+    def update_policy(
+        self,
+        user_id: int,
+        policy_id: int,
+        name: str,
+        rules: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Update an existing user firewall policy via PUT.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            policy_id: The numeric policy ID to update.
+            name: The new name for the policy.
+            rules: List of rule dicts to set on the policy.
+
+        Returns:
+            The updated firewall policy as a dict.
+
+        Raises:
+            ValueError: If the API response is missing or has an unexpected shape.
+        """
+        from scp_client.api.server_firewalls import (
+            put_api_v_1_users_user_id_firewall_policies_id,
+        )
+        from scp_client.models.firewall_policy_save import FirewallPolicySave
+        from scp_client.types import UNSET
+
+        fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
+        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules else UNSET)
+        result = self._retry_on_5xx(
+            put_api_v_1_users_user_id_firewall_policies_id.sync,
+            user_id,
+            policy_id,
+            client=self._client,
+            body=body,
+        )
+        if result is None:
+            raise ValueError(f"Failed to update policy {policy_id}")
+        if hasattr(result, "firewall_policy") and result.firewall_policy is not None:
+            fp = result.firewall_policy
+            if not isinstance(fp, Unset) and hasattr(fp, "to_dict"):
+                return fp.to_dict()
+        if hasattr(result, "to_dict"):
+            return result.to_dict()
+        raise ValueError(f"Unexpected response updating policy {policy_id}")
+
+    def delete_policy(self, user_id: int, policy_id: int) -> None:
+        """Delete a firewall policy.
+
+        Args:
+            user_id: The numeric SCP user ID.
+            policy_id: The numeric policy ID to delete.
+        """
+        from scp_client.api.server_firewalls import (
+            delete_api_v_1_users_user_id_firewall_policies_id,
+        )
+
+        self._retry_on_5xx(
+            delete_api_v_1_users_user_id_firewall_policies_id.sync,
+            user_id,
+            policy_id,
+            client=self._client,
+        )
 
 
 def _authenticate_and_setup(
