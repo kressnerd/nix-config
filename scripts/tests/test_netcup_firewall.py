@@ -811,6 +811,161 @@ class TestPolicyCreateCommand:
         )
 
 
+class TestPolicyUpdateCommand:
+    """Tests for cmd_policy_update handler."""
+
+    def test_update_policy_success(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Update policy with --yes succeeds."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 123, "name": "cupix001-bootstrap", "rules": []},
+        ]
+        mock_client.update_policy.return_value = {
+            "id": 123,
+            "name": "cupix001-bootstrap",
+            "rules": [
+                {
+                    "direction": "INGRESS",
+                    "protocol": "TCP",
+                    "sourceIp": "0.0.0.0/0",
+                    "destinationPort": "443",
+                    "action": "ACCEPT",
+                }
+            ],
+        }
+
+        args = argparse.Namespace(
+            name="cupix001-bootstrap",
+            rules_file="infra/firewall/cupix001-bootstrap.json",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={
+                "name": "cupix001-bootstrap",
+                "rules": [
+                    {
+                        "direction": "INGRESS",
+                        "protocol": "TCP",
+                        "sourceIp": "0.0.0.0/0",
+                        "destinationPort": "443",
+                        "action": "ACCEPT",
+                    }
+                ],
+            },
+        ):
+            cmd_policy_update(args, client=mock_client, user_id=42)
+
+        mock_client.update_policy.assert_called_once()
+        call_args = mock_client.update_policy.call_args
+        assert call_args[0][0] == 42  # user_id
+        assert call_args[0][1] == 123  # policy_id
+        captured = capsys.readouterr()
+        assert "Updated policy" in captured.out
+        assert "cupix001-bootstrap" in captured.out
+        assert "123" in captured.out
+
+    def test_update_policy_prompts_and_confirms(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Update policy without --yes prompts, user confirms."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 123, "name": "test-policy", "rules": []},
+        ]
+        mock_client.update_policy.return_value = {
+            "id": 123,
+            "name": "test-policy",
+            "rules": [],
+        }
+
+        args = argparse.Namespace(
+            name="test-policy",
+            rules_file="rules.json",
+            yes=False,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={"name": "test-policy", "rules": []},
+        ):
+            with patch("builtins.input", return_value="y"):
+                cmd_policy_update(args, client=mock_client, user_id=42)
+
+        mock_client.update_policy.assert_called_once()
+
+    def test_update_policy_prompts_and_declines(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Update policy without --yes, user declines."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = [
+            {"id": 123, "name": "test-policy", "rules": []},
+        ]
+
+        args = argparse.Namespace(
+            name="test-policy",
+            rules_file="rules.json",
+            yes=False,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={"name": "test-policy", "rules": []},
+        ):
+            with patch("builtins.input", return_value="n"):
+                with pytest.raises(SystemExit, match="1"):
+                    cmd_policy_update(args, client=mock_client, user_id=42)
+
+        mock_client.update_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "Aborted" in captured.err
+
+    def test_update_policy_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Update policy fails when name doesn't exist."""
+        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client.list_policies.return_value = []
+
+        args = argparse.Namespace(
+            name="nonexistent",
+            rules_file="rules.json",
+            yes=True,
+            output="text",
+            verbose=False,
+            quiet=False,
+            keyring=False,
+        )
+        with patch(
+            "netcup_firewall.load_policy_file",
+            return_value={"name": "nonexistent", "rules": []},
+        ):
+            with pytest.raises(SystemExit, match="1"):
+                cmd_policy_update(args, client=mock_client, user_id=42)
+
+        mock_client.update_policy.assert_not_called()
+        captured = capsys.readouterr()
+        assert "not found" in captured.err
+        assert "nonexistent" in captured.err
+
+
 class TestScpAuth:
     """Test OIDC authentication module."""
 

@@ -994,7 +994,51 @@ def cmd_policy_update(
     user_id: int | None = None,
 ) -> None:
     """Update an existing user firewall policy."""
-    raise NotImplementedError
+    if client is None or user_id is None:
+        _, client, user_id = _authenticate_and_setup(
+            auth,
+            client,
+            user_id,
+            use_keyring=args.keyring,
+        )
+
+    try:
+        policy_data = load_policy_file(args.rules_file)
+    except FileNotFoundError:
+        print(
+            f"Error: rules file '{args.rules_file}' not found",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        validate_policy_schema(policy_data)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    existing = _find_policy_by_name(client, user_id, args.name)
+    if existing is None:
+        print(
+            f"Error: policy named '{args.name}' not found",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    policy_id: int = existing["id"]
+
+    if not args.yes:
+        prompt = (
+            f"About to update policy '{args.name}' (ID {policy_id}). Proceed? [y/N] "
+        )
+        print(prompt, end="", flush=True)
+        answer = input()
+        if answer.lower() != "y":
+            print("Aborted.", file=sys.stderr)
+            sys.exit(1)
+
+    client.update_policy(user_id, policy_id, args.name, policy_data.get("rules", []))
+    print(f"Updated policy '{args.name}' (ID {policy_id})")
 
 
 def cmd_policy_delete(
