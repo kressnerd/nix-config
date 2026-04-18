@@ -87,6 +87,14 @@
           builtins.elem "podman" hmPkgNames;
         message = "thiniel: Podman must be installed via Home Manager for container development";
       }
+      {
+        assertion =
+          let
+            hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home-manager.users.dan.home.packages;
+          in
+          builtins.elem "maestral" hmPkgNames;
+        message = "thiniel: Maestral must be installed via Home Manager for Dropbox sync";
+      }
     ];
   };
 }

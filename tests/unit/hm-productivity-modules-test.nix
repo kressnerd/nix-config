@@ -1,7 +1,7 @@
 # tests/unit/hm-productivity-modules-test.nix
 # Characterization unit tests for Home Manager productivity feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
-# Covers: browser.nix, keepassxc.nix
+# Covers: browser.nix, keepassxc.nix, maestral.nix
 { lib, pkgs }:
 let
   # Platform mocks
@@ -29,6 +29,11 @@ let
 
   # keepassxc.nix — signature is `_:`, call with empty attrset
   keepassxcModule = import ../../home/dan/features/productivity/keepassxc.nix { };
+
+  # maestral.nix — signature is `{ pkgs, ... }:`
+  maestralModule = import ../../home/dan/features/productivity/maestral.nix {
+    pkgs = mockPkgsLinux;
+  };
 in
 lib.debug.runTests {
 
@@ -137,6 +142,32 @@ lib.debug.runTests {
 
   testKeepassxcHidePasswords = {
     expr = keepassxcModule.programs.keepassxc.settings.GUI.HidePasswords;
+    expected = true;
+  };
+
+  # ── maestral ──────────────────────────────────────────────────────────────
+
+  testMaestralPackagePresent = {
+    expr = builtins.any (p: (p.pname or p.name or "") == "maestral") maestralModule.home.packages;
+    expected = true;
+  };
+
+  testMaestralServiceDefined = {
+    expr =
+      maestralModule ? systemd
+      && maestralModule.systemd ? user
+      && maestralModule.systemd.user ? services
+      && maestralModule.systemd.user.services ? maestral;
+    expected = true;
+  };
+
+  testMaestralServiceExecStart = {
+    expr =
+      let
+        svc = maestralModule.systemd.user.services.maestral;
+      in
+      builtins.isString svc.Service.ExecStart
+      && builtins.match ".*maestral.*--foreground.*" svc.Service.ExecStart != null;
     expected = true;
   };
 }

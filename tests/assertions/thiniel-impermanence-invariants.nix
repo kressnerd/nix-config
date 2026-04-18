@@ -95,6 +95,19 @@
           assertion = hmHasDir ".config/Threema";
           message = "thiniel: Threema Desktop config must be persisted";
         }
+        # Maestral Dropbox client persistence
+        {
+          assertion = hmHasDir "Dropbox";
+          message = "thiniel: Dropbox sync folder must be persisted for Maestral";
+        }
+        {
+          assertion = hmHasDir ".config/maestral";
+          message = "thiniel: .config/maestral must be persisted for Maestral config and OAuth tokens";
+        }
+        {
+          assertion = hmHasDir ".local/share/maestral";
+          message = "thiniel: .local/share/maestral must be persisted for Maestral state and index";
+        }
       ];
   };
 }
