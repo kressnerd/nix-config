@@ -308,7 +308,7 @@ class TestServerFirewallGetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Get firewall in text mode prints pretty JSON."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.return_value = 12345
         mock_client.get_firewall.return_value = self._SAMPLE_FIREWALL
 
@@ -333,7 +333,7 @@ class TestServerFirewallGetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Get firewall in json mode prints snake_case keys."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.return_value = 12345
         mock_client.get_firewall.return_value = self._SAMPLE_FIREWALL
 
@@ -364,7 +364,7 @@ class TestServerFirewallGetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Server not found prints error and exits 1."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.side_effect = ValueError(
             "Server 'nonexistent' not found"
         )
@@ -392,7 +392,7 @@ class TestServerFirewallSetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Set firewall with --yes skips confirmation, calls set_firewall."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.return_value = 12345
         mock_client.set_firewall.return_value = "task-uuid-123"
 
@@ -422,7 +422,7 @@ class TestServerFirewallSetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Set firewall without --yes prompts, user confirms with 'y'."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.return_value = 12345
         mock_client.set_firewall.return_value = "task-uuid-123"
 
@@ -448,7 +448,7 @@ class TestServerFirewallSetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Set firewall without --yes, user declines, aborts."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.return_value = 12345
 
         args = argparse.Namespace(
@@ -474,7 +474,7 @@ class TestServerFirewallSetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Server not found prints error and exits 1."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.side_effect = ValueError(
             "Server 'nonexistent' not found"
         )
@@ -501,7 +501,7 @@ class TestServerFirewallSetCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Invalid (non-integer) policy IDs print error and exit 1."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.find_server.return_value = 12345
 
         args = argparse.Namespace(
@@ -599,7 +599,7 @@ class TestPolicyListCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """List policies in text mode prints a table."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = self._SAMPLE_POLICIES
 
         args = argparse.Namespace(
@@ -625,7 +625,7 @@ class TestPolicyListCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """List policies in json mode prints JSON array with snake_case keys."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = self._SAMPLE_POLICIES
 
         args = argparse.Namespace(
@@ -659,7 +659,7 @@ class TestPolicyListCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """List policies with empty list prints header or message, exits 0."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = []
 
         args = argparse.Namespace(
@@ -683,7 +683,7 @@ class TestPolicyCreateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Create policy succeeds when name doesn't exist."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = []
         mock_client.create_policy.return_value = {
             "id": 123,
@@ -735,7 +735,7 @@ class TestPolicyCreateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Create policy fails when name already exists."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 42, "name": "lockdown", "rules": []},
         ]
@@ -766,7 +766,7 @@ class TestPolicyCreateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Create policy fails when rules file has invalid schema."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
 
         args = argparse.Namespace(
             name="bad-policy",
@@ -801,7 +801,7 @@ class TestPolicyCreateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Create policy fails when rules file doesn't exist."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
 
         args = argparse.Namespace(
             name="test-policy",
@@ -833,7 +833,7 @@ class TestPolicyUpdateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Update policy with --yes succeeds."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 123, "name": "cupix001-bootstrap", "rules": []},
         ]
@@ -891,7 +891,7 @@ class TestPolicyUpdateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Update policy without --yes prompts, user confirms."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 123, "name": "test-policy", "rules": []},
         ]
@@ -924,7 +924,7 @@ class TestPolicyUpdateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Update policy without --yes, user declines."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 123, "name": "test-policy", "rules": []},
         ]
@@ -955,7 +955,7 @@ class TestPolicyUpdateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Update policy fails when rules file doesn't exist."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
 
         args = argparse.Namespace(
             name="test-policy",
@@ -982,7 +982,7 @@ class TestPolicyUpdateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Update policy fails when rules file has invalid schema."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
 
         args = argparse.Namespace(
             name="test-policy",
@@ -1016,7 +1016,7 @@ class TestPolicyUpdateCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Update policy fails when name doesn't exist."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = []
 
         args = argparse.Namespace(
@@ -1049,7 +1049,7 @@ class TestPolicyDeleteCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Delete policy with --yes skips confirmation."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 99, "name": "ssh-temp-cupix001", "rules": []},
         ]
@@ -1075,7 +1075,7 @@ class TestPolicyDeleteCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Delete policy without --yes prompts, user confirms."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 99, "name": "ssh-temp-cupix001", "rules": []},
         ]
@@ -1100,7 +1100,7 @@ class TestPolicyDeleteCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Delete policy without --yes, user declines."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = [
             {"id": 99, "name": "ssh-temp-cupix001", "rules": []},
         ]
@@ -1126,7 +1126,7 @@ class TestPolicyDeleteCommand:
         capsys: pytest.CaptureFixture[str],
     ) -> None:
         """Delete policy fails when name doesn't exist."""
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.list_policies.return_value = []
 
         args = argparse.Namespace(
@@ -1682,7 +1682,7 @@ class TestBackupCommand:
     ) -> None:
         """backup uses injected auth/client without creating new ones."""
         injected_auth = MagicMock(spec=ScpAuth)
-        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client = MagicMock(spec=ScpApi)
         injected_client.find_server.return_value = 99999
         injected_client.get_interfaces.return_value = []
         injected_client.list_policies.return_value = []
@@ -1963,7 +1963,7 @@ class TestLockdownCommand:
     ) -> None:
         """lockdown uses injected auth/client/user_id without re-authenticating."""
         injected_auth = MagicMock(spec=ScpAuth)
-        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client = MagicMock(spec=ScpApi)
         injected_client.find_server.return_value = 555
         injected_client.get_interfaces.return_value = [{"mac": "00:11:22:33:44:55"}]
         injected_client.list_policies.return_value = []
@@ -2254,7 +2254,7 @@ class TestRestoreCommand:
     ) -> None:
         """restore uses injected auth/client/user_id without re-authenticating."""
         injected_auth = MagicMock(spec=ScpAuth)
-        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client = MagicMock(spec=ScpApi)
         injected_client.find_server.return_value = 12345
         injected_client.list_policies.return_value = []
         injected_client.create_policy.return_value = {
@@ -2761,7 +2761,7 @@ class TestGetCurrentPolicyIds:
 
     def test_returns_policy_ids_from_firewall(self) -> None:
         """Extracts userPolicies IDs from get_firewall response."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         client.get_firewall.return_value = {
             "userPolicies": [
@@ -2778,7 +2778,7 @@ class TestGetCurrentPolicyIds:
 
     def test_returns_empty_list_when_no_policies(self) -> None:
         """Returns empty list when no userPolicies are assigned."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.get_firewall.return_value = {
             "userPolicies": [],
             "copiedPolicies": [],
@@ -2790,7 +2790,7 @@ class TestGetCurrentPolicyIds:
 
     def test_handles_missing_user_policies_key(self) -> None:
         """Returns empty list when userPolicies key is missing from response."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.get_firewall.return_value = {
             "copiedPolicies": [],
             "ingressImplicitRule": "DROP",
@@ -2800,7 +2800,7 @@ class TestGetCurrentPolicyIds:
 
     def test_get_current_policy_ids_extracts_ids_from_objects(self) -> None:
         """Extracts integer IDs from full FirewallPolicy objects in userPolicies."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.get_firewall.return_value = {
             "userPolicies": [
                 {
@@ -2838,7 +2838,7 @@ class TestFindOrCreateSshPolicy:
 
     def test_creates_new_policy_when_none_exists(self) -> None:
         """Creates ssh-temp-{server} policy when no existing one found."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.list_policies.return_value = []
         client.create_policy.return_value = {
             "id": 777,
@@ -2867,7 +2867,7 @@ class TestFindOrCreateSshPolicy:
 
     def test_deletes_stale_policy_and_recreates(self) -> None:
         """If ssh-temp-{server} already exists (stale from crash), deletes and recreates."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.list_policies.return_value = [
             {"id": 555, "name": "ssh-temp-cupix001", "rules": []}
         ]
@@ -2893,7 +2893,7 @@ class TestFindOrCreateSshPolicy:
 
     def test_uses_correct_port_in_rule(self) -> None:
         """Destination port in rule matches the port argument."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.list_policies.return_value = []
         client.create_policy.return_value = {
             "id": 999,
@@ -2909,7 +2909,7 @@ class TestFindOrCreateSshPolicy:
 
     def test_unassigns_stale_policy_before_deleting(self) -> None:
         """Stale policy is unassigned from interfaces before deletion."""
-        client = MagicMock(spec=ScpApiClient)
+        client = MagicMock(spec=ScpApi)
         client.list_policies.return_value = [
             {"id": 555, "name": "ssh-temp-cupix001", "rules": []}
         ]
@@ -3114,7 +3114,7 @@ class TestSshOpenCommand:
     ) -> None:
         """When DI params are passed, ssh-open does not instantiate auth/client."""
         injected_auth = MagicMock(spec=ScpAuth)
-        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client = MagicMock(spec=ScpApi)
         injected_client.find_server.return_value = 123
         injected_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         injected_client.get_firewall.return_value = {
@@ -3348,7 +3348,7 @@ class TestSshCloseCommand:
     ) -> None:
         """When DI params are passed, ssh-close does not instantiate auth/client."""
         injected_auth = MagicMock(spec=ScpAuth)
-        injected_client = MagicMock(spec=ScpApiClient)
+        injected_client = MagicMock(spec=ScpApi)
         injected_client.find_server.return_value = 123
         injected_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
         injected_client.list_policies.return_value = []
@@ -3540,7 +3540,7 @@ class TestAuthenticateNoUser:
     def test_returns_provided_auth_and_client(self) -> None:
         """Returns existing auth and client unchanged without making API calls."""
         mock_auth = MagicMock(spec=ScpAuth)
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
 
         auth, client = _authenticate_and_setup_no_user(mock_auth, mock_client)
 
@@ -3595,7 +3595,7 @@ class TestOpenApiDownloadCommand:
             quiet=False,
         )
         mock_auth = MagicMock(spec=ScpAuth)
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         spec_data: dict[str, Any] = {"openapi": "3.0.3", "info": {"title": "SCP API"}}
         mock_client.get_openapi_spec.return_value = spec_data
 
@@ -3642,7 +3642,7 @@ class TestOpenApiDownloadCommand:
             quiet=False,
         )
         mock_auth = MagicMock(spec=ScpAuth)
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mock_client.get_openapi_spec.return_value = {"openapi": "3.0.3"}
 
         with pytest.raises(SystemExit) as exc_info:
@@ -3665,7 +3665,7 @@ class TestOpenApiMcpCommand:
             quiet=False,
         )
         mock_auth = MagicMock(spec=ScpAuth)
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
         mcp_response = {"tools": ["firewall", "server"]}
         mock_client.post_openapi_mcp.return_value = mcp_response
 
@@ -4151,7 +4151,7 @@ class TestAuthenticateAndSetup:
     def test_returns_provided_values(self) -> None:
         """Returns existing auth, client, and user_id unchanged when all provided."""
         mock_auth = MagicMock(spec=ScpAuth)
-        mock_client = MagicMock(spec=ScpApiClient)
+        mock_client = MagicMock(spec=ScpApi)
 
         auth, client, user_id = _authenticate_and_setup(mock_auth, mock_client, 99)
 
