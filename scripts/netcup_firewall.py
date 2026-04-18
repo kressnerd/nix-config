@@ -55,7 +55,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://www.servercontrolpanel.de/scp-core/api/v1"
 TOKEN_URL = "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/token"
 DEVICE_AUTH_URL = (
     "https://www.servercontrolpanel.de/realms/scp/protocol/openid-connect/auth/device"
@@ -391,6 +390,23 @@ class ScpApi:
                     raise
                 time.sleep(attempt)  # 0s, 1s, 2s backoff
         raise RuntimeError("unreachable")  # satisfy mypy
+
+    @staticmethod
+    def _result_to_dict(result: Any) -> dict[str, Any]:
+        """Convert an API result to a plain dict.
+
+        Args:
+            result: An API response object that is either already a dict,
+                has a ``to_dict`` method, or is otherwise dict-convertible.
+
+        Returns:
+            A plain Python dict representation of the result.
+        """
+        if isinstance(result, dict):
+            return result
+        if hasattr(result, "to_dict"):
+            return result.to_dict()  # type: ignore[no-any-return]
+        return dict(result)
 
     def find_server(self, name: str) -> int:
         """Find a server by name and return its numeric ID.
@@ -753,11 +769,7 @@ class ScpApi:
         result = self._retry_on_5xx(get_api_v1_openapi.sync, client=self._client)
         if result is None:
             raise ValueError("Failed to get OpenAPI spec")
-        if isinstance(result, dict):
-            return result
-        if hasattr(result, "to_dict"):
-            return result.to_dict()
-        return dict(result)  # type: ignore[call-overload, no-any-return]
+        return self._result_to_dict(result)
 
     def post_openapi_mcp(self, message: str) -> dict[str, Any]:  # noqa: ARG002
         """Send a request to the OpenAPI MCP endpoint.
@@ -781,11 +793,7 @@ class ScpApi:
         result = post_api_v1_openapi_mcp.sync(client=self._client)
         if result is None:
             raise ValueError("Failed to post to OpenAPI MCP endpoint")
-        if isinstance(result, dict):
-            return result
-        if hasattr(result, "to_dict"):
-            return result.to_dict()
-        return dict(result)  # type: ignore[call-overload, no-any-return]
+        return self._result_to_dict(result)
 
 
 def _authenticate_and_setup(
