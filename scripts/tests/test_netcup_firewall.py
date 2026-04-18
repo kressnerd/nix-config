@@ -17,7 +17,6 @@ from typing import Any, ClassVar
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-import requests
 
 from netcup_firewall import (
     ScpApi,
@@ -2045,7 +2044,6 @@ class TestRestoreCommand:
         MockAuth.assert_not_called()
         MockClient.assert_not_called()
         injected_client.find_server.assert_called_once_with("cupix001")
-
 
 
 class TestCamelToSnake:

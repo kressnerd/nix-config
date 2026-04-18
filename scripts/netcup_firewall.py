@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
-"""netcup-firewall — CLI tool to manage netcup vServer firewall rules.
+"""netcup-scp — CLI tool to manage netcup vServer firewall rules.
 
 This module provides a command-line interface for declaratively managing
 firewall rules on netcup vServer instances via the SCP REST API.
 Authentication uses the OIDC device code flow with offline refresh tokens.
+API calls use the generated scp_client package backed by httpx.
 
-Subcommands:
+Command groups:
+    server firewall  Get/set per-interface firewall state.
+    policy           CRUD for user-owned firewall policies.
+    openapi          Download spec, query MCP endpoint.
+
+Legacy commands:
     backup    Save current firewall rules to a JSON file.
     lockdown  Apply a deny-all inbound policy (kill-switch).
     restore   Restore firewall rules from a previously saved JSON file.
-    apply     Apply a named policy template (bootstrap or production).
+    ssh-open  Open temporary SSH access from a specific source IP.
+    ssh-close Close temporary SSH access and remove the policy.
 """
 
 from __future__ import annotations
@@ -31,11 +38,9 @@ if TYPE_CHECKING:
 
 import httpx
 import requests
-from requests.adapters import HTTPAdapter
 from scp_client.client import AuthenticatedClient
 from scp_client.errors import UnexpectedStatus
 from scp_client.types import Unset
-from urllib3.util.retry import Retry
 
 try:
     import secretstorage
@@ -343,256 +348,6 @@ class ScpAuth:
         )
         resp.raise_for_status()
         return resp.json()["id"]  # type: ignore[no-any-return]
-
-
-class ScpApiClient:
-    """REST API client for the netcup Server Control Panel."""
-
-    def __init__(self, access_token: str) -> None:
-        """Initialize the API client with a valid access token.
-
-        Args:
-            access_token: A valid SCP OAuth2 access token.
-        """
-        self._token = access_token
-        retry = Retry(
-            total=3,
-            backoff_factor=1,
-            status_forcelist=[500, 502, 503, 504],
-        )
-        adapter = HTTPAdapter(max_retries=retry)
-        self._session = requests.Session()
-        self._session.mount("https://", adapter)
-        self._session.mount("http://", adapter)
-
-    def _headers(self) -> dict[str, str]:
-        """Return HTTP headers for authenticated API requests."""
-        return {
-            "Authorization": f"Bearer {self._token}",
-            "Content-Type": "application/json",
-        }
-
-    def _get(self, path: str) -> requests.Response:
-        """Send an authenticated GET request to the SCP API."""
-        resp = self._session.get(
-            BASE_URL + path, headers=self._headers(), timeout=(10, 30)
-        )
-        resp.raise_for_status()
-        return resp
-
-    def _post(self, path: str, json_data: dict[str, Any]) -> requests.Response:
-        """Send an authenticated POST request to the SCP API."""
-        resp = self._session.post(
-            BASE_URL + path, headers=self._headers(), json=json_data, timeout=(10, 30)
-        )
-        resp.raise_for_status()
-        return resp
-
-    def _put(self, path: str, json_data: dict[str, Any]) -> requests.Response:
-        """Send an authenticated PUT request to the SCP API."""
-        resp = self._session.put(
-            BASE_URL + path, headers=self._headers(), json=json_data, timeout=(10, 30)
-        )
-        resp.raise_for_status()
-        return resp
-
-    def _delete(self, path: str) -> requests.Response:
-        """Send an authenticated DELETE request to the SCP API."""
-        resp = self._session.delete(
-            BASE_URL + path, headers=self._headers(), timeout=(10, 30)
-        )
-        resp.raise_for_status()
-        return resp
-
-    def find_server(self, name: str) -> int:
-        """Find a server by name and return its numeric ID.
-
-        Args:
-            name: The server name to search for.
-
-        Returns:
-            The integer server ID.
-
-        Raises:
-            ValueError: If no server with the given name is found.
-        """
-        resp = self._get(f"/servers?name={name}")
-        servers = resp.json()
-        if not isinstance(servers, list):
-            raise ValueError(
-                f"Unexpected response format when searching for server '{name}'"
-            )
-        for server in servers:
-            if server.get("name") == name:
-                server_id = server.get("id")
-                if server_id is None:
-                    raise ValueError(f"Server '{name}' response missing 'id' field")
-                return server_id  # type: ignore[no-any-return]
-        raise ValueError(f"Server '{name}' not found")
-
-    def get_interfaces(self, server_id: int) -> list[dict[str, Any]]:
-        """Return list of interface dicts for a server.
-
-        Args:
-            server_id: The numeric server ID.
-
-        Returns:
-            List of interface dicts, each containing mac and type fields.
-        """
-        resp = self._get(f"/servers/{server_id}/interfaces")
-        return resp.json()  # type: ignore[no-any-return]
-
-    def get_firewall(self, server_id: int, mac: str) -> dict[str, Any]:
-        """Return the firewall state dict for a server interface.
-
-        Args:
-            server_id: The numeric server ID.
-            mac: The MAC address of the interface.
-
-        Returns:
-            Firewall state dict including userPolicies and implicit rules.
-        """
-        resp = self._get(f"/servers/{server_id}/interfaces/{mac}/firewall")
-        return resp.json()  # type: ignore[no-any-return]
-
-    def set_firewall(self, server_id: int, mac: str, policy_ids: list[int]) -> str:
-        """Apply a firewall configuration via PUT and return the task UUID.
-
-        Builds the ServerFirewallSave payload (IdentifierInt-wrapped IDs).
-
-        Args:
-            server_id: The numeric server ID.
-            mac: The MAC address of the interface.
-            policy_ids: List of policy IDs to assign as userPolicies.
-
-        Returns:
-            Task UUID string for polling the async task status.
-        """
-        payload = {
-            "userPolicies": [{"id": pid} for pid in policy_ids],
-            "copiedPolicies": [],
-        }
-        resp = self._put(f"/servers/{server_id}/interfaces/{mac}/firewall", payload)
-        return resp.json()["uuid"]  # type: ignore[no-any-return]
-
-    def get_openapi_spec(self) -> dict[str, Any]:
-        """Download the full OpenAPI specification."""
-        resp = self._get("/openapi")
-        return resp.json()  # type: ignore[no-any-return]
-
-    def post_openapi_mcp(self, message: str) -> dict[str, Any]:
-        """Send a message to the OpenAPI MCP endpoint."""
-        resp = self._post("/openapi/mcp", {"message": message})
-        return resp.json()  # type: ignore[no-any-return]
-
-    def list_policies(self, user_id: int) -> list[dict[str, Any]]:
-        """Return list of firewall policy dicts for a user.
-
-        Args:
-            user_id: The numeric SCP user ID.
-
-        Returns:
-            List of firewall policy dicts.
-        """
-        resp = self._get(f"/users/{user_id}/firewall-policies")
-        return resp.json()  # type: ignore[no-any-return]
-
-    def get_policy(self, user_id: int, policy_id: int) -> dict[str, Any]:
-        """Return a single firewall policy dict.
-
-        Args:
-            user_id: The numeric SCP user ID.
-            policy_id: The numeric policy ID.
-
-        Returns:
-            Firewall policy dict including name and rules.
-        """
-        resp = self._get(f"/users/{user_id}/firewall-policies/{policy_id}")
-        return resp.json()  # type: ignore[no-any-return]
-
-    def create_policy(
-        self,
-        user_id: int,
-        name: str,
-        rules: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        """Create a new firewall policy and return the created policy dict.
-
-        Args:
-            user_id: The numeric SCP user ID.
-            name: Name for the new policy.
-            rules: List of firewall rule dicts.
-
-        Returns:
-            Created policy dict including the server-assigned id.
-        """
-        resp = self._post(
-            f"/users/{user_id}/firewall-policies",
-            {"name": name, "rules": rules},
-        )
-        return resp.json()  # type: ignore[no-any-return]
-
-    def update_policy(
-        self,
-        user_id: int,
-        policy_id: int,
-        name: str,
-        rules: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        """Update an existing user firewall policy via PUT.
-
-        Args:
-            user_id: The numeric SCP user ID.
-            policy_id: The numeric policy ID to update.
-            name: New name for the policy.
-            rules: Updated list of firewall rule dicts.
-
-        Returns:
-            Updated policy dict as returned by the API.
-        """
-        resp = self._put(
-            f"/users/{user_id}/firewall-policies/{policy_id}",
-            json_data={"name": name, "rules": rules},
-        )
-        result: dict[str, Any] = resp.json()
-        return result
-
-    def delete_policy(self, user_id: int, policy_id: int) -> None:
-        """Delete a firewall policy.
-
-        Args:
-            user_id: The numeric SCP user ID.
-            policy_id: The numeric policy ID to delete.
-        """
-        self._delete(f"/users/{user_id}/firewall-policies/{policy_id}")
-
-    def wait_for_task(
-        self,
-        task_uuid: str,
-        max_polls: int = 30,
-        interval: int = 2,
-    ) -> None:
-        """Poll the task endpoint until COMPLETED, FAILED, or timeout.
-
-        Args:
-            task_uuid: The task UUID to poll.
-            max_polls: Maximum number of polling attempts.
-            interval: Seconds to wait between polls.
-
-        Raises:
-            RuntimeError: If the task status is FAILED.
-            TimeoutError: If max_polls is exceeded without completion.
-        """
-        for _ in range(max_polls):
-            resp = self._get(f"/tasks/{task_uuid}")
-            data = resp.json()
-            status = data.get("status")
-            if status == "COMPLETED":
-                return
-            if status == "FAILED":
-                raise RuntimeError(f"Task {task_uuid} failed")
-            time.sleep(interval)
-        raise TimeoutError(f"Task {task_uuid} did not complete after {max_polls} polls")
 
 
 _T = TypeVar("_T")
@@ -1096,7 +851,7 @@ def _gather_interface_firewall_state(
     """Fetch and return the current firewall state for each server interface.
 
     Args:
-        client: Authenticated ScpApiClient instance.
+        client: Authenticated ScpApi instance.
         server_id: The numeric server ID.
         interfaces: List of interface dicts as returned by get_interfaces.
 
@@ -1536,7 +1291,7 @@ def _find_or_create_lockdown_policy(
     rules, which causes the SCP external firewall to DROP all inbound traffic.
 
     Args:
-        client: Authenticated ScpApiClient instance.
+        client: Authenticated ScpApi instance.
         user_id: The numeric SCP user ID.
         server_name: Server name used to derive the policy name.
 
@@ -1615,7 +1370,7 @@ def _apply_lockdown_to_interfaces(
     """Assign the lockdown policy to every interface and log the resulting state.
 
     Args:
-        client: Authenticated ScpApiClient instance.
+        client: Authenticated ScpApi instance.
         server_id: The numeric server ID.
         interfaces: List of interface dicts as returned by get_interfaces.
         lockdown_policy: Policy dict to assign to each interface.
@@ -1716,7 +1471,7 @@ def _restore_policies(
     """Restore policies from backup, reusing existing ones where names match.
 
     Args:
-        client: Authenticated ScpApiClient instance.
+        client: Authenticated ScpApi instance.
         user_id: The numeric SCP user ID.
         policies: Policy entries from the backup file.
         existing_policies: Currently existing policies on the account.
@@ -1757,7 +1512,7 @@ def _reassign_firewall_interfaces(
     """Reassign firewall policies to each interface using the restored ID mapping.
 
     Args:
-        client: Authenticated ScpApiClient instance.
+        client: Authenticated ScpApi instance.
         server_id: The numeric server ID.
         interfaces_backup: Interface entries from the backup file.
         id_map: Mapping from old backup policy IDs to new server-assigned IDs.
@@ -1937,19 +1692,6 @@ def cmd_restore(
     )
 
     logger.info("\nRESTORE COMPLETE — firewall state restored from %s", args.file)
-
-
-def cmd_apply(args: argparse.Namespace) -> None:
-    """Handle the apply subcommand (not yet implemented).
-
-    Args:
-        args: Parsed CLI arguments.
-
-    Raises:
-        SystemExit: Always, with code 1.
-    """
-    logger.error("Not implemented — see Epic 15")
-    sys.exit(1)
 
 
 def cmd_ssh_open(
@@ -2184,20 +1926,6 @@ examples:
         help="Path to the JSON backup file.",
     )
     restore_parser.set_defaults(command="restore", func=cmd_restore)
-
-    apply_parser = subparsers.add_parser("apply", help="Apply a named policy template.")
-    apply_parser.add_argument(
-        "--server",
-        required=True,
-        help="Target server name.",
-    )
-    apply_parser.add_argument(
-        "--policy",
-        required=True,
-        choices=["bootstrap", "production"],
-        help="Policy template to apply.",
-    )
-    apply_parser.set_defaults(command="apply", func=cmd_apply)
 
     # ssh-open subcommand
     ssh_open_parser = subparsers.add_parser(
