@@ -1,6 +1,6 @@
 # Implementation Plan: CUP-018 Phase 4 — Generated Client Migration & Legacy Cleanup
 
-**Status:** NOT STARTED
+**Status:** COMPLETED
 **Parent Story:** [CUP-018 SCP CLI Restructuring](18-scp-cli-restructuring.md)
 **Prerequisite:** [Phase 3 — Server Firewall & Policy CRUD Commands](18-phase3-implementation.md) (COMPLETED)
 
@@ -606,22 +606,34 @@ cd scripts && python3 -c "from netcup_firewall import ScpApi, parse_args, main; 
 
 ## Current Status
 
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 0: Validation Strategy | NOT STARTED | |
-| Phase 1: Constructor + Retry | NOT STARTED | |
-| Phase 2: Server + Interface | NOT STARTED | |
-| Phase 3: Firewall + Task | NOT STARTED | |
-| Phase 4: Policy CRUD | NOT STARTED | |
-| Phase 5: OpenAPI | NOT STARTED | |
-| Phase 6: Auth Helpers | NOT STARTED | |
-| Phase 7: Type Annotations | NOT STARTED | |
-| Phase 8: Rewrite ScpApiClient Tests | NOT STARTED | |
-| Phase 9: Delete Dead Code | NOT STARTED | |
-| Phase 10: Quality Gates | NOT STARTED | |
-
----
+| Phase | Status |
+|-------|--------|
+| Phase 0: Validation Strategy | ✅ COMPLETED |
+| Phase 1: Constructor + Retry | ✅ COMPLETED |
+| Phase 2: Server + Interface | ✅ COMPLETED |
+| Phase 3: Firewall + Task | ✅ COMPLETED |
+| Phase 4: Policy CRUD | ✅ COMPLETED |
+| Phase 5: OpenAPI | ✅ COMPLETED |
+| Phase 6: Auth Helpers | ✅ COMPLETED |
+| Phase 7: Type Annotations | ✅ COMPLETED |
+| Phase 8: Rewrite ScpApiClient Tests | ✅ COMPLETED |
+| Phase 9: Delete Dead Code | ✅ COMPLETED |
+| Phase 10: Quality Gates | ✅ COMPLETED |
 
 ## Completion Log
 
-_To be filled during implementation._
+| Phase | Commit | Tests | Notes |
+|-------|--------|-------|-------|
+| 1 | `e09a7de` | 201 | ScpApi constructor + _retry_on_5xx + HTTPTransport |
+| 2 | `23e7604` | 205 | find_server + get_interfaces |
+| 3 | `d7bd215` | 210 | get_firewall + set_firewall + wait_for_task (TaskState.FINISHED/ERROR) |
+| 4 | `8669835` | 217 | list/get/create/update/delete_policy + _legacy_rule_to_firewall_rule |
+| 5+6 | `7af648b` | 223 | get_openapi_spec + post_openapi_mcp + auth helper migration |
+| 7 | `30e45f8` | 223 | All type annotations ScpApiClient → ScpApi |
+| 8+9 | Phase 8+9 commits | 203 | Deleted TestScpApiClient, TestScpApiClientOpenapi, TestApplyCommand, ScpApiClient class, cmd_apply, HTTPAdapter/Retry imports |
+| 10 | `9f42de6` | 203 | Review findings F-001 (dead BASE_URL), F-003 (DRY _result_to_dict) |
+
+**Completed Date**: 2026-04-18
+**Final Test Count**: 203 (196 pre-Phase 4 → +27 new ScpApi tests → −20 deleted legacy tests)
+**Quality Gates**: All passed (mypy --strict 0 errors, ruff check, ruff format)
+**Review**: APPROVED — 8 findings (0 Critical, 0 High, 5 Medium, 3 Low); F-001+F-003 fixed, remainder deferred
