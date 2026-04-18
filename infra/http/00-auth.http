@@ -7,17 +7,16 @@
 #   4. Run "Get User Info" → user_id captured + saved to gnome-keyring
 #
 # Per-session workflow:
-#   1. Run "Refresh Token" (request 3) → fresh access_token from gnome-keyring
+#   1. Run "Refresh Token" (request 3) → reads refresh_token from gnome-keyring
+#      once per session into $global, then fetches a fresh access_token
 #   2. All .http files use {{access_token}} from $global — no manual edits
 #   3. When access_token expires mid-session, re-run "Refresh Token"
 #
 # Token storage:
 #   - gnome-keyring: shared with scripts/netcup_firewall.py --keyring
 #     (service=netcup-scp, username=default, label="netcup-scp credentials")
-#   - $global: session-scoped access_token for httpYac requests
+#   - $global: session-scoped refresh_token + access_token for httpYac requests
 #   - http-client.private.env.json: semi-static values only (server_id, etc.)
-#
-# httpyac.config.js loads refresh_token and user_id from gnome-keyring.
 
 ### 1 — Initiate Device Authorization
 # Opens a device authorization session. Returns:
@@ -61,8 +60,19 @@ client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&
 }}
 
 ### 3 — Refresh Token (run once per session)
-# refresh_token is loaded from gnome-keyring via httpyac.config.js.
+# refresh_token is read from gnome-keyring once per session into $global.
 # Captures fresh access_token into $global and updates gnome-keyring.
+{{
+  if (!$global.refresh_token) {
+    const config = require('./httpyac.config.js');
+    const creds = config.loadFromKeyring();
+    if (creds.refresh_token) {
+      $global.refresh_token = creds.refresh_token;
+    } else {
+      throw new Error("No refresh_token in gnome-keyring — run device auth flow first (requests 1+2).");
+    }
+  }
+}}
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
 
