@@ -1,7 +1,7 @@
 # User Story: CUP-018
 
 **Title:** Restructure netcup SCP CLI as full OpenAPI-backed client  
-**Status:** Backlog  
+**Status:** Done
 **Priority:** High  
 **Labels:** cli, netcup, firewall, api-client, openapi
 
@@ -14,7 +14,7 @@ I want **a restructured `netcup-scp` CLI that auto-generates its API client from
 To **interact with the full SCP API more reliably than raw cURL, with transparent OIDC authentication, input validation, and clean separation between server and policy concerns**.
 
 **Consequence Analysis:**  
-If this story is not implemented, the hand-crafted [`ScpApiClient`](scripts/netcup_firewall.py:450) covers only a fraction of SCP API endpoints, mixes server-state and user-policy operations in single commands, and requires manual `Authorization: Bearer ...` header juggling for any endpoint not yet wrapped — making firewall automation fragile and error-prone.
+If this story is not implemented, the hand-crafted `ScpApiClient` (replaced by [`ScpApi`](scripts/netcup_firewall.py:348) in Phase 4) covers only a fraction of SCP API endpoints, mixes server-state and user-policy operations in single commands, and requires manual `Authorization: Bearer ...` header juggling for any endpoint not yet wrapped — making firewall automation fragile and error-prone.
 
 **Story Owner:** Dan, Infrastructure/DevOps
 
@@ -68,7 +68,7 @@ The restructuring proceeds in four sequential phases:
 
 ### Phase 1: OpenAPI Spec Discovery
 
-#### Scenario 1.1: Download and save the SCP OpenAPI spec
+#### ✅ Scenario 1.1: Download and save the SCP OpenAPI spec
 
 **Given** the operator is authenticated (valid OIDC token in `~/.config/netcup-scp/credentials.json`)  
 **When** they run `netcup-scp openapi download --output /tmp/scp-openapi.json`  
@@ -77,7 +77,7 @@ The restructuring proceeds in four sequential phases:
 **And** prints `Saved OpenAPI spec to /tmp/scp-openapi.json` to stdout  
 **And** exits with code `0`
 
-#### Scenario 1.2: Download fails when unauthenticated
+#### ✅ Scenario 1.2: Download fails when unauthenticated
 
 **Given** the operator has no valid credentials (credentials file absent or refresh token expired)  
 **When** they run `netcup-scp openapi download --output /tmp/scp-openapi.json`  
@@ -85,7 +85,7 @@ The restructuring proceeds in four sequential phases:
 **And** exits with code `1`  
 **And** does NOT create or overwrite the output file
 
-#### Scenario 1.3: Explore the MCP endpoint
+#### ✅ Scenario 1.3: Explore the MCP endpoint
 
 **Given** the operator is authenticated  
 **When** they run `netcup-scp openapi mcp --message "list available tools"`  
@@ -93,7 +93,7 @@ The restructuring proceeds in four sequential phases:
 **And** prints the MCP response JSON to stdout  
 **And** exits with code `0`
 
-#### Scenario 1.4: Download output path is not writable
+#### ✅ Scenario 1.4: Download output path is not writable
 
 **Given** the operator is authenticated  
 **When** they run `netcup-scp openapi download --output /root/protected/spec.json`  
@@ -105,7 +105,7 @@ The restructuring proceeds in four sequential phases:
 
 ### Phase 2: Generated Python API Client
 
-#### Scenario 2.1: Generate client from a local OpenAPI spec file
+#### ✅ Scenario 2.1: Generate client from a local OpenAPI spec file
 
 **Given** a valid OpenAPI 3.0.3 spec file exists at `scripts/scp-openapi.json`  
 **When** the developer runs the code-generation step (e.g., `openapi-python-client generate --path scripts/scp-openapi.json --output-path scripts/scp_client/`)  
@@ -113,7 +113,7 @@ The restructuring proceeds in four sequential phases:
 **And** the package contains typed model classes for all schemas defined in the spec (including `ServerFirewall`, `ServerFirewallSave`, `FirewallPolicy`, `IdentifierInt`)  
 **And** the package contains API client methods for all endpoints defined in the spec
 
-#### Scenario 2.2: Generated client covers server firewall endpoints
+#### ✅ Scenario 2.2: Generated client covers server firewall endpoints
 
 **Given** the generated client package `scripts/scp_client/` exists  
 **When** a developer imports `from scp_client.api.servers import get_server_interface_firewall`  
@@ -121,7 +121,7 @@ The restructuring proceeds in four sequential phases:
 **And** the function signature accepts `server_id: str`, `mac: str`, and an authenticated `httpx.Client`  
 **And** the return type is `ServerFirewall`
 
-#### Scenario 2.3: Generated client covers user policy endpoints
+#### ✅ Scenario 2.3: Generated client covers user policy endpoints
 
 **Given** the generated client package `scripts/scp_client/` exists  
 **When** a developer imports `from scp_client.api.users import list_user_firewall_policies`  
@@ -129,7 +129,7 @@ The restructuring proceeds in four sequential phases:
 **And** the function signature accepts `user_id: str` and an authenticated `httpx.Client`  
 **And** the return type is `list[FirewallPolicy]`
 
-#### Scenario 2.4: Existing `mypy --strict` gate passes after client generation
+#### ✅ Scenario 2.4: Existing `mypy --strict` gate passes after client generation
 
 **Given** the generated client has been added to `scripts/`  
 **When** the developer runs `cd scripts && mypy --strict netcup_firewall.py`  
@@ -140,7 +140,7 @@ The restructuring proceeds in four sequential phases:
 
 ### Phase 3a: Server Firewall Commands
 
-#### Scenario 3a.1: Get current firewall state for a server interface
+#### ✅ Scenario 3a.1: Get current firewall state for a server interface
 
 **Given** the operator is authenticated  
 **And** server `cupix001` has interface with MAC `aa:bb:cc:dd:ee:ff`  
@@ -150,7 +150,7 @@ The restructuring proceeds in four sequential phases:
 **And** prints the firewall state as formatted JSON to stdout  
 **And** exits with code `0`
 
-#### Scenario 3a.2: Get firewall state in JSON output mode for scripting
+#### ✅ Scenario 3a.2: Get firewall state in JSON output mode for scripting
 
 **Given** the operator is authenticated  
 **And** server `cupix001` has interface with MAC `aa:bb:cc:dd:ee:ff`  
@@ -159,7 +159,7 @@ The restructuring proceeds in four sequential phases:
 **And** the object contains `user_policies`, `copied_policies`, `ingress_implicit_rule`, `egress_implicit_rule`, `consistent`, `active`  
 **And** no log messages are emitted to stdout
 
-#### Scenario 3a.3: Set firewall state by policy IDs
+#### ✅ Scenario 3a.3: Set firewall state by policy IDs
 
 **Given** the operator is authenticated  
 **And** user policies with IDs `42` and `99` exist in the SCP account  
@@ -169,7 +169,7 @@ The restructuring proceeds in four sequential phases:
 **And** on HTTP 200 the tool prints `Firewall updated for cupix001 interface aa:bb:cc:dd:ee:ff`  
 **And** exits with code `0`
 
-#### Scenario 3a.4: Set firewall prompts for confirmation without `--yes`
+#### ✅ Scenario 3a.4: Set firewall prompts for confirmation without `--yes`
 
 **Given** the operator is authenticated  
 **When** they run `netcup-scp server firewall set --server cupix001 --mac aa:bb:cc:dd:ee:ff --policy-ids 42`  
@@ -177,7 +177,7 @@ The restructuring proceeds in four sequential phases:
 **And** waits for user input  
 **And** if the user enters anything other than `y` or `Y`, prints `Aborted.` to stderr and exits with code `1`
 
-#### Scenario 3a.5: Server not found returns a clear error
+#### ✅ Scenario 3a.5: Server not found returns a clear error
 
 **Given** the operator is authenticated  
 **When** they run `netcup-scp server firewall get --server nonexistent-host --mac aa:bb:cc:dd:ee:ff`  
@@ -189,7 +189,7 @@ The restructuring proceeds in four sequential phases:
 
 ### Phase 3b: User Firewall Policy Commands
 
-#### Scenario 3b.1: List all user firewall policies
+#### ✅ Scenario 3b.1: List all user firewall policies
 
 **Given** the operator is authenticated  
 **And** the SCP account has user policies `[{"id": 42, "name": "lockdown"}, {"id": 99, "name": "ssh-temp-cupix001"}]`  
@@ -198,7 +198,7 @@ The restructuring proceeds in four sequential phases:
 **And** prints a table with columns `ID`, `Name`, `Rules` to stdout  
 **And** exits with code `0`
 
-#### Scenario 3b.2: List policies in JSON output mode
+#### ✅ Scenario 3b.2: List policies in JSON output mode
 
 **Given** the operator is authenticated  
 **When** they run `netcup-scp policy list --output json`  
@@ -206,7 +206,7 @@ The restructuring proceeds in four sequential phases:
 **And** each object contains `id`, `name`, and `rules` keys  
 **And** no log messages are emitted to stdout
 
-#### Scenario 3b.3: Create a new named firewall policy from a JSON rules file
+#### ✅ Scenario 3b.3: Create a new named firewall policy from a JSON rules file
 
 **Given** the operator is authenticated  
 **And** a valid rules file `infra/firewall/cupix001-bootstrap.json` exists  
@@ -215,7 +215,7 @@ The restructuring proceeds in four sequential phases:
 **And** on HTTP 201 prints `Created policy 'cupix001-bootstrap' with ID 123`  
 **And** exits with code `0`
 
-#### Scenario 3b.4: Create policy fails when name already exists
+#### ✅ Scenario 3b.4: Create policy fails when name already exists
 
 **Given** the operator is authenticated  
 **And** a policy named `lockdown` already exists with ID `42`  
@@ -224,7 +224,7 @@ The restructuring proceeds in four sequential phases:
 **And** exits with code `1`  
 **And** does NOT send a `POST` request
 
-#### Scenario 3b.5: Update an existing policy's rules
+#### ✅ Scenario 3b.5: Update an existing policy's rules
 
 **Given** the operator is authenticated  
 **And** a policy named `cupix001-bootstrap` exists with ID `123`  
@@ -234,7 +234,7 @@ The restructuring proceeds in four sequential phases:
 **And** on HTTP 200 prints `Updated policy 'cupix001-bootstrap' (ID 123)`  
 **And** exits with code `0`
 
-#### Scenario 3b.6: Delete a policy with confirmation
+#### ✅ Scenario 3b.6: Delete a policy with confirmation
 
 **Given** the operator is authenticated  
 **And** a policy named `ssh-temp-cupix001` exists with ID `99`  
@@ -245,7 +245,7 @@ The restructuring proceeds in four sequential phases:
 **And** on HTTP 204 prints `Deleted policy 'ssh-temp-cupix001' (ID 99)`  
 **And** exits with code `0`
 
-#### Scenario 3b.7: Delete with `--yes` skips confirmation prompt
+#### ✅ Scenario 3b.7: Delete with `--yes` skips confirmation prompt
 
 **Given** the operator is authenticated  
 **And** a policy named `ssh-temp-cupix001` exists with ID `99`  
@@ -253,7 +253,7 @@ The restructuring proceeds in four sequential phases:
 **Then** the tool calls `DELETE /api/v1/users/{userId}/firewall-policies/99` without prompting  
 **And** exits with code `0`
 
-#### Scenario 3b.8: Delete policy that does not exist
+#### ✅ Scenario 3b.8: Delete policy that does not exist
 
 **Given** the operator is authenticated  
 **When** they run `netcup-scp policy delete --name nonexistent-policy --yes`  
@@ -261,7 +261,7 @@ The restructuring proceeds in four sequential phases:
 **And** exits with code `1`  
 **And** does NOT send a `DELETE` request
 
-#### Scenario 3b.9: Rules file fails JSON schema validation
+#### ✅ Scenario 3b.9: Rules file fails JSON schema validation
 
 **Given** the operator is authenticated  
 **And** a malformed rules file `infra/firewall/bad.json` exists with an invalid `action` value  
@@ -292,6 +292,54 @@ The restructuring proceeds in four sequential phases:
 - Phase 3b policy CRUD tests must cover: list empty, list non-empty, create success, create duplicate-name error, update success, update not-found error, delete with confirmation, delete with `--yes`, delete not-found error
 - Regression: all 130+ existing tests in [`scripts/tests/test_netcup_firewall.py`](scripts/tests/test_netcup_firewall.py) must continue to pass after each phase
 - Quality gates per phase: `mypy --strict`, `ruff check`, `ruff format --check` must all pass
+
+---
+
+---
+
+## Completion Summary
+
+**Completed Date**: 2026-04-18
+**Total Duration**: Phases 1-4 across multiple sessions
+**Status**: All 4 phases completed, reviewed, all findings fixed
+
+### Phase Completion
+
+| Phase | Plan | Commits | Tests |
+|-------|------|---------|-------|
+| 1 — OpenAPI Commands | [Phase 1 Plan](18-phase1-openapi-commands-plan.md) | `e1d5ed7` | 148 |
+| 2 — Generated Client | [Phase 2 Plan](18-phase2-generated-client-plan.md) | `b178637`, `e16a1a4` | 175 |
+| 3 — Server Firewall & Policy CRUD | [Phase 3 Plan](18-phase3-implementation.md) | 11 commits | 196 |
+| 4 — Generated Client Migration & Cleanup | [Phase 4 Plan](18-phase4-cleanup-migration-plan.md) | 11 commits | 213 |
+
+### Key Metrics
+
+- **Final test count**: 213 (started at 109 in Phase 1)
+- **Quality gates**: `mypy --strict` 0 errors, `ruff check` 0 violations, `ruff format` clean
+- **Code review**: All 4 phases reviewed and approved; all findings fixed
+- **Dead code removed**: `ScpApiClient` (~250 lines), `cmd_apply` stub, `HTTPAdapter`/`Retry` imports, `BASE_URL` constant, 20 legacy tests
+
+### Deviations from Original Plan
+
+- Phase 3 plan specified using the generated `scp_client` directly in command handlers. Instead, an `ScpApi` adapter layer was introduced (Phase 4) to preserve API contract compatibility and encapsulate generated client complexity.
+- `cmd_apply` was removed entirely rather than deprecated — it was a dead stub.
+- The `post_openapi_mcp` endpoint in the generated client does not accept a request body, so the `--message` parameter is accepted but not forwarded (logged as warning).
+
+### Lessons Learned
+
+1. **Adapter pattern is essential for generated clients**: The generated `scp_client` package uses `Unset` sentinels, attrs models, and verbose import paths. Wrapping it in a thin `ScpApi` adapter class with dict-returning methods kept all 14 command handlers unchanged. Without the adapter, every handler would need model-to-dict conversion, `Unset` guards, and 10+ line import blocks.
+
+2. **TaskState enum naming doesn't match API response strings**: The generated `TaskState` enum uses `FINISHED`/`ERROR` while the raw API returns `"COMPLETED"`/`"FAILED"`. This is a generator-level abstraction that isn't documented — it was discovered during implementation. Any future polling code must use enum comparison, not string comparison.
+
+3. **FirewallRule field naming differs between API and generated model**: The API uses `sourceIp` (singular string) while the generated `FirewallRule` model uses `sources` (list of strings). The `_legacy_rule_to_firewall_rule` conversion helper handles both formats, but this mapping was not predictable from the OpenAPI spec alone.
+
+4. **POST operations must NOT be retried**: The 5xx retry logic was correctly restricted to GET/PUT/DELETE (idempotent operations). POST operations (`create_policy`, `post_openapi_mcp`) skip retry entirely because creating a duplicate policy on retry would corrupt state.
+
+5. **Atomic TDD cycles accumulate DRY debt fast**: When each handler is implemented in a separate TDD cycle, identical patterns (confirmation prompts, file load+validate, auth setup) get copied. The refactoring obligation from FUND-001 should be checked after every 3rd handler sharing a pattern, not deferred to review.
+
+6. **Generated client may not support all API features**: The `POST /api/v1/openapi/mcp` endpoint accepts a message body according to the API, but the generated client provides no `body` parameter. This gap required accepting the `message` parameter for interface consistency while logging a warning that it's not forwarded.
+
+7. **Test count is not monotonically increasing during migrations**: Phase 4 peaked at 223 tests (after adding ScpApi tests) then dropped to 203 (after removing legacy ScpApiClient tests) then rose to 213 (after adding negative-path tests). This is expected during refactoring — what matters is coverage of the current codebase, not absolute count.
 
 ---
 
