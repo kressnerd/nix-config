@@ -23,6 +23,7 @@ from netcup_firewall import (
     ScpApi,
     ScpApiClient,
     ScpAuth,
+    _authenticate_and_setup,
     _authenticate_and_setup_no_user,
     _camel_to_snake,
     _convert_keys_to_snake_case,
@@ -1537,7 +1538,7 @@ class TestBackupCommand:
         mock_client.list_policies.return_value = []
         return mock_auth, mock_client
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_calls_api_methods(
         self,
@@ -1570,7 +1571,7 @@ class TestBackupCommand:
         mock_client.list_policies.assert_called_once_with(42)
         mock_client.get_policy.assert_called_once_with(42, 1)
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_writes_valid_json(
         self,
@@ -1592,7 +1593,7 @@ class TestBackupCommand:
         assert data["server"]["id"] == 12345
         assert data["server"]["name"] == "cupix001"
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_includes_interfaces_and_firewall(
         self,
@@ -1633,7 +1634,7 @@ class TestBackupCommand:
         assert data["interfaces"][0]["firewall"] == firewall_state
         assert len(data["policies"]) == 2
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_creates_directory(
         self,
@@ -1652,7 +1653,7 @@ class TestBackupCommand:
         assert os.path.exists(backup_path)
         assert os.path.isdir(nested_dir)
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_filename_format(
         self,
@@ -1671,7 +1672,7 @@ class TestBackupCommand:
         assert filename.startswith("cupix001-")
         assert filename.endswith(".json")
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_uses_di_auth_client(
         self,
@@ -1700,7 +1701,7 @@ class TestBackupCommand:
         injected_client.find_server.assert_called_once_with("myserver")
         injected_client.list_policies.assert_called_once_with(7)
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_backup_fetches_full_policy_details(
         self,
@@ -1786,7 +1787,7 @@ class TestLockdownCommand:
         return mock_auth, mock_client
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_creates_auto_backup(
         self,
@@ -1805,7 +1806,7 @@ class TestLockdownCommand:
         mock_backup.assert_called_once()
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_creates_empty_policy(
         self,
@@ -1824,7 +1825,7 @@ class TestLockdownCommand:
         mock_client.create_policy.assert_called_once_with(42, "lockdown-cupix001", [])
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_reuses_existing_policy(
         self,
@@ -1850,7 +1851,7 @@ class TestLockdownCommand:
         assert 77 in call_args[0][2]
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_assigns_policy_to_interface(
         self,
@@ -1871,7 +1872,7 @@ class TestLockdownCommand:
         )
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_waits_for_task(
         self,
@@ -1890,7 +1891,7 @@ class TestLockdownCommand:
         mock_client.wait_for_task.assert_called_once_with("task-uuid-123")
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_verifies_state(
         self,
@@ -1910,7 +1911,7 @@ class TestLockdownCommand:
 
     @patch("builtins.input", return_value="n")
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_aborts_without_yes(
         self,
@@ -1931,7 +1932,7 @@ class TestLockdownCommand:
 
     @patch("builtins.input", return_value="y")
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_proceeds_with_yes_input(
         self,
@@ -1951,7 +1952,7 @@ class TestLockdownCommand:
         mock_client.set_firewall.assert_called_once()
 
     @patch("netcup_firewall.cmd_backup")
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_lockdown_uses_di_params(
         self,
@@ -2030,7 +2031,7 @@ class TestRestoreCommand:
         backup_file.write_text(json.dumps(backup))
         return str(backup_file)
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_loads_backup(
         self,
@@ -2060,7 +2061,7 @@ class TestRestoreCommand:
 
         mock_client.find_server.assert_called_once_with("cupix001")
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_validates_version(
         self,
@@ -2079,7 +2080,7 @@ class TestRestoreCommand:
         assert exc_info.value.code == 1
         assert "version" in caplog.text.lower()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_validates_server_name(
         self,
@@ -2098,7 +2099,7 @@ class TestRestoreCommand:
         assert exc_info.value.code == 1
         assert "server" in caplog.text.lower()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_creates_missing_policies(
         self,
@@ -2131,7 +2132,7 @@ class TestRestoreCommand:
         assert call_args[0][1] == "my-policy"
         assert len(call_args[0][2]) == 1
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_reuses_existing_policies(
         self,
@@ -2158,7 +2159,7 @@ class TestRestoreCommand:
 
         mock_client.create_policy.assert_not_called()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_assigns_policies_to_interfaces(
         self,
@@ -2189,7 +2190,7 @@ class TestRestoreCommand:
         assert call_args[0][1] == "aa:bb:cc:dd:ee:ff"
         assert 77 in call_args[0][2]
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_waits_for_task(
         self,
@@ -2243,7 +2244,7 @@ class TestRestoreCommand:
         assert exc_info.value.code == 1
         assert "not found" in caplog.text.lower()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_restore_uses_di_params(
         self,
@@ -2441,7 +2442,7 @@ class TestErrorPaths:
 class TestWorkflow:
     """Test full backup → lockdown → restore workflow."""
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_full_backup_lockdown_restore_cycle(
         self,
@@ -2951,7 +2952,7 @@ class TestFindOrCreateSshPolicy:
 class TestSshOpenCommand:
     """Tests for cmd_ssh_open() — open temporary SSH access."""
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_open_creates_policy_and_assigns(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3003,7 +3004,7 @@ class TestSshOpenCommand:
         assert 50 in policy_ids
         assert 777 in policy_ids
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_open_skips_assignment_if_already_assigned(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3047,7 +3048,7 @@ class TestSshOpenCommand:
 
         mock_client.set_firewall.assert_not_called()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_open_creates_backup_first(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3085,7 +3086,7 @@ class TestSshOpenCommand:
         backup_files = list(tmp_path.glob("*.json"))
         assert len(backup_files) >= 1
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_open_validates_source_ip(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3106,7 +3107,7 @@ class TestSshOpenCommand:
                 user_id=42,
             )
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_open_with_di_skips_auth_setup(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3142,7 +3143,7 @@ class TestSshOpenCommand:
         MockAuth.assert_not_called()
         MockClient.assert_not_called()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     @patch("builtins.input", return_value="n")
     def test_ssh_open_aborts_without_yes(
@@ -3173,7 +3174,7 @@ class TestSshOpenCommand:
 class TestSshCloseCommand:
     """Tests for cmd_ssh_close() — close temporary SSH access."""
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_close_removes_policy_and_deletes(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3226,7 +3227,7 @@ class TestSshCloseCommand:
         # Should delete the SSH policy
         mock_client.delete_policy.assert_called_once_with(42, 777)
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_close_no_policy_found(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3253,7 +3254,7 @@ class TestSshCloseCommand:
         mock_client.set_firewall.assert_not_called()
         mock_client.delete_policy.assert_not_called()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_close_policy_exists_but_not_assigned(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3294,7 +3295,7 @@ class TestSshCloseCommand:
         # Should still delete the orphaned policy
         mock_client.delete_policy.assert_called_once_with(42, 777)
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_close_creates_backup_first(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3340,7 +3341,7 @@ class TestSshCloseCommand:
         backup_files = list(tmp_path.glob("*.json"))
         assert len(backup_files) >= 1
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_ssh_close_with_di_skips_auth_setup(
         self, MockAuth: MagicMock, MockClient: MagicMock, tmp_path: Any
@@ -3518,7 +3519,7 @@ class TestScpApiClientOpenapi:
 class TestAuthenticateNoUser:
     """Test _authenticate_and_setup_no_user() helper."""
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_creates_auth_and_client_when_none(
         self, MockAuth: MagicMock, MockClient: MagicMock
@@ -3611,7 +3612,7 @@ class TestOpenApiDownloadCommand:
 
         mock_client.get_openapi_spec.assert_called_once()
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_download_auth_failure_no_file_created(
         self,
@@ -3675,7 +3676,7 @@ class TestOpenApiMcpCommand:
         assert output == mcp_response
         mock_client.post_openapi_mcp.assert_called_once_with("list available tools")
 
-    @patch("netcup_firewall.ScpApiClient")
+    @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
     def test_mcp_auth_failure(self, MockAuth: MagicMock, MockClient: MagicMock) -> None:
         """Auth failure exits with code 1."""
@@ -4084,3 +4085,115 @@ class TestScpApi:
         api.delete_policy(456, 42)  # must not raise
 
         mock_sync.assert_called_once_with(456, 42, client=api._client)
+
+    # --- Cycle 5.1: get_openapi_spec ---
+
+    @patch("scp_client.api.miscellaneous.get_api_v1_openapi.sync")
+    def test_get_openapi_spec_success(self, mock_sync: MagicMock) -> None:
+        """get_openapi_spec returns the OpenAPI spec dict from the generated client."""
+        from scp_client.models.get_api_v1_openapi_response_200 import (
+            GetApiV1OpenapiResponse200,
+        )
+
+        spec_model = GetApiV1OpenapiResponse200()
+        spec_model["openapi"] = "3.0.3"
+        spec_model["info"] = {"title": "SCP API"}
+        mock_sync.return_value = spec_model
+
+        api = ScpApi("test-token")
+        result = api.get_openapi_spec()
+
+        assert result == {"openapi": "3.0.3", "info": {"title": "SCP API"}}
+        mock_sync.assert_called_once_with(client=api._client)
+
+    # --- Cycle 5.2: post_openapi_mcp ---
+
+    @patch("scp_client.api.miscellaneous.post_api_v1_openapi_mcp.sync")
+    def test_post_openapi_mcp_success(self, mock_sync: MagicMock) -> None:
+        """post_openapi_mcp returns the MCP response dict (no 5xx retry)."""
+        from scp_client.models.post_api_v1_openapi_mcp_response_200 import (
+            PostApiV1OpenapiMcpResponse200,
+        )
+
+        mcp_model = PostApiV1OpenapiMcpResponse200()
+        mcp_model["tools"] = ["firewall"]
+        mock_sync.return_value = mcp_model
+
+        api = ScpApi("test-token")
+        result = api.post_openapi_mcp("list tools")
+
+        assert result == {"tools": ["firewall"]}
+        mock_sync.assert_called_once_with(client=api._client)
+
+
+class TestAuthenticateAndSetup:
+    """Tests for the _authenticate_and_setup() helper."""
+
+    @patch("netcup_firewall.ScpApi")
+    @patch("netcup_firewall.ScpAuth")
+    def test_creates_auth_client_user_when_none(
+        self, MockAuth: MagicMock, MockClient: MagicMock
+    ) -> None:
+        """Creates fresh auth, client, and user_id when all are None."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "test-token"
+        mock_auth.get_user_id.return_value = 42
+
+        auth, client, user_id = _authenticate_and_setup(None, None, None)
+
+        MockAuth.assert_called_once_with(use_keyring=False)
+        mock_auth.get_access_token.assert_called_once()
+        mock_auth.get_user_id.assert_called_once_with("test-token")
+        assert auth is mock_auth
+        assert client is MockClient.return_value
+        assert user_id == 42
+
+    def test_returns_provided_values(self) -> None:
+        """Returns existing auth, client, and user_id unchanged when all provided."""
+        mock_auth = MagicMock(spec=ScpAuth)
+        mock_client = MagicMock(spec=ScpApiClient)
+
+        auth, client, user_id = _authenticate_and_setup(mock_auth, mock_client, 99)
+
+        assert auth is mock_auth
+        assert client is mock_client
+        assert user_id == 99
+        mock_auth.get_access_token.assert_not_called()
+
+    # --- Cycle 6.1: _authenticate_and_setup creates ScpApi ---
+
+    @patch("netcup_firewall.ScpApi")
+    @patch("netcup_firewall.ScpAuth")
+    def test_creates_scpapi_instance_when_none(
+        self, MockAuth: MagicMock, MockScpApi: MagicMock
+    ) -> None:
+        """Creates ScpApi (not ScpApiClient) when auth/client/user_id are None."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "access-tok"
+        mock_auth.get_user_id.return_value = 77
+
+        auth, client, user_id = _authenticate_and_setup(None, None, None)
+
+        MockScpApi.assert_called_once_with("access-tok")
+        assert client is MockScpApi.return_value
+        assert user_id == 77
+
+
+class TestAuthenticateNoUserScpApi:
+    """Test _authenticate_and_setup_no_user() returns ScpApi."""
+
+    # --- Cycle 6.2: _authenticate_and_setup_no_user creates ScpApi ---
+
+    @patch("netcup_firewall.ScpApi")
+    @patch("netcup_firewall.ScpAuth")
+    def test_creates_scpapi_instance_when_none(
+        self, MockAuth: MagicMock, MockScpApi: MagicMock
+    ) -> None:
+        """Creates ScpApi (not ScpApiClient) when auth/client are None."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "access-tok"
+
+        auth, client = _authenticate_and_setup_no_user(None, None)
+
+        MockScpApi.assert_called_once_with("access-tok")
+        assert client is MockScpApi.return_value
