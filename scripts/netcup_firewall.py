@@ -40,7 +40,7 @@ import httpx
 import requests
 from scp_client.client import AuthenticatedClient
 from scp_client.errors import UnexpectedStatus
-from scp_client.types import Unset
+from scp_client.types import UNSET, Unset
 
 try:
     import secretstorage
@@ -388,7 +388,7 @@ class ScpApi:
             except UnexpectedStatus as exc:
                 if exc.status_code < 500 or attempt == 3:
                     raise
-                time.sleep(attempt)  # 0s, 1s, 2s backoff
+                time.sleep(attempt + 1)  # 1s, 2s, 3s backoff
         raise RuntimeError("unreachable")  # satisfy mypy
 
     @staticmethod
@@ -406,7 +406,7 @@ class ScpApi:
             return result
         if hasattr(result, "to_dict"):
             return result.to_dict()  # type: ignore[no-any-return]
-        return dict(result)
+        raise TypeError(f"Unexpected API result type: {type(result).__name__}")
 
     def find_server(self, name: str) -> int:
         """Find a server by name and return its numeric ID.
@@ -631,7 +631,6 @@ class ScpApi:
         from scp_client.models.firewall_protocol import FirewallProtocol
         from scp_client.models.firewall_rule import FirewallRule
         from scp_client.models.firewall_rule_direction import FirewallRuleDirection
-        from scp_client.types import UNSET
 
         sources: list[str] | Unset = UNSET
         if "sourceIp" in rule and rule["sourceIp"]:
@@ -678,7 +677,6 @@ class ScpApi:
             post_api_v_1_users_user_id_firewall_policies,
         )
         from scp_client.models.firewall_policy_save import FirewallPolicySave
-        from scp_client.types import UNSET
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
         body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules else UNSET)
@@ -716,7 +714,6 @@ class ScpApi:
             put_api_v_1_users_user_id_firewall_policies_id,
         )
         from scp_client.models.firewall_policy_save import FirewallPolicySave
-        from scp_client.types import UNSET
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
         body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules else UNSET)
@@ -771,16 +768,16 @@ class ScpApi:
             raise ValueError("Failed to get OpenAPI spec")
         return self._result_to_dict(result)
 
-    def post_openapi_mcp(self, message: str) -> dict[str, Any]:  # noqa: ARG002
-        """Send a request to the OpenAPI MCP endpoint.
+    def post_openapi_mcp(self, message: str) -> dict[str, Any]:
+        """Send a message to the OpenAPI MCP endpoint.
 
-        Note: POST is not idempotent — no 5xx retry.
+        Note: The generated client does not accept a request body for this
+        endpoint, so the message parameter is accepted for interface
+        consistency but not forwarded to the API.
 
         Args:
             message: The message to send to the MCP endpoint.
-                     The generated client does not accept a request body,
-                     so this parameter is accepted for interface consistency
-                     but not forwarded.
+                     Not forwarded — the generated client has no body argument.
 
         Returns:
             The MCP endpoint response as a plain dict.
@@ -788,8 +785,14 @@ class ScpApi:
         Raises:
             ValueError: If the API returns no response.
         """
+        if message:
+            logger.warning(
+                "The MCP endpoint does not accept a request body; "
+                "'--message' value was not forwarded."
+            )
         from scp_client.api.miscellaneous import post_api_v1_openapi_mcp
 
+        # POST — no retry (not idempotent)
         result = post_api_v1_openapi_mcp.sync(client=self._client)
         if result is None:
             raise ValueError("Failed to post to OpenAPI MCP endpoint")

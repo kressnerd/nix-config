@@ -3439,6 +3439,10 @@ class TestScpApi:
 
         assert result == "ok"
         assert call_count == 3
+        # Two failures → sleep called with 1 then 2 (attempt+1)
+        assert mock_sleep.call_count == 2
+        mock_sleep.assert_any_call(1)
+        mock_sleep.assert_any_call(2)
 
     @patch("netcup_firewall.time.sleep")
     def test_retry_on_5xx_raises_after_max_retries(self, mock_sleep: MagicMock) -> None:
@@ -3839,6 +3843,138 @@ class TestScpApi:
 
         assert result == {"tools": ["firewall"]}
         mock_sync.assert_called_once_with(client=api._client)
+
+    # --- F-004 negative-path tests ---
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".get_api_v_1_servers_server_id_interfaces_mac_firewall.sync"
+    )
+    def test_get_firewall_none_raises(self, mock_sync: MagicMock) -> None:
+        """get_firewall raises ValueError when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError):
+            api.get_firewall(1, "aa:bb:cc:dd:ee:ff")
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".put_api_v_1_servers_server_id_interfaces_mac_firewall.sync"
+    )
+    def test_set_firewall_none_raises(self, mock_sync: MagicMock) -> None:
+        """set_firewall raises ValueError when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError):
+            api.set_firewall(1, "aa:bb:cc:dd:ee:ff", [42])
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".put_api_v_1_servers_server_id_interfaces_mac_firewall.sync"
+    )
+    def test_set_firewall_unset_uuid_raises(self, mock_sync: MagicMock) -> None:
+        """set_firewall raises ValueError when the task UUID is Unset."""
+        from scp_client.types import UNSET
+
+        mock_task = MagicMock()
+        mock_task.uuid = UNSET
+        mock_sync.return_value = mock_task
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="UUID missing"):
+            api.set_firewall(1, "aa:bb:cc:dd:ee:ff", [42])
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".post_api_v_1_users_user_id_firewall_policies.sync"
+    )
+    def test_create_policy_none_raises(self, mock_sync: MagicMock) -> None:
+        """create_policy raises ValueError when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="Failed to create policy"):
+            api.create_policy(123, "test-policy", [])
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".put_api_v_1_users_user_id_firewall_policies_id.sync"
+    )
+    def test_update_policy_none_raises(self, mock_sync: MagicMock) -> None:
+        """update_policy raises ValueError when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="Failed to update policy"):
+            api.update_policy(123, 42, "test-policy", [])
+
+    @patch("scp_client.api.miscellaneous.get_api_v1_openapi.sync")
+    def test_get_openapi_spec_none_raises(self, mock_sync: MagicMock) -> None:
+        """get_openapi_spec raises ValueError when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="Failed to get OpenAPI spec"):
+            api.get_openapi_spec()
+
+    @patch("scp_client.api.miscellaneous.post_api_v1_openapi_mcp.sync")
+    def test_post_openapi_mcp_none_raises(self, mock_sync: MagicMock) -> None:
+        """post_openapi_mcp raises ValueError when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        with pytest.raises(ValueError, match="Failed to post"):
+            api.post_openapi_mcp("")
+
+    @patch(
+        "scp_client.api.server_networking.get_api_v_1_servers_server_id_interfaces.sync"
+    )
+    def test_get_interfaces_non_list_returns_empty(self, mock_sync: MagicMock) -> None:
+        """get_interfaces returns [] when the API returns a non-list (e.g. None)."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        result = api.get_interfaces(42)
+
+        assert result == []
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".get_api_v_1_users_user_id_firewall_policies.sync"
+    )
+    def test_list_policies_none_returns_empty(self, mock_sync: MagicMock) -> None:
+        """list_policies returns [] when the API returns None."""
+        mock_sync.return_value = None
+
+        api = ScpApi("test-token")
+        result = api.list_policies(123)
+
+        assert result == []
+
+    # --- F-006: warning test ---
+
+    @patch("scp_client.api.miscellaneous.post_api_v1_openapi_mcp.sync")
+    def test_post_openapi_mcp_warns_on_message(
+        self, mock_sync: MagicMock, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """post_openapi_mcp emits a warning when a non-empty message is passed."""
+        from scp_client.models.post_api_v1_openapi_mcp_response_200 import (
+            PostApiV1OpenapiMcpResponse200,
+        )
+
+        mcp_model = PostApiV1OpenapiMcpResponse200()
+        mcp_model["tools"] = []
+        mock_sync.return_value = mcp_model
+
+        api = ScpApi("test-token")
+        with caplog.at_level(logging.WARNING, logger="netcup_firewall"):
+            api.post_openapi_mcp("hello")
+
+        assert any(
+            "not accept a request body" in record.message for record in caplog.records
+        )
 
 
 class TestAuthenticateAndSetup:
