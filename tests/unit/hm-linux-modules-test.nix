@@ -15,8 +15,9 @@ let
   impermanenceDirs = impermanenceModule.home.persistence."/persist".directories;
   impermanenceFiles = impermanenceModule.home.persistence."/persist".files;
 
-  # gnome-keyring.nix — signature is `_:`, call with empty attrset
-  gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix { };
+  # gnome-keyring.nix — signature is `{ pkgs, ... }:`, pass pkgs for libsecret
+  gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix { inherit pkgs; };
+  gnomeKeyringPkgNames = builtins.map (p: p.pname or p.name or "") gnomeKeyringModule.home.packages;
 
   # fonts.nix — signature is `{ pkgs, ... }:`
   fontsModule = import ../../home/dan/features/linux/fonts.nix { inherit pkgs; };
@@ -443,6 +444,11 @@ lib.debug.runTests {
   testGnomeKeyringComponents = {
     expr = gnomeKeyringModule.services.gnome-keyring.components;
     expected = [ "secrets" ];
+  };
+
+  testGnomeKeyringHasLibsecret = {
+    expr = builtins.elem "libsecret" gnomeKeyringPkgNames;
+    expected = true;
   };
 
   # ── fonts ─────────────────────────────────────────────────────────────────

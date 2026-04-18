@@ -24,14 +24,18 @@ function loadFromKeyring() {
       timeout: 5000,
     }).trim();
     if (!raw) {
-      console.warn('[httpyac] gnome-keyring: no entry found for netcup-scp');
+      console.warn('[httpyac] gnome-keyring: no entry found for netcup-scp — run device auth flow first (requests 1+2).');
       _cachedCredentials = {};
       return _cachedCredentials;
     }
     _cachedCredentials = JSON.parse(raw);
     return _cachedCredentials;
   } catch (e) {
-    console.warn('[httpyac] gnome-keyring lookup failed:', e.message);
+    if (e.message && e.message.includes('not found')) {
+      console.error('[httpyac] secret-tool not found — install libsecret (pkgs.libsecret) and rebuild home-manager.');
+    } else {
+      console.warn('[httpyac] gnome-keyring lookup failed:', e.message);
+    }
     _cachedCredentials = {};
     return _cachedCredentials;
   }
