@@ -1002,7 +1002,7 @@ class ScpApi:
             return result
         if hasattr(result, "to_dict"):
             return result.to_dict()
-        return dict(result)  # type: ignore[arg-type]
+        return dict(result)  # type: ignore[call-overload, no-any-return]
 
     def post_openapi_mcp(self, message: str) -> dict[str, Any]:  # noqa: ARG002
         """Send a request to the OpenAPI MCP endpoint.
@@ -1030,7 +1030,7 @@ class ScpApi:
             return result
         if hasattr(result, "to_dict"):
             return result.to_dict()
-        return dict(result)  # type: ignore[arg-type]
+        return dict(result)  # type: ignore[call-overload, no-any-return]
 
 
 def _authenticate_and_setup(
@@ -1089,7 +1089,7 @@ def _authenticate_and_setup_no_user(
 
 
 def _gather_interface_firewall_state(
-    client: ScpApiClient,
+    client: ScpApi,
     server_id: int,
     interfaces: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
@@ -1242,7 +1242,7 @@ def validate_policy_schema(policy: dict[str, Any]) -> None:
 
 
 def _find_policy_by_name(
-    client: ScpApiClient, user_id: int, name: str
+    client: ScpApi, user_id: int, name: str
 ) -> dict[str, Any] | None:
     """Find a firewall policy by name, returning the first match or None.
 
@@ -1304,11 +1304,11 @@ def cmd_server_firewall_get(
     args: argparse.Namespace,
     *,
     auth: "ScpAuth | None" = None,
-    client: "ScpApiClient | None" = None,
+    client: "ScpApi | None" = None,
 ) -> None:
     """Get firewall state for a server interface."""
     # Server commands use _authenticate_and_setup_no_user (no user_id needed)
-    _client: ScpApiClient
+    _client: ScpApi
     if client is not None:
         _client = client
     else:
@@ -1339,11 +1339,11 @@ def cmd_server_firewall_set(
     args: argparse.Namespace,
     *,
     auth: "ScpAuth | None" = None,
-    client: "ScpApiClient | None" = None,
+    client: "ScpApi | None" = None,
 ) -> None:
     """Set firewall policies for a server interface."""
     # Server commands use _authenticate_and_setup_no_user (no user_id needed)
-    _client: ScpApiClient
+    _client: ScpApi
     if client is not None:
         _client = client
     else:
@@ -1385,7 +1385,7 @@ def cmd_policy_list(
     args: argparse.Namespace,
     *,
     auth: "ScpAuth | None" = None,
-    client: "ScpApiClient | None" = None,
+    client: "ScpApi | None" = None,
     user_id: int | None = None,
 ) -> None:
     """List all user firewall policies."""
@@ -1412,7 +1412,7 @@ def cmd_policy_create(
     args: argparse.Namespace,
     *,
     auth: "ScpAuth | None" = None,
-    client: "ScpApiClient | None" = None,
+    client: "ScpApi | None" = None,
     user_id: int | None = None,
 ) -> None:
     """Create a new user firewall policy."""
@@ -1442,7 +1442,7 @@ def cmd_policy_update(
     args: argparse.Namespace,
     *,
     auth: "ScpAuth | None" = None,
-    client: "ScpApiClient | None" = None,
+    client: "ScpApi | None" = None,
     user_id: int | None = None,
 ) -> None:
     """Update an existing user firewall policy."""
@@ -1479,7 +1479,7 @@ def cmd_policy_delete(
     args: argparse.Namespace,
     *,
     auth: "ScpAuth | None" = None,
-    client: "ScpApiClient | None" = None,
+    client: "ScpApi | None" = None,
     user_id: int | None = None,
 ) -> None:
     """Delete a user firewall policy."""
@@ -1510,9 +1510,7 @@ def cmd_policy_delete(
     print(f"Deleted policy '{args.name}' (ID {policy_id})")
 
 
-def _get_current_policy_ids(
-    client: ScpApiClient, server_id: int, mac: str
-) -> list[int]:
+def _get_current_policy_ids(client: ScpApi, server_id: int, mac: str) -> list[int]:
     """Read current userPolicies IDs assigned to a server interface.
 
     Args:
@@ -1528,7 +1526,7 @@ def _get_current_policy_ids(
 
 
 def _find_or_create_lockdown_policy(
-    client: ScpApiClient,
+    client: ScpApi,
     user_id: int,
     server_name: str,
 ) -> dict[str, Any]:
@@ -1561,7 +1559,7 @@ def _find_or_create_lockdown_policy(
 
 
 def _find_or_create_ssh_policy(
-    client: ScpApiClient,
+    client: ScpApi,
     user_id: int,
     server_name: str,
     source_cidr: str,
@@ -1609,7 +1607,7 @@ def _find_or_create_ssh_policy(
 
 
 def _apply_lockdown_to_interfaces(
-    client: ScpApiClient,
+    client: ScpApi,
     server_id: int,
     interfaces: list[dict[str, Any]],
     lockdown_policy: dict[str, Any],
@@ -1710,7 +1708,7 @@ def _validate_backup_structure(backup: dict[str, Any], server_name: str) -> None
 
 
 def _restore_policies(
-    client: ScpApiClient,
+    client: ScpApi,
     user_id: int,
     policies: list[dict[str, Any]],
     existing_policies: list[dict[str, Any]],
@@ -1751,7 +1749,7 @@ def _restore_policies(
 
 
 def _reassign_firewall_interfaces(
-    client: ScpApiClient,
+    client: ScpApi,
     server_id: int,
     interfaces_backup: list[dict[str, Any]],
     id_map: dict[int, int],
@@ -1779,7 +1777,7 @@ def cmd_openapi_download(
     args: argparse.Namespace,
     *,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
 ) -> None:
     """Download the SCP OpenAPI specification."""
     auth, client = _authenticate_and_setup_no_user(
@@ -1799,7 +1797,7 @@ def cmd_openapi_mcp(
     args: argparse.Namespace,
     *,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
 ) -> None:
     """Send a message to the SCP OpenAPI MCP endpoint."""
     auth, client = _authenticate_and_setup_no_user(
@@ -1813,7 +1811,7 @@ def cmd_backup(
     args: argparse.Namespace,
     backup_dir: str | None = None,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> str:
     """Export current firewall state to a JSON backup file.
@@ -1823,7 +1821,7 @@ def cmd_backup(
         backup_dir: Directory for backup files. Defaults to
             ~/.local/share/netcup-scp/backups.
         auth: ScpAuth instance. Created internally if not provided.
-        client: ScpApiClient instance. Created internally if not provided.
+        client: ScpApi instance. Created internally if not provided.
         user_id: SCP user ID. Fetched internally if not provided.
 
     Returns:
@@ -1856,7 +1854,7 @@ def cmd_backup(
 def cmd_lockdown(
     args: argparse.Namespace,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> None:
     """Kill switch: block ALL traffic via an empty firewall policy.
@@ -1864,7 +1862,7 @@ def cmd_lockdown(
     Args:
         args: Parsed CLI arguments (requires args.server, args.yes).
         auth: ScpAuth instance. Created internally if not provided.
-        client: ScpApiClient instance. Created internally if not provided.
+        client: ScpApi instance. Created internally if not provided.
         user_id: SCP user ID. Fetched internally if not provided.
     """
     # Uses input() inline with logger.error + sys.exit — differs from _confirm_or_abort
@@ -1906,7 +1904,7 @@ def cmd_lockdown(
 def cmd_restore(
     args: argparse.Namespace,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> None:
     """Restore firewall state from a backup JSON file.
@@ -1914,7 +1912,7 @@ def cmd_restore(
     Args:
         args: Parsed CLI arguments (requires args.server, args.file).
         auth: ScpAuth instance. Created internally if not provided.
-        client: ScpApiClient instance. Created internally if not provided.
+        client: ScpApi instance. Created internally if not provided.
         user_id: SCP user ID. Fetched internally if not provided.
 
     Raises:
@@ -1959,7 +1957,7 @@ def cmd_ssh_open(
     *,
     backup_dir: str | None = None,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> None:
     """Open temporary SSH access from a specific source IP.
@@ -1970,7 +1968,7 @@ def cmd_ssh_open(
         backup_dir: Directory for the auto-backup file. Defaults to
             ~/.local/share/netcup-scp/backups.
         auth: ScpAuth instance. Created internally if not provided.
-        client: ScpApiClient instance. Created internally if not provided.
+        client: ScpApi instance. Created internally if not provided.
         user_id: SCP user ID. Fetched internally if not provided.
 
     Raises:
@@ -2040,7 +2038,7 @@ def cmd_ssh_close(
     *,
     backup_dir: str | None = None,
     auth: ScpAuth | None = None,
-    client: ScpApiClient | None = None,
+    client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> None:
     """Close temporary SSH access and delete the policy.
@@ -2050,7 +2048,7 @@ def cmd_ssh_close(
         backup_dir: Directory for the auto-backup file. Defaults to
             ~/.local/share/netcup-scp/backups.
         auth: ScpAuth instance. Created internally if not provided.
-        client: ScpApiClient instance. Created internally if not provided.
+        client: ScpApi instance. Created internally if not provided.
         user_id: SCP user ID. Fetched internally if not provided.
     """
     use_keyring = getattr(args, "keyring", False)
