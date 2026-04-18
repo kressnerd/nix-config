@@ -984,13 +984,61 @@ class ScpApi:
             client=self._client,
         )
 
+    def get_openapi_spec(self) -> dict[str, Any]:
+        """Download the full OpenAPI specification.
+
+        Returns:
+            The OpenAPI spec as a plain dict.
+
+        Raises:
+            ValueError: If the API returns no response.
+        """
+        from scp_client.api.miscellaneous import get_api_v1_openapi
+
+        result = self._retry_on_5xx(get_api_v1_openapi.sync, client=self._client)
+        if result is None:
+            raise ValueError("Failed to get OpenAPI spec")
+        if isinstance(result, dict):
+            return result
+        if hasattr(result, "to_dict"):
+            return result.to_dict()
+        return dict(result)  # type: ignore[arg-type]
+
+    def post_openapi_mcp(self, message: str) -> dict[str, Any]:  # noqa: ARG002
+        """Send a request to the OpenAPI MCP endpoint.
+
+        Note: POST is not idempotent — no 5xx retry.
+
+        Args:
+            message: The message to send to the MCP endpoint.
+                     The generated client does not accept a request body,
+                     so this parameter is accepted for interface consistency
+                     but not forwarded.
+
+        Returns:
+            The MCP endpoint response as a plain dict.
+
+        Raises:
+            ValueError: If the API returns no response.
+        """
+        from scp_client.api.miscellaneous import post_api_v1_openapi_mcp
+
+        result = post_api_v1_openapi_mcp.sync(client=self._client)
+        if result is None:
+            raise ValueError("Failed to post to OpenAPI MCP endpoint")
+        if isinstance(result, dict):
+            return result
+        if hasattr(result, "to_dict"):
+            return result.to_dict()
+        return dict(result)  # type: ignore[arg-type]
+
 
 def _authenticate_and_setup(
     auth: ScpAuth | None,
-    client: ScpApiClient | None,
+    client: ScpApi | None,
     user_id: int | None,
     use_keyring: bool = False,
-) -> tuple[ScpAuth, ScpApiClient, int]:
+) -> tuple[ScpAuth, ScpApi, int]:
     """Authenticate with SCP and return a ready-to-use auth, client, and user ID.
 
     When all three arguments are already provided, they are returned unchanged.
@@ -998,7 +1046,7 @@ def _authenticate_and_setup(
 
     Args:
         auth: Existing ScpAuth instance, or None to create one.
-        client: Existing ScpApiClient instance, or None to create one.
+        client: Existing ScpApi instance, or None to create one.
         user_id: Known SCP user ID, or None to fetch from the userinfo endpoint.
         use_keyring: Pass to ScpAuth when creating a new instance.
 
@@ -1009,16 +1057,16 @@ def _authenticate_and_setup(
         _auth = ScpAuth(use_keyring=use_keyring)
         access_token = _auth.get_access_token()
         _user_id = _auth.get_user_id(access_token)
-        _client = ScpApiClient(access_token)
+        _client = ScpApi(access_token)
         return _auth, _client, _user_id
     return auth, client, user_id
 
 
 def _authenticate_and_setup_no_user(
     auth: ScpAuth | None,
-    client: ScpApiClient | None,
+    client: ScpApi | None,
     use_keyring: bool = False,
-) -> tuple[ScpAuth, ScpApiClient]:
+) -> tuple[ScpAuth, ScpApi]:
     """Authenticate and create API client without resolving user ID.
 
     Use for commands that do not need user-specific API endpoints.
@@ -1026,7 +1074,7 @@ def _authenticate_and_setup_no_user(
 
     Args:
         auth: Existing ScpAuth instance, or None to create one.
-        client: Existing ScpApiClient instance, or None to create one.
+        client: Existing ScpApi instance, or None to create one.
         use_keyring: Pass to ScpAuth when creating a new instance.
 
     Returns:
@@ -1035,7 +1083,7 @@ def _authenticate_and_setup_no_user(
     if auth is None or client is None:
         _auth = ScpAuth(use_keyring=use_keyring)
         access_token = _auth.get_access_token()
-        _client = ScpApiClient(access_token)
+        _client = ScpApi(access_token)
         return _auth, _client
     return auth, client
 
