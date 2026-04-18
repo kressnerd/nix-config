@@ -1,8 +1,8 @@
 """Tests for the netcup-firewall CLI tool.
 
-Covers argument parsing, OIDC authentication (ScpAuth), REST API client
-(ScpApiClient), all command handlers (backup, lockdown, restore, apply),
-and keyring credential storage via the Secret Service API.
+Covers argument parsing, OIDC authentication (ScpAuth), REST API adapter
+(ScpApi), all command handlers (backup, lockdown, restore, ssh-open,
+ssh-close), and keyring credential storage via the Secret Service API.
 External HTTP calls are fully mocked — no real network access is made.
 """
 
@@ -21,7 +21,6 @@ import requests
 
 from netcup_firewall import (
     ScpApi,
-    ScpApiClient,
     ScpAuth,
     _authenticate_and_setup,
     _authenticate_and_setup_no_user,
@@ -29,7 +28,6 @@ from netcup_firewall import (
     _convert_keys_to_snake_case,
     _find_or_create_ssh_policy,
     _get_current_policy_ids,
-    cmd_apply,
     cmd_backup,
     cmd_lockdown,
     cmd_openapi_download,
@@ -85,18 +83,6 @@ class TestArgParsing:
         assert args.command == "restore"
         assert args.server == "cupix001"
         assert args.file == "/tmp/backup.json"
-
-    def test_apply_subcommand(self) -> None:
-        """apply subcommand requires --server and --policy."""
-        args = parse_args(["apply", "--server", "cupix001", "--policy", "bootstrap"])
-        assert args.command == "apply"
-        assert args.server == "cupix001"
-        assert args.policy == "bootstrap"
-
-    def test_apply_policy_choices(self) -> None:
-        """apply --policy only accepts bootstrap or production."""
-        with pytest.raises(SystemExit):
-            parse_args(["apply", "--server", "cupix001", "--policy", "invalid"])
 
     @pytest.mark.parametrize(
         "argv",
@@ -1294,220 +1280,6 @@ class TestScpAuth:
         auth.save_credentials.assert_called_once()
 
 
-class TestScpApiClient:
-    """Test SCP REST API client."""
-
-    def test_find_server(self) -> None:
-        """find_server returns server ID by name."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = [{"id": 12345, "name": "cupix001"}]
-            mock_get.return_value = mock_resp
-            result = client.find_server("cupix001")
-        assert result == 12345
-
-    def test_find_server_not_found(self) -> None:
-        """find_server raises ValueError when server not found."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = []
-            mock_get.return_value = mock_resp
-            with pytest.raises(ValueError, match="not found"):
-                client.find_server("nonexistent")
-
-    def test_get_interfaces(self) -> None:
-        """get_interfaces returns list of interface dicts."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = [
-                {"mac": "aa:bb:cc:dd:ee:ff", "type": "public"}
-            ]
-            mock_get.return_value = mock_resp
-            result = client.get_interfaces(12345)
-        assert len(result) == 1
-        assert result[0]["mac"] == "aa:bb:cc:dd:ee:ff"
-
-    def test_get_firewall(self) -> None:
-        """get_firewall returns firewall state dict."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {
-                "userPolicies": [1],
-                "copiedPolicies": [],
-                "ingressImplicitRule": "DROP",
-                "egressImplicitRule": "DROP",
-                "consistent": True,
-                "active": True,
-            }
-            mock_get.return_value = mock_resp
-            result = client.get_firewall(12345, "aa:bb:cc:dd:ee:ff")
-        assert result["active"] is True
-        assert result["ingressImplicitRule"] == "DROP"
-
-    def test_set_firewall(self) -> None:
-        """set_firewall PUTs ServerFirewallSave payload and returns task UUID."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client, "_put") as mock_put:
-            mock_resp = MagicMock()
-            mock_resp.json.return_value = {"uuid": "task-uuid-123"}
-            mock_put.return_value = mock_resp
-            result = client.set_firewall(12345, "aa:bb:cc:dd:ee:ff", [99])
-        assert result == "task-uuid-123"
-        mock_put.assert_called_once_with(
-            "/servers/12345/interfaces/aa:bb:cc:dd:ee:ff/firewall",
-            {"userPolicies": [{"id": 99}], "copiedPolicies": []},
-        )
-
-    def test_set_firewall_sends_server_firewall_save_format(self) -> None:
-        """set_firewall builds ServerFirewallSave payload with IdentifierInt wrapping."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client, "_put") as mock_put:
-            mock_resp = MagicMock()
-            mock_resp.json.return_value = {"uuid": "task-uuid-123"}
-            mock_put.return_value = mock_resp
-            client.set_firewall(
-                server_id=123, mac="aa:bb:cc:dd:ee:ff", policy_ids=[42, 99]
-            )
-        mock_put.assert_called_once_with(
-            "/servers/123/interfaces/aa:bb:cc:dd:ee:ff/firewall",
-            {
-                "userPolicies": [{"id": 42}, {"id": 99}],
-                "copiedPolicies": [],
-            },
-        )
-
-    def test_list_policies(self) -> None:
-        """list_policies returns list of policy dicts."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = [
-                {"id": 1, "name": "my-policy", "rules": []},
-                {"id": 2, "name": "other-policy", "rules": []},
-            ]
-            mock_get.return_value = mock_resp
-            result = client.list_policies(42)
-        assert len(result) == 2
-
-    def test_get_policy(self) -> None:
-        """get_policy returns single policy dict."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_resp.json.return_value = {"id": 1, "name": "my-policy", "rules": []}
-            mock_get.return_value = mock_resp
-            result = client.get_policy(42, 1)
-        assert result["name"] == "my-policy"
-
-    def test_create_policy(self) -> None:
-        """create_policy POSTs and returns created policy."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "post") as mock_post:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 201
-            mock_resp.json.return_value = {"id": 99, "name": "lockdown", "rules": []}
-            mock_post.return_value = mock_resp
-            result = client.create_policy(42, "lockdown", [])
-        assert result["id"] == 99
-        assert result["name"] == "lockdown"
-
-    def test_delete_policy(self) -> None:
-        """delete_policy sends DELETE request."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "delete") as mock_delete:
-            mock_resp = MagicMock()
-            mock_resp.status_code = 200
-            mock_delete.return_value = mock_resp
-            client.delete_policy(42, 99)
-        mock_delete.assert_called_once()
-
-    @patch("time.sleep")
-    def test_wait_for_task_success(self, mock_sleep: MagicMock) -> None:
-        """wait_for_task polls until COMPLETED."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            running_resp = MagicMock()
-            running_resp.status_code = 200
-            running_resp.json.return_value = {"status": "RUNNING"}
-            completed_resp = MagicMock()
-            completed_resp.status_code = 200
-            completed_resp.json.return_value = {"status": "COMPLETED"}
-            mock_get.side_effect = [running_resp, completed_resp]
-            client.wait_for_task("task-uuid-123")
-
-    @patch("time.sleep")
-    def test_wait_for_task_timeout(self, mock_sleep: MagicMock) -> None:
-        """wait_for_task raises TimeoutError after max polls."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            running_resp = MagicMock()
-            running_resp.status_code = 200
-            running_resp.json.return_value = {"status": "RUNNING"}
-            mock_get.return_value = running_resp
-            with pytest.raises(TimeoutError):
-                client.wait_for_task("task-uuid-123", max_polls=3, interval=0)
-
-    def test_update_policy_success(self) -> None:
-        """update_policy sends PUT and returns response dict."""
-        client = ScpApiClient(access_token="test-token")
-        mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "id": 123,
-            "name": "updated-policy",
-            "rules": [
-                {
-                    "direction": "INGRESS",
-                    "protocol": "TCP",
-                    "sourceIp": "0.0.0.0/0",
-                    "destinationPort": "443",
-                    "action": "ACCEPT",
-                }
-            ],
-        }
-        mock_resp.raise_for_status = MagicMock()
-        with patch.object(client._session, "put", return_value=mock_resp) as mock_put:
-            result = client.update_policy(
-                user_id=42,
-                policy_id=123,
-                name="updated-policy",
-                rules=[
-                    {
-                        "direction": "INGRESS",
-                        "protocol": "TCP",
-                        "sourceIp": "0.0.0.0/0",
-                        "destinationPort": "443",
-                        "action": "ACCEPT",
-                    }
-                ],
-            )
-        mock_put.assert_called_once()
-        call_url = mock_put.call_args[0][0]
-        assert "/users/42/firewall-policies/123" in call_url
-        call_json = mock_put.call_args[1]["json"]
-        assert call_json["name"] == "updated-policy"
-        assert len(call_json["rules"]) == 1
-        assert result == mock_resp.json.return_value
-
-    def test_update_policy_http_error(self) -> None:
-        """update_policy propagates HTTP errors from the API."""
-        client = ScpApiClient(access_token="test-token")
-        mock_resp = MagicMock()
-        mock_resp.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
-        with patch.object(client._session, "put", return_value=mock_resp):
-            with pytest.raises(requests.HTTPError, match="404 Not Found"):
-                client.update_policy(user_id=42, policy_id=999, name="x", rules=[])
-
-
 class TestBackupCommand:
     """Test backup subcommand."""
 
@@ -2275,18 +2047,6 @@ class TestRestoreCommand:
         injected_client.find_server.assert_called_once_with("cupix001")
 
 
-class TestApplyCommand:
-    """Test apply subcommand."""
-
-    def test_apply_exits_not_implemented(self) -> None:
-        """apply command exits with code 1 (not yet implemented)."""
-        args = argparse.Namespace(
-            server="cupix001", policy="bootstrap", command="apply"
-        )
-        with pytest.raises(SystemExit) as exc_info:
-            cmd_apply(args)
-        assert exc_info.value.code == 1
-
 
 class TestCamelToSnake:
     """Tests for _camel_to_snake and _convert_keys_to_snake_case helpers."""
@@ -2387,18 +2147,6 @@ class TestErrorPaths:
         mock_post.return_value = error_resp
         with pytest.raises(RuntimeError, match="access_denied"):
             auth.poll_for_token("dc-123", interval=1, expires_in=600)
-
-    @patch("time.sleep")
-    def test_wait_for_task_failed(self, mock_sleep: MagicMock) -> None:
-        """wait_for_task raises RuntimeError when task fails."""
-        client = ScpApiClient("fake-token")
-        with patch.object(client._session, "get") as mock_get:
-            failed_resp = MagicMock()
-            failed_resp.status_code = 200
-            failed_resp.json.return_value = {"status": "FAILED"}
-            mock_get.return_value = failed_resp
-            with pytest.raises(RuntimeError, match="failed"):
-                client.wait_for_task("task-uuid")
 
     @patch("requests.post")
     def test_get_access_token_expired_refresh_falls_back(
@@ -3483,37 +3231,6 @@ class TestPolicyLoading:
         validate_policy_schema(result)
         assert result["name"] == "lockdown"
         assert result["rules"] == []
-
-
-class TestScpApiClientOpenapi:
-    """Test OpenAPI-related methods of ScpApiClient."""
-
-    def test_get_openapi_spec(self) -> None:
-        """get_openapi_spec returns parsed JSON from /openapi endpoint."""
-        client = ScpApiClient("fake-token")
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {"openapi": "3.0.3", "info": {"title": "SCP API"}}
-        with patch.object(client._session, "get", return_value=mock_resp) as mock_get:
-            result = client.get_openapi_spec()
-            assert result == {"openapi": "3.0.3", "info": {"title": "SCP API"}}
-            call_args = mock_get.call_args
-            assert "/openapi" in call_args[0][0]
-            assert "Authorization" in call_args[1]["headers"]
-
-    def test_post_openapi_mcp(self) -> None:
-        """post_openapi_mcp sends message to /openapi/mcp and returns parsed JSON."""
-        client = ScpApiClient("fake-token")
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = {"tools": ["firewall", "server"]}
-        with patch.object(client._session, "post", return_value=mock_resp) as mock_post:
-            result = client.post_openapi_mcp("list available tools")
-            assert result == {"tools": ["firewall", "server"]}
-            call_args = mock_post.call_args
-            assert "/openapi/mcp" in call_args[0][0]
-            assert "Authorization" in call_args[1]["headers"]
-            assert call_args[1]["json"] == {"message": "list available tools"}
 
 
 class TestAuthenticateNoUser:
