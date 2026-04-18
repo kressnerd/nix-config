@@ -52,6 +52,7 @@ The restructuring proceeds in four sequential phases:
 | 2 | Generated Python API client from the downloaded OpenAPI spec | ✅ Completed |
 | 3a | `server firewall` command group: get/set per-interface firewall state | ✅ Completed |
 | 3b | `policy` command group: full CRUD for user-owned firewall policies | ✅ Completed |
+| 4 | Generated client migration + legacy cleanup | ✅ Completed |
 
 **Out of Scope:**
 
@@ -301,5 +302,5 @@ The restructuring proceeds in four sequential phases:
 | Which OpenAPI client generator to use (`openapi-python-client` vs `datamodel-code-generator`)? | To be decided in Phase 2 kickoff | Dan |
 | Should the generated client be committed to git or regenerated from spec on each `nix build`? | Commit generated code (simpler devShell, avoids network dependency in Nix build) | Dan |
 | What is the stable `userId` resolution path — from `userinfo` endpoint or from stored credentials? | Resolve from `GET /api/v1/userinfo` at runtime using existing `ScpAuth.get_user_info()` | Dan |
-| Should deprecated commands (`backup`, `restore`, `lockdown`, `ssh-open`, `ssh-close`) be removed in this story or a follow-up? | Out of scope for this story; deprecate with warning in a follow-up | Dan |
+| Should deprecated commands (`backup`, `restore`, `lockdown`, `ssh-open`, `ssh-close`) be removed in this story or a follow-up? | Phase 4 migrated all commands to generated client; `cmd_apply` stub deleted. Legacy commands (backup, lockdown, restore, ssh-open, ssh-close) retained and migrated to ScpApi. | Dan |
 | Does the SCP `DELETE /firewall-policies/{id}` endpoint return 204 or 200? | To be verified against downloaded OpenAPI spec in Phase 1 | Dan |
