@@ -25,6 +25,10 @@ _: {
       ".config/netcup-scp"
       ".local/share/netcup-scp"
       ".local/share/ownCloud"
+      # Maestral Dropbox client
+      "Dropbox"
+      ".config/maestral"
+      ".local/share/maestral"
       # gnome-keyring encrypted keyring files
       ".local/share/keyrings"
       # Rootless Podman container images, layers, and volumes

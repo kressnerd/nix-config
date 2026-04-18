@@ -31,6 +31,7 @@
     ./features/productivity/browser.nix
     ./features/productivity/firefox-personal.nix
     ./features/productivity/keepassxc.nix
+    ./features/productivity/maestral.nix
     ./features/productivity/owncloud.nix
     ./features/productivity/sweethome3d.nix
     ./features/productivity/vscode-fhs.nix
