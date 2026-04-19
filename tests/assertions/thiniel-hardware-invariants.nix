@@ -2,6 +2,9 @@
 # Thiniel-specific hardware assertions — enforced at evaluation time via nix flake check
 # Covers: Bluetooth, fwupd, WWAN, battery thresholds, and other hardware concerns
 { config, lib, ... }:
+let
+  sysPkgNames = builtins.map (p: p.pname or p.name or "") config.environment.systemPackages;
+in
 {
   config = lib.mkIf (config.networking.hostName == "thiniel") {
     assertions = [
@@ -42,6 +45,10 @@
       {
         assertion = config.powerManagement.powertop.enable;
         message = "thiniel: powertop auto-tune must remain enabled for power savings";
+      }
+      {
+        assertion = builtins.elem "usbutils" sysPkgNames;
+        message = "thiniel: usbutils (lsusb) must be installed as a system package for hardware diagnostics";
       }
     ];
   };
