@@ -3,9 +3,9 @@
 // Reads/writes the shared "netcup-scp credentials" secret from gnome-keyring
 // (same entry used by scripts/netcup_firewall.py --keyring).
 //
-// Provides: refresh_token, user_id (when present in keyring)
-// The access_token from keyring is NOT injected here because $global
-// takes precedence after a fresh refresh — see 00-auth.http request 3.
+// Provides: access_token, refresh_token, user_id (when present in keyring)
+// $global does NOT persist between separate "Send Request" clicks, so all
+// session tokens must be provided via the provideVariables hook instead.
 const { execSync } = require('child_process');
 
 const KEYRING_LABEL = 'netcup-scp credentials';
@@ -75,6 +75,9 @@ module.exports = {
     api.hooks.provideVariables.addHook('gnome-keyring', function () {
       const creds = loadFromKeyring();
       const vars = {};
+      if (creds.access_token) {
+        vars.access_token = creds.access_token;
+      }
       if (creds.refresh_token) {
         vars.refresh_token = creds.refresh_token;
       }
