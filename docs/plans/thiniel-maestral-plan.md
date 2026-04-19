@@ -111,7 +111,13 @@ None — this is a user-level feature addition. No bootloader, networking, files
 
 ### Post-Apply Manual Steps
 
-After first `nixos-rebuild switch`, the user must run `maestral auth link` once to authenticate the Dropbox account via OAuth. This is a one-time interactive step that cannot be automated.
+After first `nixos-rebuild switch`, perform these steps in order:
+
+1. **Create Dropbox directory**: `mkdir -p ~/Dropbox` (on impermanence: also `mkdir -p /persist/Dropbox` if bind mount isn't active yet)
+2. **Start the daemon**: `maestral start` (or `systemctl --user start maestral`)
+3. **Authenticate**: `maestral auth link` — follow the OAuth flow in the browser (one-time)
+4. **Verify sync**: `maestral status` should show connected and syncing
+5. **On subsequent logins**: The systemd user service auto-starts via `WantedBy = graphical-session.target`
 
 ## Implementation Phases
 
@@ -246,12 +252,11 @@ After first `nixos-rebuild switch`, the user must run `maestral auth link` once 
 ### Phase 10: Apply & Verify
 
 - [ ] Step 10.1: Apply with `sudo nixos-rebuild switch --flake .#thiniel`
-- [ ] Step 10.2: Verify `which maestral` returns a valid path
-- [ ] Step 10.3: Verify `systemctl --user status maestral` shows the service (may be inactive until `maestral auth link` is run)
-- [ ] Step 10.4: Run `maestral auth link` to authenticate with Dropbox (one-time manual step)
+- [ ] Step 10.2: Create `~/Dropbox` directory: `mkdir -p ~/Dropbox` (on impermanence: also `mkdir -p /persist/Dropbox` if bind mount isn't active yet)
+- [ ] Step 10.3: Start maestral daemon: `maestral start` (or `systemctl --user start maestral`)
+- [ ] Step 10.4: Run `maestral auth link` for OAuth authentication (one-time manual step)
 - [ ] Step 10.5: Verify `maestral status` shows connected state
-- [ ] Step 10.6: Verify `systemctl --user start maestral` starts the daemon
-- [ ] Step 10.7: Verify `systemctl --user enable maestral` is already enabled via WantedBy
+- [ ] Step 10.6: Verify sync is working with `maestral filestatus`
 
 ## Current Status
 
@@ -277,6 +282,7 @@ After first `nixos-rebuild switch`, the user must run `maestral auth link` once 
   3. **Explicit systemd defaults**: Always set `Type = "simple"` explicitly in systemd user services, even when it's the default. Self-documenting configuration prevents ambiguity during review
   4. **Test service lifecycle properties**: Unit tests for systemd services should cover not just `ExecStart` but also `WantedBy` (auto-start), `Restart` (resilience), and `Type` (execution model). These are the properties most likely to regress
   5. **Maestral requires one-time OAuth**: Unlike packages that work immediately after deployment, Maestral requires `maestral auth link` for initial OAuth authentication — this must be documented as a post-deploy manual step
+  6. **Maestral needs the sync directory pre-created**: Unlike the official Dropbox client, Maestral does not create `~/Dropbox` automatically. On impermanence systems, both the persist directory (`/persist/Dropbox`) and the home directory (`~/Dropbox`) must exist before the daemon can start syncing. This must be documented as a post-deploy step.
 
 ## Completion Log
 
