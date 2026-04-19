@@ -21,6 +21,18 @@
         assertion = config.sops.defaultSopsFile != null;
         message = "cupix001: sops.defaultSopsFile must be set (SOPS secrets configuration required)";
       }
+      {
+        assertion = config.disko.devices.disk ? vda;
+        message = "cupix001: disko device 'vda' must be configured (disk layout required for btrfs subvolumes)";
+      }
+      {
+        assertion = config.fileSystems."/persist".neededForBoot;
+        message = "cupix001: /persist must have neededForBoot = true — sops-nix requires /persist before secrets decryption";
+      }
+      {
+        assertion = config.fileSystems."/var/log".neededForBoot;
+        message = "cupix001: /var/log must have neededForBoot = true — persistent logs require early mount";
+      }
     ];
   };
 }

@@ -8,6 +8,7 @@
     ../common/global
     ../common/users/dan.nix
     ./hardware.nix
+    ./disko.nix
     ./options.nix
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
