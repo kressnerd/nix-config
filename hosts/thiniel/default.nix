@@ -291,7 +291,7 @@
       # Re-apply autosuspend disable for USB HID devices after powertop --auto-tune
       for iface in /sys/bus/usb/devices/*/bInterfaceClass; do
         if [ "$(cat "$iface" 2>/dev/null)" = "03" ]; then
-          dev_dir="$(dirname "$iface")"
+          dev_dir="$(realpath "$(dirname "$iface")")"
           parent_dir="$(dirname "$dev_dir")"
           if [ -f "$parent_dir/power/control" ]; then
             echo on > "$parent_dir/power/control"

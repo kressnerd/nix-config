@@ -258,6 +258,8 @@ powerManagement.powertop.postStart = ''
 | F-005 | LOW | Plan status not updated after implementation | Updated phase statuses |
 | udevadm | CRITICAL | `$(dirname $DEVPATH)` in inline `RUN+=` value rejected by `udevadm verify` — udev interprets `$` as its own substitution syntax | Extracted bash logic into `pkgs.writeShellScript "usb-hid-unsuspend"` — script in Nix store, udev rule only contains store path |
 | udev-hot-plug | CRITICAL | `ACTION=="add\|change", ATTR{bInterfaceClass}=="03"` not firing on dock hot-plug — interface `add` events unreliable | Changed to `ACTION=="bind", DRIVER=="usbhid"` — fires when kernel driver binds to interface |
+| postStart-realpath | HIGH | `dirname` on symlink paths in `/sys/bus/usb/devices/` yields the flat symlink directory instead of the parent USB device node | Added `realpath` to resolve symlinks before `dirname` in `postStart` script |
+| udev-hot-plug | CRITICAL | `ACTION=="add\|change", ATTR{bInterfaceClass}=="03"` not firing on dock hot-plug — interface `add` events unreliable | Changed to `ACTION=="bind", DRIVER=="usbhid"` — fires when kernel driver binds to interface |
 
 ## Lessons Learned
 
@@ -280,6 +282,14 @@ Setting `power/control = on` unconditionally disables autosuspend for a USB devi
 ### 5. Dual-layer strategy is necessary
 
 A udev rule alone is insufficient because `powertop --auto-tune` runs AFTER udev processes boot-time device-add events and overwrites all `power/control` values. The `powerManagement.powertop.postStart` script re-applies the override after powertop finishes. The udev rule handles hot-plugged devices. Both layers are required for complete coverage.
+
+### 6. `ATTR{bInterfaceClass}` does not work for hot-plug udev rules
+
+Matching `ATTR{bInterfaceClass}=="03"` on `ACTION=="add|change"` does not fire reliably on USB hot-plug (e.g., dock attach). The USB interface node's `bInterfaceClass` attribute is not consistently available at `add` time, and the `add` event fires primarily for the USB device node (parent), not the interface node where `bInterfaceClass` lives. **Solution**: Use `ACTION=="bind", DRIVER=="usbhid"` instead. The `bind` event fires when the kernel driver (`usbhid`) attaches to the interface, which is reliable for both boot and hot-plug. `DRIVER` matching is more direct than `ATTR` matching because it operates on the exact event where the driver is known.
+
+### 7. sysfs symlinks vs real paths — `dirname` on `/sys/bus/usb/devices/*` gives wrong parent
+
+`/sys/bus/usb/devices/` contains **symlinks** to the real device nodes. Using `dirname` on a symlink path navigates the symlink directory structure, not the real device hierarchy. `dirname "/sys/bus/usb/devices/1-2:1.0"` yields `/sys/bus/usb/devices` (the flat directory), not the parent USB device node. **Solution**: Use `realpath` to resolve symlinks before `dirname`: `dev_dir="$(realpath "$(dirname "$iface")")"`. The udev `$DEVPATH` variable does not have this problem because it contains the real sysfs path, not the symlink path.
 
 ### 6. `ATTR{bInterfaceClass}` does not work for hot-plug udev rules
 
