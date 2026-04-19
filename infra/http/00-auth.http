@@ -8,15 +8,17 @@
 #
 # Per-session workflow:
 #   1. Run "Refresh Token" (request 3) → refresh_token injected from gnome-keyring
-#      via provideVariables hook; fetches fresh access_token saved to gnome-keyring
-#   2. All .http files use {{access_token}} — injected from gnome-keyring on every
-#      request click via the provideVariables hook in httpyac.config.js
-#   3. When access_token expires mid-session, re-run "Refresh Token"
+#      via provideVariables hook; fetches fresh access_token into $global + keyring
+#   2. Run "Get User Info" (request 4) — pre-request script loads access_token from
+#      $global (set by request 3); falls back to keyring if $global is empty
+#   3. All other .http files use {{access_token}} from $global (set in same session)
+#   4. When access_token expires mid-session, re-run "Refresh Token"
 #
 # Token storage:
-#   - gnome-keyring: source of truth for access_token, refresh_token, user_id
+#   - gnome-keyring: source of truth for refresh_token, user_id
 #     (service=netcup-scp, username=default, shared with netcup_firewall.py)
-#   - provideVariables hook (httpyac.config.js): injects tokens into {{variable}} lookups
+#   - access_token: ephemeral; lives in $global only (NOT in provideVariables hook)
+#   - provideVariables hook (httpyac.config.js): injects refresh_token, user_id only
 #   - httpyac.config.js in workspace root delegates to infra/http/httpyac.config.js
 #   - http-client.private.env.json: semi-static values only (server_id, etc.)
 
@@ -79,7 +81,8 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
     console.info("access_token refreshed and captured into $global.");
     const config = require('./httpyac.config.js');
     config.mergeAndSave(response.parsedBody);
-    console.info("Updated tokens in gnome-keyring.");
+    config.resetCache();
+    console.info("Updated tokens in gnome-keyring (cache cleared for next read).");
   } else {
     console.warn("Token refresh failed:", response.parsedBody.error || response.statusCode);
   }
@@ -89,6 +92,20 @@ client_id={{client_id}}&grant_type=refresh_token&refresh_token={{refresh_token}}
 # Returns the SCP user profile. The `id` field (integer) is the user_id
 # required for /users/{user_id}/... endpoints — NOT the customer number.
 # user_id is auto-captured into $global and saved to gnome-keyring.
+# Pre-request: loads access_token from keyring into $global if not already set
+# (fallback for when $global doesn't persist between "Send Request" clicks).
+{{
+  if (!$global.access_token) {
+    const config = require('./httpyac.config.js');
+    const creds = config.loadFromKeyring();
+    if (creds.access_token) {
+      $global.access_token = creds.access_token;
+      console.info("[pre-request] access_token loaded from keyring into $global.");
+    } else {
+      console.warn("[pre-request] No access_token in keyring — run Refresh Token first.");
+    }
+  }
+}}
 GET {{oidc_base}}/userinfo
 Authorization: Bearer {{access_token}}
 
