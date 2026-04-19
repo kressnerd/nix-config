@@ -111,7 +111,7 @@ None — this is a user-level feature addition. No bootloader, networking, files
 
 ### Post-Apply Manual Steps
 
-After first `nixos-rebuild switch`, the user must run `maestral link` once to authenticate the Dropbox account via OAuth. This is a one-time interactive step that cannot be automated.
+After first `nixos-rebuild switch`, the user must run `maestral auth link` once to authenticate the Dropbox account via OAuth. This is a one-time interactive step that cannot be automated.
 
 ## Implementation Phases
 
@@ -247,8 +247,8 @@ After first `nixos-rebuild switch`, the user must run `maestral link` once to au
 
 - [ ] Step 10.1: Apply with `sudo nixos-rebuild switch --flake .#thiniel`
 - [ ] Step 10.2: Verify `which maestral` returns a valid path
-- [ ] Step 10.3: Verify `systemctl --user status maestral` shows the service (may be inactive until `maestral link` is run)
-- [ ] Step 10.4: Run `maestral link` to authenticate with Dropbox (one-time manual step)
+- [ ] Step 10.3: Verify `systemctl --user status maestral` shows the service (may be inactive until `maestral auth link` is run)
+- [ ] Step 10.4: Run `maestral auth link` to authenticate with Dropbox (one-time manual step)
 - [ ] Step 10.5: Verify `maestral status` shows connected state
 - [ ] Step 10.6: Verify `systemctl --user start maestral` starts the daemon
 - [ ] Step 10.7: Verify `systemctl --user enable maestral` is already enabled via WantedBy
@@ -276,7 +276,7 @@ After first `nixos-rebuild switch`, the user must run `maestral link` once to au
   2. **Extract helpers early**: The `hmHasPkg` helper pattern (from `thiniel-impermanence-invariants.nix`) should have been applied to `thiniel-invariants.nix` from the start. When adding the 4th instance of a duplicated pattern, refactor immediately rather than replicating
   3. **Explicit systemd defaults**: Always set `Type = "simple"` explicitly in systemd user services, even when it's the default. Self-documenting configuration prevents ambiguity during review
   4. **Test service lifecycle properties**: Unit tests for systemd services should cover not just `ExecStart` but also `WantedBy` (auto-start), `Restart` (resilience), and `Type` (execution model). These are the properties most likely to regress
-  5. **Maestral requires one-time OAuth**: Unlike packages that work immediately after deployment, Maestral requires `maestral link` for initial OAuth authentication — this must be documented as a post-deploy manual step
+  5. **Maestral requires one-time OAuth**: Unlike packages that work immediately after deployment, Maestral requires `maestral auth link` for initial OAuth authentication — this must be documented as a post-deploy manual step
 
 ## Completion Log
 
