@@ -7,15 +7,17 @@
 #   4. Run "Get User Info" → user_id captured + saved to gnome-keyring
 #
 # Per-session workflow:
-#   1. Run "Refresh Token" (request 3) → reads refresh_token from gnome-keyring
-#      once per session into $global, then fetches a fresh access_token
-#   2. All .http files use {{access_token}} from $global — no manual edits
+#   1. Run "Refresh Token" (request 3) → refresh_token injected from gnome-keyring
+#      via provideVariables hook; fetches fresh access_token saved to gnome-keyring
+#   2. All .http files use {{access_token}} — injected from gnome-keyring on every
+#      request click via the provideVariables hook in httpyac.config.js
 #   3. When access_token expires mid-session, re-run "Refresh Token"
 #
 # Token storage:
-#   - gnome-keyring: shared with scripts/netcup_firewall.py --keyring
-#     (service=netcup-scp, username=default, label="netcup-scp credentials")
-#   - $global: session-scoped refresh_token + access_token for httpYac requests
+#   - gnome-keyring: source of truth for access_token, refresh_token, user_id
+#     (service=netcup-scp, username=default, shared with netcup_firewall.py)
+#   - provideVariables hook (httpyac.config.js): injects tokens into {{variable}} lookups
+#   - httpyac.config.js in workspace root delegates to infra/http/httpyac.config.js
 #   - http-client.private.env.json: semi-static values only (server_id, etc.)
 
 ### 1 — Initiate Device Authorization
@@ -60,19 +62,9 @@ client_id={{client_id}}&grant_type=urn:ietf:params:oauth:grant-type:device_code&
 }}
 
 ### 3 — Refresh Token (run once per session)
-# refresh_token is read from gnome-keyring once per session into $global.
-# Captures fresh access_token into $global and updates gnome-keyring.
-{{
-  if (!$global.refresh_token) {
-    const config = require('./httpyac.config.js');
-    const creds = config.loadFromKeyring();
-    if (creds.refresh_token) {
-      $global.refresh_token = creds.refresh_token;
-    } else {
-      throw new Error("No refresh_token in gnome-keyring — run device auth flow first (requests 1+2).");
-    }
-  }
-}}
+# refresh_token is injected via the provideVariables hook in httpyac.config.js
+# (reads from gnome-keyring on every request click).
+# Captures fresh access_token into gnome-keyring for all subsequent requests.
 POST {{oidc_base}}/token
 Content-Type: application/x-www-form-urlencoded
 
