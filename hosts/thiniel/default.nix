@@ -305,7 +305,7 @@
   services.udev.extraRules =
     let
       usbHidUnsuspend = pkgs.writeShellScript "usb-hid-unsuspend" ''
-        parent_dir="/sys$(dirname "$DEVPATH")"
+        parent_dir="/sys$DEVPATH/.."
         if [ -f "$parent_dir/power/control" ]; then
           echo on > "$parent_dir/power/control"
         fi
@@ -313,7 +313,7 @@
     in
     ''
       # Disable autosuspend for all USB HID devices (keyboards, mice, tablets)
-      ACTION=="add|change", SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="03", RUN+="${usbHidUnsuspend}"
+      ACTION=="bind", SUBSYSTEM=="usb", DRIVER=="usbhid", RUN+="${usbHidUnsuspend}"
       # Vendor:product-specific overrides (uncomment and replace XXXX:YYYY after running lsusb)
       # ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="XXXX", ATTR{idProduct}=="YYYY", ATTR{power/control}="on"
       # ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="XXXX", ATTR{idProduct}=="YYYY", ATTR{power/autosuspend}="-1"
