@@ -1,6 +1,7 @@
 # Disko configuration for cupix001 — netcup KVM VPS
 # UEFI boot, btrfs subvolumes for impermanence
-_: {
+{ ... }:
+{
   disko.devices = {
     disk = {
       vda = {
@@ -30,14 +31,14 @@ _: {
             root = {
               priority = 2;
               name = "root";
-              label = "nixos";
+              label = "nixos"; # GPT partition label (PARTLABEL)
               size = "100%";
               content = {
                 type = "btrfs";
                 extraArgs = [
                   "-f"
                   "-L"
-                  "nixos"
+                  "nixos" # btrfs filesystem label (LABEL)
                 ];
                 subvolumes = {
                   "@root" = {

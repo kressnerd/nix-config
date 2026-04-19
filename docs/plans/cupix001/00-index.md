@@ -257,8 +257,8 @@ colmena apply --on @edge
 ## Current Status
 
 - **Status**: IN PROGRESS
-- **Current Phase**: Epic 1 complete, ready for Epic 2
-- **Completed Phases**: Epic 1 (Foundation)
+- **Current Phase**: Epic 2 complete, ready for Epic 3
+- **Completed Phases**: Epic 1 (Foundation), Epic 2 (Disk Layout)
 
 ## Completion Log
 
