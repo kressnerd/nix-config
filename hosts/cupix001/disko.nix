@@ -1,7 +1,6 @@
 # Disko configuration for cupix001 — netcup KVM VPS
 # UEFI boot, btrfs subvolumes for impermanence
-{ ... }:
-{
+_: {
   disko.devices = {
     disk = {
       vda = {
@@ -82,6 +81,9 @@
     };
   };
 
-  fileSystems."/persist".neededForBoot = true;
-  fileSystems."/var/log".neededForBoot = true;
+  fileSystems = {
+    "/persist".neededForBoot = true;
+    "/nix".neededForBoot = true;
+    "/var/log".neededForBoot = true;
+  };
 }
