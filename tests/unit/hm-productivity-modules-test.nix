@@ -170,4 +170,14 @@ lib.debug.runTests {
       && builtins.match ".*maestral.*--foreground.*" svc.Service.ExecStart != null;
     expected = true;
   };
+
+  testMaestralServiceWantedBy = {
+    expr = maestralModule.systemd.user.services.maestral.Install.WantedBy;
+    expected = [ "graphical-session.target" ];
+  };
+
+  testMaestralServiceRestart = {
+    expr = maestralModule.systemd.user.services.maestral.Service.Restart;
+    expected = "on-failure";
+  };
 }
