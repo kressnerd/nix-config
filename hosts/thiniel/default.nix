@@ -339,6 +339,9 @@
     # $ nix search wget
     # System packages
     systemPackages = with pkgs; [
+      # Hardware diagnostics
+      usbutils
+
       # Rust-based CLI tools
       lsd # fancy ls like exa
       diffr # diff with colors
