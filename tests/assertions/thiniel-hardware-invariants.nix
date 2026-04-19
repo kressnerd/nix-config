@@ -32,8 +32,8 @@
         message = "thiniel: NetworkManager OpenVPN plugin must be installed";
       }
       {
-        assertion = builtins.match ".*bInterfaceClass.*03.*" config.services.udev.extraRules != null;
-        message = "thiniel: udev must disable USB autosuspend for HID input devices (bInterfaceClass==03)";
+        assertion = builtins.match ".*usbhid.*" config.services.udev.extraRules != null;
+        message = "thiniel: udev must disable USB autosuspend for HID input devices (DRIVER==usbhid)";
       }
       {
         assertion = builtins.match ".*power/control.*" config.powerManagement.powertop.postStart != null;
