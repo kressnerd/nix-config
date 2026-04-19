@@ -102,6 +102,11 @@
         ) config.home-manager.users.dan.home.packages;
         message = "thiniel: wf-recorder must be installed for screen recording";
       }
+      {
+        assertion =
+          config.home-manager.users.dan.programs.keepassxc.settings.General.OpenPreviousDatabasesOnStartup or false;
+        message = "thiniel: KeePassXC must be configured to open previous databases on startup";
+      }
     ];
   };
 }
