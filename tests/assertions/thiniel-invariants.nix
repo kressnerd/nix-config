@@ -84,6 +84,22 @@
           assertion = hmHasPkg "maestral";
           message = "thiniel: Maestral must be installed via Home Manager for Dropbox sync";
         }
+        {
+          assertion = hmHasPkg "iotop";
+          message = "thiniel: iotop must be installed via Home Manager for per-process I/O monitoring";
+        }
+        {
+          assertion = hmHasPkg "iw";
+          message = "thiniel: iw must be installed via Home Manager for wireless diagnostics";
+        }
+        {
+          assertion = hmHasPkg "acpi";
+          message = "thiniel: acpi must be installed via Home Manager for battery and thermal status";
+        }
+        {
+          assertion = hmHasPkg "bind";
+          message = "thiniel: bind (dig/nslookup) must be installed via Home Manager for DNS diagnostics";
+        }
       ];
   };
 }

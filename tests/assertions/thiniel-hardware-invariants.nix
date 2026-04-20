@@ -50,6 +50,38 @@ in
         assertion = builtins.elem "usbutils" sysPkgNames;
         message = "thiniel: usbutils (lsusb) must be installed as a system package for hardware diagnostics";
       }
+      {
+        assertion = builtins.elem "pciutils" sysPkgNames;
+        message = "thiniel: pciutils (lspci) must be installed as a system package for PCI bus diagnostics";
+      }
+      {
+        assertion = builtins.elem "lshw" sysPkgNames;
+        message = "thiniel: lshw must be installed as a system package for detailed hardware listing";
+      }
+      {
+        assertion = builtins.elem "lm_sensors" sysPkgNames;
+        message = "thiniel: lm_sensors (sensors) must be installed as a system package for temperature monitoring";
+      }
+      {
+        assertion = builtins.elem "nvme-cli" sysPkgNames;
+        message = "thiniel: nvme-cli must be installed as a system package for NVMe SSD health monitoring";
+      }
+      {
+        assertion = builtins.elem "smartmontools" sysPkgNames;
+        message = "thiniel: smartmontools (smartctl) must be installed as a system package for drive SMART data";
+      }
+      {
+        assertion = builtins.elem "lsof" sysPkgNames;
+        message = "thiniel: lsof must be installed as a system package for listing open files and sockets";
+      }
+      {
+        assertion = builtins.elem "strace" sysPkgNames;
+        message = "thiniel: strace must be installed as a system package for system call tracing";
+      }
+      {
+        assertion = config.programs.mtr.enable;
+        message = "thiniel: programs.mtr must be enabled for network path diagnostics (traceroute with SUID wrapper)";
+      }
     ];
   };
 }
