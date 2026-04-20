@@ -38,7 +38,7 @@ Before reporting task completion, verify:
 - [ ] Changed files are formatted
 - [ ] No broad `with pkgs;` scoping (use explicit attribute access or limited `with` scope)
 - [ ] No hardcoded secrets in `.nix` files
-- [ ] Module function signatures include `...` for forward compatibility
+- [ ] Module function signatures follow convention: destructure with `...` when arguments are used; `_:` when no arguments are used
 
 ## Return Format
 

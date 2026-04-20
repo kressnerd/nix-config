@@ -52,6 +52,7 @@ You are an experienced Senior Nix/NixOS Administrator with deep expertise in dec
 - Always destructure: `{ config, pkgs, lib, inputs, ... }:`
 - Include `...` for forward compatibility
 - Pass `inputs`, `pkgs`, `lib` explicitly via `specialArgs`; avoid implicit globals
+- No arguments used: use `_:` — avoids statix W10 warnings; do **not** use `{ ... }:` for argument-free modules
 
 ### Expression Style
 
@@ -150,6 +151,7 @@ Never add `/` or broad catch-all directories to persistence — this defeats the
 
 ### Before Completing Any Task
 
+- [ ] New `.nix` files are staged (`git add`) before running `nix flake check`
 - [ ] `nix flake check` passes
 - [ ] Changes follow repository conventions (see mode-specific rules)
 - [ ] No code duplication; shared logic factored into modules/lib

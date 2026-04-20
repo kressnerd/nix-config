@@ -9,6 +9,10 @@
 
 Every task is only complete when the changed configuration has been validated.
 
+### Prerequisite — Stage New Files
+
+Before running any validation step, `git add` all new `.nix` files created during this task. Nix flake evaluation reads the git-tracked tree snapshot; untracked files are invisible to the evaluator and will cause `nix flake check` to silently ignore them.
+
 ### Validation Steps (in order)
 
 1. **Syntax check**: `nix flake check` must pass without errors
