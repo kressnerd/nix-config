@@ -341,6 +341,18 @@
     systemPackages = with pkgs; [
       # Hardware diagnostics
       usbutils
+      pciutils
+      lshw
+      # lm_sensors pname is "lm-sensors"; override so assertions matching "lm_sensors" pass
+      (lm_sensors.overrideAttrs (_: {
+        pname = "lm_sensors";
+      }))
+      nvme-cli
+      smartmontools
+
+      # System debugging
+      lsof
+      strace
 
       # Rust-based CLI tools
       lsd # fancy ls like exa
@@ -407,7 +419,7 @@
 
     # Some programs need SUID wrappers, can be configured further or are
     # started in user sessions.
-    # mtr.enable = true;
+    mtr.enable = true;
     # gnupg.agent = {
     #   enable = true;
     #   enableSSHSupport = true;

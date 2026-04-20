@@ -37,6 +37,10 @@
     ++ lib.optionals pkgs.stdenv.isLinux [
       bluetuith # TUI Bluetooth manager — Linux-only, requires bluez
       pulsemixer # TUI PulseAudio mixer — Linux-only volume control
+      iotop # per-process I/O monitoring
+      iw # wireless diagnostics — signal strength, channel
+      acpi # battery and thermal status
+      dig # DNS tools — dig, nslookup, host
     ];
 
   # Configure tools
