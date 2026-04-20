@@ -100,6 +100,18 @@
           assertion = hmHasPkg "bind";
           message = "thiniel: bind (dig/nslookup) must be installed via Home Manager for DNS diagnostics";
         }
+        {
+          assertion = builtins.elem "lsof" sysPkgNames;
+          message = "thiniel: lsof must be installed as a system package for listing open files and sockets";
+        }
+        {
+          assertion = builtins.elem "strace" sysPkgNames;
+          message = "thiniel: strace must be installed as a system package for system call tracing";
+        }
+        {
+          assertion = config.programs.mtr.enable;
+          message = "thiniel: programs.mtr must be enabled for network path diagnostics (traceroute with SUID wrapper)";
+        }
       ];
   };
 }

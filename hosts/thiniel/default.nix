@@ -335,18 +335,13 @@
   };
 
   environment = {
-    # List packages installed in system profile. To search, run:
-    # $ nix search wget
     # System packages
     systemPackages = with pkgs; [
       # Hardware diagnostics
       usbutils
       pciutils
       lshw
-      # lm_sensors pname is "lm-sensors"; override so assertions matching "lm_sensors" pass
-      (lm_sensors.overrideAttrs (_: {
-        pname = "lm_sensors";
-      }))
+      lm_sensors
       nvme-cli
       smartmontools
 
