@@ -254,6 +254,20 @@ colmena apply --on @edge
 - **Colmena**: `colmena apply --goal switch --on @edge` with previous flake revision
 - **Emergency**: netcup SCP console access + snapshot restore
 
+## Lessons Learned
+
+### Epic 2: Disk Layout
+
+1. **Prefer `_:` over `{ ... }:` for unused module arguments** — When a NixOS module doesn't use any arguments from the module system, use `_:` as the function signature. This aligns with statix W10 and avoids unnecessary noise. The `{ ... }:` pattern is only needed when the module actually accesses `config`, `lib`, `pkgs`, etc.
+
+2. **Set `neededForBoot = true` for `/nix` explicitly** — Although NixOS internally recognizes `/nix` as boot-critical, setting `fileSystems."/nix".neededForBoot = true` explicitly in disko.nix provides defense-in-depth and makes the intent visible to future maintainers.
+
+3. **`git add` new files before `nix flake check`** — Nix evaluates from the git-tracked tree snapshot. Newly created files (like `disko.nix`) must be staged with `git add` before `nix flake check` can see them. Without staging, the file is invisible to the flake evaluator.
+
+4. **Dual GPT/btrfs labels need clarifying comments** — When a disko config sets both a GPT partition `label` and a btrfs filesystem label via `extraArgs = ["-L" "name"]`, add inline comments distinguishing `# GPT partition label (PARTLABEL)` from `# btrfs filesystem label (LABEL)` to prevent future confusion about which is redundant (neither is).
+
+5. **Merge repeated `fileSystems` attribute sets** — statix W20 flags repeated top-level attribute keys. Instead of `fileSystems."/persist".neededForBoot = true; fileSystems."/nix".neededForBoot = true;` as separate statements, merge into a single `fileSystems` attribute set for cleaner code.
+
 ## Current Status
 
 - **Status**: IN PROGRESS
