@@ -1,7 +1,7 @@
 # tests/unit/hm-productivity-modules-test.nix
 # Characterization unit tests for Home Manager productivity feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
-# Covers: browser.nix, keepassxc.nix, maestral.nix
+# Covers: browser.nix, keepassxc.nix, maestral.nix, firefox-personal.nix
 { lib, pkgs }:
 let
   # Platform mocks
@@ -16,6 +16,48 @@ let
       isDarwin = true;
       isLinux = false;
     };
+  };
+
+  mockPkgsWithNur = mockPkgsLinux // {
+    nur = {
+      repos.rycee.firefox-addons = builtins.listToAttrs (
+        map
+          (name: {
+            inherit name;
+            value = name;
+          })
+          [
+            "ublock-origin"
+            "keepassxc-browser"
+            "consent-o-matic"
+            "privacy-badger"
+            "decentraleyes"
+            "clearurls"
+            "noscript"
+            "temporary-containers"
+            "tridactyl"
+            "tree-style-tab"
+            "languagetool"
+            "single-file"
+            "sponsorblock"
+            "return-youtube-dislikes"
+            "youtube-shorts-block"
+            "reddit-enhancement-suite"
+            "old-reddit-redirect"
+            "terms-of-service-didnt-read"
+            "link-cleaner"
+            "tabliss"
+            "kagi-search"
+            "refined-github"
+            "octotree"
+            "wappalyzer"
+          ]
+      );
+    };
+  };
+
+  firefoxPersonalModule = import ../../home/dan/features/productivity/firefox-personal.nix {
+    pkgs = mockPkgsWithNur;
   };
 
   # browser.nix — signature is `{ pkgs, ... }:`
@@ -180,4 +222,60 @@ lib.debug.runTests {
     expr = maestralModule.systemd.user.services.maestral.Service.Restart;
     expected = "on-failure";
   };
+
+  # ── firefox-personal: no-tracking profile ────────────────────────────────
+
+  testPersonalProfileNoTrackingExists = {
+    expr = firefoxPersonalModule.programs.firefox.profiles ? no-tracking;
+    expected = true;
+  };
+
+  testPersonalProfileNoTrackingId = {
+    expr = firefoxPersonalModule.programs.firefox.profiles.no-tracking.id;
+    expected = 1;
+  };
+
+  testPersonalProfileNoTrackingNotDefault = {
+    expr = firefoxPersonalModule.programs.firefox.profiles.no-tracking.isDefault;
+    expected = false;
+  };
+
+  # Characterization tests — user profile unchanged
+  testPersonalProfileUserExists = {
+    expr = firefoxPersonalModule.programs.firefox.profiles ? user;
+    expected = true;
+  };
+
+  testPersonalProfileUserId = {
+    expr = firefoxPersonalModule.programs.firefox.profiles.user.id;
+    expected = 0;
+  };
+
+  testPersonalProfileUserIsDefault = {
+    expr = firefoxPersonalModule.programs.firefox.profiles.user.isDefault;
+    expected = true;
+  };
+
+  # Characterization tests — both profiles identical
+  testPersonalProfileSettingsMatch = {
+    expr =
+      firefoxPersonalModule.programs.firefox.profiles.user.settings
+      == firefoxPersonalModule.programs.firefox.profiles.no-tracking.settings;
+    expected = true;
+  };
+
+  testPersonalProfileSearchMatch = {
+    expr =
+      firefoxPersonalModule.programs.firefox.profiles.user.search
+      == firefoxPersonalModule.programs.firefox.profiles.no-tracking.search;
+    expected = true;
+  };
+
+  testPersonalProfileExtensionsMatch = {
+    expr =
+      firefoxPersonalModule.programs.firefox.profiles.user.extensions.packages
+      == firefoxPersonalModule.programs.firefox.profiles.no-tracking.extensions.packages;
+    expected = true;
+  };
+
 }
