@@ -182,3 +182,10 @@ mockPkgsWithNur = mockPkgsLinux // {
 - [x] `nix flake check` passes
 - [x] `nixos-rebuild build --flake .#thiniel` passes
 - [x] Commit created with conventional format
+
+## Lessons Learned
+
+- **Magic numbers need comments**: Firefox's `cookieBehavior = 5` is not self-documenting. Always add inline comments for non-obvious numeric values, even in a "minimal comments" codebase. The sibling file `firefox-company.nix` had the same comment — consistency matters.
+- **Test mocks should document scope**: When a mock provides a superset of what the tested module needs (e.g., including `exts.dev` addons for future reuse), a comment prevents confusion about whether the extra entries are intentional or accidental.
+- **Cross-file DRY is a future concern**: `personalSettings` and `workSettings` share ~20 identical key-value pairs. Extracting a shared `basePrivacySettings` into `lib/helpers.nix` would eliminate this duplication. Candidate for a dedicated refactoring task.
+- **TDD with NUR mocks works well**: Mocking `pkgs.nur.repos.rycee.firefox-addons` as a simple `name → name` attrset is sufficient for unit-testing Firefox profile structure without evaluating real NUR packages. This pattern is reusable for testing `firefox-company.nix`.

@@ -28,6 +28,7 @@ let
     "privacy.resistFingerprinting" = true;
     "privacy.trackingprotection.enabled" = true;
     "privacy.trackingprotection.socialtracking.enabled" = true;
+    # 5 = reject cross-site and social trackers
     "network.cookie.cookieBehavior" = 5;
     "dom.security.https_only_mode" = true;
     "geo.enabled" = false;

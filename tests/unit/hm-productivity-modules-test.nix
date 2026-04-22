@@ -18,6 +18,8 @@ let
     };
   };
 
+  # Superset of all addons from mkFirefoxExtensions (common, dev, privacy, productivity, convenience)
+  # plus profile-specific extras. Includes dev addons for future firefox-company.nix test reuse.
   mockPkgsWithNur = mockPkgsLinux // {
     nur = {
       repos.rycee.firefox-addons = builtins.listToAttrs (
