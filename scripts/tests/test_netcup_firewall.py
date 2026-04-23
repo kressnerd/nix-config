@@ -1588,8 +1588,6 @@ class TestLockdownCommand:
         tmp_path: Path,
     ) -> None:
         """lockdown creates policy with explicit DROP rules for all protocols."""
-        from netcup_firewall import LOCKDOWN_RULES
-
         _, mock_client = self._make_mock_setup(MockAuth, MockClient)
         mock_backup.return_value = str(tmp_path / "backup.json")
 
@@ -1659,6 +1657,24 @@ class TestLockdownCommand:
         mock_client.set_firewall.assert_called_once()
         call_args = mock_client.set_firewall.call_args
         assert 77 in call_args[0][2]
+        mock_client.update_policy.assert_called_once_with(
+            42, 77, "lockdown-cupix001", LOCKDOWN_RULES
+        )
+
+    def test_lockdown_reuse_updates_stale_policy_rules(self) -> None:
+        """Stale lockdown policy (empty rules) must be reconciled with LOCKDOWN_RULES."""
+        from netcup_firewall import _find_or_create_lockdown_policy
+
+        mock_client = MagicMock()
+        mock_client.list_policies.return_value = [
+            {"id": 77, "name": "lockdown-cupix001", "rules": []}
+        ]
+
+        _find_or_create_lockdown_policy(mock_client, 42, "cupix001")
+
+        mock_client.update_policy.assert_called_once_with(
+            42, 77, "lockdown-cupix001", LOCKDOWN_RULES
+        )
 
     @patch("netcup_firewall.cmd_backup")
     @patch("netcup_firewall.ScpApi")
@@ -2292,8 +2308,6 @@ class TestWorkflow:
         mock_client.list_policies.return_value = [
             {"id": 1, "name": "production", "rules": []}
         ]
-
-        from netcup_firewall import LOCKDOWN_RULES
 
         with patch(
             "netcup_firewall.cmd_backup",
