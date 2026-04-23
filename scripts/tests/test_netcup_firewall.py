@@ -2988,6 +2988,70 @@ class TestSshOpenCommand:
         # Should NOT proceed to find_server etc.
         MockClient.return_value.find_server.assert_not_called()
 
+    @patch("netcup_firewall._find_or_create_ssh_policy")
+    @patch("netcup_firewall._get_current_policy_ids")
+    @patch("netcup_firewall.ScpApi")
+    @patch("netcup_firewall.ScpAuth")
+    def test_ssh_open_prepends_policy_before_existing(
+        self,
+        MockAuth: MagicMock,
+        MockClient: MagicMock,
+        mock_get_current_policy_ids: MagicMock,
+        mock_find_or_create_ssh_policy: MagicMock,
+        tmp_path: Any,
+    ) -> None:
+        """ssh-open prepends SSH policy before existing policies, not appends."""
+        mock_auth = MockAuth.return_value
+        mock_auth.get_access_token.return_value = "token"
+        mock_auth.get_user_id.return_value = 42
+        mock_client = MockClient.return_value
+        mock_client.find_server.return_value = 123
+        mock_client.get_interfaces.return_value = [{"mac": "aa:bb:cc:dd:ee:ff"}]
+        mock_client.get_firewall.return_value = {
+            "userPolicies": [
+                {"id": 100, "name": "lockdown", "description": None, "rules": []}
+            ],
+            "copiedPolicies": [],
+        }
+        mock_client.list_policies.return_value = []
+        mock_client.set_firewall.return_value = "task-uuid-1"
+
+        # Simulate a lockdown DROP-all policy already assigned
+        mock_get_current_policy_ids.return_value = [100]
+        # SSH policy to be created
+        mock_find_or_create_ssh_policy.return_value = {
+            "id": 200,
+            "name": "ssh-temp-testserver",
+            "rules": [],
+        }
+
+        args = parse_args(
+            [
+                "ssh-open",
+                "--server",
+                "testserver",
+                "--source",
+                "1.2.3.4",
+                "--port",
+                "22",
+                "--yes",
+            ]
+        )
+        cmd_ssh_open(
+            args,
+            backup_dir=str(tmp_path),
+            auth=mock_auth,
+            client=mock_client,
+            user_id=42,
+        )
+
+        mock_client.set_firewall.assert_called_once()
+        set_fw_call = mock_client.set_firewall.call_args
+        policy_ids = set_fw_call[0][2]
+        # SSH policy must come first so it is evaluated before any DROP-all rule
+        assert policy_ids[0] == 200  # SSH ACCEPT policy at index 0
+        assert policy_ids[1] == 100  # lockdown DROP-all policy at index 1
+
 
 class TestSshCloseCommand:
     """Tests for cmd_ssh_close() — close temporary SSH access."""

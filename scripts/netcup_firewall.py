@@ -1790,7 +1790,7 @@ def cmd_ssh_open(
         if ssh_policy_id in current_ids:
             logger.info("SSH policy already assigned to %s — skipping", mac)
             continue
-        new_ids = current_ids + [ssh_policy_id]
+        new_ids = [ssh_policy_id] + current_ids
         task_uuid = client.set_firewall(server_id, mac, new_ids)
         client.wait_for_task(task_uuid)
 
