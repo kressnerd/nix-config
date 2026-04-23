@@ -8,7 +8,7 @@ Fix the `lockdown` command so it creates a firewall policy with explicit DROP ru
 
 ## Business Context
 
-The lockdown command is a security kill switch intended to block all network traffic to a server during emergencies. The current implementation passes an empty rules list `[]`, which the SCP API interprets as "no rules → ACCEPT_ALL", the opposite of the intended behavior. This is a critical security defect.
+The lockdown command is a firewall lockdown intended to block all network traffic to a server during emergencies. The current implementation passes an empty rules list `[]`, which the SCP API interprets as "no rules → ACCEPT_ALL", the opposite of the intended behavior. This is a critical security defect.
 
 ## Acceptance Criteria
 
