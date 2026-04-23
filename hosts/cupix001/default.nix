@@ -12,6 +12,7 @@
     ./options.nix
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
+    ../../modules/nixos/persistence
     ../../tests/assertions
   ]
   ++ lib.optional (builtins.pathExists ./private.nix) ./private.nix;

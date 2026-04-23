@@ -117,6 +117,15 @@
             result.success && result.value;
           message = "thiniel: myHome.persistence.enable must be true — persistence base module not loaded or not enabled";
         }
+        {
+          assertion =
+            let
+              hasOption = config ? mySystem.persistence.enable;
+              result = builtins.tryEval (if hasOption then config.mySystem.persistence.enable else false);
+            in
+            result.success && result.value;
+          message = "thiniel: mySystem.persistence.enable must be true — system persistence base module not loaded or not enabled";
+        }
       ];
   };
 }
