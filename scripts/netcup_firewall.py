@@ -963,9 +963,7 @@ def validate_source_ip(source: str) -> str:
     return str(network)
 
 
-_REQUIRED_RULE_FIELDS = frozenset(
-    {"direction", "protocol", "sourceIp", "destinationPort", "action"}
-)
+_REQUIRED_RULE_FIELDS = frozenset({"direction", "protocol", "action"})
 
 
 def load_policy_file(path: str) -> dict[str, Any]:
@@ -1295,8 +1293,6 @@ LOCKDOWN_RULES: list[dict[str, str]] = [
     {
         "direction": "INGRESS",
         "protocol": protocol,
-        "sourceIp": "",
-        "destinationPort": "",
         "action": "DROP",
     }
     for protocol in ("TCP", "UDP", "ICMP", "ICMPv6")

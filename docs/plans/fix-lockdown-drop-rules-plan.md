@@ -1,6 +1,6 @@
 # Fix Lockdown Command — Explicit DROP Rules
 
-## Status: PLANNED
+## Status: COMPLETED
 
 ## Goal
 
@@ -183,12 +183,26 @@ This is the latent bug fix. Fixing it first means subsequent phases work correct
 
 ### Phase 6: Final Validation
 
-- [ ] `cd scripts && python3 -m pytest tests/test_netcup_firewall.py -v` → all PASS
-- [ ] `cd scripts && ruff check .` → zero violations
-- [ ] `cd scripts && mypy --strict netcup_firewall.py` → PASS
-- [ ] `cd scripts && ruff format --check .` → PASS
-- [ ] Manual review: no other callers pass `[]` to `create_policy` or `update_policy` expecting DROP behavior
+- [x] `cd scripts && python3 -m pytest tests/test_netcup_firewall.py -v` → all PASS
+- [x] `cd scripts && ruff check .` → zero violations
+- [x] `cd scripts && mypy --strict netcup_firewall.py` → PASS
+- [x] `cd scripts && ruff format --check .` → PASS
+- [x] Manual review: no other callers pass `[]` to `create_policy` or `update_policy` expecting DROP behavior
 
 ## Completion Log
 
 _To be filled during implementation._
+
+## Completion Summary
+
+- **Completed Date**: 2026-04-23
+- **Total Duration**: ~2 hours
+- **Deviations**:
+  - Phase 1 and Phase 2 were each executed as combined Red+Green subtasks rather than separate Red/Green subtasks, reducing overhead while maintaining TDD discipline
+  - Added Phase for review finding fixes: stale policy reuse reconciliation (F-001), guard simplification (F-002), documentation fixes (F-003/F-004), test coverage improvement (F-005), redundant import cleanup (F-007), ICMP field cleanup (F-006)
+- **Lessons Learned**:
+  - Python's truthiness of empty lists (`[]` is falsy) can silently convert intended values to sentinel values like `UNSET` — always use explicit identity checks (`is not None`) or unconditional assignment when the type is guaranteed
+  - Security-critical "reuse" paths must be validated: when a function finds an existing resource by name, it must verify the resource's state matches expectations, not just return it blindly
+  - SCP API does NOT default to DROP when rules are absent — it defaults to ACCEPT_ALL. Always verify API default behavior empirically rather than assuming
+  - Legacy dict formats that include optional fields as empty strings (e.g., `"destinationPort": ""`) should omit those fields entirely when the conversion layer handles missing keys gracefully
+  - When fixing a security function, update ALL artifacts: production code, tests, JSON fixtures, README files, docstrings — stale documentation is a security risk because operators may rely on it
