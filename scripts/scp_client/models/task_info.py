@@ -170,15 +170,15 @@ class TaskInfo:
 
         _executing_user = d.pop("executingUser", UNSET)
         executing_user: UserMinimal | Unset
-        if isinstance(_executing_user, Unset):
-            executing_user = UNSET
+        if isinstance(_executing_user, Unset) or _executing_user is None:
+            executing_user = _executing_user  # type: ignore[assignment]
         else:
             executing_user = UserMinimal.from_dict(_executing_user)
 
         _task_progress = d.pop("taskProgress", UNSET)
         task_progress: TaskProgress | Unset
-        if isinstance(_task_progress, Unset):
-            task_progress = UNSET
+        if isinstance(_task_progress, Unset) or _task_progress is None:
+            task_progress = _task_progress  # type: ignore[assignment]
         else:
             task_progress = TaskProgress.from_dict(_task_progress)
 
@@ -195,24 +195,26 @@ class TaskInfo:
 
         _steps = d.pop("steps", UNSET)
         steps: list[TaskInfoStep] | Unset = UNSET
-        if _steps is not UNSET:
+        if _steps is not UNSET and _steps is not None:
             steps = []
             for steps_item_data in _steps:
                 steps_item = TaskInfoStep.from_dict(steps_item_data)
 
                 steps.append(steps_item)
+        elif _steps is None:
+            steps = None  # type: ignore[assignment]
 
         _result = d.pop("result", UNSET)
         result: TaskInfoResult | Unset
-        if isinstance(_result, Unset):
-            result = UNSET
+        if isinstance(_result, Unset) or _result is None:
+            result = _result  # type: ignore[assignment]
         else:
             result = TaskInfoResult.from_dict(_result)
 
         _response_error = d.pop("responseError", UNSET)
         response_error: ResponseError | Unset
-        if isinstance(_response_error, Unset):
-            response_error = UNSET
+        if isinstance(_response_error, Unset) or _response_error is None:
+            response_error = _response_error  # type: ignore[assignment]
         else:
             response_error = ResponseError.from_dict(_response_error)
 

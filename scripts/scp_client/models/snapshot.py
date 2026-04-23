@@ -162,8 +162,8 @@ class Snapshot:
 
         _download_infos = d.pop("downloadInfos", UNSET)
         download_infos: S3DownloadInfos | Unset
-        if isinstance(_download_infos, Unset):
-            download_infos = UNSET
+        if isinstance(_download_infos, Unset) or _download_infos is None:
+            download_infos = _download_infos  # type: ignore[assignment]
         else:
             download_infos = S3DownloadInfos.from_dict(_download_infos)
 

@@ -56,15 +56,15 @@ class FirewallPolicyUpdateResult:
         d = dict(src_dict)
         _firewall_policy = d.pop("firewallPolicy", UNSET)
         firewall_policy: FirewallPolicy | Unset
-        if isinstance(_firewall_policy, Unset):
-            firewall_policy = UNSET
+        if isinstance(_firewall_policy, Unset) or _firewall_policy is None:
+            firewall_policy = _firewall_policy  # type: ignore[assignment]
         else:
             firewall_policy = FirewallPolicy.from_dict(_firewall_policy)
 
         _task_info = d.pop("taskInfo", UNSET)
         task_info: TaskInfo | Unset
-        if isinstance(_task_info, Unset):
-            task_info = UNSET
+        if isinstance(_task_info, Unset) or _task_info is None:
+            task_info = _task_info  # type: ignore[assignment]
         else:
             task_info = TaskInfo.from_dict(_task_info)
 

@@ -89,7 +89,7 @@ class ServerFirewall:
         d = dict(src_dict)
         _copied_policies = d.pop("copiedPolicies", UNSET)
         copied_policies: list[FirewallPolicy] | Unset = UNSET
-        if _copied_policies is not UNSET:
+        if _copied_policies is not UNSET and _copied_policies is not None:
             copied_policies = []
             for copied_policies_item_data in _copied_policies:
                 copied_policies_item = FirewallPolicy.from_dict(
@@ -97,15 +97,19 @@ class ServerFirewall:
                 )
 
                 copied_policies.append(copied_policies_item)
+        elif _copied_policies is None:
+            copied_policies = None  # type: ignore[assignment]
 
         _user_policies = d.pop("userPolicies", UNSET)
         user_policies: list[FirewallPolicy] | Unset = UNSET
-        if _user_policies is not UNSET:
+        if _user_policies is not UNSET and _user_policies is not None:
             user_policies = []
             for user_policies_item_data in _user_policies:
                 user_policies_item = FirewallPolicy.from_dict(user_policies_item_data)
 
                 user_policies.append(user_policies_item)
+        elif _user_policies is None:
+            user_policies = None  # type: ignore[assignment]
 
         _ingress_implicit_rule = d.pop("ingressImplicitRule", UNSET)
         ingress_implicit_rule: ImplicitRule | Unset

@@ -109,8 +109,8 @@ class ServerListMinimal:
 
         _template = d.pop("template", UNSET)
         template: ServerTemplateMinimal | Unset
-        if isinstance(_template, Unset):
-            template = UNSET
+        if isinstance(_template, Unset) or _template is None:
+            template = _template  # type: ignore[assignment]
         else:
             template = ServerTemplateMinimal.from_dict(_template)
 

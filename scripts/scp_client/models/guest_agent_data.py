@@ -57,8 +57,8 @@ class GuestAgentData:
 
         _guest_agent_data = d.pop("guestAgentData", UNSET)
         guest_agent_data: GuestAgentDataGuestAgentData | Unset
-        if isinstance(_guest_agent_data, Unset):
-            guest_agent_data = UNSET
+        if isinstance(_guest_agent_data, Unset) or _guest_agent_data is None:
+            guest_agent_data = _guest_agent_data  # type: ignore[assignment]
         else:
             guest_agent_data = GuestAgentDataGuestAgentData.from_dict(_guest_agent_data)
 

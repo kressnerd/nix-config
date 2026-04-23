@@ -213,21 +213,25 @@ class ServerInfo:
 
         _interfaces = d.pop("interfaces", UNSET)
         interfaces: list[ServerInterface] | Unset = UNSET
-        if _interfaces is not UNSET:
+        if _interfaces is not UNSET and _interfaces is not None:
             interfaces = []
             for interfaces_item_data in _interfaces:
                 interfaces_item = ServerInterface.from_dict(interfaces_item_data)
 
                 interfaces.append(interfaces_item)
+        elif _interfaces is None:
+            interfaces = None  # type: ignore[assignment]
 
         _disks = d.pop("disks", UNSET)
         disks: list[ServerDisk] | Unset = UNSET
-        if _disks is not UNSET:
+        if _disks is not UNSET and _disks is not None:
             disks = []
             for disks_item_data in _disks:
                 disks_item = ServerDisk.from_dict(disks_item_data)
 
                 disks.append(disks_item)
+        elif _disks is None:
+            disks = None  # type: ignore[assignment]
 
         _bootorder = d.pop("bootorder", UNSET)
         bootorder: list[Bootorder] | Unset = UNSET

@@ -78,8 +78,8 @@ class ImageFlavour:
 
         _image = d.pop("image", UNSET)
         image: ImageMinimal | Unset
-        if isinstance(_image, Unset):
-            image = UNSET
+        if isinstance(_image, Unset) or _image is None:
+            image = _image  # type: ignore[assignment]
         else:
             image = ImageMinimal.from_dict(_image)
 

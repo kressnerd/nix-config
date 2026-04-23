@@ -86,21 +86,25 @@ class Interface:
 
         _ipv_4_addresses = d.pop("ipv4Addresses", UNSET)
         ipv_4_addresses: list[ServerIpv4] | Unset = UNSET
-        if _ipv_4_addresses is not UNSET:
+        if _ipv_4_addresses is not UNSET and _ipv_4_addresses is not None:
             ipv_4_addresses = []
             for ipv_4_addresses_item_data in _ipv_4_addresses:
                 ipv_4_addresses_item = ServerIpv4.from_dict(ipv_4_addresses_item_data)
 
                 ipv_4_addresses.append(ipv_4_addresses_item)
+        elif _ipv_4_addresses is None:
+            ipv_4_addresses = None  # type: ignore[assignment]
 
         _ipv_6_addresses = d.pop("ipv6Addresses", UNSET)
         ipv_6_addresses: list[ServerIpv6] | Unset = UNSET
-        if _ipv_6_addresses is not UNSET:
+        if _ipv_6_addresses is not UNSET and _ipv_6_addresses is not None:
             ipv_6_addresses = []
             for ipv_6_addresses_item_data in _ipv_6_addresses:
                 ipv_6_addresses_item = ServerIpv6.from_dict(ipv_6_addresses_item_data)
 
                 ipv_6_addresses.append(ipv_6_addresses_item)
+        elif _ipv_6_addresses is None:
+            ipv_6_addresses = None  # type: ignore[assignment]
 
         interface = cls(
             mac=mac,
