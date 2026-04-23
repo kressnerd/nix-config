@@ -76,8 +76,8 @@ class S3DownloadInfos:
 
         _headers = d.pop("headers", UNSET)
         headers: S3DownloadInfosHeaders | Unset
-        if isinstance(_headers, Unset):
-            headers = UNSET
+        if isinstance(_headers, Unset) or _headers is None:
+            headers = _headers  # type: ignore[assignment]
         else:
             headers = S3DownloadInfosHeaders.from_dict(_headers)
 

@@ -200,21 +200,21 @@ class Server:
 
         _template = d.pop("template", UNSET)
         template: ServerTemplateMinimal | Unset
-        if isinstance(_template, Unset):
-            template = UNSET
+        if isinstance(_template, Unset) or _template is None:
+            template = _template  # type: ignore[assignment]
         else:
             template = ServerTemplateMinimal.from_dict(_template)
 
         _server_live_info = d.pop("serverLiveInfo", UNSET)
         server_live_info: ServerInfo | Unset
-        if isinstance(_server_live_info, Unset):
-            server_live_info = UNSET
+        if isinstance(_server_live_info, Unset) or _server_live_info is None:
+            server_live_info = _server_live_info  # type: ignore[assignment]
         else:
             server_live_info = ServerInfo.from_dict(_server_live_info)
 
         _ipv_4_addresses = d.pop("ipv4Addresses", UNSET)
         ipv_4_addresses: list[IPv4AddressMinimal] | Unset = UNSET
-        if _ipv_4_addresses is not UNSET:
+        if _ipv_4_addresses is not UNSET and _ipv_4_addresses is not None:
             ipv_4_addresses = []
             for ipv_4_addresses_item_data in _ipv_4_addresses:
                 ipv_4_addresses_item = IPv4AddressMinimal.from_dict(
@@ -222,10 +222,12 @@ class Server:
                 )
 
                 ipv_4_addresses.append(ipv_4_addresses_item)
+        elif _ipv_4_addresses is None:
+            ipv_4_addresses = None  # type: ignore[assignment]
 
         _ipv_6_addresses = d.pop("ipv6Addresses", UNSET)
         ipv_6_addresses: list[IPv6AddressMinimal] | Unset = UNSET
-        if _ipv_6_addresses is not UNSET:
+        if _ipv_6_addresses is not UNSET and _ipv_6_addresses is not None:
             ipv_6_addresses = []
             for ipv_6_addresses_item_data in _ipv_6_addresses:
                 ipv_6_addresses_item = IPv6AddressMinimal.from_dict(
@@ -233,11 +235,13 @@ class Server:
                 )
 
                 ipv_6_addresses.append(ipv_6_addresses_item)
+        elif _ipv_6_addresses is None:
+            ipv_6_addresses = None  # type: ignore[assignment]
 
         _site = d.pop("site", UNSET)
         site: Site | Unset
-        if isinstance(_site, Unset):
-            site = UNSET
+        if isinstance(_site, Unset) or _site is None:
+            site = _site  # type: ignore[assignment]
         else:
             site = Site.from_dict(_site)
 

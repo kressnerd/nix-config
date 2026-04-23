@@ -94,22 +94,22 @@ class VLan:
 
         _user = d.pop("user", UNSET)
         user: UserMinimal | Unset
-        if isinstance(_user, Unset):
-            user = UNSET
+        if isinstance(_user, Unset) or _user is None:
+            user = _user  # type: ignore[assignment]
         else:
             user = UserMinimal.from_dict(_user)
 
         _site = d.pop("site", UNSET)
         site: Site | Unset
-        if isinstance(_site, Unset):
-            site = UNSET
+        if isinstance(_site, Unset) or _site is None:
+            site = _site  # type: ignore[assignment]
         else:
             site = Site.from_dict(_site)
 
         _bandwidth_class = d.pop("bandwidthClass", UNSET)
         bandwidth_class: BandwidthClass | Unset
-        if isinstance(_bandwidth_class, Unset):
-            bandwidth_class = UNSET
+        if isinstance(_bandwidth_class, Unset) or _bandwidth_class is None:
+            bandwidth_class = _bandwidth_class  # type: ignore[assignment]
         else:
             bandwidth_class = BandwidthClass.from_dict(_bandwidth_class)
 

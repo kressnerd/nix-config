@@ -84,8 +84,8 @@ class Log:
 
         _executing_user = d.pop("executingUser", UNSET)
         executing_user: UserMinimal | Unset
-        if isinstance(_executing_user, Unset):
-            executing_user = UNSET
+        if isinstance(_executing_user, Unset) or _executing_user is None:
+            executing_user = _executing_user  # type: ignore[assignment]
         else:
             executing_user = UserMinimal.from_dict(_executing_user)
 

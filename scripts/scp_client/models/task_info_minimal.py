@@ -137,15 +137,15 @@ class TaskInfoMinimal:
 
         _executing_user = d.pop("executingUser", UNSET)
         executing_user: UserMinimal | Unset
-        if isinstance(_executing_user, Unset):
-            executing_user = UNSET
+        if isinstance(_executing_user, Unset) or _executing_user is None:
+            executing_user = _executing_user  # type: ignore[assignment]
         else:
             executing_user = UserMinimal.from_dict(_executing_user)
 
         _task_progress = d.pop("taskProgress", UNSET)
         task_progress: TaskProgress | Unset
-        if isinstance(_task_progress, Unset):
-            task_progress = UNSET
+        if isinstance(_task_progress, Unset) or _task_progress is None:
+            task_progress = _task_progress  # type: ignore[assignment]
         else:
             task_progress = TaskProgress.from_dict(_task_progress)
 

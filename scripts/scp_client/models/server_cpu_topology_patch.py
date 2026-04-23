@@ -46,8 +46,8 @@ class ServerCpuTopologyPatch:
         d = dict(src_dict)
         _cpu_topology = d.pop("cpuTopology", UNSET)
         cpu_topology: CpuTopology | Unset
-        if isinstance(_cpu_topology, Unset):
-            cpu_topology = UNSET
+        if isinstance(_cpu_topology, Unset) or _cpu_topology is None:
+            cpu_topology = _cpu_topology  # type: ignore[assignment]
         else:
             cpu_topology = CpuTopology.from_dict(_cpu_topology)
 

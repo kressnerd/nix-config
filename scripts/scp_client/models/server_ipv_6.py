@@ -138,8 +138,8 @@ class ServerIpv6:
 
         _rdns = d.pop("rdns", UNSET)
         rdns: ServerIpv6Rdns | Unset
-        if isinstance(_rdns, Unset):
-            rdns = UNSET
+        if isinstance(_rdns, Unset) or _rdns is None:
+            rdns = _rdns  # type: ignore[assignment]
         else:
             rdns = ServerIpv6Rdns.from_dict(_rdns)
 
