@@ -200,9 +200,16 @@ _To be filled during implementation._
 - **Deviations**:
   - Phase 1 and Phase 2 were each executed as combined Red+Green subtasks rather than separate Red/Green subtasks, reducing overhead while maintaining TDD discipline
   - Added Phase for review finding fixes: stale policy reuse reconciliation (F-001), guard simplification (F-002), documentation fixes (F-003/F-004), test coverage improvement (F-005), redundant import cleanup (F-007), ICMP field cleanup (F-006)
+  - Added EGRESS DROP rules based on user feedback that a lockdown must be bidirectional (not just INGRESS)
+  - Added 409 Conflict retry handling after production testing revealed a race condition between `update_policy()` and `set_firewall()`
+  - Replaced all "kill switch" terminology with "lockdown" per user feedback on consistent domain terminology
 - **Lessons Learned**:
   - Python's truthiness of empty lists (`[]` is falsy) can silently convert intended values to sentinel values like `UNSET` — always use explicit identity checks (`is not None`) or unconditional assignment when the type is guaranteed
   - Security-critical "reuse" paths must be validated: when a function finds an existing resource by name, it must verify the resource's state matches expectations, not just return it blindly
   - SCP API does NOT default to DROP when rules are absent — it defaults to ACCEPT_ALL. Always verify API default behavior empirically rather than assuming
   - Legacy dict formats that include optional fields as empty strings (e.g., `"destinationPort": ""`) should omit those fields entirely when the conversion layer handles missing keys gracefully
   - When fixing a security function, update ALL artifacts: production code, tests, JSON fixtures, README files, docstrings — stale documentation is a security risk because operators may rely on it
+  - **Firewall lockdown must be bidirectional**: A lockdown policy must block both INGRESS and EGRESS traffic. Blocking only INGRESS still allows outbound connections (e.g., data exfiltration, C2 callbacks). Always cover both directions when the intent is to fully isolate a host.
+  - **HTTP 409 Conflict is a retryable condition**: When the SCP API returns 409 ("server lock — write operation currently running"), the correct response is to retry with backoff, not to abort. Treat 409 like a transient error in the same class as 5xx. Any API with async write operations can return 409.
+  - **Race conditions between sequential API calls**: When one API call triggers an async server-side operation (e.g., `update_policy()`), the immediately following call (`set_firewall()`) can fail with 409. Mitigate with: (a) a small `time.sleep()` between calls to reduce frequency, and (b) retry logic on the second call to handle the remaining race window.
+  - **Use domain terminology consistently**: Do not invent alternative names for established concepts. "Lockdown" is standard firewall terminology; "kill switch" is ambiguous and misleading. Consistent terminology prevents confusion in documentation, logs, and CLI help text.

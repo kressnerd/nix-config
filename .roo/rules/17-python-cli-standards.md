@@ -89,6 +89,17 @@ def cmd_action(
 - Never retry 4xx errors (except 429 with `Retry-After`).
 - Maximum 3 retries.
 
+## Retryable HTTP Status Codes
+
+In addition to 5xx errors, the following status codes MUST be treated as retryable with backoff:
+
+- `409 Conflict` — Server-side write lock; the operation should be retried after a short delay
+- `429 Too Many Requests` — Rate limiting; retry after `Retry-After` header value
+
+Do NOT retry other 4xx errors (400, 401, 403, 404, etc.) — these indicate client errors that will not resolve with retries.
+
+When sequential API calls depend on each other (e.g., update then assign), add a small delay between them to reduce the probability of 409 conflicts from async server-side operations.
+
 ## Error Handling
 
 - `main()` MUST catch `KeyboardInterrupt` and exit with code 130.
