@@ -4048,3 +4048,64 @@ class TestAuthenticateNoUserScpApi:
 
         MockScpApi.assert_called_once_with("access-tok")
         assert client is MockScpApi.return_value
+
+
+class TestApiEmptyRulesGuard:
+    """Tests that empty rules list [] is sent as-is, not replaced with UNSET."""
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".post_api_v_1_users_user_id_firewall_policies.sync"
+    )
+    def test_create_policy_sends_empty_list_not_unset(
+        self, mock_sync: MagicMock
+    ) -> None:
+        """Empty rules list must be sent as [] in JSON body, not omitted."""
+        from scp_client.models.firewall_policy_save import FirewallPolicySave
+        from scp_client.types import UNSET
+
+        mock_result = MagicMock()
+        mock_result.to_dict.return_value = {"id": 1, "name": "test", "rules": []}
+        mock_sync.return_value = mock_result
+
+        api = ScpApi("test-token")
+        api.create_policy(42, "test-policy", [])
+
+        mock_sync.assert_called_once()
+        call_kwargs = mock_sync.call_args
+        body: FirewallPolicySave = call_kwargs.kwargs["body"]
+        assert body.rules != UNSET, (
+            f"Expected body.rules to not be UNSET, got {body.rules!r}"
+        )
+        assert body.rules == [], f"Expected empty list [], got {body.rules!r}"
+
+    @patch(
+        "scp_client.api.server_firewalls"
+        ".put_api_v_1_users_user_id_firewall_policies_id.sync"
+    )
+    def test_update_policy_sends_empty_list_not_unset(
+        self, mock_sync: MagicMock
+    ) -> None:
+        """Empty rules list must be sent as [] in JSON body, not omitted."""
+        from scp_client.models.firewall_policy_save import FirewallPolicySave
+        from scp_client.types import UNSET
+
+        mock_result = MagicMock()
+        mock_result.firewall_policy = MagicMock()
+        mock_result.firewall_policy.to_dict.return_value = {
+            "id": 1,
+            "name": "test",
+            "rules": [],
+        }
+        mock_sync.return_value = mock_result
+
+        api = ScpApi("test-token")
+        api.update_policy(42, 1, "test-policy", [])
+
+        mock_sync.assert_called_once()
+        call_kwargs = mock_sync.call_args
+        body: FirewallPolicySave = call_kwargs.kwargs["body"]
+        assert body.rules != UNSET, (
+            f"Expected body.rules to not be UNSET, got {body.rules!r}"
+        )
+        assert body.rules == [], f"Expected empty list [], got {body.rules!r}"
