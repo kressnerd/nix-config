@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from netcup_firewall import (
+    LOCKDOWN_RULES,
     ScpApi,
     ScpAuth,
     _authenticate_and_setup,
@@ -3270,7 +3271,7 @@ class TestPolicyLoading:
         result = load_policy_file(lockdown_path)
         validate_policy_schema(result)
         assert result["name"] == "lockdown"
-        assert result["rules"] == []
+        assert result["rules"] == LOCKDOWN_RULES
 
 
 class TestAuthenticateNoUser:

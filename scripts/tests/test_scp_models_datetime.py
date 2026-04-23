@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import datetime
 
-import pytest
 
 from scp_client.models.task_info import TaskInfo
 

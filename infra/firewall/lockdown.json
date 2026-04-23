@@ -1,5 +1,34 @@
 {
   "name": "lockdown",
-  "description": "Block all traffic — empty rules trigger implicit DROP ALL",
-  "rules": []
+  "description": "Kill-switch policy: explicit DROP rules for all protocols block all inbound traffic",
+  "rules": [
+    {
+      "direction": "INGRESS",
+      "protocol": "TCP",
+      "sourceIp": "",
+      "destinationPort": "",
+      "action": "DROP"
+    },
+    {
+      "direction": "INGRESS",
+      "protocol": "UDP",
+      "sourceIp": "",
+      "destinationPort": "",
+      "action": "DROP"
+    },
+    {
+      "direction": "INGRESS",
+      "protocol": "ICMP",
+      "sourceIp": "",
+      "destinationPort": "",
+      "action": "DROP"
+    },
+    {
+      "direction": "INGRESS",
+      "protocol": "ICMPv6",
+      "sourceIp": "",
+      "destinationPort": "",
+      "action": "DROP"
+    }
+  ]
 }
