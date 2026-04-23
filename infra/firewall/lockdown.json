@@ -5,29 +5,21 @@
     {
       "direction": "INGRESS",
       "protocol": "TCP",
-      "sourceIp": "",
-      "destinationPort": "",
       "action": "DROP"
     },
     {
       "direction": "INGRESS",
       "protocol": "UDP",
-      "sourceIp": "",
-      "destinationPort": "",
       "action": "DROP"
     },
     {
       "direction": "INGRESS",
       "protocol": "ICMP",
-      "sourceIp": "",
-      "destinationPort": "",
       "action": "DROP"
     },
     {
       "direction": "INGRESS",
       "protocol": "ICMPv6",
-      "sourceIp": "",
-      "destinationPort": "",
       "action": "DROP"
     }
   ]
