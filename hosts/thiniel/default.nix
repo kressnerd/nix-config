@@ -17,6 +17,7 @@
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
     ../../modules/nixos/systemd-sleep-settings.nix
+    ../../modules/nixos/persistence
     ../../tests/assertions
   ];
 
@@ -123,6 +124,8 @@
       "noatime"
     ];
   };
+
+  mySystem.persistence.enable = true;
 
   # Impermanence system directories
   environment.persistence."/persist/system" = {

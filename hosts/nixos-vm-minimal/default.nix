@@ -5,6 +5,7 @@
     ../common/users/dan.nix
     ./hardware.nix
     ./disko.nix
+    ../../modules/nixos/persistence
     ../../tests/assertions
   ];
 
