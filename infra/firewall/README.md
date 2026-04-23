@@ -6,7 +6,7 @@ Infrastructure-as-code definitions for netcup SCP external firewall policies.
 
 | File | Purpose | Lifecycle |
 |------|---------|-----------|
-| `lockdown.json` | Block all traffic (implicit DROP ALL) | Persistent — shared across servers |
+| `lockdown.json` | Block all traffic (explicit DROP rules for TCP/UDP/ICMP/ICMPv6) | Persistent — shared across servers |
 
 ## Format
 
@@ -42,7 +42,7 @@ Each JSON file defines a named firewall policy:
 
 - No `protocol: ANY` for non-reseller netcup accounts
 - Implicit rules (`ingressImplicitRule: DROP`) cannot be disabled
-- Empty `rules` array = DROP ALL (used by lockdown policy)
+- Lockdown policy uses explicit DROP rules for TCP, UDP, ICMP, and ICMPv6 to block all inbound traffic
 
 ## Usage
 
