@@ -1,6 +1,6 @@
 # Implementation Plan: Add LibreOffice to Thiniel
 
-## Status: PENDING APPROVAL
+## Status: COMPLETED
 
 ## Goal
 
@@ -12,12 +12,12 @@ Thiniel is a Linux desktop workstation (ThinkPad X270, Hyprland/Wayland). LibreO
 
 ## Acceptance Criteria
 
-- [ ] LibreOffice is installed via `home.packages` in a dedicated feature module
-- [ ] `.config/libreoffice` is persisted across reboots via impermanence
-- [ ] `thiniel.nix` imports the new feature module
-- [ ] Assertion test: LibreOffice package present in thiniel HM packages (eval-time)
-- [ ] Assertion test: `.config/libreoffice` in HM persistence directories (eval-time)
-- [ ] `nix flake check` passes
+- [x] LibreOffice is installed via `home.packages` in a dedicated feature module
+- [x] `.config/libreoffice` is persisted across reboots via impermanence
+- [x] `thiniel.nix` imports the new feature module
+- [x] Assertion test: LibreOffice package present in thiniel HM packages (eval-time)
+- [x] Assertion test: `.config/libreoffice` in HM persistence directories (eval-time)
+- [x] `nix flake check` passes
 
 ## Technical Analysis
 
@@ -113,4 +113,11 @@ Plan created — awaiting approval.
 
 ## Completion Log
 
-*(to be filled during implementation)*
+### Completion Summary
+
+- **Completed Date**: 2026-04-23
+- **Commits**: `77c4312` (initial), fix commit (wrapped package fix)
+- **Deviations**:
+  - Created separate `thiniel-libreoffice-invariants.nix` instead of adding assertions to existing files
+  - Initial implementation used `pkgs.libreoffice.unwrapped` due to assertion limitations; fixed in follow-up commit to use `pkgs.libreoffice` with `lib.hasPrefix` pattern for wrapped package name matching
+- **Lessons Learned**: LibreOffice's nixpkgs wrapper derivation lacks `pname` — assertions matching wrapped packages should use `lib.hasPrefix` instead of exact `pname` match
