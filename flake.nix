@@ -132,6 +132,7 @@
                 users.dan = import ./home/dan/nixos-vm-minimal.nix;
                 sharedModules = [
                   sops-nix.homeManagerModules.sops
+                  ./modules/home-manager/persistence
                 ];
               };
             }
@@ -155,6 +156,8 @@
               nixpkgs.config.allowUnfree = true;
             }
             ./hosts/thiniel
+            ./modules/home-manager/persistence
+            { myHome.persistence.enable = true; }
             stylix.nixosModules.stylix
             home-manager.nixosModules.home-manager
             {
@@ -171,6 +174,7 @@
                 users.dan = import ./home/dan/thiniel.nix;
                 sharedModules = [
                   sops-nix.homeManagerModules.sops
+                  ./modules/home-manager/persistence
                 ];
               };
             }
@@ -210,6 +214,7 @@
                 users.dan = import ./home/dan/cupix001.nix;
                 sharedModules = [
                   sops-nix.homeManagerModules.sops
+                  ./modules/home-manager/persistence
                 ];
               };
             }
@@ -294,6 +299,7 @@
                 sharedModules = [
                   mac-app-util.homeManagerModules.default
                   sops-nix.homeManagerModules.sops
+                  ./modules/home-manager/persistence
                 ];
               };
             }

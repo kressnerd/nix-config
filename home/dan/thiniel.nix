@@ -71,4 +71,6 @@
     cda = "colmena apply --goal dry-activate --on";
     call = "colmena apply";
   };
+
+  myHome.persistence.enable = true;
 }

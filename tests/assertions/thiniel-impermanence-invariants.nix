@@ -108,6 +108,15 @@
           assertion = hmHasDir ".local/share/maestral";
           message = "thiniel: .local/share/maestral must be persisted for Maestral state and index";
         }
+        {
+          assertion =
+            let
+              hasOption = config ? myHome.persistence.enable;
+              result = builtins.tryEval (if hasOption then config.myHome.persistence.enable else false);
+            in
+            result.success && result.value;
+          message = "thiniel: myHome.persistence.enable must be true — persistence base module not loaded or not enabled";
+        }
       ];
   };
 }
