@@ -67,7 +67,7 @@ python3 scripts/netcup_firewall.py backup --server cupix001
 ```
 Saves all policies + interface assignments to `~/.local/share/netcup-scp/backups/cupix001-{timestamp}.json`.
 
-**Lockdown** (kill switch — block ALL traffic):
+**Lockdown** (block ALL traffic):
 ```bash
 # Enter the devShell first (provides Python 3 + all dependencies)
 nix develop
@@ -113,7 +113,7 @@ python3 scripts/netcup_firewall.py apply --server cupix001 --policy bootstrap
 | Subcommand | Synopsis | Notes |
 |------------|----------|-------|
 | `backup` | `backup --server NAME` | Save current firewall rules to a timestamped JSON file |
-| `lockdown` | `lockdown --server NAME [--yes]` | Apply deny-all inbound policy (kill switch). `--yes` skips the interactive confirmation prompt |
+| `lockdown` | `lockdown --server NAME [--yes]` | Apply deny-all inbound policy (lockdown). `--yes` skips the interactive confirmation prompt |
 | `restore` | `restore --server NAME --file PATH` | Restore firewall rules from a backup JSON file |
 | `apply` | `apply --server NAME --policy {bootstrap,production}` | Apply a named policy template (not yet implemented) |
 | `ssh-open` | `ssh-open --server NAME --source IP [--port N] [--yes]` | Temporarily open SSH access from a specific source IP |
@@ -176,7 +176,7 @@ python3 scripts/netcup_firewall.py --keyring restore --server cupix001 --file ba
 
 - SCP API credentials are **Tier 1 secrets** — never commit to git
 - Credentials and backups are persisted via impermanence on thiniel
-- The kill switch runs from thiniel only — credentials never reside on the VPS
+- The lockdown command runs from thiniel only — credentials never reside on the VPS
 - Add age encryption to credentials file later if needed (see Epic 15a plan)
 
 ### Running Tests

@@ -1518,7 +1518,7 @@ class TestBackupCommand:
 
 
 class TestLockdownCommand:
-    """Test lockdown (kill switch) subcommand."""
+    """Test lockdown subcommand."""
 
     def _make_mock_setup(
         self,

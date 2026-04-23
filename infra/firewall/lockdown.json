@@ -1,6 +1,6 @@
 {
   "name": "lockdown",
-  "description": "Kill-switch policy: explicit DROP rules for all protocols block all inbound and outbound traffic",
+  "description": "Lockdown policy: explicit DROP rules for all protocols block all inbound and outbound traffic",
   "rules": [
     {
       "direction": "INGRESS",
