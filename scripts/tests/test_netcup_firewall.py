@@ -1615,15 +1615,18 @@ class TestLockdownCommand:
         call_args = mock_client.create_policy.call_args
         rules = call_args[0][2]  # positional arg: rules
 
-        # Must have at least 4 rules (one per protocol)
-        assert len(rules) >= 4, f"Expected >=4 DROP rules, got {len(rules)}"
+        # Must have 8 rules: 4 protocols × 2 directions
+        assert len(rules) >= 8, f"Expected >=8 DROP rules, got {len(rules)}"
 
-        # All rules must be DROP + INGRESS
+        # All rules must be DROP
         for rule in rules:
             assert rule["action"] == "DROP", f"Expected DROP, got {rule['action']}"
-            assert rule["direction"] == "INGRESS", (
-                f"Expected INGRESS, got {rule['direction']}"
-            )
+
+        # Both directions must be covered
+        directions = {r["direction"] for r in rules}
+        assert directions == {"INGRESS", "EGRESS"}, (
+            f"Expected INGRESS+EGRESS, got {directions}"
+        )
 
         # Must cover all 4 protocols
         protocols = {r["protocol"] for r in rules}
@@ -1631,6 +1634,18 @@ class TestLockdownCommand:
         assert protocols == expected_protocols, (
             f"Expected {expected_protocols}, got {protocols}"
         )
+
+    def test_lockdown_rules_cover_both_directions(self) -> None:
+        """LOCKDOWN_RULES must include DROP rules for both INGRESS and EGRESS."""
+        from netcup_firewall import LOCKDOWN_RULES
+
+        directions = {r["direction"] for r in LOCKDOWN_RULES}
+        assert directions == {"INGRESS", "EGRESS"}, (
+            f"Expected INGRESS+EGRESS, got {directions}"
+        )
+
+        # Must have 8 rules: 4 protocols × 2 directions
+        assert len(LOCKDOWN_RULES) == 8, f"Expected 8 rules, got {len(LOCKDOWN_RULES)}"
 
     @patch("netcup_firewall.cmd_backup")
     @patch("netcup_firewall.ScpApi")

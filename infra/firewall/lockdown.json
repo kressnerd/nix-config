@@ -1,6 +1,6 @@
 {
   "name": "lockdown",
-  "description": "Kill-switch policy: explicit DROP rules for all protocols block all inbound traffic",
+  "description": "Kill-switch policy: explicit DROP rules for all protocols block all inbound and outbound traffic",
   "rules": [
     {
       "direction": "INGRESS",
@@ -19,6 +19,26 @@
     },
     {
       "direction": "INGRESS",
+      "protocol": "ICMPv6",
+      "action": "DROP"
+    },
+    {
+      "direction": "EGRESS",
+      "protocol": "TCP",
+      "action": "DROP"
+    },
+    {
+      "direction": "EGRESS",
+      "protocol": "UDP",
+      "action": "DROP"
+    },
+    {
+      "direction": "EGRESS",
+      "protocol": "ICMP",
+      "action": "DROP"
+    },
+    {
+      "direction": "EGRESS",
       "protocol": "ICMPv6",
       "action": "DROP"
     }

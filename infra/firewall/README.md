@@ -32,7 +32,7 @@ Each JSON file defines a named firewall policy:
 
 | Field | Values | Required |
 |-------|--------|----------|
-| `direction` | `INGRESS` | Yes |
+| `direction` | `INGRESS`, `EGRESS` | Yes |
 | `protocol` | `TCP`, `UDP` | Yes |
 | `sourceIp` | CIDR notation (e.g., `0.0.0.0/0`) | Yes |
 | `destinationPort` | Port number as string (e.g., `"443"`) | Yes |
@@ -42,7 +42,7 @@ Each JSON file defines a named firewall policy:
 
 - No `protocol: ANY` for non-reseller netcup accounts
 - Implicit rules (`ingressImplicitRule: DROP`) cannot be disabled
-- Lockdown policy uses explicit DROP rules for TCP, UDP, ICMP, and ICMPv6 to block all inbound traffic
+- Lockdown policy uses explicit DROP rules for TCP, UDP, ICMP, and ICMPv6 in both INGRESS and EGRESS directions to block all inbound and outbound traffic
 
 ## Usage
 

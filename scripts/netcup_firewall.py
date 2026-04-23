@@ -13,7 +13,7 @@ Command groups:
 
 Legacy commands:
     backup    Save current firewall rules to a JSON file.
-    lockdown  Apply a deny-all inbound policy (kill-switch).
+    lockdown  Apply a deny-all policy for all traffic (kill-switch).
     restore   Restore firewall rules from a previously saved JSON file.
     ssh-open  Open temporary SSH access from a specific source IP.
     ssh-close Close temporary SSH access and remove the policy.
@@ -1291,10 +1291,11 @@ def _get_current_policy_ids(client: ScpApi, server_id: int, mac: str) -> list[in
 
 LOCKDOWN_RULES: list[dict[str, str]] = [
     {
-        "direction": "INGRESS",
+        "direction": direction,
         "protocol": protocol,
         "action": "DROP",
     }
+    for direction in ("INGRESS", "EGRESS")
     for protocol in ("TCP", "UDP", "ICMP", "ICMPv6")
 ]
 
@@ -1307,10 +1308,10 @@ def _find_or_create_lockdown_policy(
     """Return the lockdown policy for a server, creating or reconciling it.
 
     The lockdown policy is named ``lockdown-<server_name>`` and contains
-    explicit DROP rules for all protocols to block all inbound traffic via
-    the SCP external firewall.  When an existing policy is found its rules
-    are overwritten with the current ``LOCKDOWN_RULES`` to prevent stale
-    empty-rule policies from silently bypassing the kill switch.
+    explicit DROP rules for all protocols to block all inbound and outbound
+    traffic via the SCP external firewall.  When an existing policy is found
+    its rules are overwritten with the current ``LOCKDOWN_RULES`` to prevent
+    stale empty-rule policies from silently bypassing the kill switch.
 
     Args:
         client: Authenticated ScpApi instance.
@@ -1636,7 +1637,7 @@ def cmd_lockdown(
     client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> None:
-    """Kill switch: block ALL inbound traffic via explicit DROP rules.
+    """Kill switch: block ALL inbound and outbound traffic via explicit DROP rules.
 
     Args:
         args: Parsed CLI arguments (requires args.server, args.yes).
@@ -1669,7 +1670,7 @@ def cmd_lockdown(
     _apply_lockdown_to_interfaces(client, server_id, interfaces, lockdown_policy)
 
     logger.info(
-        "\nLOCKDOWN ACTIVE — all traffic to %s blocked via SCP external firewall",
+        "\nLOCKDOWN ACTIVE — all inbound and outbound traffic to %s blocked via SCP external firewall",
         args.server,
     )
     logger.info("Backup saved to: %s", backup_path)
@@ -1921,7 +1922,7 @@ examples:
     backup_parser.set_defaults(command="backup", func=cmd_backup)
 
     lockdown_parser = subparsers.add_parser(
-        "lockdown", help="Apply deny-all inbound policy."
+        "lockdown", help="Apply deny-all policy for all traffic (kill-switch)."
     )
     lockdown_parser.add_argument(
         "--server",
