@@ -341,6 +341,10 @@ The restructuring proceeds in four sequential phases:
 
 7. **Test count is not monotonically increasing during migrations**: Phase 4 peaked at 223 tests (after adding ScpApi tests) then dropped to 203 (after removing legacy ScpApiClient tests) then rose to 213 (after adding negative-path tests). This is expected during refactoring — what matters is coverage of the current codebase, not absolute count.
 
+8. **`openapi-python-client` `from_dict()` does not handle JSON `null`**: The generator produces `from_dict()` methods that check `if isinstance(v, Unset)` but never check `if v is None`. When the API returns `null` for any field (datetime, nested object, or list), the generated code crashes with `TypeError`. This required patching 48 locations across 19 model files. The fix pattern: add `or v is None` alongside every `isinstance(v, Unset)` guard, and `and v is not None` before list iteration. Some model files already had the correct pattern (e.g., `ssh_key.py`, `maintenance.py`), proving the generator is inconsistent in its own output.
+
+9. **Post-generation patching must be re-applied after every client regeneration**: Because the patches modify generated output (not the generator config or Jinja templates), running `openapi-python-client generate` overwrites all fixes. A documented regeneration workflow is required: generate → run `scripts/tests/test_scp_models_datetime.py` to detect regressions → apply null-guard patches → verify full test suite passes. Consider upstreaming a fix to `openapi-python-client` or customizing the generator templates to avoid this maintenance burden.
+
 ---
 
 ## Open Points
