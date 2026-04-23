@@ -5,9 +5,6 @@
   config = lib.mkIf (config.networking.hostName == "thiniel") {
     assertions =
       let
-        hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home-manager.users.dan.home.packages;
-        hmHasPkg = name: builtins.elem name hmPkgNames;
-
         hmPersistDirs = config.home-manager.users.dan.home.persistence."/persist".directories;
         hmHasDir =
           path:
@@ -17,7 +14,9 @@
       in
       [
         {
-          assertion = hmHasPkg "libreoffice";
+          assertion = builtins.any (
+            p: lib.hasPrefix "libreoffice" (p.pname or p.name or "")
+          ) config.home-manager.users.dan.home.packages;
           message = "thiniel: LibreOffice must be installed via Home Manager for office productivity";
         }
         {
