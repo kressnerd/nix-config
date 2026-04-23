@@ -49,8 +49,8 @@ class TaskProgress:
         d = dict(src_dict)
         _expected_finished_at = d.pop("expectedFinishedAt", UNSET)
         expected_finished_at: datetime.datetime | Unset
-        if isinstance(_expected_finished_at, Unset):
-            expected_finished_at = UNSET
+        if isinstance(_expected_finished_at, Unset) or _expected_finished_at is None:
+            expected_finished_at = _expected_finished_at  # type: ignore[assignment]
         else:
             expected_finished_at = isoparse(_expected_finished_at)
 

@@ -120,8 +120,8 @@ class SnapshotMinimal:
 
         _creation_time = d.pop("creationTime", UNSET)
         creation_time: datetime.datetime | Unset
-        if isinstance(_creation_time, Unset):
-            creation_time = UNSET
+        if isinstance(_creation_time, Unset) or _creation_time is None:
+            creation_time = _creation_time  # type: ignore[assignment]
         else:
             creation_time = isoparse(_creation_time)
 

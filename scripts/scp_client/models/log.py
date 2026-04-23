@@ -91,8 +91,8 @@ class Log:
 
         _date = d.pop("date", UNSET)
         date: datetime.datetime | Unset
-        if isinstance(_date, Unset):
-            date = UNSET
+        if isinstance(_date, Unset) or _date is None:
+            date = _date  # type: ignore[assignment]
         else:
             date = isoparse(_date)
 

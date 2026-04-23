@@ -57,8 +57,8 @@ class S3Object:
 
         _last_modified = d.pop("lastModified", UNSET)
         last_modified: datetime.datetime | Unset
-        if isinstance(_last_modified, Unset):
-            last_modified = UNSET
+        if isinstance(_last_modified, Unset) or _last_modified is None:
+            last_modified = _last_modified  # type: ignore[assignment]
         else:
             last_modified = isoparse(_last_modified)
 

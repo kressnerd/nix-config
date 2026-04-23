@@ -123,15 +123,15 @@ class TaskInfoMinimal:
 
         _started_at = d.pop("startedAt", UNSET)
         started_at: datetime.datetime | Unset
-        if isinstance(_started_at, Unset):
-            started_at = UNSET
+        if isinstance(_started_at, Unset) or _started_at is None:
+            started_at = _started_at  # type: ignore[assignment]
         else:
             started_at = isoparse(_started_at)
 
         _finished_at = d.pop("finishedAt", UNSET)
         finished_at: datetime.datetime | Unset
-        if isinstance(_finished_at, Unset):
-            finished_at = UNSET
+        if isinstance(_finished_at, Unset) or _finished_at is None:
+            finished_at = _finished_at  # type: ignore[assignment]
         else:
             finished_at = isoparse(_finished_at)
 
