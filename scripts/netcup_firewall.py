@@ -679,7 +679,9 @@ class ScpApi:
         from scp_client.models.firewall_policy_save import FirewallPolicySave
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
-        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules is not None else UNSET)
+        body = FirewallPolicySave(
+            name=name, rules=fw_rules if fw_rules is not None else UNSET
+        )
         result = post_api_v_1_users_user_id_firewall_policies.sync(
             user_id,
             client=self._client,
@@ -716,7 +718,9 @@ class ScpApi:
         from scp_client.models.firewall_policy_save import FirewallPolicySave
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
-        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules is not None else UNSET)
+        body = FirewallPolicySave(
+            name=name, rules=fw_rules if fw_rules is not None else UNSET
+        )
         result = self._retry_on_5xx(
             put_api_v_1_users_user_id_firewall_policies_id.sync,
             user_id,
@@ -1291,6 +1295,18 @@ def _get_current_policy_ids(client: ScpApi, server_id: int, mac: str) -> list[in
     return [p["id"] for p in firewall_state.get("userPolicies", [])]
 
 
+LOCKDOWN_RULES: list[dict[str, str]] = [
+    {
+        "direction": "INGRESS",
+        "protocol": protocol,
+        "sourceIp": "",
+        "destinationPort": "",
+        "action": "DROP",
+    }
+    for protocol in ("TCP", "UDP", "ICMP", "ICMPv6")
+]
+
+
 def _find_or_create_lockdown_policy(
     client: ScpApi,
     user_id: int,
@@ -1298,8 +1314,9 @@ def _find_or_create_lockdown_policy(
 ) -> dict[str, Any]:
     """Return the lockdown policy for a server, creating it when absent.
 
-    The lockdown policy is named ``lockdown-<server_name>`` and contains no
-    rules, which causes the SCP external firewall to DROP all inbound traffic.
+    The lockdown policy is named ``lockdown-<server_name>`` and contains
+    explicit DROP rules for all protocols to block all inbound traffic via
+    the SCP external firewall.
 
     Args:
         client: Authenticated ScpApi instance.
@@ -1319,9 +1336,10 @@ def _find_or_create_lockdown_policy(
         )
         return existing
     logger.info(
-        "Creating lockdown policy '%s' (empty rules = DROP ALL)...", lockdown_name
+        "Creating lockdown policy '%s' (explicit DROP rules for all protocols)...",
+        lockdown_name,
     )
-    return client.create_policy(user_id, lockdown_name, [])
+    return client.create_policy(user_id, lockdown_name, LOCKDOWN_RULES)
 
 
 def _find_or_create_ssh_policy(

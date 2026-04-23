@@ -1579,21 +1579,59 @@ class TestLockdownCommand:
     @patch("netcup_firewall.cmd_backup")
     @patch("netcup_firewall.ScpApi")
     @patch("netcup_firewall.ScpAuth")
-    def test_lockdown_creates_empty_policy(
+    def test_lockdown_creates_policy_with_drop_rules(
         self,
         MockAuth: MagicMock,
         MockClient: MagicMock,
         mock_backup: MagicMock,
         tmp_path: Path,
     ) -> None:
-        """lockdown creates policy with empty rules (DROP ALL)."""
+        """lockdown creates policy with explicit DROP rules for all protocols."""
+        from netcup_firewall import LOCKDOWN_RULES
+
         _, mock_client = self._make_mock_setup(MockAuth, MockClient)
         mock_backup.return_value = str(tmp_path / "backup.json")
 
         args = argparse.Namespace(server="cupix001", command="lockdown", yes=True)
         cmd_lockdown(args)
 
-        mock_client.create_policy.assert_called_once_with(42, "lockdown-cupix001", [])
+        mock_client.create_policy.assert_called_once_with(
+            42, "lockdown-cupix001", LOCKDOWN_RULES
+        )
+
+    def test_lockdown_creates_policy_with_explicit_drop_rules(self) -> None:
+        """Lockdown policy must contain explicit DROP rules, not empty rules list."""
+        from netcup_firewall import _find_or_create_lockdown_policy
+
+        mock_client = MagicMock()
+        mock_client.list_policies.return_value = []  # no existing policy
+        mock_client.create_policy.return_value = {
+            "id": 99,
+            "name": "lockdown-cupix001",
+            "rules": [],
+        }
+
+        _find_or_create_lockdown_policy(mock_client, 42, "cupix001")
+
+        call_args = mock_client.create_policy.call_args
+        rules = call_args[0][2]  # positional arg: rules
+
+        # Must have at least 4 rules (one per protocol)
+        assert len(rules) >= 4, f"Expected >=4 DROP rules, got {len(rules)}"
+
+        # All rules must be DROP + INGRESS
+        for rule in rules:
+            assert rule["action"] == "DROP", f"Expected DROP, got {rule['action']}"
+            assert rule["direction"] == "INGRESS", (
+                f"Expected INGRESS, got {rule['direction']}"
+            )
+
+        # Must cover all 4 protocols
+        protocols = {r["protocol"] for r in rules}
+        expected_protocols = {"TCP", "UDP", "ICMP", "ICMPv6"}
+        assert protocols == expected_protocols, (
+            f"Expected {expected_protocols}, got {protocols}"
+        )
 
     @patch("netcup_firewall.cmd_backup")
     @patch("netcup_firewall.ScpApi")
@@ -2254,6 +2292,8 @@ class TestWorkflow:
             {"id": 1, "name": "production", "rules": []}
         ]
 
+        from netcup_firewall import LOCKDOWN_RULES
+
         with patch(
             "netcup_firewall.cmd_backup",
             return_value=str(tmp_path / "auto-backup.json"),
@@ -2263,7 +2303,9 @@ class TestWorkflow:
             )
             cmd_lockdown(args_lockdown)
 
-        mock_client.create_policy.assert_called_with(42, "lockdown-cupix001", [])
+        mock_client.create_policy.assert_called_with(
+            42, "lockdown-cupix001", LOCKDOWN_RULES
+        )
         mock_client.set_firewall.assert_called()
 
         mock_client.list_policies.return_value = [
