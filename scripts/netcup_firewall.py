@@ -679,7 +679,7 @@ class ScpApi:
         from scp_client.models.firewall_policy_save import FirewallPolicySave
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
-        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules else UNSET)
+        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules is not None else UNSET)
         result = post_api_v_1_users_user_id_firewall_policies.sync(
             user_id,
             client=self._client,
@@ -716,7 +716,7 @@ class ScpApi:
         from scp_client.models.firewall_policy_save import FirewallPolicySave
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
-        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules else UNSET)
+        body = FirewallPolicySave(name=name, rules=fw_rules if fw_rules is not None else UNSET)
         result = self._retry_on_5xx(
             put_api_v_1_users_user_id_firewall_policies_id.sync,
             user_id,
