@@ -19,6 +19,8 @@ _: {
       ".config/sops/age"
       # VSCode
       ".config/Code"
+      # LibreOffice
+      ".config/libreoffice"
       # ownCloud client
       ".config/ownCloud"
       # netcup SCP firewall tool (Epic 15a)
