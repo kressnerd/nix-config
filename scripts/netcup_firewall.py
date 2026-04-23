@@ -679,9 +679,7 @@ class ScpApi:
         from scp_client.models.firewall_policy_save import FirewallPolicySave
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
-        body = FirewallPolicySave(
-            name=name, rules=fw_rules if fw_rules is not None else UNSET
-        )
+        body = FirewallPolicySave(name=name, rules=fw_rules)
         result = post_api_v_1_users_user_id_firewall_policies.sync(
             user_id,
             client=self._client,
@@ -718,9 +716,7 @@ class ScpApi:
         from scp_client.models.firewall_policy_save import FirewallPolicySave
 
         fw_rules = [self._legacy_rule_to_firewall_rule(r) for r in rules]
-        body = FirewallPolicySave(
-            name=name, rules=fw_rules if fw_rules is not None else UNSET
-        )
+        body = FirewallPolicySave(name=name, rules=fw_rules)
         result = self._retry_on_5xx(
             put_api_v_1_users_user_id_firewall_policies_id.sync,
             user_id,
@@ -1312,11 +1308,13 @@ def _find_or_create_lockdown_policy(
     user_id: int,
     server_name: str,
 ) -> dict[str, Any]:
-    """Return the lockdown policy for a server, creating it when absent.
+    """Return the lockdown policy for a server, creating or reconciling it.
 
     The lockdown policy is named ``lockdown-<server_name>`` and contains
     explicit DROP rules for all protocols to block all inbound traffic via
-    the SCP external firewall.
+    the SCP external firewall.  When an existing policy is found its rules
+    are overwritten with the current ``LOCKDOWN_RULES`` to prevent stale
+    empty-rule policies from silently bypassing the kill switch.
 
     Args:
         client: Authenticated ScpApi instance.
@@ -1330,10 +1328,11 @@ def _find_or_create_lockdown_policy(
     existing = _find_policy_by_name(client, user_id, lockdown_name)
     if existing is not None:
         logger.info(
-            "Reusing existing lockdown policy '%s' (id: %s)",
+            "Updating existing lockdown policy '%s' (id: %s) with current DROP rules",
             lockdown_name,
             existing["id"],
         )
+        client.update_policy(user_id, existing["id"], lockdown_name, LOCKDOWN_RULES)
         return existing
     logger.info(
         "Creating lockdown policy '%s' (explicit DROP rules for all protocols)...",
@@ -1641,7 +1640,7 @@ def cmd_lockdown(
     client: ScpApi | None = None,
     user_id: int | None = None,
 ) -> None:
-    """Kill switch: block ALL traffic via an empty firewall policy.
+    """Kill switch: block ALL inbound traffic via explicit DROP rules.
 
     Args:
         args: Parsed CLI arguments (requires args.server, args.yes).

@@ -75,7 +75,7 @@ nix develop
 # Then run the command
 python3 scripts/netcup_firewall.py lockdown --server cupix001 --yes
 ```
-Creates an empty policy (implicit DROP ALL) and assigns it. Auto-backup is created first.
+Creates a policy with explicit DROP rules for all protocols (TCP, UDP, ICMP, ICMPv6) and assigns it to all interfaces. Auto-backup is created first.
 
 **Restore** from backup:
 ```bash
