@@ -3552,6 +3552,43 @@ class TestScpApi:
 
         assert call_count == 1
 
+    @patch("netcup_firewall.time.sleep")
+    def test_retry_on_5xx_retries_409_conflict(self, mock_sleep: MagicMock) -> None:
+        """409 Conflict (server lock) must be retried like 5xx errors."""
+        from scp_client.errors import UnexpectedStatus
+
+        mock_fn: MagicMock = MagicMock(
+            side_effect=[
+                UnexpectedStatus(409, b'{"code":"server.lock.error"}'),
+                UnexpectedStatus(409, b'{"code":"server.lock.error"}'),
+                "success",
+            ]
+        )
+
+        api = ScpApi.__new__(ScpApi)
+        result = api._retry_on_5xx(mock_fn)
+
+        assert result == "success"
+        assert mock_fn.call_count == 3
+
+    @patch("netcup_firewall.time.sleep")
+    def test_retry_on_5xx_raises_409_after_max_retries(
+        self, mock_sleep: MagicMock
+    ) -> None:
+        """409 Conflict must raise after exhausting retries."""
+        from scp_client.errors import UnexpectedStatus
+
+        mock_fn: MagicMock = MagicMock(
+            side_effect=UnexpectedStatus(409, b'{"code":"server.lock.error"}')
+        )
+
+        api = ScpApi.__new__(ScpApi)
+        with pytest.raises(UnexpectedStatus) as exc_info:
+            api._retry_on_5xx(mock_fn)
+
+        assert exc_info.value.status_code == 409
+        assert mock_fn.call_count == 4  # initial + 3 retries
+
     def test_scpapi_transport_retries(self) -> None:
         """ScpApi constructor configures httpx transport with connection retries."""
         import httpx

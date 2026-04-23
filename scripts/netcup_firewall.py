@@ -369,7 +369,7 @@ class ScpApi:
         )
 
     def _retry_on_5xx(self, fn: Callable[..., _T], *args: Any, **kwargs: Any) -> _T:
-        """Retry on 5xx UnexpectedStatus, up to 3 retries with backoff.
+        """Retry on 5xx or 409 (server lock) UnexpectedStatus, up to 3 retries with backoff.
 
         Args:
             fn: Callable to invoke.
@@ -380,13 +380,14 @@ class ScpApi:
             The return value of fn on success.
 
         Raises:
-            UnexpectedStatus: On 4xx immediately, or on 5xx after exhausting retries.
+            UnexpectedStatus: On non-retryable 4xx immediately, or on 5xx/409 after exhausting retries.
         """
         for attempt in range(4):  # initial + 3 retries
             try:
                 return fn(*args, **kwargs)
             except UnexpectedStatus as exc:
-                if exc.status_code < 500 or attempt == 3:
+                is_retryable = exc.status_code >= 500 or exc.status_code == 409
+                if not is_retryable or attempt == 3:
                     raise
                 time.sleep(attempt + 1)  # 1s, 2s, 3s backoff
         raise RuntimeError("unreachable")  # satisfy mypy
@@ -1330,6 +1331,7 @@ def _find_or_create_lockdown_policy(
             existing["id"],
         )
         client.update_policy(user_id, existing["id"], lockdown_name, LOCKDOWN_RULES)
+        time.sleep(2)  # Allow server to finish processing policy update
         return existing
     logger.info(
         "Creating lockdown policy '%s' (explicit DROP rules for all protocols)...",
