@@ -22,6 +22,7 @@
 - Allowed comments: legal headers, TODO with issue reference, `SAFETY:` annotations for non-obvious security decisions.
 - Nix: minimal comments only for non-obvious expressions (see [`10-nix-senior-admin.md`](10-nix-senior-admin.md)).
 - Python: docstrings on public APIs are documentation, not comments. Inline comments are prohibited.
+- Python truthiness: Never use `if collection` to check for non-None when the collection can legitimately be empty. Use `if collection is not None` or unconditional assignment. Empty lists, dicts, and strings are falsy in Python and `if x` will silently convert `[]` to a "missing" sentinel, losing the caller's explicit intent.
 
 ### 3. SOLID Principles
 
@@ -72,6 +73,7 @@
 - Nix: enable firewalls by default. Restrict SSH access. Validate inputs.
 - Treat all external input as untrusted: API responses, user input, file contents.
 - Log security-relevant events. Never log secrets or credentials.
+- Reuse validation: When a security-critical function finds an existing resource by name (e.g., a lockdown policy), it MUST validate the resource's state matches the expected security invariant. Never blindly reuse a resource found by name — its content may have been modified or may be stale from a prior version.
 
 ## Enforcement
 
