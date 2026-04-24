@@ -1,8 +1,21 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   home.packages = with pkgs; [
     maestral
   ];
+
+  home.persistence.${config.myHome.persistence.root}.directories =
+    lib.mkIf config.myHome.persistence.enable
+      [
+        "Dropbox"
+        ".config/maestral"
+        ".local/share/maestral"
+      ];
 
   systemd.user.services.maestral = {
     Unit = {

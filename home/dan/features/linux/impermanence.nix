@@ -12,10 +12,6 @@ _: {
       ".config/Code"
       # yazi history, bookmarks, tab state
       ".local/share/yazi"
-      # Maestral Dropbox client
-      "Dropbox"
-      ".config/maestral"
-      ".local/share/maestral"
       # gnome-keyring encrypted keyring files
       ".local/share/keyrings"
       # Rootless Podman container images, layers, and volumes
