@@ -14,8 +14,15 @@ let
   impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
   impermanenceDirs = impermanenceModule.home.persistence."/persist".directories;
 
-  # gnome-keyring.nix — signature is `{ pkgs, ... }:`, pass pkgs for libsecret
-  gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix { inherit pkgs; };
+  # gnome-keyring.nix — signature is `{ config, lib, pkgs, ... }:`, pass pkgs for libsecret
+  # config mock: persistence disabled so home.persistence block is a no-op
+  gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix {
+    inherit lib pkgs;
+    config.myHome.persistence = {
+      enable = false;
+      root = "/persist";
+    };
+  };
   gnomeKeyringPkgNames = builtins.map (p: p.pname or p.name or "") gnomeKeyringModule.home.packages;
 
   # fonts.nix — signature is `{ pkgs, ... }:`
@@ -361,9 +368,9 @@ lib.debug.runTests {
     expected = false;
   };
 
-  testImpermanenceHasKeyrings = {
+  testImpermanenceDoesNotHaveKeyrings = {
     expr = builtins.elem ".local/share/keyrings" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceDoesNotHaveSweethome = {
