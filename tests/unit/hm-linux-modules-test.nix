@@ -323,9 +323,9 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceHasClaude = {
+  testImpermanenceDoesNotHaveClaude = {
     expr = builtins.elem ".claude" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceHasMozilla = {
