@@ -74,9 +74,16 @@ let
   # keepassxc.nix — signature is `_:`, call with empty attrset
   keepassxcModule = import ../../home/dan/features/productivity/keepassxc.nix { };
 
-  # maestral.nix — signature is `{ pkgs, ... }:`
+  # maestral.nix — signature is `{ config, lib, pkgs, ... }:`
   maestralModule = import ../../home/dan/features/productivity/maestral.nix {
     pkgs = mockPkgsLinux;
+    inherit lib;
+    config = {
+      myHome.persistence = {
+        enable = false;
+        root = "/persist";
+      };
+    };
   };
 in
 lib.debug.runTests {
