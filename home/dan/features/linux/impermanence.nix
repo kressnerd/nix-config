@@ -10,8 +10,6 @@ _: {
       ".roo"
       # VSCode
       ".config/Code"
-      # LibreOffice
-      ".config/libreoffice"
       # yazi history, bookmarks, tab state
       ".local/share/yazi"
       # ownCloud client
