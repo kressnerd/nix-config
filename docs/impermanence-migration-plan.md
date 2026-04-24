@@ -395,8 +395,8 @@ nix eval .#nixosConfigurations.nixos-vm-minimal.config.home-manager.users.dan.ho
 
 ## 7. Current Status
 
-- **Phase 0**: Not started
-- **Phase 1**: Not started
-- **Phase 2**: Not started
-- **Phase 3**: Not started
-- **Phase 4**: Not started
+- **Phase 0**: ✅ Complete
+- **Phase 1**: ✅ Complete
+- **Phase 2**: ✅ Complete — base persistence modules introduced
+- **Phase 3**: ✅ Complete — all 12 HM tool migrations done
+- **Phase 4**: ✅ Complete — central impermanence.nix removed
