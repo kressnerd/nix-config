@@ -32,9 +32,14 @@ let
   deployToolsModule = import ../../home/dan/features/cli/deploy-tools.nix { inherit pkgs; };
   deployToolsPackageNames = builtins.map (p: p.pname or p.name or "") deployToolsModule.home.packages;
 
-  # Import claude-code feature module — file does not exist yet (RED phase).
+  # Import claude-code feature module — pass config mock so persistence block is a no-op.
   claudeCodeModule = import ../../home/dan/features/development/claude-code.nix {
+    inherit lib;
     pkgs-unstable = pkgs;
+    config.myHome.persistence = {
+      enable = false;
+      root = "/persist";
+    };
   };
   claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") claudeCodeModule.home.packages;
 
@@ -308,11 +313,11 @@ lib.debug.runTests {
     expected = true;
   };
 
-  # ── F-001: .claude must be in impermanence persisted directories ─────────
+  # ── F-001: .claude moved to claude-code.nix — must NOT be in impermanence.nix ──
 
-  testClaudeDirInImpermanence = {
+  testClaudeDirNotInImpermanence = {
     expr = builtins.elem ".claude" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   # ── VSCode FHS RED: vscode-fhs must expose home.packages ────────────────
