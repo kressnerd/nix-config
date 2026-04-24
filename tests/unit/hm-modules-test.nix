@@ -129,7 +129,15 @@ lib.debug.runTests {
             isLinux = true;
           };
         };
-        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsLinux; };
+        mockConfig.myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix {
+          inherit lib;
+          pkgs = mockPkgsLinux;
+          config = mockConfig;
+        };
       in
       sshModule.services.ssh-agent.enable;
     expected = true;
@@ -144,7 +152,15 @@ lib.debug.runTests {
             isLinux = false;
           };
         };
-        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsDarwin; };
+        mockConfig.myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix {
+          inherit lib;
+          pkgs = mockPkgsDarwin;
+          config = mockConfig;
+        };
       in
       sshModule.services.ssh-agent.enable;
     expected = false;
@@ -163,7 +179,15 @@ lib.debug.runTests {
             isLinux = true;
           };
         };
-        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsLinux; };
+        mockConfig.myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix {
+          inherit lib;
+          pkgs = mockPkgsLinux;
+          config = mockConfig;
+        };
         extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
       in
       !(builtins.hasAttr "UseKeychain" extraOpts);
@@ -180,7 +204,15 @@ lib.debug.runTests {
             isLinux = false;
           };
         };
-        sshModule = import ../../home/dan/features/cli/ssh.nix { pkgs = mockPkgsDarwin; };
+        mockConfig.myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix {
+          inherit lib;
+          pkgs = mockPkgsDarwin;
+          config = mockConfig;
+        };
         extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
       in
       builtins.hasAttr "UseKeychain" extraOpts;

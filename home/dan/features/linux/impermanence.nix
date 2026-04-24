@@ -4,7 +4,6 @@ _: {
       ".cache/mozilla"
       ".claude"
       ".mozilla" # Firefox
-      ".ssh"
       ".vscode/extensions"
       # Roo Code rules and skills
       ".roo"
