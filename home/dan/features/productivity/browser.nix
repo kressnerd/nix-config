@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   # Firefox theme managed manually — install Catppuccin Latte addon from marketplace
   programs.firefox = {
@@ -56,4 +61,11 @@
       };
     };
   };
+
+  home.persistence.${config.myHome.persistence.root}.directories =
+    lib.mkIf config.myHome.persistence.enable
+      [
+        ".cache/mozilla"
+        ".mozilla"
+      ];
 }
