@@ -351,14 +351,14 @@ lib.debug.runTests {
     expected = false;
   };
 
-  testImpermanenceHasOwnCloud = {
+  testImpermanenceDoesNotHaveOwnCloud = {
     expr = builtins.elem ".config/ownCloud" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
-  testImpermanenceHasOwnCloudShare = {
+  testImpermanenceDoesNotHaveOwnCloudShare = {
     expr = builtins.elem ".local/share/ownCloud" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceHasKeyrings = {
