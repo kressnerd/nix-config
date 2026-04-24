@@ -338,19 +338,19 @@ lib.debug.runTests {
     expected = false;
   };
 
-  testImpermanenceHasVscodeExtensions = {
+  testImpermanenceDoesNotHaveVscodeExtensions = {
     expr = builtins.elem ".vscode/extensions" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
-  testImpermanenceHasRoo = {
+  testImpermanenceDoesNotHaveRoo = {
     expr = builtins.elem ".roo" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
-  testImpermanenceHasVscodeConfig = {
+  testImpermanenceDoesNotHaveVscodeConfig = {
     expr = builtins.elem ".config/Code" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceDoesNotHaveKeepassxc = {

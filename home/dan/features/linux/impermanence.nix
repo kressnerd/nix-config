@@ -1,11 +1,6 @@
 _: {
   home.persistence."/persist" = {
     directories = [
-      ".vscode/extensions"
-      # Roo Code rules and skills
-      ".roo"
-      # VSCode
-      ".config/Code"
       # yazi history, bookmarks, tab state
       ".local/share/yazi"
       # Rootless Podman container images, layers, and volumes
