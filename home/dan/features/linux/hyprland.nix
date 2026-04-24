@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   pkgs-unstable,
   lib,
@@ -278,4 +279,10 @@ in
 
     };
   };
+
+  home.persistence.${config.myHome.persistence.root}.directories =
+    lib.mkIf config.myHome.persistence.enable
+      [
+        "Videos"
+      ];
 }

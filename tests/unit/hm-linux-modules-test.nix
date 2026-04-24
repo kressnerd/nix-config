@@ -11,8 +11,10 @@
 { lib, pkgs }:
 let
   # impermanence.nix — signature is `_:`, call with empty attrset
+  # Safe accessor: module may now be fully empty after all paths are colocated.
   impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
-  impermanenceDirs = impermanenceModule.home.persistence."/persist".directories;
+  impermanenceDirs =
+    (((impermanenceModule.home or { }).persistence or { })."/persist" or { }).directories or [ ];
 
   # gnome-keyring.nix — signature is `{ config, lib, pkgs, ... }:`, pass pkgs for libsecret
   # config mock: persistence disabled so home.persistence block is a no-op
@@ -37,6 +39,10 @@ let
         hyprlandModule = import ../../home/dan/features/linux/hyprland.nix {
           inherit pkgs lib;
           pkgs-unstable = pkgs;
+          config.myHome.persistence = {
+            enable = false;
+            root = "/persist";
+          };
         };
         waybarModule = import ../../home/dan/features/linux/waybar.nix {
           inherit pkgs;
@@ -312,8 +318,8 @@ lib.debug.runTests {
   # ── impermanence: mount point ─────────────────────────────────────────────
 
   testImpermanenceMountPointExists = {
-    expr = impermanenceModule.home.persistence ? "/persist";
-    expected = true;
+    expr = ((impermanenceModule.home or { }).persistence or { }) ? "/persist";
+    expected = false;
   };
 
   # ── impermanence: directories ─────────────────────────────────────────────
@@ -393,15 +399,15 @@ lib.debug.runTests {
     expected = false;
   };
 
-  testImpermanenceHasVideos = {
+  testImpermanenceDoesNotHaveVideos = {
     expr = builtins.elem "Videos" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   # ── impermanence: files ───────────────────────────────────────────────────
 
   testImpermanenceHasBashHistory = {
-    expr = !(impermanenceModule.home.persistence."/persist" ? files);
+    expr = !((((impermanenceModule.home or { }).persistence or { })."/persist" or { }) ? files);
     expected = true;
   };
 
