@@ -13,7 +13,6 @@ let
   # impermanence.nix — signature is `_:`, call with empty attrset
   impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
   impermanenceDirs = impermanenceModule.home.persistence."/persist".directories;
-  impermanenceFiles = impermanenceModule.home.persistence."/persist".files;
 
   # gnome-keyring.nix — signature is `{ pkgs, ... }:`, pass pkgs for libsecret
   gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix { inherit pkgs; };
@@ -312,16 +311,6 @@ lib.debug.runTests {
 
   # ── impermanence: directories ─────────────────────────────────────────────
 
-  testImpermanenceHasMesaShaderCache = {
-    expr = builtins.elem ".cache/mesa_shader_cache" impermanenceDirs;
-    expected = true;
-  };
-
-  testImpermanenceHasMesaShaderCacheDb = {
-    expr = builtins.elem ".cache/mesa_shader_cache_db" impermanenceDirs;
-    expected = true;
-  };
-
   testImpermanenceHasCacheMozilla = {
     expr = builtins.elem ".cache/mozilla" impermanenceDirs;
     expected = true;
@@ -349,21 +338,6 @@ lib.debug.runTests {
 
   testImpermanenceHasRoo = {
     expr = builtins.elem ".roo" impermanenceDirs;
-    expected = true;
-  };
-
-  testImpermanenceHasDev = {
-    expr = builtins.elem "dev" impermanenceDirs;
-    expected = true;
-  };
-
-  testImpermanenceHasProjects = {
-    expr = builtins.elem "Projects" impermanenceDirs;
-    expected = true;
-  };
-
-  testImpermanenceHasSopsAge = {
-    expr = builtins.elem ".config/sops/age" impermanenceDirs;
     expected = true;
   };
 
@@ -397,16 +371,6 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceHasNetcupScpConfig = {
-    expr = builtins.elem ".config/netcup-scp" impermanenceDirs;
-    expected = true;
-  };
-
-  testImpermanenceHasNetcupScpData = {
-    expr = builtins.elem ".local/share/netcup-scp" impermanenceDirs;
-    expected = true;
-  };
-
   testImpermanenceHasContainers = {
     expr = builtins.elem ".local/share/containers" impermanenceDirs;
     expected = true;
@@ -430,7 +394,7 @@ lib.debug.runTests {
   # ── impermanence: files ───────────────────────────────────────────────────
 
   testImpermanenceHasBashHistory = {
-    expr = builtins.elem ".bash_history" impermanenceFiles;
+    expr = !(impermanenceModule.home.persistence."/persist" ? files);
     expected = true;
   };
 

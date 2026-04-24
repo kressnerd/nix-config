@@ -1,12 +1,6 @@
 _: {
   home.persistence."/persist" = {
     directories = [
-      #      ".cache/bat"
-      #      ".cache/dconf"
-      #      ".cache/fontconfig"
-      ".cache/mesa_shader_cache"
-      ".cache/mesa_shader_cache_db"
-      #     ".cargo"
       ".cache/mozilla"
       ".claude"
       ".mozilla" # Firefox
@@ -14,20 +8,14 @@ _: {
       ".vscode/extensions"
       # Roo Code rules and skills
       ".roo"
-      "dev"
-      "Projects"
-      ".config/sops/age"
       # VSCode
       ".config/Code"
       # LibreOffice
       ".config/libreoffice"
-      # ownCloud client
-      ".config/ownCloud"
-      # netcup SCP firewall tool (Epic 15a)
-      ".config/netcup-scp"
-      ".local/share/netcup-scp"
       # yazi history, bookmarks, tab state
       ".local/share/yazi"
+      # ownCloud client
+      ".config/ownCloud"
       ".local/share/ownCloud"
       # Maestral Dropbox client
       "Dropbox"
@@ -45,9 +33,6 @@ _: {
       ".config/Threema"
       # Screen recordings (wf-recorder output)
       "Videos"
-    ];
-    files = [
-      ".bash_history"
     ];
   };
 }

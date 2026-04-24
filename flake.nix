@@ -76,6 +76,7 @@
       darwin,
       home-manager,
       sops-nix,
+      impermanence,
       mac-app-util,
       nix-homebrew,
       nur,
@@ -117,6 +118,7 @@
             }
             ./hosts/nixos-vm-minimal
             disko.nixosModules.disko
+            impermanence.nixosModules.impermanence
             home-manager.nixosModules.home-manager
             {
               home-manager = {
@@ -156,7 +158,7 @@
               nixpkgs.config.allowUnfree = true;
             }
             ./hosts/thiniel
-            ./modules/home-manager/persistence
+            ./modules/home-manager/persistence/options.nix
             { myHome.persistence.enable = true; }
             stylix.nixosModules.stylix
             home-manager.nixosModules.home-manager
@@ -299,7 +301,7 @@
                 sharedModules = [
                   mac-app-util.homeManagerModules.default
                   sops-nix.homeManagerModules.sops
-                  ./modules/home-manager/persistence
+                  ./modules/home-manager/persistence/options.nix
                 ];
               };
             }
