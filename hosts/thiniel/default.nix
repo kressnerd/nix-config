@@ -127,17 +127,12 @@
 
   mySystem.persistence.enable = true;
 
-  # Impermanence system directories
+  # Impermanence system directories (service-specific; base paths are in modules/nixos/persistence)
   environment.persistence."/persist/system" = {
-    hideMounts = true;
     directories = [
-      "/etc/nixos"
-      "/var/log"
       "/var/lib/bluetooth"
       "/var/lib/cups"
-      "/var/lib/nixos" # contains important state
       "/var/lib/containers" # Podman container images and layers (system-level)
-      "/var/lib/systemd/coredump"
       "/etc/NetworkManager/system-connections"
       #      "/etc/mullvad-vpn"
       #      "/var/cache/libvirt"
@@ -151,12 +146,6 @@
       #      "/var/lib/libvirt"
       #      "/var/lib/systemd"
       #      { directory = "/var/lib/colord"; user = "colord"; group = "colord"; mode = "u=rwx,g=rx,o="; }
-    ];
-    files = [
-      "/etc/machine-id"
-      #      "/var/lib/logrotate.status"
-      "/var/lib/sops-nix/key.txt"
-      #      { file = "/var/keys/secret_file"; parentDirectory = { mode = "u=rwx,g=,o="; }; }
     ];
   };
 
