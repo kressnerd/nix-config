@@ -383,14 +383,14 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceHasSignal = {
+  testImpermanenceDoesNotHaveSignal = {
     expr = builtins.elem ".config/Signal" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
-  testImpermanenceHasThreema = {
+  testImpermanenceDoesNotHaveThreema = {
     expr = builtins.elem ".config/Threema" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceHasVideos = {
