@@ -366,9 +366,9 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceHasSweethome = {
+  testImpermanenceDoesNotHaveSweethome = {
     expr = builtins.elem ".eteks" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceHasContainers = {
