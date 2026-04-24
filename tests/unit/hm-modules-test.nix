@@ -9,7 +9,6 @@
 # Colmena Phase 3 RED — J6G6Y9JK7L Colmena aliases (cs, ct, cb, cda, call)
 # Colmena Review F-004 — alias value assertions for canonical Colmena aliases
 # Claude Code RED — claude-code must be in home/dan/features/development/claude-code.nix
-# Claude Code F-001 — .claude must be in impermanence persisted directories
 # VSCode FHS RED — vscode-fhs must be in home/dan/features/productivity/vscode-fhs.nix
 { lib, pkgs }:
 let
@@ -53,12 +52,6 @@ let
     };
   };
   vscodeFhsPkgNames = builtins.map (p: p.pname or p.name or "") vscodeFhsModule.home.packages;
-
-  # Import impermanence module — signature is `_:` so call with empty attrset.
-  # Safe accessor: module may now be fully empty after all paths are colocated.
-  impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
-  impermanenceDirs =
-    (((impermanenceModule.home or { }).persistence or { })."/persist" or { }).directories or [ ];
 
   # Import J6G6Y9JK7L HM profile — signature is { config, pkgs, lib, ... }:
   # programs.fish.shellAliases only contains string literals so no real config/pkgs needed.
@@ -318,13 +311,6 @@ lib.debug.runTests {
   testClaudeCodeInPackages = {
     expr = builtins.elem "claude-code" claudeCodePkgNames;
     expected = true;
-  };
-
-  # ── F-001: .claude moved to claude-code.nix — must NOT be in impermanence.nix ──
-
-  testClaudeDirNotInImpermanence = {
-    expr = builtins.elem ".claude" impermanenceDirs;
-    expected = false;
   };
 
   # ── VSCode FHS RED: vscode-fhs must expose home.packages ────────────────

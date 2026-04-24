@@ -1,7 +1,7 @@
 # tests/unit/hm-linux-modules-test.nix
 # Characterization unit tests for Home Manager Linux feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
-# Covers: impermanence.nix, gnome-keyring.nix, fonts.nix,
+# Covers: gnome-keyring.nix, fonts.nix,
 #         hyprland.nix, waybar.nix, mako.nix, fuzzel.nix,
 #         hyprlock.nix, hypridle.nix, gtk-qt.nix
 #
@@ -10,12 +10,6 @@
 # pkgs.stdenv.isLinux so the aarch64-darwin unit-helpers check continues to pass.
 { lib, pkgs }:
 let
-  # impermanence.nix — signature is `_:`, call with empty attrset
-  # Safe accessor: module may now be fully empty after all paths are colocated.
-  impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
-  impermanenceDirs =
-    (((impermanenceModule.home or { }).persistence or { })."/persist" or { }).directories or [ ];
-
   # gnome-keyring.nix — signature is `{ config, lib, pkgs, ... }:`, pass pkgs for libsecret
   # config mock: persistence disabled so home.persistence block is a no-op
   gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix {
@@ -314,102 +308,6 @@ let
       [ ]; # skip all hyprland tests on Darwin
 in
 lib.debug.runTests {
-
-  # ── impermanence: mount point ─────────────────────────────────────────────
-
-  testImpermanenceMountPointExists = {
-    expr = ((impermanenceModule.home or { }).persistence or { }) ? "/persist";
-    expected = false;
-  };
-
-  # ── impermanence: directories ─────────────────────────────────────────────
-
-  testImpermanenceDoesNotHaveCacheMozilla = {
-    expr = builtins.elem ".cache/mozilla" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveClaude = {
-    expr = builtins.elem ".claude" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveMozilla = {
-    expr = builtins.elem ".mozilla" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveSsh = {
-    expr = builtins.elem ".ssh" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveVscodeExtensions = {
-    expr = builtins.elem ".vscode/extensions" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveRoo = {
-    expr = builtins.elem ".roo" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveVscodeConfig = {
-    expr = builtins.elem ".config/Code" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveKeepassxc = {
-    expr = builtins.elem ".config/keepassxc" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveOwnCloud = {
-    expr = builtins.elem ".config/ownCloud" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveOwnCloudShare = {
-    expr = builtins.elem ".local/share/ownCloud" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveKeyrings = {
-    expr = builtins.elem ".local/share/keyrings" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveSweethome = {
-    expr = builtins.elem ".eteks" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveContainers = {
-    expr = builtins.elem ".local/share/containers" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveSignal = {
-    expr = builtins.elem ".config/Signal" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveThreema = {
-    expr = builtins.elem ".config/Threema" impermanenceDirs;
-    expected = false;
-  };
-
-  testImpermanenceDoesNotHaveVideos = {
-    expr = builtins.elem "Videos" impermanenceDirs;
-    expected = false;
-  };
-
-  # ── impermanence: files ───────────────────────────────────────────────────
-
-  testImpermanenceHasBashHistory = {
-    expr = !((((impermanenceModule.home or { }).persistence or { })."/persist" or { }) ? files);
-    expected = true;
-  };
 
   # ── gnome-keyring ─────────────────────────────────────────────────────────
 

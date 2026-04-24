@@ -27,7 +27,6 @@
     ./features/linux/gtk-qt.nix
     ./features/linux/mako.nix
     ./features/linux/waybar.nix
-    ./features/linux/impermanence.nix
     ./features/linux/wlsunset.nix
     ./features/productivity/browser.nix
     ./features/productivity/firefox-personal.nix
