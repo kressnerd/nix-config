@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   # SSH agent as systemd user service (Linux only; macOS uses launchd agent)
   services.ssh-agent.enable = !pkgs.stdenv.isDarwin;
@@ -54,4 +59,8 @@
       };
     };
   };
+
+  home.persistence.${config.myHome.persistence.root}.directories =
+    lib.mkIf config.myHome.persistence.enable
+      [ ".ssh" ];
 }

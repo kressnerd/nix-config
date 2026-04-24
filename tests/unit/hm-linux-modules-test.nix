@@ -333,9 +333,9 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testImpermanenceHasSsh = {
+  testImpermanenceDoesNotHaveSsh = {
     expr = builtins.elem ".ssh" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceHasVscodeExtensions = {
