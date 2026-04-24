@@ -5,10 +5,6 @@ _: {
       ".local/share/yazi"
       # Rootless Podman container images, layers, and volumes
       ".local/share/containers"
-      # Signal Desktop messaging state
-      ".config/Signal"
-      # Threema Desktop messaging state
-      ".config/Threema"
       # Screen recordings (wf-recorder output)
       "Videos"
     ];
