@@ -43,9 +43,14 @@ let
   };
   claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") claudeCodeModule.home.packages;
 
-  # Import vscode-fhs feature module — file does not exist yet (RED phase).
+  # Import vscode-fhs feature module — pass config mock so persistence block is a no-op.
   vscodeFhsModule = import ../../home/dan/features/productivity/vscode-fhs.nix {
+    inherit lib;
     pkgs-unstable = pkgs;
+    config.myHome.persistence = {
+      enable = false;
+      root = "/persist";
+    };
   };
   vscodeFhsPkgNames = builtins.map (p: p.pname or p.name or "") vscodeFhsModule.home.packages;
 
