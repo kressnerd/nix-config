@@ -55,8 +55,10 @@ let
   vscodeFhsPkgNames = builtins.map (p: p.pname or p.name or "") vscodeFhsModule.home.packages;
 
   # Import impermanence module — signature is `_:` so call with empty attrset.
+  # Safe accessor: module may now be fully empty after all paths are colocated.
   impermanenceModule = import ../../home/dan/features/linux/impermanence.nix { };
-  impermanenceDirs = impermanenceModule.home.persistence."/persist".directories;
+  impermanenceDirs =
+    (((impermanenceModule.home or { }).persistence or { })."/persist" or { }).directories or [ ];
 
   # Import J6G6Y9JK7L HM profile — signature is { config, pkgs, lib, ... }:
   # programs.fish.shellAliases only contains string literals so no real config/pkgs needed.
