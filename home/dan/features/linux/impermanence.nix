@@ -1,8 +1,6 @@
 _: {
   home.persistence."/persist" = {
     directories = [
-      ".cache/mozilla"
-      ".mozilla" # Firefox
       ".vscode/extensions"
       # Roo Code rules and skills
       ".roo"

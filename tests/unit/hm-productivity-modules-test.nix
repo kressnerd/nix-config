@@ -62,12 +62,23 @@ let
     pkgs = mockPkgsWithNur;
   };
 
-  # browser.nix — signature is `{ pkgs, ... }:`
+  # browser.nix — signature is `{ config, lib, pkgs, ... }:`
+  # config mock: persistence disabled so home.persistence block is a no-op
+  mockPersistenceConfig = {
+    myHome.persistence = {
+      enable = false;
+      root = "/persist";
+    };
+  };
   browserModuleLinux = import ../../home/dan/features/productivity/browser.nix {
+    inherit lib;
     pkgs = mockPkgsLinux;
+    config = mockPersistenceConfig;
   };
   browserModuleDarwin = import ../../home/dan/features/productivity/browser.nix {
+    inherit lib;
     pkgs = mockPkgsDarwin;
+    config = mockPersistenceConfig;
   };
   linuxPolicies = browserModuleLinux.programs.firefox.policies;
 

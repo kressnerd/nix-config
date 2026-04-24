@@ -318,9 +318,9 @@ lib.debug.runTests {
 
   # ── impermanence: directories ─────────────────────────────────────────────
 
-  testImpermanenceHasCacheMozilla = {
+  testImpermanenceDoesNotHaveCacheMozilla = {
     expr = builtins.elem ".cache/mozilla" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceDoesNotHaveClaude = {
@@ -328,9 +328,9 @@ lib.debug.runTests {
     expected = false;
   };
 
-  testImpermanenceHasMozilla = {
+  testImpermanenceDoesNotHaveMozilla = {
     expr = builtins.elem ".mozilla" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceDoesNotHaveSsh = {
