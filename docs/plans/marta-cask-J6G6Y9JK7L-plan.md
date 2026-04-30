@@ -1,6 +1,6 @@
 # Plan: Add Homebrew Cask `marta` to Host `J6G6Y9JK7L`
 
-**Status**: PROPOSED
+**Status**: COMPLETED
 **Target Host**: `J6G6Y9JK7L` (aarch64-darwin)
 **Author**: Architect Mode
 **Related Files**:
@@ -172,10 +172,11 @@ No `darwin-rebuild build` step is part of this plan — `nix flake check` is suf
 | Phase | Status |
 |---|---|
 | Phase 0 — Validation Strategy | DEFINED |
-| Phase 1 — RED | NOT STARTED |
-| Phase 2 — GREEN | NOT STARTED |
+| Phase 1 — RED | DONE |
+| Phase 2 — GREEN | DONE |
 | Phase 3 — REFACTOR | N/A |
 
 ## 8. Completion Log
 
 (To be filled by the orchestrator/code mode as phases complete.)
+- 2026-04-30 — Phases 1 (RED) and 2 (GREEN) complete. nix flake check PASS.
