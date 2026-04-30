@@ -8,7 +8,6 @@ _: {
     userSettings = {
       default-root-container-layout = "tiles";
       default-root-container-orientation = "auto";
-      after-startup-command = [ ];
       key-mapping.preset = "qwerty";
 
       mode.main.binding = {
