@@ -25,6 +25,7 @@
     ./features/development/nodejs.nix
     ./features/development/fnm.nix
     ./features/macos/defaults.nix
+    ./features/macos/aerospace.nix
     ./features/productivity/browser.nix
     ./features/productivity/firefox-company.nix
     # ./features/productivity/keepassxc.nix # installed via Homebrew cask to have signed version for quick unlock
