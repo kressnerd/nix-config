@@ -10,38 +10,57 @@ _: {
       default-root-container-orientation = "auto";
       key-mapping.preset = "qwerty";
 
+      gaps = {
+        inner = {
+          horizontal = 4;
+          vertical = 4;
+        };
+        outer = {
+          top = 8;
+          bottom = 8;
+          left = 8;
+          right = 8;
+        };
+      };
+
       mode.main.binding = {
-        alt-h = "focus left";
-        alt-j = "focus down";
-        alt-k = "focus up";
-        alt-l = "focus right";
+        cmd-h = "focus left";
+        cmd-j = "focus down";
+        cmd-k = "focus up";
+        cmd-l = "focus right";
 
-        alt-shift-h = "move left";
-        alt-shift-j = "move down";
-        alt-shift-k = "move up";
-        alt-shift-l = "move right";
+        cmd-shift-h = "move left";
+        cmd-shift-j = "move down";
+        cmd-shift-k = "move up";
+        cmd-shift-l = "move right";
 
-        alt-q = "workspace 1";
-        alt-w = "workspace 2";
-        alt-e = "workspace 3";
-        alt-r = "workspace 4";
-        alt-t = "workspace 5";
-        alt-y = "workspace 6";
-        alt-u = "workspace 7";
-        alt-i = "workspace 8";
-        alt-o = "workspace 9";
+        cmd-f = "fullscreen";
+        cmd-s = "layout tiles horizontal vertical";
+        cmd-return = "exec-and-forget open -na kitty";
 
-        alt-shift-q = "move-node-to-workspace 1";
-        alt-shift-w = "move-node-to-workspace 2";
-        alt-shift-e = "move-node-to-workspace 3";
-        alt-shift-r = "move-node-to-workspace 4";
-        alt-shift-t = "move-node-to-workspace 5";
-        alt-shift-y = "move-node-to-workspace 6";
-        alt-shift-u = "move-node-to-workspace 7";
-        alt-shift-i = "move-node-to-workspace 8";
-        alt-shift-o = "move-node-to-workspace 9";
+        cmd-q = "workspace 1";
+        cmd-w = "workspace 2";
+        cmd-e = "workspace 3";
+        cmd-r = "workspace 4";
+        cmd-t = "workspace 5";
+        cmd-y = "workspace 6";
+        cmd-u = "workspace 7";
+        cmd-i = "workspace 8";
+        cmd-o = "workspace 9";
+        cmd-p = "workspace 10";
 
-        alt-shift-semicolon = "mode service";
+        cmd-shift-q = "move-node-to-workspace 1";
+        cmd-shift-w = "move-node-to-workspace 2";
+        cmd-shift-e = "move-node-to-workspace 3";
+        cmd-shift-r = "move-node-to-workspace 4";
+        cmd-shift-t = "move-node-to-workspace 5";
+        cmd-shift-y = "move-node-to-workspace 6";
+        cmd-shift-u = "move-node-to-workspace 7";
+        cmd-shift-i = "move-node-to-workspace 8";
+        cmd-shift-o = "move-node-to-workspace 9";
+        cmd-shift-p = "move-node-to-workspace 10";
+
+        cmd-shift-semicolon = "mode service";
       };
 
       mode.service.binding = {
