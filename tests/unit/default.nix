@@ -24,6 +24,7 @@ let
     inherit pkgs;
   };
   hmMacosTests = import ./hm-macos-modules-test.nix { inherit (pkgs) lib; };
+  j6HomebrewTests = import ./J6G6Y9JK7L-homebrew-test.nix { inherit (pkgs) lib; };
   allFailures =
     helperTests
     ++ hmModuleTests
@@ -31,7 +32,8 @@ let
     ++ hmDevTests
     ++ hmLinuxTests
     ++ hmProductivityTests
-    ++ hmMacosTests;
+    ++ hmMacosTests
+    ++ j6HomebrewTests;
 in
 # lib.debug.runTests returns [] on success — the branch is selected at eval time
 pkgs.runCommand "unit-tests" { } ''

@@ -6,6 +6,7 @@
 }:
 {
   imports = [
+    ../../tests/assertions/J6G6Y9JK7L-invariants.nix
     ./global/default.nix
     ./features/cli/cloud-tools.nix
     ./features/cli/deploy-tools.nix
