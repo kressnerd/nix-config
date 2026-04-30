@@ -97,6 +97,7 @@
       "claude-code"
       "crossover"
       "kitty"
+      "marta"
     ];
   };
 
