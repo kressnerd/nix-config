@@ -180,3 +180,13 @@ No `darwin-rebuild build` step is part of this plan — `nix flake check` is suf
 
 (To be filled by the orchestrator/code mode as phases complete.)
 - 2026-04-30 — Phases 1 (RED) and 2 (GREEN) complete. nix flake check PASS.
+
+## 9. Lessons Learned
+
+### Darwin host modules cannot be imported as raw attrsets in unit tests
+
+The plan's §3.5 skeleton proposed testing cask membership via `builtins.elem` on an imported module attrset. This is the pattern used for pure Home Manager feature modules (e.g. [`tests/unit/hm-modules-test.nix`](tests/unit/hm-modules-test.nix:1)). It does **not** work for darwin host modules because `hosts/J6G6Y9JK7L/default.nix` references `config.nix-homebrew.taps` — a value that is only available after full NixOS/nix-darwin module-system evaluation. Importing the host file directly as a function requires stubbing the entire `config` attrset, which is fragile and couples tests to implementation details.
+
+**Alternative used**: `builtins.readFile` + `lib.strings.hasInfix "\"marta\""` against the source file text. This is a textual check, not a structural one, but is adequate for a simple membership assertion on a literal string value. No false-positive risk exists as long as the cask token does not appear elsewhere in the file (verified at time of implementation).
+
+**Guideline for future darwin cask/brew tests**: Use `builtins.readFile` + `hasInfix` for simple presence checks on literal string values in darwin host configs. For structural assertions (e.g. `homebrew.enable = true`), consider a dedicated NixOS-test-style evaluation or accept the textual approach for simple cases.
