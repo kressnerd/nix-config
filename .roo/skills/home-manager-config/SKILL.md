@@ -436,6 +436,18 @@ Use MCP for Home Manager option discovery:
 ### Example Query Pattern
 
 Before configuring a program, check if HM has a module:
-1. Search: `home_manager_search("programs.<name>")` 
+1. Search: `home_manager_search("programs.<name>")`
 2. If module exists → use `programs.<name>.enable = true;`
 3. If not → fall back to `home.packages` + `home.file` / `xdg.configFile`
+
+---
+
+## 12. Common Pitfalls
+
+#### `userSettings` vs `settings`
+
+HM program modules are not uniform. Some use `programs.<name>.settings` for the free-form config attrset; others use `programs.<name>.userSettings` (e.g., `programs.vscode.userSettings`, `programs.aerospace.userSettings`). Do not assume `settings` — verify the exact option name against the pinned HM source (`nix repl` or MCP `home_manager_search`) before writing config.
+
+#### macOS WM Modifier Key
+
+When configuring a macOS window manager (e.g., AeroSpace via `programs.aerospace.userSettings`), use `alt-` (⌥ Option) as the primary modifier key. `cmd-` (⌘ Command) conflicts with system shortcuts (`cmd-q` quits apps, `cmd-w` closes windows, `cmd-s` saves, `cmd-f` finds, `cmd-tab` switches apps) and must not be used as a primary WM modifier.
