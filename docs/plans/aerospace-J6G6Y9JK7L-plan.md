@@ -1,6 +1,6 @@
 # Implementation Plan: Add `aerospace` Tiling WM to macOS Host `J6G6Y9JK7L`
 
-**Status**: DRAFT — Awaiting approval
+**Status**: COMPLETED
 **Target host**: [`hosts/J6G6Y9JK7L/default.nix`](../../hosts/J6G6Y9JK7L/default.nix:1) (aarch64-darwin, nix-darwin)
 **HM profile**: [`home/dan/J6G6Y9JK7L.nix`](../../home/dan/J6G6Y9JK7L.nix:1)
 
@@ -213,14 +213,75 @@ Verification:
 
 ## 10. Current Status
 
-### Current Phase: **Phase 1 — RED (Failing Assertion)**
+### Current Phase: **COMPLETED**
 
-- [ ] Phase 0: Validation Strategy documented (this document)
-- [-] Phase 1: RED — Write failing HM assertion
-- [ ] Phase 2: GREEN — Implement `aerospace.nix` feature module + wire import
-- [ ] Phase 3: REFACTOR & QUALITY — fmt / statix / deadnix / final check
-- [ ] Phase 4: APPLY & VERIFY (manual)
+- [x] Phase 0: Validation Strategy documented (this document)
+- [x] Phase 1: RED — Write failing HM assertion
+- [x] Phase 2: GREEN — Implement `aerospace.nix` feature module + wire import
+- [x] Phase 3: REFACTOR & QUALITY — fmt / statix / deadnix / final check
+- [x] Phase 4: APPLY & VERIFY (manual)
 
 ### Completion Log
 
-_(empty — no phases completed yet)_
+- Phase 0: Validation strategy defined (commands, rollback, dangerous-change classification = none).
+- Phase 1: HM assertion module [`tests/assertions/J6G6Y9JK7L-invariants.nix`](../../tests/assertions/J6G6Y9JK7L-invariants.nix:1) created with hardcoded `assertion = false` to confirm the assertion mechanism fires at eval-time on darwin. Build failed as expected.
+- Phase 2: [`home/dan/features/macos/aerospace.nix`](../../home/dan/features/macos/aerospace.nix:1) created with `programs.aerospace.enable`, `launchd.enable`, `launchd.keepAlive`, and `userSettings` (TOML-serialized config). Assertion swapped to real check against `config.programs.aerospace.enable`. Build green.
+- Phase 3: `nix fmt`, `statix check`, `deadnix` — clean. `nix flake check` green.
+- Phase 4: Applied via `darwin-rebuild switch`; launchd agent verified; AeroSpace responsive.
+
+---
+
+## 11. Lessons Learned
+
+1. **`userSettings` not `settings`** — The pinned Home Manager version exposes `programs.aerospace.userSettings` (not `programs.aerospace.settings`) for the TOML configuration attrset. This differs from some online examples and may change across HM versions. Verify against the pinned HM source before using.
+
+2. **Red phase: hardcoded `false` is safer than referencing the option** — During the Red phase, using `assertion = false` (hardcoded) instead of `assertion = !config.programs.aerospace.enable` avoids evaluation errors if the option doesn't exist yet in the module graph. Swap to the real check (`config.programs.aerospace.enable`) during the Green phase.
+
+3. **Darwin hosts have no NixOS assertion infrastructure** — The [`tests/assertions/default.nix`](../../tests/assertions/default.nix:1) aggregator and [`flake.nix`](../../flake.nix:1) `checks` output only cover NixOS hosts. For darwin, assertions must be added directly as HM modules imported from the darwin HM profile ([`home/dan/J6G6Y9JK7L.nix`](../../home/dan/J6G6Y9JK7L.nix:1)). They fire at eval-time during `nix build .#darwinConfigurations.J6G6Y9JK7L.config.system`.
+
+4. **statix W20 (repeated keys) in nested attrsets** — When writing nested AeroSpace `gaps` config in Nix, use proper nested attrset syntax:
+
+   ```nix
+   gaps = {
+     inner = {
+       horizontal = 4;
+       vertical = 4;
+     };
+     outer = {
+       top = 8;
+       bottom = 8;
+       left = 8;
+       right = 8;
+     };
+   };
+   ```
+
+   Do NOT write `inner.horizontal = 4; inner.vertical = 4;` as separate lines at the same attrset level — `statix` will flag this as W20 (repeated attribute path).
+
+5. **`cmd-` = SUPER on macOS for AeroSpace** — AeroSpace uses `cmd` for the Command (⌘) key, which is the semantic equivalent of `SUPER`/Meta on Linux. Use `cmd-` (not `alt-`) to mirror Hyprland's `$mainMod = SUPER` bindings.
+
+6. **Multi-command bindings use Nix lists** — AeroSpace supports multi-command bindings (e.g., `esc` in service mode runs `reload-config` then `mode main`). In `userSettings`, represent these as Nix lists:
+
+   ```nix
+   esc = [ "reload-config" "mode main" ];
+   ```
+
+   The HM module serializes this to a TOML array, which AeroSpace interprets as a command sequence.
+
+7. **AeroSpace features with no Hyprland equivalent (and vice versa)** — AeroSpace has no floating mode, no window opacity, no animations, and no compositor effects — these are macOS system-level features. Hyprland bindings for `killactive`, `fullscreen 0` (native), `togglefloating`, `pseudo`, lock screen, power menu, screenshot toolchain, and media keys have no AeroSpace equivalent and should remain as native macOS shortcuts.
+
+---
+
+## 12. Completion Summary
+
+- **Completed Date**: 2026-04-30
+- **Status**: COMPLETED
+- **Key Changes**:
+  - Created feature module [`home/dan/features/macos/aerospace.nix`](../../home/dan/features/macos/aerospace.nix:1) (`programs.aerospace.enable`, `userSettings`, launchd auto-start with `keepAlive`).
+  - Wired import into [`home/dan/J6G6Y9JK7L.nix`](../../home/dan/J6G6Y9JK7L.nix:1).
+  - Created HM assertion module [`tests/assertions/J6G6Y9JK7L-invariants.nix`](../../tests/assertions/J6G6Y9JK7L-invariants.nix:1) verifying `programs.aerospace.enable`.
+  - Followed strict TDD Red-Green cycle (failing assertion first, then implementation).
+  - Aligned bindings with Hyprland conventions: `cmd` modifier (= SUPER), letter-key workspaces, gaps configuration, fullscreen toggle, layout toggle, terminal launch.
+- **Deviations**:
+  - HM option name is `userSettings`, not `settings` as originally documented in §5 / §6. Discovered at build time during Phase 2; fixed in-place. Plan §5.1 / §5.3 / §6 still reference `settings` for historical context — the actual implementation uses `userSettings`.
+- **Lessons Learned**: See §11.
