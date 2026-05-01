@@ -76,6 +76,48 @@ When writing a **failing test** (Red phase):
 4. Run the verification command and **confirm it FAILS**
 5. Report: `RED CONFIRMED: <test-name> fails as expected`
 
+#### Red Phase Assertion Expression — Real Condition Only
+
+The `assertion` field MUST reference the **real configuration condition** (e.g., `config.programs.<name>.enable`), never a hardcoded `false`. A hardcoded `false` only tests that the assertion mechanism fires — it does not test the feature condition and cannot detect regressions if the Green phase is accidentally broken.
+
+**Decision tree for Red-phase assertions:**
+
+1. **Built-in HM/NixOS option** (e.g., `programs.aerospace`, `services.openssh`):
+   Reference it directly. The module system declares it with `default = false`. The assertion evaluates cleanly and fails because the feature isn't enabled yet.
+   ```nix
+   { config, ... }: {
+     assertions = [{
+       assertion = config.programs.aerospace.enable;
+       message = "aerospace must be enabled";
+     }];
+   }
+   ```
+
+2. **Custom option not yet declared** (e.g., `my.custom.module.enable`):
+   Write a stub module that declares the option with `default = false` AND the assertion in the same file. Import the stub as the Red phase. Green phase: replace the stub with the real implementation module, keep only the assertion.
+   ```nix
+   # Red phase stub — declares option + assertion
+   { lib, config, ... }: {
+     options.my.custom.enable = lib.mkOption {
+       type = lib.types.bool;
+       default = false;
+       description = "Enable my custom feature";
+     };
+     config.assertions = [{
+       assertion = config.my.custom.enable;
+       message = "my.custom.enable must be true";
+     }];
+   }
+   ```
+
+3. **Third-party module option** (not yet imported):
+   Add the module to imports first, then write the assertion referencing the option. The option only exists once the module is imported.
+
+**Prohibited patterns:**
+- `assertion = false` — tests nothing meaningful; workaround, not a test
+- `builtins.tryEval` in assertions — cannot catch module system errors
+- `lib.attrByPath` for top-level option existence — bypasses the type-safe option lookup
+
 ## Green Phase Obligations
 
 When verifying a test **passes** (Green phase):
