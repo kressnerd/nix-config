@@ -305,9 +305,24 @@ pytest --hosts=ssh://dan@thiniel tests/deploy/
 |-----------|---------------|---------------|----------------|
 | `lib.debug.runTests` | ✅ | ✅ | `nix flake check` |
 | NixOS `assertions` | ⚠️ NixOS hosts eval only | ✅ | `nix flake check --no-build` |
+| NixOS `assertions` (darwin host) | ✅ via HM profile import | — | `nix build .#darwinConfigurations.<host>.config.system` |
 | `testers.runNixOSTest` | ❌ (needs linux-builder) | ✅ | `nix build .#checks.<linux-system>.<name>` |
 | `flake-checker` | ✅ | ✅ | `nix run github:DeterminateSystems/flake-checker` |
 | `pytest-testinfra` | ✅ (SSH from devShell) | ✅ | `pytest --hosts=ssh://...` |
+
+#### Darwin Host Assertions
+
+The `tests/assertions/default.nix` NixOS aggregator cannot be imported by `darwinConfigurations` hosts. For darwin hosts, import assertion modules **directly** from the HM profile (`home/dan/<host>.nix`). They fire at eval-time:
+
+```nix
+# home/dan/J6G6Y9JK7L.nix
+{ imports = [ ../../tests/assertions/J6G6Y9JK7L-invariants.nix ]; }
+```
+
+Verify with:
+```bash
+nix build .#darwinConfigurations.<host>.config.system
+```
 
 ---
 

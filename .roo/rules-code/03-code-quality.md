@@ -16,6 +16,26 @@ After completing a change, run linting tools on modified files:
 | deadnix | `deadnix <file>` | Find unused variables and expressions in one or more files |
 | statix | `statix check <file>` | Find anti-patterns and suggest fixes in exactly one file|
 
+#### statix W20 — Repeated Attribute Path Prefixes
+
+Do NOT write repeated dotted paths at the same indentation level:
+
+```nix
+# BAD — triggers statix W20
+gaps.inner.horizontal = 4;
+gaps.inner.vertical = 4;
+```
+
+Write nested attrsets instead:
+
+```nix
+# GOOD
+gaps.inner = {
+  horizontal = 4;
+  vertical = 4;
+};
+```
+
 ### Auto-fix
 
 - `statix fix <file>` — apply safe automatic fixes to one file
