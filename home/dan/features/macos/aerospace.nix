@@ -45,8 +45,8 @@ _: {
         # Launcher (mirrors SUPER+D = fuzzel on Linux)
         alt-d = "exec-and-forget open -a Raycast || open -a Spotlight";
 
-        # Terminal (mirrors SUPER+Return on Linux)
-        alt-return = "exec-and-forget open -na kitty";
+        # Terminal (mirrors SUPER+Enter on Linux)
+        alt-enter = "exec-and-forget open -na kitty";
 
         # Workspaces 1–10 on number row
         alt-1 = "workspace 1";
