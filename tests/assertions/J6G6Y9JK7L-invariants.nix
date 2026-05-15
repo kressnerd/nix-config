@@ -23,5 +23,13 @@
         && builtins.match ".*all-monitors-outer-frame.*" bindings."alt-h" != null;
       message = "aerospace: alt-h focus must use --boundaries all-monitors-outer-frame for cross-monitor navigation";
     }
+    {
+      assertion =
+        let
+          bindings = config.programs.aerospace.userSettings.mode.main.binding;
+        in
+        builtins.hasAttr "alt-tab" bindings && bindings."alt-tab" == "focus-monitor --wrap-around next";
+      message = "aerospace: alt-tab must be bound to focus-monitor --wrap-around next";
+    }
   ];
 }
