@@ -64,6 +64,10 @@ _: {
         alt-k = "focus up --boundaries all-monitors-outer-frame";
         alt-l = "focus right --boundaries all-monitors-outer-frame";
 
+        # Focus monitor — cycle between monitors
+        alt-tab = "focus-monitor --wrap-around next";
+        alt-shift-tab = "focus-monitor --wrap-around prev";
+
         # Move window — shift+hjkl
         alt-shift-h = "move left";
         alt-shift-j = "move down";
