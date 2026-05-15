@@ -23,6 +23,40 @@ _: {
         };
       };
 
+      "workspace-to-monitor-force-assignment" = {
+        "1" = "main";
+        "2" = "main";
+        "3" = "main";
+        "4" = "main";
+        "5" = [
+          "secondary"
+          "main"
+        ];
+        "6" = [
+          "secondary"
+          "main"
+        ];
+        "7" = [
+          "secondary"
+          "main"
+        ];
+        "8" = [
+          "built-in"
+          "secondary"
+          "main"
+        ];
+        "9" = [
+          "built-in"
+          "secondary"
+          "main"
+        ];
+        "10" = [
+          "built-in"
+          "secondary"
+          "main"
+        ];
+      };
+
       mode.main.binding = {
         # Focus — vim-style hjkl
         alt-h = "focus left";
