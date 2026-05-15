@@ -31,5 +31,14 @@
         builtins.hasAttr "alt-tab" bindings && bindings."alt-tab" == "focus-monitor --wrap-around next";
       message = "aerospace: alt-tab must be bound to focus-monitor --wrap-around next";
     }
+    {
+      assertion =
+        let
+          bindings = config.programs.aerospace.userSettings.mode.main.binding;
+        in
+        builtins.hasAttr "alt-ctrl-l" bindings
+        && bindings."alt-ctrl-l" == "move-workspace-to-monitor --wrap-around next";
+      message = "aerospace: alt-ctrl-l must be bound to move-workspace-to-monitor --wrap-around next";
+    }
   ];
 }

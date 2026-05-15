@@ -74,6 +74,10 @@ _: {
         alt-shift-k = "move up";
         alt-shift-l = "move right";
 
+        # Move workspace to monitor
+        alt-ctrl-l = "move-workspace-to-monitor --wrap-around next";
+        alt-ctrl-h = "move-workspace-to-monitor --wrap-around prev";
+
         # Fullscreen (maximize)
         alt-f = "fullscreen";
 
