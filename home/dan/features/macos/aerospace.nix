@@ -10,6 +10,8 @@ _: {
       default-root-container-orientation = "auto";
       key-mapping.preset = "qwerty";
 
+      on-focused-monitor-changed = [ "move-mouse monitor-lazy-center" ];
+
       gaps = {
         inner = {
           horizontal = 4;
