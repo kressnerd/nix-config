@@ -40,5 +40,14 @@
         && bindings."alt-ctrl-l" == "move-workspace-to-monitor --wrap-around next";
       message = "aerospace: alt-ctrl-l must be bound to move-workspace-to-monitor --wrap-around next";
     }
+    {
+      assertion =
+        let
+          settings = config.programs.aerospace.userSettings;
+        in
+        builtins.hasAttr "on-focused-monitor-changed" settings
+        && settings."on-focused-monitor-changed" == [ "move-mouse monitor-lazy-center" ];
+      message = "aerospace: on-focused-monitor-changed must move mouse to monitor center";
+    }
   ];
 }
