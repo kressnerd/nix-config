@@ -14,5 +14,14 @@
         && settings."workspace-to-monitor-force-assignment"."1" == "main";
       message = "aerospace: workspace 1 must be force-assigned to main monitor";
     }
+    {
+      assertion =
+        let
+          bindings = config.programs.aerospace.userSettings.mode.main.binding;
+        in
+        builtins.hasAttr "alt-h" bindings
+        && builtins.match ".*all-monitors-outer-frame.*" bindings."alt-h" != null;
+      message = "aerospace: alt-h focus must use --boundaries all-monitors-outer-frame for cross-monitor navigation";
+    }
   ];
 }

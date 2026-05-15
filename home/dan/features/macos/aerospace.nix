@@ -59,10 +59,10 @@ _: {
 
       mode.main.binding = {
         # Focus — vim-style hjkl
-        alt-h = "focus left";
-        alt-j = "focus down";
-        alt-k = "focus up";
-        alt-l = "focus right";
+        alt-h = "focus left --boundaries all-monitors-outer-frame";
+        alt-j = "focus down --boundaries all-monitors-outer-frame";
+        alt-k = "focus up --boundaries all-monitors-outer-frame";
+        alt-l = "focus right --boundaries all-monitors-outer-frame";
 
         # Move window — shift+hjkl
         alt-shift-h = "move left";
