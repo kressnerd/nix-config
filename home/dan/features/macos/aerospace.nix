@@ -14,14 +14,14 @@ _: {
 
       gaps = {
         inner = {
-          horizontal = 4;
-          vertical = 4;
+          horizontal = 2;
+          vertical = 2;
         };
         outer = {
-          top = 8;
-          bottom = 8;
-          left = 8;
-          right = 8;
+          top = 2;
+          bottom = 2;
+          left = 2;
+          right = 2;
         };
       };
 
