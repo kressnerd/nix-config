@@ -202,7 +202,7 @@ in
         "$mainMod SHIFT, F, fullscreen, 0"
         "$mainMod, V, togglefloating,"
         "$mainMod, G, pseudo,"
-        "$mainMod, S, togglesplit,"
+        "$mainMod, S, layoutmsg, togglesplit"
 
         # Launcher
         "$mainMod, D, exec, fuzzel"
