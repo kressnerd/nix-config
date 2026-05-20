@@ -171,11 +171,11 @@
 (use-package! org-roam
   :after org
   :defer t
-  :hook (org-mode . org-roam-db-autosync-enable)
   :init
   (setq org-roam-completion-everywhere t)
   :config
-  (setq org-roam-file-exclude-regexp "\\.git/.*\\|logseq/.*$"))
+  (setq org-roam-file-exclude-regexp "\\.git/.*\\|logseq/.*$")
+  (org-roam-db-autosync-mode))
 ;;; Development Configuration
 ;; LSP configuration - enhanced from original
 (use-package! lsp-mode
