@@ -18,6 +18,22 @@
         assertion = !config.networking.networkmanager.enable;
         message = "adlerkopf: NetworkManager must be disabled (server host)";
       }
+      {
+        assertion = config.disko.devices.disk ? nvme0n1;
+        message = "adlerkopf: disko must target nvme0n1 (NVMe disk)";
+      }
+      {
+        assertion = config.fileSystems ? "/persist" && config.fileSystems."/persist".neededForBoot;
+        message = "adlerkopf: /persist must have neededForBoot = true";
+      }
+      {
+        assertion = config.fileSystems ? "/nix" && config.fileSystems."/nix".neededForBoot;
+        message = "adlerkopf: /nix must have neededForBoot = true";
+      }
+      {
+        assertion = config.fileSystems ? "/var/log" && config.fileSystems."/var/log".neededForBoot;
+        message = "adlerkopf: /var/log must have neededForBoot = true";
+      }
     ];
   };
 }
