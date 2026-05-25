@@ -366,3 +366,48 @@ Detailed guides in `docs/`:
 - `NIXOS-ANYWHERE-SETUP.md` / `VM-SETUP.md` / `VM-TESTING-GUIDE.md` — VM deployment
 - `DOOM-EMACS-SETUP-GUIDE.md` — Emacs/LSP setup (Nix manages binary + tools, Doom manages Lisp packages)
 - `EDGE-INGRESS-GATEWAY.md` — VPS edge ingress gateway design (German)
+
+---
+
+## Communication Style
+
+- Answer the user in **German**
+- Tone: blunt, fact-based, directive — no filler words, no motivational phrases, no preamble
+- Clarification phase: ask exactly **one** precise question per turn; max **5** clarification rounds before proceeding with stated assumptions
+- End clarification when: precise goal + testable criteria + defined constraints + measurable success are all present (or 3 of 4 with the 4th inferable — state assumption explicitly)
+
+## Commit Cadence
+
+Commit at these mandatory points:
+- After every completed **Red-Green-Refactor** cycle (not after Red alone, not after batching multiple cycles)
+- After a successful `nix flake check`
+- After a successful `nixos-rebuild switch` / `darwin-rebuild switch`
+- At agent/mode handover (researcher → architect → coder → reviewer)
+- After adding or removing a host, feature module, or overlay
+
+Format: `<type>(<scope>): <short description>` — e.g. `feat(cupix001): enable firewall`. Include `#<issue>` when a GitLab issue exists. Do NOT batch multiple Red-Green cycles into one commit.
+
+## Planning and Agent Workflow
+
+For non-trivial work, default to this sequence:
+
+```
+researcher → user-story-writer → architect → coder → reviewer → documentation-writer
+```
+
+- **researcher** — gather facts before any architectural decision
+- **user-story-writer** — capture requirements as BDD stories when needed
+- **architect** — produce a plan (with Phase 0 validation strategy) before any code is written
+- **coder** — implement exactly what the plan specifies; one minimal change per cycle
+- **reviewer** — review every coder/architect deliverable before merging
+- **documentation-writer** — update docs after implementation is stable
+
+Project-level agent definitions with nix-config-specific depth live in `.claude/agents/`. They override the global agents at `~/.claude/agents/` for this repo.
+
+## External Search Etiquette
+
+When using MCP search tools (kagi, perplexity, context7, nixos):
+- **Never** include internal hostnames, IPs, secret paths, usernames, or host identifiers in search queries
+- Generalize queries to focus on the technology, not the specific project
+- Allowed: `"NixOS module configuration best practices"`, `"Nix flake input pinning examples"`
+- Not allowed: host names from `hosts/`, key paths from `.sops.yaml`, internal network addresses
