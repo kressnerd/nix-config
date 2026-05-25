@@ -13,6 +13,7 @@
     ./thiniel-hardware-invariants.nix
     ./thiniel-desktop-invariants.nix
     ./thiniel-libreoffice-invariants.nix
+    ./thiniel-yazi-invariants.nix
     ./nixos-vm-minimal-invariants.nix
     ./cupix001-invariants.nix
     ./adlerkopf-invariants.nix

@@ -11,6 +11,10 @@
       hash = "sha256-R/TlCPfo36+cofQBU488Zl81PoRbhhOvFzT5zHYAP4Y=";
     };
 
+    initLua = ''
+      require("dual-pane"):setup()
+    '';
+
     keymap = {
       mgr.prepend_keymap = [
         {

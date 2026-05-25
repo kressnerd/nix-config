@@ -12,6 +12,13 @@
         assertion = config.home-manager.users.dan.programs.yazi.keymap != { };
         message = "thiniel: yazi keymap must include dual-pane keybindings";
       }
+      {
+        assertion =
+          builtins.isString config.home-manager.users.dan.programs.yazi.initLua
+          &&
+            builtins.match ".*dual-pane.*setup.*" config.home-manager.users.dan.programs.yazi.initLua != null;
+        message = "thiniel: yazi init.lua must call dual-pane setup";
+      }
     ];
   };
 }
