@@ -76,7 +76,7 @@ let
         };
 
         testHyprlandHasWorkspaceBind = {
-          expr = builtins.any (b: lib.strings.hasInfix "$mainMod, Q, workspace" b) hyprSettings.bind;
+          expr = builtins.any (b: lib.strings.hasInfix "$mainMod, 1, workspace" b) hyprSettings.bind;
           expected = true;
         };
 
