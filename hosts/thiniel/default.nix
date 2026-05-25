@@ -455,26 +455,31 @@
     # Inline scheme avoids IFD (Import From Derivation) so cross-system evaluation
     # from macOS works with --no-build. Colors from base16-schemes catppuccin-latte.yaml.
     base16Scheme = {
-      scheme = "Catppuccin Latte";
-      author = "https://github.com/catppuccin/catppuccin";
-      base00 = "eff1f5"; # Base
-      base01 = "e6e9ef"; # Mantle
-      base02 = "ccd0da"; # Surface 0
-      base03 = "bcc0cc"; # Surface 1
-      base04 = "acb0be"; # Surface 2
-      base05 = "4c4f69"; # Text
-      base06 = "dc8a78"; # Rosewater
-      base07 = "7287fd"; # Lavender
-      base08 = "d20f39"; # Red
-      base09 = "fe640b"; # Peach
-      base0A = "df8e1d"; # Yellow
-      base0B = "40a02b"; # Green
-      base0C = "179299"; # Teal
-      base0D = "1e66f5"; # Blue
-      base0E = "8839ef"; # Mauve
-      base0F = "dd7878"; # Flamingo
+      base00 = "fafafa"; # Background
+      base01 = "f0f0f1"; # Alt background
+      base02 = "e5e5e6"; # Selection
+      base03 = "a0a1a7"; # Comments
+      base04 = "696c77"; # Dark decoration
+      base05 = "383a42"; # Text
+      base06 = "202227"; # Light foreground
+      base07 = "090a0b"; # Near-black
+      base08 = "ca1243"; # Red
+      base09 = "d75f00"; # Orange
+      base0A = "c18401"; # Yellow
+      base0B = "50a14f"; # Green
+      base0C = "0184bc"; # Cyan
+      base0D = "4078f2"; # Blue
+      base0E = "a626a4"; # Purple
+      base0F = "986801"; # Brown
     };
-    image = pkgs.nixos-artwork.wallpapers.catppuccin-latte.gnomeFilePath;
+    image =
+      pkgs.runCommand "one-light-wallpaper.png"
+        {
+          nativeBuildInputs = [ pkgs.imagemagick ];
+        }
+        ''
+          magick -size 3840x2160 xc:"#fafafa" $out
+        '';
     fonts = {
       monospace = {
         package = pkgs.nerd-fonts.jetbrains-mono;
