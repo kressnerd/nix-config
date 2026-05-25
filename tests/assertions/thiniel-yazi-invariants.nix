@@ -14,6 +14,14 @@
       in
       [
         {
+          assertion = config.home-manager.users.dan.programs.yazi.enable;
+          message = "thiniel: yazi must be enabled";
+        }
+        {
+          assertion = config.home-manager.users.dan.stylix.targets.yazi.enable;
+          message = "thiniel: stylix.targets.yazi must remain enabled after refactor";
+        }
+        {
           assertion = config.home-manager.users.dan.programs.yazi.plugins ? "dual-pane";
           message = "thiniel: yazi dual-pane plugin must be configured";
         }
