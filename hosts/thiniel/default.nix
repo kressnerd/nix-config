@@ -501,8 +501,8 @@
       };
     };
     cursor = {
-      package = pkgs.catppuccin-cursors.latteBlue;
-      name = "catppuccin-latte-blue-cursors";
+      package = pkgs.bibata-cursors;
+      name = "Bibata-Modern-Classic";
       size = 24;
     };
   };
