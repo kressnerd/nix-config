@@ -13,10 +13,10 @@
     ./features/cli/git.nix
     ./features/cli/kitty.nix
     ./features/cli/shell-utils.nix
-    ./features/cli/yazi.nix
     ./features/cli/ssh.nix
     ./features/cli/starship.nix
     ./features/cli/vim.nix
+    ./features/cli/yazi.nix
     ./features/cli/fish.nix
     ./features/development/containers.nix
     ./features/development/formatters.nix
