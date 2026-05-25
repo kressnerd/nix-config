@@ -74,11 +74,6 @@
       };
     };
 
-    yazi = {
-      enable = true;
-      enableFishIntegration = true; # provides `y` shell wrapper with cwd tracking
-    };
-
     zoxide.enable = true;
 
     direnv = {
@@ -93,7 +88,6 @@
     fzf.enable = true;
     lazygit.enable = true;
     btop.enable = true;
-    yazi.enable = true;
   };
 
   # fastfetch: minimal module list; inherits terminal colours (no Stylix target needed)
