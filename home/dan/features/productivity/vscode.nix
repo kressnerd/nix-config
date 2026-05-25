@@ -1,6 +1,6 @@
 _: {
   # Extensions and theme managed via VS Code UI
-  # Install "Catppuccin for VSCode" from marketplace, set theme to "Catppuccin Latte"
+  # Install 'One Light Theme' from marketplace (e.g., 'Atom One Light Theme' by akamud)
   programs.vscode = {
     enable = true;
     mutableExtensionsDir = true;
