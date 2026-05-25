@@ -84,6 +84,10 @@
           && builtins.any (cmd: builtins.match ".*assign-workspaces.*" cmd != null) execOnce;
         message = "thiniel: Hyprland exec-once must include assign-workspaces daemon for dynamic workspace distribution";
       }
+      {
+        assertion = lib.hasPrefix "Bibata" config.stylix.cursor.name;
+        message = "thiniel: cursor must be Bibata, got ${config.stylix.cursor.name}";
+      }
     ];
   };
 }
