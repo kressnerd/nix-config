@@ -1,12 +1,10 @@
-{ pkgs, ... }:
-{
-  # Keep catppuccin-vim for richer Latte color support; disable generic Stylix base16 vim theme
-  stylix.targets.vim.enable = false;
+_: {
+  stylix.targets.vim.enable = true;
 
   programs.vim = {
     enable = true;
 
-    plugins = with pkgs.vimPlugins; [ catppuccin-vim ];
+    plugins = [ ];
 
     settings = {
       expandtab = true;
@@ -24,11 +22,8 @@
       " Enable syntax highlighting
       syntax on
 
-      " Catppuccin Latte colorscheme
       set termguicolors
       set background=light
-      colorscheme catppuccin_latte
-
 
       " Better search highlighting
       set hlsearch
