@@ -121,7 +121,7 @@ let
 
         testHyprlandGapsIn = {
           expr = hyprSettings.general.gaps_in;
-          expected = 4;
+          expected = 2;
         };
 
         testHyprlandRounding = {
