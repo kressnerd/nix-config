@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   imports = [
     ../common/global
@@ -8,6 +13,10 @@
     ./options.nix
     ./networking.nix
     ./caddy.nix
+    ./tpm2.nix
+    ./impermanence.nix
+    inputs.sops-nix.nixosModules.sops
+    inputs.impermanence.nixosModules.impermanence
     ../../tests/assertions
   ]
   ++ lib.optional (builtins.pathExists ./private.nix) ./private.nix;
@@ -35,6 +44,14 @@
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFnzrOhWy7kCWs/MhcYTEID/TQ78jhRAFfy8NWC1Cgh9 thiniel"
     ];
+  };
+
+  # SOPS secrets configuration
+  # Age key derived from SSH host key persisted under /persist/system
+  sops = {
+    defaultSopsFile = ./secrets.yaml;
+    defaultSopsFormat = "yaml";
+    age.sshKeyPaths = [ "/persist/system/etc/ssh/ssh_host_ed25519_key" ];
   };
 
   system.stateVersion = "25.11";
@@ -68,13 +85,27 @@
     hardware.cpu.intel.updateMicrocode = lib.mkForce false;
 
     boot = {
-      initrd.availableKernelModules = lib.mkForce [
-        "virtio_pci"
-        "virtio_blk"
-        "virtio_net"
-        "xhci_pci"
-      ];
+      # Disable TPM2/LUKS and impermanence rollback in VM — no encrypted disk
+      initrd = {
+        systemd = {
+          enable = lib.mkForce false;
+          services.rollback = lib.mkForce { };
+        };
+        luks.devices = lib.mkForce { };
+        availableKernelModules = lib.mkForce [
+          "virtio_pci"
+          "virtio_blk"
+          "virtio_net"
+          "xhci_pci"
+        ];
+      };
       kernelModules = lib.mkForce [ ];
+    };
+
+    # Disable SOPS secret decryption in VM — no age key available
+    sops.age = {
+      sshKeyPaths = lib.mkForce [ ];
+      keyFiles = lib.mkForce [ ];
     };
   };
 }

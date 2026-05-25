@@ -63,6 +63,10 @@
         assertion = config.services.caddy.enable;
         message = "adlerkopf: Caddy must be enabled";
       }
+      {
+        assertion = config.sops.defaultSopsFile != null;
+        message = "adlerkopf: sops.defaultSopsFile must be set";
+      }
     ];
   };
 }
