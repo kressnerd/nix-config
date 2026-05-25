@@ -4,4 +4,5 @@
 { pkgs, ... }:
 {
   integration-vm-minimal-ssh = import ./nixos-vm-minimal-test.nix { inherit pkgs; };
+  integration-adlerkopf = import ./adlerkopf-test.nix { inherit pkgs; };
 }
