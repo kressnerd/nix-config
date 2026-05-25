@@ -54,6 +54,10 @@
         assertion = !config.security.sudo.wheelNeedsPassword;
         message = "adlerkopf: wheel group must not require sudo password (nixos-rebuild --use-remote-sudo)";
       }
+      {
+        assertion = config.services.caddy.enable;
+        message = "adlerkopf: Caddy must be enabled";
+      }
     ];
   };
 }
