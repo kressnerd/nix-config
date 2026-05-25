@@ -26,6 +26,7 @@ _: {
       # netcup SCP firewall tool (Epic 15a)
       ".config/netcup-scp"
       ".local/share/netcup-scp"
+      ".local/share/yazi"
       ".local/share/ownCloud"
       # Maestral Dropbox client
       "Dropbox"
