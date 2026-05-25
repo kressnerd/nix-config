@@ -14,6 +14,10 @@
         message = "Thiniel rice: stylix.polarity must be 'light' (Catppuccin Latte)";
       }
       {
+        assertion = config.stylix.base16Scheme.base00 == "fafafa";
+        message = "thiniel: stylix base16 scheme base00 must be One Light background (fafafa), got ${config.stylix.base16Scheme.base00}";
+      }
+      {
         assertion = config.security.pam.services ? hyprlock;
         message = "Thiniel rice: security.pam.services.hyprlock must exist for screen lock";
       }
