@@ -239,8 +239,8 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testVimExtraConfigCatppuccin = {
-    expr = lib.strings.hasInfix "catppuccin_latte" vimModule.programs.vim.extraConfig;
+  testVimNoCatppuccinColorscheme = {
+    expr = builtins.match ".*catppuccin.*" vimModule.programs.vim.extraConfig == null;
     expected = true;
   };
 
@@ -249,10 +249,15 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testVimHasCatppuccinPlugin = {
-    expr = builtins.any (
-      p: (p.pname or p.name or "") == "catppuccin-vim"
+  testVimNoCatppuccinPlugin = {
+    expr = builtins.all (
+      p: (p.pname or p.name or "") != "catppuccin-vim"
     ) vimModule.programs.vim.plugins;
+    expected = true;
+  };
+
+  testVimStylixTargetEnabled = {
+    expr = vimModule.stylix.targets.vim.enable;
     expected = true;
   };
 
