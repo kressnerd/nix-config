@@ -1,0 +1,19 @@
+# private.nix — gitignored, not committed
+# Override networking.adlerkopf options with actual values after first boot.
+# Copy this to private.nix and fill in the real values.
+#
+# Gather values from the installed system:
+#   ip -4 addr show eno1
+#   ip -4 route show default
+#
+# Then fill in below and run: nixos-rebuild switch --flake .#adlerkopf
+{ ... }:
+{
+  networking.adlerkopf = {
+    # Uncomment and set if interface name differs from default "eno1":
+    # interfaceName = "eno1";
+
+    # LAN IP (default: 192.168.168.15):
+    # lanIPv4 = "192.168.168.15";
+  };
+}

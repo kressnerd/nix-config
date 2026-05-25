@@ -1,5 +1,6 @@
 result*
 hosts/cupix001/private.nix
+hosts/adlerkopf/private.nix
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
