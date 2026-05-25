@@ -7,6 +7,7 @@
     ./disko.nix
     ./options.nix
     ./networking.nix
+    ./caddy.nix
     ../../tests/assertions
   ]
   ++ lib.optional (builtins.pathExists ./private.nix) ./private.nix;
