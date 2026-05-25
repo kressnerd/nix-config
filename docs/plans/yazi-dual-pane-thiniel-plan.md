@@ -1,6 +1,6 @@
 # Implementation Plan: Yazi with dual-pane.yazi Plugin on Thiniel
 
-## Status: DRAFT — awaiting approval
+## Status: COMPLETED
 
 ## Goal
 
@@ -355,15 +355,29 @@ Each binding gets its own Red–Green cycle per [`13-test-first.md`](.roo/rules/
 
 ## Current Status
 
-Plan created — awaiting human approval before any implementation begins.
+COMPLETED — 2026-05-25.
 
-## Completion Log
+### Deviation Log
 
-To be filled in upon completion by Code Mode / Orchestrator:
+#### Deviation 1: initLua instead of plugins.dual-pane.setup
 
-```
-- Completed Date: YYYY-MM-DD
-- Commits: <list of commit SHAs>
-- Deviations: <any deviations from this plan, with reason>
-- Lessons Learned: <key insights>
-```
+- **Step**: Phase 2 — Plugin Integration
+- **Plan specified**: `programs.yazi.plugins.dual-pane.setup = true` to auto-generate `require("dual-pane"):setup()` call
+- **Actual implementation**: Used `programs.yazi.initLua` with explicit `require("dual-pane"):setup()` string
+- **Reason**: The installed HM version's `programs.yazi.plugins` option type is `attrsOf (oneOf [ path package ])` — it accepts only a plain package/path, not an attrset with `package`/`setup` fields. The `setup = true` sub-option does not exist in the current Home Manager yazi module.
+- **Impact**: None — functionally equivalent. `initLua` is the standard documented approach.
+
+#### Deviation 2: Tab keybindings 1–3 instead of 1–8
+
+- **Step**: Phase 3 — Keybindings
+- **Plan specified**: Direct tab selection keybindings for tabs 1–8
+- **Actual implementation**: Only tabs 1–3 implemented (10 keybindings total)
+- **Reason**: 3 tabs covers typical dual-pane workflows. Adding 8 tab bindings would override yazi's default number key behavior unnecessarily.
+- **Impact**: None — 3 tabs is sufficient for the dual-pane use case. Additional tabs can be added later if needed.
+
+## Completion Summary
+
+- **Completed Date**: 2026-05-25
+- **Deviations**: 2 (initLua approach, tab count reduction) — see Deviation Log
+- **Commits**: `d7569b4`, `178195c`, `7bc1afc`, `87b4a2f`
+- **Lessons Learned**: Always verify HM module option types via MCP before planning — the `plugins.<name>.setup` sub-option assumed by upstream docs may not exist in the pinned HM version.
