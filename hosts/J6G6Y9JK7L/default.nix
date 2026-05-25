@@ -106,16 +106,16 @@
     # Only system-wide essentials
   ];
 
-  # --- Stylix: system-wide Catppuccin Latte theming ---
-  # autoEnable = false: HM feature modules already have hand-crafted Catppuccin Latte
-  # theming; Stylix HM targets are enabled selectively to avoid conflicts.
+  # --- Stylix: system-wide One Light theming ---
+  # autoEnable = false: HM feature modules already have hand-crafted theming;
+  # Stylix HM targets are enabled selectively to avoid conflicts.
   stylix = {
     enable = true;
     autoEnable = false;
     polarity = "light";
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-latte.yaml";
-    image = pkgs.runCommand "solid-latte-wallpaper" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
-      magick -size 1920x1080 xc:#eff1f5 $out
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/one-light.yaml";
+    image = pkgs.runCommand "one-light-wallpaper.png" { nativeBuildInputs = [ pkgs.imagemagick ]; } ''
+      magick -size 1920x1080 xc:#fafafa $out
     '';
     fonts = {
       monospace = {
