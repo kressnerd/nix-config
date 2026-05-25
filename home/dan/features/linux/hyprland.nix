@@ -203,7 +203,7 @@ in
         "$mainMod SHIFT, F, fullscreen, 0"
         "$mainMod, V, togglefloating,"
         "$mainMod, G, pseudo,"
-        "$mainMod, S, layoutmsg, togglesplit"
+        "$mainMod, semicolon, layoutmsg, togglesplit"
 
         # Launcher
         "$mainMod, D, exec, fuzzel"
@@ -224,28 +224,36 @@ in
         "$mainMod SHIFT, j, movewindow, d"
 
         # Workspace switching
-        "$mainMod, Q, workspace, 1"
-        "$mainMod, W, workspace, 2"
-        "$mainMod, E, workspace, 3"
-        "$mainMod, R, workspace, 4"
-        "$mainMod, T, workspace, 5"
-        "$mainMod, Y, workspace, 6"
-        "$mainMod, U, workspace, 7"
-        "$mainMod, I, workspace, 8"
-        "$mainMod, O, workspace, 9"
-        "$mainMod, P, workspace, 10"
+        "$mainMod, 1, workspace, 1"
+        "$mainMod, 2, workspace, 2"
+        "$mainMod, 3, workspace, 3"
+        "$mainMod, 4, workspace, 4"
+        "$mainMod, 5, workspace, 5"
+        "$mainMod, 6, workspace, 6"
+        "$mainMod, 7, workspace, 7"
+        "$mainMod, 8, workspace, 8"
+        "$mainMod, 9, workspace, 9"
+        "$mainMod, 0, workspace, 10"
 
         # Move window to workspace
-        "$mainMod SHIFT, Q, movetoworkspace, 1"
-        "$mainMod SHIFT, W, movetoworkspace, 2"
-        "$mainMod SHIFT, E, movetoworkspace, 3"
-        "$mainMod SHIFT, R, movetoworkspace, 4"
-        "$mainMod SHIFT, T, movetoworkspace, 5"
-        "$mainMod SHIFT, Y, movetoworkspace, 6"
-        "$mainMod SHIFT, U, movetoworkspace, 7"
-        "$mainMod SHIFT, I, movetoworkspace, 8"
-        "$mainMod SHIFT, O, movetoworkspace, 9"
-        "$mainMod SHIFT, P, movetoworkspace, 10"
+        "$mainMod SHIFT, 1, movetoworkspace, 1"
+        "$mainMod SHIFT, 2, movetoworkspace, 2"
+        "$mainMod SHIFT, 3, movetoworkspace, 3"
+        "$mainMod SHIFT, 4, movetoworkspace, 4"
+        "$mainMod SHIFT, 5, movetoworkspace, 5"
+        "$mainMod SHIFT, 6, movetoworkspace, 6"
+        "$mainMod SHIFT, 7, movetoworkspace, 7"
+        "$mainMod SHIFT, 8, movetoworkspace, 8"
+        "$mainMod SHIFT, 9, movetoworkspace, 9"
+        "$mainMod SHIFT, 0, movetoworkspace, 10"
+
+        # Monitor focus cycling
+        "$mainMod, Tab, focusmonitor, +1"
+        "$mainMod SHIFT, Tab, focusmonitor, -1"
+
+        # Move workspace to monitor
+        "$mainMod CTRL, l, movecurrentworkspacetomonitor, +1"
+        "$mainMod CTRL, h, movecurrentworkspacetomonitor, -1"
 
         # Screenshot: region selection → clipboard
         "$mainMod, Print, exec, grim -g \"$(slurp)\" - | wl-copy"
