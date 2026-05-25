@@ -15,5 +15,6 @@
     ./thiniel-libreoffice-invariants.nix
     ./nixos-vm-minimal-invariants.nix
     ./cupix001-invariants.nix
+    ./adlerkopf-invariants.nix
   ];
 }
