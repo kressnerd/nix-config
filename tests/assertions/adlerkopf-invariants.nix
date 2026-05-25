@@ -34,6 +34,26 @@
         assertion = config.fileSystems ? "/var/log" && config.fileSystems."/var/log".neededForBoot;
         message = "adlerkopf: /var/log must have neededForBoot = true";
       }
+      {
+        assertion = config.services.openssh.enable;
+        message = "adlerkopf: openssh must be enabled";
+      }
+      {
+        assertion = config.services.openssh.settings.PermitRootLogin == "no";
+        message = "adlerkopf: SSH PermitRootLogin must be no";
+      }
+      {
+        assertion = !config.services.openssh.settings.PasswordAuthentication;
+        message = "adlerkopf: SSH PasswordAuthentication must be false";
+      }
+      {
+        assertion = !config.services.openssh.settings.KbdInteractiveAuthentication;
+        message = "adlerkopf: SSH KbdInteractiveAuthentication must be false";
+      }
+      {
+        assertion = !config.security.sudo.wheelNeedsPassword;
+        message = "adlerkopf: wheel group must not require sudo password (nixos-rebuild --use-remote-sudo)";
+      }
     ];
   };
 }

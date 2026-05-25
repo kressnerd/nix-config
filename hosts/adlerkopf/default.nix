@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   imports = [
     ../common/global
@@ -16,6 +16,25 @@
   networking.hostName = "adlerkopf";
 
   programs.fish.enable = true;
+
+  services.openssh = {
+    enable = true;
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };
+
+  security.sudo.wheelNeedsPassword = false;
+
+  users.users.dan = {
+    extraGroups = [ "sudo" ];
+    shell = pkgs.fish;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFnzrOhWy7kCWs/MhcYTEID/TQ78jhRAFfy8NWC1Cgh9 thiniel"
+    ];
+  };
 
   system.stateVersion = "25.11";
 }
