@@ -445,15 +445,15 @@
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-  # --- Stylix: system-wide Catppuccin Latte theming ---
-  # autoEnable = false: HM feature modules already have hand-crafted Catppuccin Latte
+  # --- Stylix: system-wide One Light theming ---
+  # autoEnable = false: HM feature modules already have hand-crafted One Light
   # theming; Stylix HM targets are enabled selectively to avoid conflicts.
   stylix = {
     enable = true;
     autoEnable = false;
     polarity = "light";
     # Inline scheme avoids IFD (Import From Derivation) so cross-system evaluation
-    # from macOS works with --no-build. Colors from base16-schemes catppuccin-latte.yaml.
+    # from macOS works with --no-build. Colors from the One Light base16 scheme.
     base16Scheme = {
       base00 = "fafafa"; # Background
       base01 = "f0f0f1"; # Alt background

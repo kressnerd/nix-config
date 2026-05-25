@@ -5,7 +5,7 @@ _: {
       NSGlobalDomain = {
         # Graphite accent color
         AppleAccentColor = -1; # -1 for Graphite
-        ## Purple accent — closest macOS accent to Catppuccin Latte lavender (#7287fd)
+        ## Purple accent — closest macOS accent to One Light base0D blue (#4078f2)
         # AppleAccentColor = 5; # 5 = Purple
         AppleHighlightColor = "0.698039 0.678431 1.000000 Purple";
 

@@ -5,7 +5,7 @@
   ...
 }:
 {
-  # Firefox theme managed manually — install Catppuccin Latte addon from marketplace
+  # Firefox theme managed manually — install a light theme addon from the browser extension store
   programs.firefox = {
     enable = true;
 

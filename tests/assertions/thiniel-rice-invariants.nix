@@ -1,5 +1,5 @@
 # tests/assertions/thiniel-rice-invariants.nix
-# Assertion tests for thiniel rice invariants (Stylix + Hyprland + Catppuccin Latte).
+# Assertion tests for thiniel rice invariants (Stylix + Hyprland + One Light).
 # These fire at eval-time via `nix flake check --no-build`.
 { config, lib, ... }:
 {
@@ -11,7 +11,7 @@
       }
       {
         assertion = config.stylix.polarity == "light";
-        message = "Thiniel rice: stylix.polarity must be 'light' (Catppuccin Latte)";
+        message = "Thiniel rice: stylix.polarity must be 'light' (One Light)";
       }
       {
         assertion = config.stylix.base16Scheme.base00 == "fafafa";
