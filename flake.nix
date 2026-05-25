@@ -215,6 +215,45 @@
             }
           ];
         };
+        adlerkopf = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs outputs;
+            pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+              inherit nixpkgs-unstable;
+              system = "x86_64-linux";
+            };
+          };
+          modules = [
+            {
+              nixpkgs.overlays = [
+                nur.overlays.default
+                (import ./overlays)
+              ];
+              nixpkgs.config.allowUnfree = true;
+            }
+            ./hosts/adlerkopf
+            disko.nixosModules.disko
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                extraSpecialArgs = {
+                  inherit inputs outputs;
+                  pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
+                    inherit nixpkgs-unstable;
+                    system = "x86_64-linux";
+                  };
+                };
+                users.dan = import ./home/dan/adlerkopf.nix;
+                sharedModules = [
+                  sops-nix.homeManagerModules.sops
+                ];
+              };
+            }
+          ];
+        };
       };
 
       darwinConfigurations = {
