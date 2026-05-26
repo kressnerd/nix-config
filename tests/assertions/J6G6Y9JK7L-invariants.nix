@@ -2,6 +2,18 @@
 {
   assertions = [
     {
+      assertion = config.stylix.enable;
+      message = "J6G6Y9JK7L: stylix must be enabled";
+    }
+    {
+      assertion = config.stylix.polarity == "light";
+      message = "J6G6Y9JK7L: stylix polarity must be light, got ${config.stylix.polarity}";
+    }
+    {
+      assertion = config.stylix.base16Scheme.base00 == "fafafa";
+      message = "J6G6Y9JK7L: stylix base16 scheme base00 must be One Light background (fafafa), got ${config.stylix.base16Scheme.base00}";
+    }
+    {
       assertion = config.programs.aerospace.enable;
       message = "aerospace: programs.aerospace.enable must be true — import features/macos/aerospace.nix";
     }

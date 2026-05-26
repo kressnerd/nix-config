@@ -455,6 +455,8 @@
     # Inline scheme avoids IFD (Import From Derivation) so cross-system evaluation
     # from macOS works with --no-build. Colors from the One Light base16 scheme.
     base16Scheme = {
+      scheme = "One Light";
+      author = "Daniel Pfeifer (http://github.com/purpleKarrot)";
       base00 = "fafafa"; # Background
       base01 = "f0f0f1"; # Alt background
       base02 = "e5e5e6"; # Selection
