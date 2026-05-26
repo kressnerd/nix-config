@@ -12,6 +12,7 @@
     ./thiniel-keyboard-invariants.nix
     ./thiniel-hardware-invariants.nix
     ./thiniel-desktop-invariants.nix
+    ./thiniel-hyprland-keybindings-invariants.nix
     ./thiniel-libreoffice-invariants.nix
     ./thiniel-yazi-invariants.nix
     ./nixos-vm-minimal-invariants.nix
