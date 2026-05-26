@@ -25,6 +25,7 @@ _: {
       "/var/lib/systemd/coredump"
       "/var/lib/caddy"
       "/var/lib/private/acme"
+      "/var/lib/sbctl"
     ];
     files = [
       "/etc/machine-id"

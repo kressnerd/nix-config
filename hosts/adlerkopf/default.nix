@@ -14,6 +14,7 @@
     ./networking.nix
     ./caddy.nix
     ./tpm2.nix
+    ./secure-boot.nix
     ./impermanence.nix
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
@@ -100,6 +101,8 @@
         ];
       };
       kernelModules = lib.mkForce [ ];
+      loader.systemd-boot.enable = lib.mkForce true;
+      lanzaboote.enable = lib.mkForce false;
     };
 
     # Disable SOPS secret decryption in VM — no age key available

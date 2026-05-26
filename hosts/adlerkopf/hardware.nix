@@ -1,5 +1,6 @@
 # Hardware configuration for adlerkopf — Lenovo M720q (Intel, x86_64)
 {
+  lib,
   inputs,
   ...
 }:
@@ -11,7 +12,7 @@
 
   boot = {
     loader = {
-      systemd-boot.enable = true;
+      systemd-boot.enable = lib.mkDefault true;
       efi.canTouchEfiVariables = true;
     };
     initrd.availableKernelModules = [

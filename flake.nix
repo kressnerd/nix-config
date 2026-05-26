@@ -51,6 +51,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote/v0.4.2";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -81,6 +86,7 @@
       nix-homebrew,
       nur,
       disko,
+      lanzaboote,
       colmena,
       stylix,
       ...
@@ -241,6 +247,7 @@
             }
             ./hosts/adlerkopf
             disko.nixosModules.disko
+            lanzaboote.nixosModules.lanzaboote
             home-manager.nixosModules.home-manager
             {
               home-manager = {
