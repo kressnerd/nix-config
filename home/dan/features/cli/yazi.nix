@@ -4,12 +4,21 @@
     enable = true;
     enableFishIntegration = true;
 
-    plugins."dual-pane" = pkgs.fetchFromGitHub {
-      owner = "dawsers";
-      repo = "dual-pane.yazi";
-      rev = "c2fed127035a294d35d3328c33f25014761dcea2";
-      hash = "sha256-R/TlCPfo36+cofQBU488Zl81PoRbhhOvFzT5zHYAP4Y=";
-    };
+    plugins."dual-pane" =
+      let
+        src = pkgs.fetchFromGitHub {
+          owner = "dawsers";
+          repo = "dual-pane.yazi";
+          rev = "c2fed127035a294d35d3328c33f25014761dcea2";
+          hash = "sha256-R/TlCPfo36+cofQBU488Zl81PoRbhhOvFzT5zHYAP4Y=";
+        };
+      in
+      pkgs.runCommand "dual-pane-yazi" { } ''
+        mkdir -p $out
+        cp -r ${src}/. $out/
+        chmod -R u+w $out
+        mv $out/init.lua $out/main.lua
+      '';
 
     initLua = ''
       require("dual-pane"):setup()
