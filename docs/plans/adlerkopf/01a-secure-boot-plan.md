@@ -243,6 +243,8 @@ Each phase is one Red-Green-Refactor cycle per [`13-test-first.md`](../../../.ro
 
 ### Phase 8 — Manual post-deploy (operator runbook, NOT a code phase)
 
+> See [`docs/SECURE-BOOT-ENROLLMENT.md`](../../SECURE-BOOT-ENROLLMENT.md) for the reusable, host-independent version of this procedure.
+
 > **⚠️ DANGEROUS** — bootloader transition. Requires physical or out-of-band access to firmware. Get explicit operator go/no-go before starting.
 
 **Pre-conditions**: Phases 1–7 merged. `nixos-rebuild switch --flake .#adlerkopf` succeeded once with **Secure Boot still DISABLED in firmware** (lanzaboote runs as plain loader, no signature enforcement yet).
