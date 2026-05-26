@@ -378,9 +378,9 @@ lib.debug.runTests {
     expected = false;
   };
 
-  testImpermanenceHasContainers = {
+  testImpermanenceDoesNotHaveContainers = {
     expr = builtins.elem ".local/share/containers" impermanenceDirs;
-    expected = true;
+    expected = false;
   };
 
   testImpermanenceDoesNotHaveSignal = {

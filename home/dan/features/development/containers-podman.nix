@@ -1,4 +1,4 @@
-{ config, ... }:
+{ config, lib, ... }:
 {
   # Podman-based containerized development environment (runtime packages consolidated in containers-common.nix)
 
@@ -122,6 +122,12 @@
     sessionVariables = {
       DOCKER_HOST = "unix://${config.home.homeDirectory}/.local/share/containers/podman/machine/podman.sock";
     };
+
+    persistence.${config.myHome.persistence.root}.directories =
+      lib.mkIf config.myHome.persistence.enable
+        [
+          ".local/share/containers"
+        ];
   };
 
   # Shell integration and aliases
