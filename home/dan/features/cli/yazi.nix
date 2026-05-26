@@ -24,6 +24,7 @@
         ${pkgs.gnused}/bin/sed -i \
           's/^local function entry(state, args)$/local function entry(state, job)\n  local args = job.args/' \
           $out/main.lua
+        ${pkgs.gnused}/bin/sed -i 's/ya\.app_emit/ya.emit/g' $out/main.lua
       '';
 
     initLua = ''
