@@ -18,6 +18,12 @@
         cp -r ${src}/. $out/
         chmod -R u+w $out
         mv $out/init.lua $out/main.lua
+        # Adapt legacy entry(state, args) to v0.4.0+ entry(self, job) API.
+        # call_method("entry", job) now passes plugin-table as self and job={args=…}
+        # as the second arg; extract job.args so the body's args[1]/args[2]/… still work.
+        ${pkgs.gnused}/bin/sed -i \
+          's/^local function entry(state, args)$/local function entry(state, job)\n  local args = job.args/' \
+          $out/main.lua
       '';
 
     initLua = ''
@@ -31,7 +37,8 @@
             "b"
             "t"
           ];
-          run = "plugin --sync dual-pane --args=toggle";
+          # v25.2.7+: positional args replace --args=; --mode=sync replaces --sync
+          run = "plugin --mode=sync dual-pane toggle";
           desc = "Dual-pane: toggle";
         }
         {
@@ -39,47 +46,49 @@
             "b"
             "b"
           ];
-          run = "plugin --sync dual-pane --args=toggle_zoom";
+          run = "plugin --mode=sync dual-pane toggle_zoom";
           desc = "Dual-pane: toggle zoom";
         }
         {
           on = [ "<Tab>" ];
-          run = "plugin --sync dual-pane --args=next_pane";
+          run = "plugin --mode=sync dual-pane next_pane";
           desc = "Dual-pane: switch pane";
         }
         {
           on = [ "[" ];
-          run = "plugin --sync dual-pane --args='tab_switch -1 --relative'";
+          # Use -- inside the quoted arg-string so --relative stays positional (args[3])
+          run = "plugin --mode=sync dual-pane 'tab_switch -1 -- --relative'";
           desc = "Dual-pane: prev tab";
         }
         {
           on = [ "]" ];
-          run = "plugin --sync dual-pane --args='tab_switch 1 --relative'";
+          run = "plugin --mode=sync dual-pane 'tab_switch 1 -- --relative'";
           desc = "Dual-pane: next tab";
         }
         {
           on = [ "1" ];
-          run = "plugin --sync dual-pane --args='tab_switch 0'";
+          run = "plugin --mode=sync dual-pane 'tab_switch 0'";
           desc = "Switch to tab 1";
         }
         {
           on = [ "2" ];
-          run = "plugin --sync dual-pane --args='tab_switch 1'";
+          run = "plugin --mode=sync dual-pane 'tab_switch 1'";
           desc = "Switch to tab 2";
         }
         {
           on = [ "3" ];
-          run = "plugin --sync dual-pane --args='tab_switch 2'";
+          run = "plugin --mode=sync dual-pane 'tab_switch 2'";
           desc = "Switch to tab 3";
         }
         {
           on = [ "<F5>" ];
-          run = "plugin --sync dual-pane --args='copy_files --follow'";
+          # Use -- so --follow reaches args[2] as a positional string
+          run = "plugin --mode=sync dual-pane 'copy_files -- --follow'";
           desc = "Dual-pane: copy to other pane";
         }
         {
           on = [ "<F6>" ];
-          run = "plugin --sync dual-pane --args='move_files --follow'";
+          run = "plugin --mode=sync dual-pane 'move_files -- --follow'";
           desc = "Dual-pane: move to other pane";
         }
       ];
