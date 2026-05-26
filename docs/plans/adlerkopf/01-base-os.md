@@ -75,6 +75,8 @@ PCR selection:
 
 The LUKS recovery passphrase (slot 0) is kept untouched. Store it in 1Password before running nixos-anywhere. If TPM binding breaks after a BIOS update, the recovery passphrase allows a one-time boot and re-enrollment.
 
+> **Note**: Secure Boot via lanzaboote is configured in [`01a-secure-boot-plan.md`](01a-secure-boot-plan.md). With SB enabled, use `--tpm2-pcrs=0+2+7`. See that plan for key enrollment and firmware setup steps.
+
 ## Impermanence (`hosts/adlerkopf/impermanence.nix`)
 
 ### Boot-time rollback

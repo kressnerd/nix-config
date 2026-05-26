@@ -67,6 +67,31 @@
         assertion = config.sops.defaultSopsFile != null;
         message = "adlerkopf: sops.defaultSopsFile must be set";
       }
+      {
+        assertion = config.adlerkopf.vmMode || config.boot.lanzaboote.enable;
+        message = "adlerkopf: lanzaboote Secure Boot must be enabled";
+      }
+      {
+        assertion = config.adlerkopf.vmMode || !config.boot.loader.systemd-boot.enable;
+        message = "adlerkopf: systemd-boot must be disabled on real host (lanzaboote replaces it)";
+      }
+      {
+        assertion =
+          config.adlerkopf.vmMode
+          || builtins.any (
+            d: d.directory == "/var/lib/sbctl"
+          ) config.environment.persistence."/persist/system".directories;
+        message = "adlerkopf: /var/lib/sbctl must be persisted (Secure Boot keys)";
+      }
+      {
+        assertion =
+          config.adlerkopf.vmMode
+          || (
+            config.boot.loader.systemd-boot.configurationLimit != null
+            && config.boot.loader.systemd-boot.configurationLimit <= 5
+          );
+        message = "adlerkopf: ESP generation limit must be ≤5 (512 MiB ESP with lanzaboote UKIs)";
+      }
     ];
   };
 }
