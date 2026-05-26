@@ -4,8 +4,6 @@ _: {
   programs.vim = {
     enable = true;
 
-    plugins = [ ];
-
     settings = {
       expandtab = true;
       shiftwidth = 2;

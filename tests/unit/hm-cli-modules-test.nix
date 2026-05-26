@@ -250,9 +250,9 @@ lib.debug.runTests {
   };
 
   testVimNoCatppuccinPlugin = {
-    expr = builtins.all (
-      p: (p.pname or p.name or "") != "catppuccin-vim"
-    ) vimModule.programs.vim.plugins;
+    expr = builtins.all (p: (p.pname or p.name or "") != "catppuccin-vim") (
+      vimModule.programs.vim.plugins or [ ]
+    );
     expected = true;
   };
 
