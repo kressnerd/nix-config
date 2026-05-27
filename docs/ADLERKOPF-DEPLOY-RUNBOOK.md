@@ -15,6 +15,9 @@ On the workstation (J6G6Y9JK7L):
 - [ ] M720q is connected via Ethernet and has a temporary DHCP IP
 - [ ] `~/.config/sops/age/keys.txt` contains the workstation age private key (needed for local `sops`
   operations). On thiniel this is handled by `home/dan/features/cli/sops-age-key.nix`.
+- [ ] `nix.settings.trusted-users` includes `@wheel` in `hosts/common/global/nix.nix` (required for
+  remote `nixos-rebuild --target-host` — without it, `nix-copy-closure` fails with
+  `lacks a signature by a trusted key`)
 
 > **Secure Boot / lanzaboote — chicken-and-egg**: `secure-boot.nix` MUST be disabled (commented out
 > in `hosts/adlerkopf/default.nix`) for the initial nixos-anywhere install. The sbctl keys do not
@@ -137,6 +140,21 @@ nixos-rebuild switch \
     --sudo
 ```
 
+> **Bootstrap note**: If this is the very first deploy to a fresh host and `nix.settings.trusted-users`
+> was just added, the remote Nix daemon does not yet trust `dan`. The remote `nixos-rebuild` will fail
+> with `lacks a signature by a trusted key`. Workaround — build locally on the host once:
+>
+> ```fish
+> # From workstation:
+> git archive HEAD -o /tmp/nix-config.tar
+> scp /tmp/nix-config.tar dan@REDACTED-HOME-LAN-SUBNET:/tmp/
+> ssh dan@REDACTED-HOME-LAN-SUBNET "mkdir -p /tmp/nix-config && tar -xf /tmp/nix-config.tar -C /tmp/nix-config && cd /tmp/nix-config && sudo nixos-rebuild switch --flake .#adlerkopf"
+> rm -f /tmp/nix-config.tar
+> ssh dan@REDACTED-HOME-LAN-SUBNET "rm -rf /tmp/nix-config /tmp/nix-config.tar && sudo nix-collect-garbage"
+> ```
+>
+> After this one-time bootstrap, `trusted-users` is active and all subsequent remote deploys work normally.
+
 ## Step 4 — Enroll TPM2
 
 TPM2 enrollment can be done on the live running system (no reboot required to enroll):
@@ -165,7 +183,7 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
 | Secure Boot state | Recommended PCRs | Covers |
 |---|---|---|
 | Disabled (initial) | `0+2` | firmware + option ROMs |
-| Enabled (after sbctl) | `7` | Secure Boot policy + DBX |
+| Enabled (after sbctl) | `0+2+7` | firmware + option ROMs + Secure Boot policy |
 
 ### Enable Secure Boot (after stable first boot)
 
@@ -186,30 +204,32 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
    ```
 5. **\[adlerkopf\]** Create Secure Boot signing keys:
    ```fish
-   sudo sbctl create-keys
+   sudo nix-shell -p sbctl --run 'sbctl create-keys'
    findmnt /var/lib/sbctl   # confirm keys are on /persist bind-mount
    ```
-6. **\[adlerkopf\]** Enroll keys into firmware (includes Microsoft keys for Option ROM compatibility):
+6. **\[BIOS\]** F1 → Security → Secure Boot → **Reset to Setup Mode** (or "Clear Secure Boot Keys") → save & exit.
+   The firmware must be in Setup Mode for `sbctl enroll-keys` to work.
+7. **\[adlerkopf\]** Enroll keys into firmware (includes Microsoft keys for Option ROM compatibility):
    ```fish
-   sudo sbctl enroll-keys --microsoft
+   sudo nix-shell -p sbctl --run 'sbctl enroll-keys --microsoft'
    ```
-7. **\[workstation\]** Rebuild to re-sign all UKIs with the new keys:
+8. **\[workstation\]** Rebuild to re-sign all UKIs with the new keys:
    ```fish
    nixos-rebuild switch \
        --flake .#adlerkopf \
        --target-host dan@REDACTED-HOME-LAN-SUBNET \
        --sudo
    ```
-8. **\[adlerkopf\]** Verify all boot entries are signed:
+9. **\[adlerkopf\]** Verify all boot entries are signed:
    ```fish
    sudo sbctl verify   # every file must show ✓ Signed
    ```
-9. **\[BIOS\]** F1 → Security → Secure Boot → **Enabled** → User Mode → save & exit
-10. **\[adlerkopf\]** After reboot, confirm Secure Boot is active:
+10. **\[BIOS\]** F1 → Security → Secure Boot → **Enabled** → User Mode → save & exit
+11. **\[adlerkopf\]** After reboot, confirm Secure Boot is active:
     ```fish
     bootctl status   # should show Secure Boot: enabled (user)
     ```
-11. **\[adlerkopf\]** Re-enroll TPM2 with updated PCRs (remove old slot first — see [Re-enrollment procedure](#re-enrollment-procedure)):
+12. **\[adlerkopf\]** Re-enroll TPM2 with updated PCRs (remove old slot first — see [Re-enrollment procedure](#re-enrollment-procedure)):
     ```fish
     sudo systemd-cryptenroll --wipe-slot=tpm2 \
         /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
@@ -218,7 +238,7 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
         --tpm2-pcrs=0+2+7 \
         /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
     ```
-12. **\[adlerkopf\]** Reboot and verify LUKS auto-unlocks without passphrase prompt.
+13. **\[adlerkopf\]** Reboot and verify LUKS auto-unlocks without passphrase prompt.
 
 ### Re-enrollment procedure
 
@@ -230,9 +250,8 @@ sudo cryptsetup luksDump /dev/disk/by-partlabel/disk-nvme0n1-cryptroot | grep -E
 # Remove existing TPM2 token:
 sudo systemd-cryptenroll --wipe-slot=tpm2 /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
 # Re-enroll:
-sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+2 \
+sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+2+7 \
     /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
-# (or --tpm2-pcrs=7 if Secure Boot is active)
 ```
 
 > **"Would leave no valid slots"**: If `--wipe-slot=tpm2` fails with this error, it means
