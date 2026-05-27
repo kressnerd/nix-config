@@ -145,6 +145,15 @@ nixos-rebuild switch \
 TPM2 enrollment can be done on the live running system (no reboot required to enroll):
 
 ```fish
+# IMPORTANT: Before TPM2 enrollment, verify a passphrase keyslot exists.
+# Without a separate passphrase slot, a BIOS firmware update will lock you out
+# (TPM2 PCR values change → TPM2 unlock fails, and no passphrase fallback).
+sudo cryptsetup luksDump /dev/disk/by-partlabel/disk-nvme0n1-cryptroot | grep "luks2"
+# Must show at least one keyslot with type luks2 + PBKDF (passphrase-based).
+# disko creates one automatically via passwordFile — but verify it's there.
+```
+
+```fish
 # On adlerkopf — while Secure Boot is still DISABLED:
 sudo systemd-cryptenroll \
     --tpm2-device=auto \
@@ -175,14 +184,31 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
 Required after: BIOS firmware update, Secure Boot policy change, new option ROM detected by PCR 2.
 
 ```fish
-# Remove existing TPM2 slot (find slot number first):
-sudo systemd-cryptenroll --list /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
-sudo systemd-cryptenroll --wipe-slot=<tpm2-slot> /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
+# List keyslots and tokens:
+sudo cryptsetup luksDump /dev/disk/by-partlabel/disk-nvme0n1-cryptroot | grep -E "luks2|systemd-tpm2"
+# Remove existing TPM2 token:
+sudo systemd-cryptenroll --wipe-slot=tpm2 /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
 # Re-enroll:
 sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+2 \
     /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
 # (or --tpm2-pcrs=7 if Secure Boot is active)
 ```
+
+> **"Would leave no valid slots"**: If `--wipe-slot=tpm2` fails with this error, it means
+> the TPM2 token is the only keyslot — there's no passphrase fallback. Fix this while the
+> system is still running (volume is open):
+>
+> ```fish
+> sudo nix-shell -p keyutils --run '
+>   KEY_ID=$(keyctl search @s logon "cryptsetup:$(cryptsetup luksUUID /dev/disk/by-partlabel/disk-nvme0n1-cryptroot)-d0")
+>   keyctl pipe "$KEY_ID" > /tmp/volume-key.bin
+>   chmod 600 /tmp/volume-key.bin
+> '
+> sudo cryptsetup luksAddKey --volume-key-file /tmp/volume-key.bin \
+>     /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
+> sudo rm -f /tmp/volume-key.bin
+> # Now retry --wipe-slot=tpm2
+> ```
 
 ## Step 5 — Bootstrap sops age key
 
@@ -202,8 +228,12 @@ nix-shell -p ssh-to-age --run \
 On the workstation:
 
 1. Replace `age1PLACEHOLDER...` in `.sops.yaml` with the real `age1xxxx...` key
-2. Re-encrypt secrets for the new recipient:
+2. Encrypt or re-key secrets for the new recipient:
    ```fish
+   # First deployment (secrets.yaml is still plaintext):
+   sops encrypt -i hosts/adlerkopf/secrets.yaml
+
+   # Subsequent key changes (secrets.yaml is already encrypted):
    sops updatekeys hosts/adlerkopf/secrets.yaml
    ```
 3. Commit the updated `.sops.yaml` and `secrets.yaml`, deploy:
