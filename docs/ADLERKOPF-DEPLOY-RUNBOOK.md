@@ -13,35 +13,31 @@ On the workstation (J6G6Y9JK7L):
 - [ ] LUKS recovery passphrase saved in 1Password
 - [ ] M720q is booted from NixOS installer USB (e.g. `nixos-minimal-25.11-x86_64-linux.iso`)
 - [ ] M720q is connected via Ethernet and has a temporary DHCP IP
+- [ ] `~/.config/sops/age/keys.txt` contains the workstation age private key (needed for local `sops`
+  operations). On thiniel this is handled by `home/dan/features/cli/sops-age-key.nix`.
+
+> **Secure Boot / lanzaboote — chicken-and-egg**: `secure-boot.nix` MUST be disabled (commented out
+> in `hosts/adlerkopf/default.nix`) for the initial nixos-anywhere install. The sbctl keys do not
+> exist yet at that point. After first boot, create keys and re-enable (see Step 4).
 
 ## Step 0 — Verify TPM 2.0 in BIOS
 
 On the M720q BIOS (F1 at boot):
 - Security → TPM → **Enabled**
-- If Secure Boot is desired: Security → Secure Boot → **Enabled** → use PCRs `0+2+7`
-- If Secure Boot is off: use PCRs `0+2` only (see Step 4)
+- Leave Secure Boot **Disabled** for the initial install (see Secure Boot note above)
 
-## Step 1 — Prepare `@root-blank` snapshot via disko hook
+## Step 1 — `@root-blank` snapshot (automatic)
 
-The disko config should create `@root-blank` as part of the btrfs setup.
-Add to `hosts/adlerkopf/disko.nix` in the btrfs subvolume list or as a post-create hook:
+The `postCreateHook` in `hosts/adlerkopf/disko.nix` creates `@root-blank` automatically as part of
+the btrfs setup during nixos-anywhere. No manual step is needed.
 
 ```nix
-# At the end of the btrfs device block in disko.nix:
+# Already wired in disko.nix — shown for reference only:
 postCreateHook = ''
   mount -t btrfs /dev/mapper/cryptroot /mnt/btrfs_tmp
   btrfs subvolume snapshot /mnt/btrfs_tmp/@root /mnt/btrfs_tmp/@root-blank
   umount /mnt/btrfs_tmp
 '';
-```
-
-If the hook is not yet wired, run manually after nixos-anywhere formats but before rebooting:
-
-```fish
-# On adlerkopf installer shell:
-mount -t btrfs /dev/mapper/cryptroot /mnt/btrfs_tmp
-btrfs subvolume snapshot /mnt/btrfs_tmp/@root /mnt/btrfs_tmp/@root-blank
-umount /mnt/btrfs_tmp
 ```
 
 ## Step 1.5 — Prepare installer SSH access
@@ -79,23 +75,44 @@ From workstation (requires `nixos-anywhere` in PATH — available via `nix run g
 
 ```fish
 # Find the installer's temporary IP:
-ssh root@<installer-ip> ip addr show
+ssh nixos@<installer-ip> ip addr show
+
+# Write passphrase to a local file first (avoids shell history exposure):
+read -s -P "LUKS passphrase: " LUKS_PASS
+printf '%s' "$LUKS_PASS" > /tmp/luks-key.txt
 
 # Run nixos-anywhere:
 nix run github:nix-community/nixos-anywhere -- \
     --flake .#adlerkopf \
-    --disk-encryption-keys /tmp/secret.key /dev/stdin <<< "<recovery-passphrase>" \
-    root@<installer-ip>
+    --build-on local \
+    --disk-encryption-keys /tmp/secret.key /tmp/luks-key.txt \
+    --phases kexec,disko,install \
+    nixos@<installer-ip>
+
+# Remove the key file immediately after:
+rm -f /tmp/luks-key.txt
 ```
+
+**Flags explained**:
+- `--build-on local` — build the NixOS closure locally on the workstation (avoids Nix on installer)
+- `--phases kexec,disko,install` — stops before auto-reboot, allowing manual verification first
+- `--disk-encryption-keys /tmp/secret.key /tmp/luks-key.txt` — uploads the local key file to the
+  installer as `/tmp/secret.key`; disko uses this as the initial LUKS passphrase
 
 nixos-anywhere will:
 1. Run disko to partition and format disks (LUKS with recovery passphrase as initial key)
 2. Install NixOS into the btrfs layout
-3. Reboot
+3. Stop (no reboot — you used `--phases kexec,disko,install`)
+
+Manually reboot when ready:
+
+```fish
+ssh nixos@<installer-ip> sudo reboot
+```
 
 After reboot, the LUKS is opened with the recovery passphrase (TPM not enrolled yet).
 The box boots to NixOS; Caddy starts with empty config; no sops secrets decrypted yet
-(the age key is the SSH host key, which now exists at `/persist/etc/ssh/ssh_host_ed25519_key`).
+(the age key is the SSH host key, which now exists at `/persist/system/etc/ssh/ssh_host_ed25519_key`).
 
 ## Step 3 — Verify basic boot
 
@@ -104,46 +121,81 @@ ssh dan@REDACTED-HOME-LAN-SUBNET   # or IP from DHCP if static not active yet
 
 # Check:
 systemctl is-active caddy sshd
-ip addr show eno1         # should show REDACTED-HOME-LAN-SUBNET if networking.nix is correct
-cat /persist/etc/ssh/ssh_host_ed25519_key.pub  # should exist
+ip addr show eno1         # should show the static IP from networking.nix / private.nix
+cat /persist/system/etc/ssh/ssh_host_ed25519_key.pub  # should exist
 ```
+
+> **Note**: The actual static IP depends on the `adlerkopf.lan.ip` value in `private.nix`. The
+> default in the example file is `REDACTED-HOME-LAN-SUBNET`.
+
+To deploy a follow-up rebuild before TPM/sops are set up:
+
+```fish
+nixos-rebuild switch \
+    --flake .#adlerkopf \
+    --build-on local \
+    --target-host dan@REDACTED-HOME-LAN-SUBNET \
+    --use-remote-sudo
+```
+
+(`--build-on local` builds on the workstation by default; shown explicitly for clarity.)
 
 ## Step 4 — Enroll TPM2
 
+TPM2 enrollment can be done on the live running system (no reboot required to enroll):
+
 ```fish
-# On adlerkopf:
+# On adlerkopf — while Secure Boot is still DISABLED:
 sudo systemd-cryptenroll \
     --tpm2-device=auto \
-    --tpm2-pcrs=0+2+7 \       # use 0+2 if Secure Boot is disabled
-    /dev/disk/by-partlabel/cryptroot
+    --tpm2-pcrs=0+2 \
+    /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
 ```
 
 Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
 
-Re-enrollment required after:
-- BIOS firmware update
-- Secure Boot policy change
-- New option ROM detected by PCR 2
+### PCR selection
 
-Re-enroll procedure:
+| Secure Boot state | Recommended PCRs | Covers |
+|---|---|---|
+| Disabled (initial) | `0+2` | firmware + option ROMs |
+| Enabled (after sbctl) | `7` | Secure Boot policy + DBX |
+
+### Enable Secure Boot (after stable first boot)
+
+1. `sudo sbctl create-keys`
+2. Uncomment `./secure-boot.nix` in `hosts/adlerkopf/default.nix`
+3. Uncomment lanzaboote assertions in `tests/assertions/adlerkopf-invariants.nix`
+4. `nixos-rebuild switch --flake .#adlerkopf --build-on local --target-host dan@REDACTED-HOME-LAN-SUBNET --use-remote-sudo`
+5. Enable Secure Boot in BIOS
+6. Re-enroll TPM2 with `--tpm2-pcrs=7` (remove old slot first — see below)
+
+### Re-enrollment procedure
+
+Required after: BIOS firmware update, Secure Boot policy change, new option ROM detected by PCR 2.
 
 ```fish
 # Remove existing TPM2 slot (find slot number first):
-sudo systemd-cryptenroll --list /dev/disk/by-partlabel/cryptroot
-sudo systemd-cryptenroll --wipe-slot=<tpm2-slot> /dev/disk/by-partlabel/cryptroot
+sudo systemd-cryptenroll --list /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
+sudo systemd-cryptenroll --wipe-slot=<tpm2-slot> /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
 # Re-enroll:
-sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+2+7 \
-    /dev/disk/by-partlabel/cryptroot
+sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+2 \
+    /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
+# (or --tpm2-pcrs=7 if Secure Boot is active)
 ```
 
 ## Step 5 — Bootstrap sops age key
+
+> **Workstation prerequisite**: ensure `~/.config/sops/age/keys.txt` contains the workstation age
+> private key, so `sops` can decrypt/re-encrypt locally. On thiniel this is set up via
+> `home/dan/features/cli/sops-age-key.nix`.
 
 Derive the age public key from the SSH host key:
 
 ```fish
 # On adlerkopf:
 nix-shell -p ssh-to-age --run \
-    'ssh-to-age < /persist/etc/ssh/ssh_host_ed25519_key.pub'
+    'ssh-to-age < /persist/system/etc/ssh/ssh_host_ed25519_key.pub'
 # → age1xxxx...
 ```
 
@@ -156,12 +208,21 @@ On the workstation:
    ```
 3. Commit the updated `.sops.yaml` and `secrets.yaml`, deploy:
    ```fish
-   nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+   nixos-rebuild switch \
+       --flake .#adlerkopf \
+       --build-on local \
+       --target-host dan@REDACTED-HOME-LAN-SUBNET \
+       --use-remote-sudo
    ```
 4. Verify sops decrypts on the host:
    ```fish
-   ssh dan@REDACTED-HOME-LAN-SUBNET sudo sops -d /run/secrets/placeholder
+   # sops CLI is not installed on adlerkopf — verify via cat instead:
+   ssh dan@REDACTED-HOME-LAN-SUBNET sudo cat /run/secrets/<name>
    ```
+
+> **Note**: Phase 1 has no `sops.secrets.*` attributes declared, so `/run/secrets/` will not exist
+> until at least one secret is added to the configuration. The verify step above applies once a
+> secret is declared and deployed.
 
 ## Step 6 — Subsequent deployments
 
@@ -173,15 +234,16 @@ Three options; **Option A is the default** for day-to-day changes.
 # From workstation (J6G6Y9JK7L):
 nixos-rebuild switch \
     --flake .#adlerkopf \
+    --build-on local \
     --target-host dan@REDACTED-HOME-LAN-SUBNET \
     --use-remote-sudo
 ```
 
+> `--build-on local` builds the closure on the workstation and uploads it — this is the default
+> behaviour of `nixos-rebuild --target-host`; the flag is shown explicitly for clarity.
+
 Requires: `dan` on adlerkopf has `security.sudo.wheelNeedsPassword = false` (set in Phase 1) and
 an authorized SSH key for the workstation.
-
-Build happens **locally** on the workstation; the resulting closure is uploaded and activated
-remotely. No Nix needed on adlerkopf beyond what NixOS ships with.
 
 ```fish
 # Test-only (no activation):
