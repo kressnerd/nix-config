@@ -19,8 +19,8 @@
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
     ../../tests/assertions
-  ]
-  ++ lib.optional (builtins.pathExists ./private.nix) ./private.nix;
+    ./private.nix
+  ];
 
   nixpkgs.hostPlatform = "x86_64-linux";
 

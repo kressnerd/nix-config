@@ -1,5 +1,4 @@
 {
-  lib,
   inputs,
   ...
 }:
@@ -10,12 +9,12 @@
     ./hardware.nix
     ./disko.nix
     ./options.nix
+    ./private.nix
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
     ../../modules/nixos/persistence
     ../../tests/assertions
-  ]
-  ++ lib.optional (builtins.pathExists ./private.nix) ./private.nix;
+  ];
 
   nixpkgs.hostPlatform = "x86_64-linux";
 
