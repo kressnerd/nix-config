@@ -21,6 +21,10 @@
         assertion = builtins.elem "nix-command" config.nix.settings.experimental-features;
         message = "Global invariant violated: nix-command experimental feature must be enabled";
       }
+      {
+        assertion = builtins.elem "@wheel" config.nix.settings.trusted-users;
+        message = "nix: trusted-users must include @wheel (required for remote nixos-rebuild deployments)";
+      }
     ];
   };
 }
