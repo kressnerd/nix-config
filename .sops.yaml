@@ -3,7 +3,7 @@ keys:
     - &dan age1myvl9jg57tsllw4um80m4l55qlc904ces2jmqat2zn6nvdpc2dgqjpxju9
     - &dan_linux age1hyrw8gfdaqhqaw56zum8eq23c30vn3a9xfav7npa9nsuc0v9xfcsjx9w5v
     - &cupix001 age1placeholder000000000000000000000000000000000000000000000000
-    - &adlerkopf age1d8wyhvdldmrmvm45mu4e3fl7t2fg32sfxgewuwlnezn9lecm8skq02chle
+    - &adlerkopf age1m0hmyhnyrx8vznu8pstcapv8jl4rejexm3ettqcc0nk03jdgu3pq2fty6c
 
 creation_rules:
   - path_regex: hosts\/J6G6Y9JK7L\/secrets\.ya?ml$
