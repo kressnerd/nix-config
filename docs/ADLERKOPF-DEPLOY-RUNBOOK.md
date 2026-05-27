@@ -169,12 +169,56 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
 
 ### Enable Secure Boot (after stable first boot)
 
-1. `sudo sbctl create-keys`
-2. Uncomment `./secure-boot.nix` in `hosts/adlerkopf/default.nix`
-3. Uncomment lanzaboote assertions in `tests/assertions/adlerkopf-invariants.nix`
-4. `nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET --sudo`
-5. Enable Secure Boot in BIOS
-6. Re-enroll TPM2 with `--tpm2-pcrs=7` (remove old slot first — see below)
+> For the full detailed guide with troubleshooting, see [`docs/SECURE-BOOT-ENROLLMENT.md`](SECURE-BOOT-ENROLLMENT.md).
+
+1. **\[workstation\]** Uncomment `./secure-boot.nix` in `hosts/adlerkopf/default.nix`
+2. **\[workstation\]** Uncomment lanzaboote assertions in `tests/assertions/adlerkopf-invariants.nix`
+3. **\[workstation\]** Deploy lanzaboote (Secure Boot still **disabled** in firmware):
+   ```fish
+   nixos-rebuild switch \
+       --flake .#adlerkopf \
+       --target-host dan@REDACTED-HOME-LAN-SUBNET \
+       --sudo
+   ```
+4. **\[adlerkopf\]** Verify lanzaboote is active:
+   ```fish
+   bootctl status   # should show lanzaboote as loader; Secure Boot: disabled
+   ```
+5. **\[adlerkopf\]** Create Secure Boot signing keys:
+   ```fish
+   sudo sbctl create-keys
+   findmnt /var/lib/sbctl   # confirm keys are on /persist bind-mount
+   ```
+6. **\[adlerkopf\]** Enroll keys into firmware (includes Microsoft keys for Option ROM compatibility):
+   ```fish
+   sudo sbctl enroll-keys --microsoft
+   ```
+7. **\[workstation\]** Rebuild to re-sign all UKIs with the new keys:
+   ```fish
+   nixos-rebuild switch \
+       --flake .#adlerkopf \
+       --target-host dan@REDACTED-HOME-LAN-SUBNET \
+       --sudo
+   ```
+8. **\[adlerkopf\]** Verify all boot entries are signed:
+   ```fish
+   sudo sbctl verify   # every file must show ✓ Signed
+   ```
+9. **\[BIOS\]** F1 → Security → Secure Boot → **Enabled** → User Mode → save & exit
+10. **\[adlerkopf\]** After reboot, confirm Secure Boot is active:
+    ```fish
+    bootctl status   # should show Secure Boot: enabled (user)
+    ```
+11. **\[adlerkopf\]** Re-enroll TPM2 with updated PCRs (remove old slot first — see [Re-enrollment procedure](#re-enrollment-procedure)):
+    ```fish
+    sudo systemd-cryptenroll --wipe-slot=tpm2 \
+        /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
+    sudo systemd-cryptenroll \
+        --tpm2-device=auto \
+        --tpm2-pcrs=0+2+7 \
+        /dev/disk/by-partlabel/disk-nvme0n1-cryptroot
+    ```
+12. **\[adlerkopf\]** Reboot and verify LUKS auto-unlocks without passphrase prompt.
 
 ### Re-enrollment procedure
 
