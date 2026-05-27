@@ -14,7 +14,7 @@
     ./networking.nix
     ./caddy.nix
     ./tpm2.nix
-    ./secure-boot.nix
+    # ./secure-boot.nix  # TODO: re-enable after sbctl create-keys on first boot
     ./impermanence.nix
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
