@@ -162,7 +162,7 @@ This step removes the booby-trapped `builtins.pathExists` pattern entirely so th
 - [ ] **Step 7.3** — `nix eval .#nixosConfigurations.cupix001.config.networking.cupix001.publicIPv4` — returns real value
 - [ ] **Step 7.4** — `nix build .#nixosConfigurations.adlerkopf.config.system.build.toplevel --dry-run` — PASS
 - [ ] **Step 7.5** — `nix build .#nixosConfigurations.cupix001.config.system.build.toplevel --dry-run` — PASS
-- [ ] **Step 7.6** — Apply on adlerkopf: `sudo nixos-rebuild switch --flake .#adlerkopf --target-host dan@<current-ip> --use-remote-sudo` (run `test` instead of `switch` first if the IP change requires careful handling)
+- [ ] **Step 7.6** — Apply on adlerkopf: `sudo nixos-rebuild switch --flake .#adlerkopf --target-host dan@<current-ip> --sudo` (run `test` instead of `switch` first if the IP change requires careful handling)
 - [ ] **Step 7.7** — Verify on adlerkopf: `ip -4 addr show eno1` shows the intended IP
 - [ ] **Step 7.8** — cupix001 apply only when next deploy is scheduled — no behavior change expected since the actual values were already on disk; this fix just eliminates a silent-bug class
 

@@ -157,7 +157,7 @@ users.users.dan = {
   ];
 };
 
-# Required for `nixos-rebuild --use-remote-sudo` to work non-interactively
+# Required for `nixos-rebuild --sudo` to work non-interactively
 security.sudo.wheelNeedsPassword = false;
 ```
 

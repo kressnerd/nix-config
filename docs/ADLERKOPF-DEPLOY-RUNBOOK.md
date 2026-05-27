@@ -133,12 +133,9 @@ To deploy a follow-up rebuild before TPM/sops are set up:
 ```fish
 nixos-rebuild switch \
     --flake .#adlerkopf \
-    --build-on local \
     --target-host dan@REDACTED-HOME-LAN-SUBNET \
-    --use-remote-sudo
+    --sudo
 ```
-
-(`--build-on local` builds on the workstation by default; shown explicitly for clarity.)
 
 ## Step 4 — Enroll TPM2
 
@@ -175,7 +172,7 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
 1. `sudo sbctl create-keys`
 2. Uncomment `./secure-boot.nix` in `hosts/adlerkopf/default.nix`
 3. Uncomment lanzaboote assertions in `tests/assertions/adlerkopf-invariants.nix`
-4. `nixos-rebuild switch --flake .#adlerkopf --build-on local --target-host dan@REDACTED-HOME-LAN-SUBNET --use-remote-sudo`
+4. `nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET --sudo`
 5. Enable Secure Boot in BIOS
 6. Re-enroll TPM2 with `--tpm2-pcrs=7` (remove old slot first — see below)
 
@@ -240,9 +237,8 @@ On the workstation:
    ```fish
    nixos-rebuild switch \
        --flake .#adlerkopf \
-       --build-on local \
        --target-host dan@REDACTED-HOME-LAN-SUBNET \
-       --use-remote-sudo
+       --sudo
    ```
 4. Verify sops decrypts on the host:
    ```fish
@@ -264,13 +260,9 @@ Three options; **Option A is the default** for day-to-day changes.
 # From workstation (J6G6Y9JK7L):
 nixos-rebuild switch \
     --flake .#adlerkopf \
-    --build-on local \
     --target-host dan@REDACTED-HOME-LAN-SUBNET \
-    --use-remote-sudo
+    --sudo
 ```
-
-> `--build-on local` builds the closure on the workstation and uploads it — this is the default
-> behaviour of `nixos-rebuild --target-host`; the flag is shown explicitly for clarity.
 
 Requires: `dan` on adlerkopf has `security.sudo.wheelNeedsPassword = false` (set in Phase 1) and
 an authorized SSH key for the workstation.
@@ -280,7 +272,7 @@ an authorized SSH key for the workstation.
 nixos-rebuild build --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
 
 # Rollback last activation:
-nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET --use-remote-sudo
+nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET --sudo
 ```
 
 ### Option B — colmena (after Phase X PR-8)
@@ -325,7 +317,7 @@ ssh dan@REDACTED-HOME-LAN-SUBNET \
 
 ```fish
 # Remote (if previous generation still activatable):
-nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET --use-remote-sudo
+nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET --sudo
 
 # List generations:
 ssh dan@REDACTED-HOME-LAN-SUBNET sudo nix-env --list-generations --profile /nix/var/nix/profiles/system

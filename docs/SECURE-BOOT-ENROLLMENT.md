@@ -62,7 +62,7 @@ sudo nixos-rebuild switch --flake .#<hostname>
 Or remotely:
 
 ```bash
-nixos-rebuild switch --flake .#<hostname> --target-host dan@<ip> --use-remote-sudo
+nixos-rebuild switch --flake .#<hostname> --target-host dan@<ip> --sudo
 ```
 
 This re-signs all UKIs (Unified Kernel Images) on the ESP with the newly created keys.
