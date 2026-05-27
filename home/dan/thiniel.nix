@@ -3,6 +3,7 @@
   imports = [
     ./global/default.nix
     ./features/cli/deploy-tools.nix
+    ./features/cli/sops-age-key.nix
     ./features/cli/fish.nix
     ./features/cli/git.nix
     ./features/cli/kitty.nix

@@ -22,6 +22,7 @@
       "usb_storage"
       "sd_mod"
       "e1000e"
+      "usbhid"
     ];
     kernelModules = [ "kvm-intel" ];
   };
