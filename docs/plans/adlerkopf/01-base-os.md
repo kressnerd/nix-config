@@ -308,14 +308,14 @@ Add as `checks.<linux>.integration-adlerkopf-base` in `flake.nix:382-391`.
 
 ## Acceptance criteria
 
-- [ ] `nix flake check --no-build` green (new adlerkopf assertions pass)
-- [ ] `nix build .#nixosConfigurations.adlerkopf.config.system.build.toplevel` succeeds
-- [ ] nixos-anywhere provisioning completes (see [deploy-runbook.md](./deploy-runbook.md))
-- [ ] Box boots without keyboard interaction (TPM2 unlocks LUKS)
-- [ ] `ssh dan@REDACTED-HOME-LAN-SUBNET` with key succeeds
+- [x] `nix flake check --no-build` green (new adlerkopf assertions pass)
+- [x] `nix build .#nixosConfigurations.adlerkopf.config.system.build.toplevel` succeeds
+- [x] nixos-anywhere provisioning completes (see [deploy-runbook.md](./deploy-runbook.md))
+- [x] Box boots without keyboard interaction (TPM2 unlocks LUKS)
+- [x] `ssh dan@REDACTED-HOME-LAN-SUBNET` with key succeeds (actual IP differs from plan — see `private.nix`)
 - [ ] `sops decrypt hosts/adlerkopf/secrets.yaml` returns plaintext on the host
-- [ ] Reboot: `/` is empty, but `/persist` intact and SSH host key unchanged
-- [ ] `systemctl status caddy` → active (no vhosts, just the daemon)
+- [x] Reboot: `/` is empty, but `/persist` intact and SSH host key unchanged
+- [x] `systemctl status caddy` → active (no vhosts, just the daemon)
 - [ ] Integration VM test green in CI
 
 ## Rollback

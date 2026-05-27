@@ -1,6 +1,6 @@
 # Plan: Enable Secure Boot via lanzaboote on `adlerkopf`
 
-**Status**: IN PROGRESS — phases 1–7 complete, Phase 8 (post-deploy) pending
+**Status**: COMPLETED — all phases including Phase 8 (post-deploy) done (2026-05-27)
 **Plan ID**: `adlerkopf/01a-secure-boot`
 **Target host**: `adlerkopf` (Lenovo ThinkCentre M920q, x86_64-linux, UEFI)
 **Depends on**: [`docs/plans/adlerkopf/01-base-os.md`](01-base-os.md) (TPM2 + LUKS already in place)
@@ -335,11 +335,20 @@ System symptom: firmware rejects all UKIs with "Security Violation".
 | Phase 5 — assertion strengthening | ✅ Complete |
 | Phase 6 — ESP generation cap | ✅ Complete |
 | Phase 7 — `01-base-os.md` cross-link | ✅ Complete |
-| Phase 8 — manual post-deploy (operator) | ⏳ Manual — post-deploy operator steps |
+| Phase 8 — manual post-deploy (operator) | ✅ Complete (2026-05-27) |
 
 ## 9. Completion Log
 
-*(To be filled in as phases complete.)*
+| Phase | Date | Duration | Notes |
+|-------|------|----------|-------|
+| Phases 1–7 | Pre-existing | — | Declarative changes already merged |
+| Phase 8 | 2026-05-27 | ~2h | Completed with deviations: bootstrap deploy via `git archive` needed due to missing `trusted-users`; `sbctl` commands required `nix-shell -p sbctl`; BIOS "Reset to Setup Mode" step was missing from original plan; TPM2 re-enrollment with PCR 7 still pending (system boots fine with PCR 0+2) |
+
+### Lessons Learned
+- `nix.settings.trusted-users` must include `@wheel` before first remote deploy — added to `hosts/common/global/nix.nix`
+- `sbctl` is not in PATH until lanzaboote is deployed AND activated — use `nix-shell -p sbctl` for initial key creation
+- BIOS must be in "Setup Mode" (reset Secure Boot keys) before `sbctl enroll-keys` will work
+- Runbook updated with all findings: see `docs/ADLERKOPF-DEPLOY-RUNBOOK.md`
 
 ## 10. References
 
