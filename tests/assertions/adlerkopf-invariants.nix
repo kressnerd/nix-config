@@ -98,11 +98,11 @@
       }
       {
         assertion = builtins.elem 53 config.networking.firewall.allowedTCPPorts;
-        message = "adlerkopf: port 53/tcp open";
+        message = "adlerkopf: port 53/tcp must be open for DNS";
       }
       {
         assertion = builtins.elem 53 config.networking.firewall.allowedUDPPorts;
-        message = "adlerkopf: port 53/udp open";
+        message = "adlerkopf: port 53/udp must be open for DNS";
       }
     ];
   };

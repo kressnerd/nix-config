@@ -4,11 +4,11 @@
   pkgs,
   ...
 }:
+let
+  lanIP = config.networking.adlerkopf.lanIPv4;
+in
 {
-  sops.secrets."adguard/admin-bcrypt-hash" = {
-    owner = "root";
-    mode = "0400";
-  };
+  sops.secrets."adguard/admin-bcrypt-hash" = { };
 
   services.adguardhome = {
     enable = true;
@@ -19,7 +19,7 @@
     settings = {
       dns = {
         bind_hosts = [
-          "REDACTED-HOME-LAN-SUBNET"
+          lanIP
           "127.0.0.1"
         ];
         port = 53;
@@ -38,23 +38,23 @@
       filtering.rewrites = [
         {
           domain = "adlerkopf.lan";
-          answer = "REDACTED-HOME-LAN-SUBNET";
+          answer = lanIP;
         }
         {
           domain = "grafana.lan";
-          answer = "REDACTED-HOME-LAN-SUBNET";
+          answer = lanIP;
         }
         {
           domain = "nodered.lan";
-          answer = "REDACTED-HOME-LAN-SUBNET";
+          answer = lanIP;
         }
         {
           domain = "mqtt.lan";
-          answer = "REDACTED-HOME-LAN-SUBNET";
+          answer = lanIP;
         }
         {
           domain = "vpn.lan";
-          answer = "REDACTED-HOME-LAN-SUBNET";
+          answer = lanIP;
         }
       ];
       filters = [
@@ -83,11 +83,14 @@
   # Inject admin password hash from sops secret into AdGuardHome.yaml before service starts.
   # The adguardhome module's own preStart writes the YAML from settings;
   # mkAfter ensures our patch runs after that.
-  systemd.services.adguardhome.preStart = lib.mkAfter ''
-    HASH=$(cat ${config.sops.secrets."adguard/admin-bcrypt-hash".path})
-    ${pkgs.yq-go}/bin/yq -i '.users = [{"name": "admin", "password": "'"$HASH"'"}]' \
-      /var/lib/AdGuardHome/AdGuardHome.yaml
-  '';
+  systemd.services.adguardhome = {
+    serviceConfig.SupplementaryGroups = [ "keys" ];
+    preStart = lib.mkAfter ''
+      export HASH=$(cat ${config.sops.secrets."adguard/admin-bcrypt-hash".path})
+      ${pkgs.yq-go}/bin/yq -i '.users = [{"name": "admin", "password": strenv(HASH)}]' \
+        /var/lib/AdGuardHome/AdGuardHome.yaml
+    '';
+  };
 
   networking.firewall = {
     allowedTCPPorts = [ 53 ];
