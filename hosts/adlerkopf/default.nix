@@ -13,6 +13,7 @@
     ./options.nix
     ./networking.nix
     ./caddy.nix
+    ./services/adguard.nix
     ./tpm2.nix
     ./secure-boot.nix
     ./impermanence.nix
