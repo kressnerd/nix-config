@@ -92,6 +92,18 @@
           );
         message = "adlerkopf: ESP generation limit must be ≤5 (512 MiB ESP with lanzaboote UKIs)";
       }
+      {
+        assertion = config.services.adguardhome.enable;
+        message = "adlerkopf: AdGuard Home must be enabled";
+      }
+      {
+        assertion = builtins.elem 53 config.networking.firewall.allowedTCPPorts;
+        message = "adlerkopf: port 53/tcp open";
+      }
+      {
+        assertion = builtins.elem 53 config.networking.firewall.allowedUDPPorts;
+        message = "adlerkopf: port 53/udp open";
+      }
     ];
   };
 }
