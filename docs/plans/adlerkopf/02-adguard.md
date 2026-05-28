@@ -135,13 +135,32 @@ Change the **primary DNS server** in the router's DHCP settings from the Pi's IP
 
 ## Acceptance criteria
 
-- [ ] `nix flake check --no-build` green
+- [x] `nix flake check --no-build` green
 - [ ] `dig @REDACTED-HOME-LAN-SUBNET doubleclick.net` → blocked (NXDOMAIN or 0.0.0.0)
 - [ ] `dig @REDACTED-HOME-LAN-SUBNET google.com` → real answer (upstream DoH resolves)
 - [ ] `dig @REDACTED-HOME-LAN-SUBNET grafana.lan` → REDACTED-HOME-LAN-SUBNET (rewrite works)
 - [ ] AdGuard web UI reachable at `http://REDACTED-HOME-LAN-SUBNET:3000`
 - [ ] After router DHCP DNS change: a LAN client resolves `grafana.lan` without manual DNS override
 - [ ] AdGuard state survives a reboot (query log, custom rewrites intact)
+
+## Completion Summary
+
+- **Completed Date**: 2026-05-28
+- **Status**: IMPLEMENTATION COMPLETE (pre-deployment)
+- **Commits**:
+  - `6108209` — `test(adlerkopf): RED — add AdGuard Home assertions`
+  - `744bd1b` — `feat(adlerkopf): GREEN — add AdGuard Home service module`
+  - `5a88ded` — `refactor(adlerkopf): address review findings F-001/F-002/F-003`
+- **Deviations from plan**:
+  - `settings.bind_host` / `settings.bind_port` deprecated in current nixpkgs → replaced with top-level `services.adguardhome.host` / `services.adguardhome.port`
+  - Plan specified `sops.templates` for password injection → implemented via `systemd.services.adguardhome.preStart` with `lib.mkAfter` + `yq-go` (simpler, no extra template file needed)
+  - Hardcoded IP `REDACTED-HOME-LAN-SUBNET` replaced with `config.networking.adlerkopf.lanIPv4` option reference (DRY improvement from review)
+  - Service file placed in `hosts/adlerkopf/services/adguard.nix` as planned (introduces new `services/` subdirectory pattern)
+- **Remaining before deployment**:
+  - Add bcrypt hash to `hosts/adlerkopf/secrets.yaml` via `sops hosts/adlerkopf/secrets.yaml` under key `adguard/admin-bcrypt-hash`
+  - Deploy: `sudo nixos-rebuild switch --flake .#adlerkopf`
+  - Verify acceptance criteria (dig tests, web UI, router DHCP change)
+  - Update `private.nix` to set system DNS to `127.0.0.1` (F-005 follow-up)
 
 ## Rollback
 
