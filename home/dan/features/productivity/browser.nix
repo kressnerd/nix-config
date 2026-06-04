@@ -62,10 +62,10 @@
     };
   };
 
-  home.persistence.${config.myHome.persistence.root}.directories =
-    lib.mkIf config.myHome.persistence.enable
-      [
-        ".cache/mozilla"
-        ".mozilla"
-      ];
+  home = lib.optionalAttrs config.myHome.persistence.enable {
+    persistence.${config.myHome.persistence.root}.directories = [
+      ".cache/mozilla"
+      ".mozilla"
+    ];
+  };
 }

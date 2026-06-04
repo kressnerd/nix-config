@@ -4,12 +4,13 @@
   pkgs,
   ...
 }:
-{
-  home.packages = with pkgs; [
-    sweethome3d.application
-  ];
-
-  home.persistence.${config.myHome.persistence.root}.directories =
-    lib.mkIf config.myHome.persistence.enable
-      [ ".eteks" ];
-}
+lib.mkMerge [
+  {
+    home.packages = with pkgs; [
+      sweethome3d.application
+    ];
+  }
+  (lib.mkIf config.myHome.persistence.enable {
+    home.persistence.${config.myHome.persistence.root}.directories = [ ".eteks" ];
+  })
+]

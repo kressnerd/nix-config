@@ -4,15 +4,16 @@
   pkgs,
   ...
 }:
-{
-  home.packages = with pkgs; [
-    owncloud-client
-  ];
-
-  home.persistence.${config.myHome.persistence.root}.directories =
-    lib.mkIf config.myHome.persistence.enable
-      [
-        ".config/ownCloud"
-        ".local/share/ownCloud"
-      ];
-}
+lib.mkMerge [
+  {
+    home.packages = with pkgs; [
+      owncloud-client
+    ];
+  }
+  (lib.mkIf config.myHome.persistence.enable {
+    home.persistence.${config.myHome.persistence.root}.directories = [
+      ".config/ownCloud"
+      ".local/share/ownCloud"
+    ];
+  })
+]

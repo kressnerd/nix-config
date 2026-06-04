@@ -10,15 +10,28 @@
 # pkgs.stdenv.isLinux so the aarch64-darwin unit-helpers check continues to pass.
 { lib, pkgs }:
 let
+  normalizeModule =
+    module:
+    if module ? _type && module._type == "merge" then
+      lib.foldl' lib.recursiveUpdate { } (
+        builtins.map (
+          m: if m ? _type && m._type == "if" then if m.condition then m.content else { } else m
+        ) module.contents
+      )
+    else
+      module;
+
   # gnome-keyring.nix — signature is `{ config, lib, pkgs, ... }:`, pass pkgs for libsecret
   # config mock: persistence disabled so home.persistence block is a no-op
-  gnomeKeyringModule = import ../../home/dan/features/linux/gnome-keyring.nix {
-    inherit lib pkgs;
-    config.myHome.persistence = {
-      enable = false;
-      root = "/persist";
-    };
-  };
+  gnomeKeyringModule = normalizeModule (
+    import ../../home/dan/features/linux/gnome-keyring.nix {
+      inherit lib pkgs;
+      config.myHome.persistence = {
+        enable = false;
+        root = "/persist";
+      };
+    }
+  );
   gnomeKeyringPkgNames = builtins.map (p: p.pname or p.name or "") gnomeKeyringModule.home.packages;
 
   # fonts.nix — signature is `{ pkgs, ... }:`
@@ -30,14 +43,16 @@ let
   hyprlandTests =
     if pkgs.stdenv.isLinux then
       let
-        hyprlandModule = import ../../home/dan/features/linux/hyprland.nix {
-          inherit pkgs lib;
-          pkgs-unstable = pkgs;
-          config.myHome.persistence = {
-            enable = false;
-            root = "/persist";
-          };
-        };
+        hyprlandModule = normalizeModule (
+          import ../../home/dan/features/linux/hyprland.nix {
+            inherit pkgs lib;
+            pkgs-unstable = pkgs;
+            config.myHome.persistence = {
+              enable = false;
+              root = "/persist";
+            };
+          }
+        );
         waybarModule = import ../../home/dan/features/linux/waybar.nix {
           inherit pkgs;
           pkgs-unstable = pkgs;
