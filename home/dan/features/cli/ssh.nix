@@ -13,6 +13,7 @@
     enableDefaultConfig = false;
 
     includes = [
+      "config.d/company"
       "config.d/client002"
       "config.d/nix-builder"
     ];
