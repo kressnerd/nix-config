@@ -4,12 +4,13 @@
   pkgs-unstable,
   ...
 }:
-{
-  home.packages = with pkgs-unstable; [
-    claude-code
-  ];
-
-  home.persistence.${config.myHome.persistence.root}.directories =
-    lib.mkIf config.myHome.persistence.enable
-      [ ".claude" ];
-}
+lib.mkMerge [
+  {
+    home.packages = with pkgs-unstable; [
+      claude-code
+    ];
+  }
+  (lib.mkIf config.myHome.persistence.enable {
+    home.persistence.${config.myHome.persistence.root}.directories = [ ".claude" ];
+  })
+]

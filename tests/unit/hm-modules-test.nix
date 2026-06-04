@@ -40,7 +40,20 @@ let
       root = "/persist";
     };
   };
-  claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") claudeCodeModule.home.packages;
+
+  # Modules imported directly in tests can be plain attrsets or lib.mkMerge wrappers.
+  getHomePackages =
+    module:
+    if module ? home && module.home ? packages then
+      module.home.packages
+    else if module ? _type && module._type == "merge" then
+      builtins.concatLists (
+        builtins.map (m: if m ? home && m.home ? packages then m.home.packages else [ ]) module.contents
+      )
+    else
+      [ ];
+
+  claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") (getHomePackages claudeCodeModule);
 
   # Import vscode-fhs feature module — pass config mock so persistence block is a no-op.
   vscodeFhsModule = import ../../home/dan/features/productivity/vscode-fhs.nix {
@@ -51,7 +64,7 @@ let
       root = "/persist";
     };
   };
-  vscodeFhsPkgNames = builtins.map (p: p.pname or p.name or "") vscodeFhsModule.home.packages;
+  vscodeFhsPkgNames = builtins.map (p: p.pname or p.name or "") (getHomePackages vscodeFhsModule);
 
   # Import J6G6Y9JK7L HM profile — signature is { config, pkgs, lib, ... }:
   # programs.fish.shellAliases only contains string literals so no real config/pkgs needed.

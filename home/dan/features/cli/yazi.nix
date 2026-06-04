@@ -11,9 +11,9 @@
 
   stylix.targets.yazi.enable = true;
 
-  home.persistence.${config.myHome.persistence.root}.directories =
-    lib.mkIf config.myHome.persistence.enable
-      [
-        ".local/share/yazi"
-      ];
+  home = lib.optionalAttrs config.myHome.persistence.enable {
+    persistence.${config.myHome.persistence.root}.directories = [
+      ".local/share/yazi"
+    ];
+  };
 }

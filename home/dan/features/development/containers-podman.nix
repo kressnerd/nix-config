@@ -123,11 +123,9 @@
       DOCKER_HOST = "unix://${config.home.homeDirectory}/.local/share/containers/podman/machine/podman.sock";
     };
 
-    persistence.${config.myHome.persistence.root}.directories =
-      lib.mkIf config.myHome.persistence.enable
-        [
-          ".local/share/containers"
-        ];
+  }
+  // lib.optionalAttrs config.myHome.persistence.enable {
+    persistence.${config.myHome.persistence.root}.directories = [ ".local/share/containers" ];
   };
 
   # Shell integration and aliases

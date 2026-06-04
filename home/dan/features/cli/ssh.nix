@@ -61,7 +61,7 @@
     };
   };
 
-  home.persistence.${config.myHome.persistence.root}.directories =
-    lib.mkIf config.myHome.persistence.enable
-      [ ".ssh" ];
+  home = lib.optionalAttrs config.myHome.persistence.enable {
+    persistence.${config.myHome.persistence.root}.directories = [ ".ssh" ];
+  };
 }

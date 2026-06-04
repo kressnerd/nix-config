@@ -4,6 +4,17 @@
 # Covers: browser.nix, keepassxc.nix, maestral.nix, firefox-personal.nix
 { lib, pkgs }:
 let
+  normalizeModule =
+    module:
+    if module ? _type && module._type == "merge" then
+      lib.foldl' lib.recursiveUpdate { } (
+        builtins.map (
+          m: if m ? _type && m._type == "if" then if m.condition then m.content else { } else m
+        ) module.contents
+      )
+    else
+      module;
+
   # Platform mocks
   mockPkgsLinux = pkgs // {
     stdenv = pkgs.stdenv // {
@@ -86,16 +97,18 @@ let
   keepassxcModule = import ../../home/dan/features/productivity/keepassxc.nix { };
 
   # maestral.nix — signature is `{ config, lib, pkgs, ... }:`
-  maestralModule = import ../../home/dan/features/productivity/maestral.nix {
-    pkgs = mockPkgsLinux;
-    inherit lib;
-    config = {
-      myHome.persistence = {
-        enable = false;
-        root = "/persist";
+  maestralModule = normalizeModule (
+    import ../../home/dan/features/productivity/maestral.nix {
+      pkgs = mockPkgsLinux;
+      inherit lib;
+      config = {
+        myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
       };
-    };
-  };
+    }
+  );
 in
 lib.debug.runTests {
 
