@@ -2,6 +2,7 @@ result*
 hosts/cupix001/private.nix
 hosts/adlerkopf/private.nix
 .pytest_cache/
+.idea
 .mypy_cache/
 .ruff_cache/
 __pycache__/
