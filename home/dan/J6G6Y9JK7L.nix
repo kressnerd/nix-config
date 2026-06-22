@@ -25,6 +25,7 @@
     ./features/development/python-tools.nix
     ./features/development/nodejs.nix
     ./features/development/fnm.nix
+    ./features/development/opencode.nix
     ./features/macos/defaults.nix
     ./features/macos/aerospace.nix
     ./features/productivity/browser.nix
