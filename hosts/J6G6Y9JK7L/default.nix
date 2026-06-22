@@ -80,6 +80,7 @@
       "score-spec/homebrew-tap" = inputs.score-spec-tap;
     };
     mutableTaps = false;
+    trust.formulae = [ "score-spec/tap/score-compose" ];
   };
 
   homebrew = {
