@@ -15,6 +15,8 @@ in
         ".config/sops/age"
         ".config/netcup-scp"
         ".local/share/netcup-scp"
+        ".local/share/opencode"
+        ".cache/opencode"
       ];
       files = [
         ".bash_history"
