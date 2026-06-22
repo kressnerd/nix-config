@@ -29,6 +29,44 @@ let
 
   # ── containers-podman.nix: raw source (uses config.home.homeDirectory, cannot be imported) ─
   podmanRawContent = builtins.readFile ../../home/dan/features/development/containers-podman.nix;
+
+  # ── opencode.nix ─────────────────────────────────────────────────────────────
+  # Helper: extract home.packages from a plain attrset or lib.mkMerge result.
+  getHomePackages =
+    module:
+    if module ? home && module.home ? packages then
+      module.home.packages
+    else if module ? _type && module._type == "merge" then
+      builtins.concatLists (
+        builtins.map (m: if m ? home && m.home ? packages then m.home.packages else [ ]) module.contents
+      )
+    else
+      [ ];
+
+  # Helper: extract xdg.configFile from a plain attrset or lib.mkMerge result.
+  getXdgConfigFiles =
+    module:
+    if module ? xdg && module.xdg ? configFile then
+      module.xdg.configFile
+    else if module ? _type && module._type == "merge" then
+      builtins.foldl' (
+        acc: m: if m ? xdg && m.xdg ? configFile then acc // m.xdg.configFile else acc
+      ) { } module.contents
+    else
+      { };
+
+  # RED: home/dan/features/development/opencode.nix does not exist yet →
+  # import fails at eval time → nix build .#checks.*.unit-helpers FAILS as expected.
+  opencodeModule = import ../../home/dan/features/development/opencode.nix {
+    inherit lib pkgs;
+    config.myHome.persistence = {
+      enable = false;
+      root = "/persist";
+    };
+  };
+  opencodePkgNames = builtins.map (p: p.pname or p.name or "") (getHomePackages opencodeModule);
+  opencodeConfigFiles = getXdgConfigFiles opencodeModule;
+  opencodeJsonConfig = builtins.fromJSON opencodeConfigFiles."opencode/opencode.json".text;
 in
 lib.debug.runTests {
 
@@ -170,5 +208,21 @@ lib.debug.runTests {
   testPodmanNoDuplicateAliasContainerReset = {
     expr = lib.strings.hasInfix "\"container-reset\"" podmanRawContent;
     expected = false;
+  };
+
+  # ── opencode: RED — opencode.nix must declare opencode + bun + openspec ──────
+  testOpencodeInPackages = {
+    expr = builtins.elem "opencode" opencodePkgNames;
+    expected = true;
+  };
+
+  testOpencodeBunInPackages = {
+    expr = builtins.elem "bun" opencodePkgNames;
+    expected = true;
+  };
+
+  testOpencodePluginOpenspecDeclared = {
+    expr = builtins.elem "opencode-plugin-openspec" opencodeJsonConfig.plugin;
+    expected = true;
   };
 }
