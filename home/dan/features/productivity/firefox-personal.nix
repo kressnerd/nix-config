@@ -11,7 +11,6 @@ let
     ++ (with addons; [
       terms-of-service-didnt-read
       link-cleaner
-      tabliss
       kagi-search
     ]);
 
