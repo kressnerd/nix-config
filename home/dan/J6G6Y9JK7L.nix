@@ -13,6 +13,7 @@
     ./features/cli/git.nix
     ./features/cli/kitty.nix
     ./features/cli/shell-utils.nix
+    ./features/cli/sops.nix
     ./features/cli/ssh.nix
     ./features/cli/starship.nix
     ./features/cli/vim.nix
