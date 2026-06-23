@@ -85,6 +85,7 @@ in
         ++ (with addons; [
           multi-account-containers
           link-cleaner
+          bitwarden
         ]);
 
       settings = workSettings // {
