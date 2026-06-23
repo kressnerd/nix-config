@@ -90,6 +90,7 @@ in
 
       settings = workSettings // {
         "privacy.resistFingerprinting" = false;
+        "security.webauthn.enable_macos_passkeys" = false;
       };
 
       search = kagiSearch;
@@ -135,6 +136,7 @@ in
 
       settings = workSettings // {
         "privacy.resistFingerprinting" = false;
+        "security.webauthn.enable_macos_passkeys" = false;
       };
 
       search = kagiSearch;
