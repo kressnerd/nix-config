@@ -30,7 +30,7 @@ let
   };
 
   # Superset of all addons from mkFirefoxExtensions (common, dev, privacy, productivity, convenience)
-  # plus profile-specific extras. Includes dev addons for future firefox-company.nix test reuse.
+  # plus profile-specific extras (multi-account-containers, onepassword-password-manager, bitwarden).
   mockPkgsWithNur = mockPkgsLinux // {
     nur = {
       repos.rycee.firefox-addons = builtins.listToAttrs (
@@ -64,12 +64,19 @@ let
             "refined-github"
             "octotree"
             "wappalyzer"
+            "multi-account-containers"
+            "onepassword-password-manager"
+            "bitwarden"
           ]
       );
     };
   };
 
   firefoxPersonalModule = import ../../home/dan/features/productivity/firefox-personal.nix {
+    pkgs = mockPkgsWithNur;
+  };
+
+  firefoxCompanyModule = import ../../home/dan/features/productivity/firefox-company.nix {
     pkgs = mockPkgsWithNur;
   };
 
@@ -308,6 +315,13 @@ lib.debug.runTests {
     expr =
       firefoxPersonalModule.programs.firefox.profiles.user.extensions.packages
       == firefoxPersonalModule.programs.firefox.profiles.no-tracking.extensions.packages;
+    expected = true;
+  };
+
+  # ── firefox-company: bitwarden extension ─────────────────────────────────
+
+  testCompanyProfileHasBitwarden = {
+    expr = builtins.elem "bitwarden" firefoxCompanyModule.programs.firefox.profiles.company.extensions.packages;
     expected = true;
   };
 
