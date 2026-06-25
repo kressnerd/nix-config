@@ -8,6 +8,7 @@
   imports = [
     ../../tests/assertions/J6G6Y9JK7L-invariants.nix
     ./global/default.nix
+    ./features/cli/ansible.nix
     ./features/cli/cloud-tools.nix
     ./features/cli/deploy-tools.nix
     ./features/cli/git.nix
@@ -22,7 +23,6 @@
     ./features/development/containers.nix
     ./features/development/formatters.nix
     ./features/development/go.nix
-    ./features/development/jdk.nix
     ./features/development/python-tools.nix
     ./features/development/nodejs.nix
     ./features/development/fnm.nix
