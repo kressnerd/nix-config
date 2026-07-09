@@ -22,9 +22,8 @@
         let
           settings = config.programs.aerospace.userSettings;
         in
-        builtins.hasAttr "workspace-to-monitor-force-assignment" settings
-        && settings."workspace-to-monitor-force-assignment"."1" == "main";
-      message = "aerospace: workspace 1 must be force-assigned to main monitor";
+        !(builtins.hasAttr "workspace-to-monitor-force-assignment" settings);
+      message = "aerospace: workspace-to-monitor-force-assignment must be absent — dynamic monitor assignment";
     }
     {
       assertion =
@@ -40,8 +39,17 @@
         let
           bindings = config.programs.aerospace.userSettings.mode.main.binding;
         in
-        builtins.hasAttr "alt-tab" bindings && bindings."alt-tab" == "focus-monitor --wrap-around next";
-      message = "aerospace: alt-tab must be bound to focus-monitor --wrap-around next";
+        builtins.hasAttr "alt-tab" bindings && builtins.match ".*dfs-next.*" bindings."alt-tab" != null;
+      message = "aerospace: alt-tab must be bound to dfs-next (cyclic window focus in workspace)";
+    }
+    {
+      assertion =
+        let
+          bindings = config.programs.aerospace.userSettings.mode.main.binding;
+        in
+        builtins.hasAttr "alt-backtick" bindings
+        && bindings."alt-backtick" == "focus-monitor --wrap-around next";
+      message = "aerospace: alt-backtick must be bound to focus-monitor --wrap-around next";
     }
     {
       assertion =
@@ -60,6 +68,30 @@
         builtins.hasAttr "on-focused-monitor-changed" settings
         && settings."on-focused-monitor-changed" == [ "move-mouse monitor-lazy-center" ];
       message = "aerospace: on-focused-monitor-changed must move mouse to monitor center";
+    }
+    {
+      assertion =
+        let
+          bindings = config.programs.aerospace.userSettings.mode.main.binding;
+        in
+        builtins.hasAttr "alt-1" bindings && bindings."alt-1" == "workspace 1-WWW";
+      message = "aerospace: alt-1 must switch to named workspace 1-WWW";
+    }
+    {
+      assertion =
+        let
+          settings = config.programs.aerospace.userSettings;
+        in
+        builtins.hasAttr "on-window-detected" settings && builtins.length settings.on-window-detected > 0;
+      message = "aerospace: on-window-detected rules must be configured for auto-placement";
+    }
+    {
+      assertion =
+        let
+          bindings = config.programs.aerospace.userSettings.mode.main.binding;
+        in
+        builtins.hasAttr "alt-t" bindings && builtins.match ".*Marta.*" bindings."alt-t" != null;
+      message = "aerospace: alt-t must open Marta";
     }
     # --- global ---
     {
