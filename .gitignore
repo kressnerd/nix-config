@@ -7,3 +7,4 @@ hosts/adlerkopf/private.nix
 .ruff_cache/
 __pycache__/
 infra/http/http-client.private.env.json
+opencode.json
