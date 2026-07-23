@@ -33,6 +33,10 @@
       lazygit # TUI for git — interactive staging, rebasing, log
       glab # GitLab CLI — manage issues, MRs, pipelines from terminal
       nil # Nix language server — LSP for editor integration
+      (bats.withLibraries (p: [
+        p.bats-support
+        p.bats-assert
+      ])) # bats shell test framework + support/assert libraries (bats_load_library)
     ]
     ++ lib.optionals pkgs.stdenv.isLinux [
       bluetuith # TUI Bluetooth manager — Linux-only, requires bluez
