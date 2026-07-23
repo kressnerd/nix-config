@@ -118,6 +118,14 @@
       assertion = config.programs.git.enable;
       message = "git: programs.git.enable must be true";
     }
+    {
+      assertion = builtins.any (p: lib.getName p == "git-filter-repo") config.home.packages;
+      message = "git: git-filter-repo must be installed";
+    }
+    {
+      assertion = builtins.any (p: lib.getName p == "mob") config.home.packages;
+      message = "git: mob must be installed";
+    }
     # --- cli/kitty ---
     {
       assertion = config.programs.kitty.enable;
