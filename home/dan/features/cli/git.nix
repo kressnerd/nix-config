@@ -8,6 +8,8 @@
   home.packages = [
     pkgs.git
     pkgs.delta
+    pkgs.git-filter-repo
+    pkgs.mob
   ];
 
   programs.git = {
