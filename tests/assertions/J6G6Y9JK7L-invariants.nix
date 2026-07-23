@@ -128,6 +128,10 @@
       assertion = builtins.any (p: lib.getName p == "lazygit") config.home.packages;
       message = "shell-utils: lazygit must be installed";
     }
+    {
+      assertion = builtins.any (p: lib.getName p == "bats-with-libraries") config.home.packages;
+      message = "shell-utils: bats (with bats-support + bats-assert) must be installed";
+    }
     # --- cli/sops ---
     {
       assertion = builtins.any (p: lib.getName p == "age") config.home.packages;
