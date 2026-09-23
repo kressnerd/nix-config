@@ -87,7 +87,15 @@
     enable = true;
     taps = builtins.attrNames config.nix-homebrew.taps;
     onActivation = {
-      cleanup = "zap";
+      # Homebrew 7 removed --cleanup; nix-darwin 25.11 still emits it for
+      # cleanup = "zap". Workaround until backported: disable the built-in
+      # flag and pass Homebrew 7's replacement spelling manually.
+      # https://github.com/nix-darwin/nix-darwin/issues/1787
+      cleanup = "none";
+      extraFlags = [
+        "--zap"
+        "--force-cleanup"
+      ];
       autoUpdate = false;
       upgrade = true;
     };
