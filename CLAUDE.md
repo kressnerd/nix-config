@@ -34,7 +34,7 @@ nix flake update   # Update all inputs (updates flake.lock)
 
 **Nix formatting:**
 ```bash
-nix fmt .          # Format all Nix files (uses nixfmt-rfc-style via flake formatter output)
+nix fmt .          # Format all Nix files (uses nixfmt via flake formatter output)
 ```
 
 **Validation pipeline:**
@@ -61,7 +61,7 @@ nixfmt --check <file.nix>
 | `unit-helpers` | all | Unit tests (`lib.debug.runTests`) |
 | `lint-deadnix` | all | Unused Nix bindings |
 | `lint-statix` | all | Nix anti-patterns |
-| `lint-nixfmt` | all | Formatting (nixfmt-rfc-style) |
+| `lint-nixfmt` | all | Formatting (nixfmt) |
 | `integration-vm-minimal-ssh` | Linux only | VM integration test (QEMU) |
 
 ---
@@ -194,7 +194,7 @@ scripts/deploy-vm.sh deploy <host> <ip>           # Deploy via nixos-anywhere
 
 ## Architecture
 
-Layered, composable Nix configuration for macOS (nix-darwin) and NixOS. Channels: `nixpkgs-25.11` (stable), `nixpkgs-unstable`.
+Layered, composable Nix configuration for macOS (nix-darwin) and NixOS. Channels: `nixpkgs-26.05` (stable), `nixpkgs-unstable`.
 
 ```
 flake.nix
@@ -338,6 +338,8 @@ Categories: common, dev, privacy, productivity, convenience.
 
 ### Impermanence Pattern (NixOS Hosts)
 Used on thiniel, pronix, cupix001. Root filesystem is wiped on boot via btrfs subvolume reset. Persistent state is mounted from `/persist`. Feature module at `features/linux/impermanence.nix` defines user-level persistent directories (.ssh, .mozilla, dev, Projects, etc.).
+
+**thiniel — scripted stage 1 (since nixpkgs 26.05):** thiniel performs the btrfs root wipe in `boot.initrd.postDeviceCommands`, which only exists in the scripted stage 1. 26.05 made the systemd stage 1 the default, so `boot.initrd.systemd.enable = false` is set explicitly. Guarded by `tests/assertions/thiniel-boot-invariants.nix`. The scripted implementation is removed in **26.11** — migrate the wipe to `boot.initrd.systemd.services.<name>` (`before = [ "sysroot.mount" ]`) before then.
 
 ## Secrets Setup
 

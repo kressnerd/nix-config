@@ -121,7 +121,7 @@ up-to-date templates.
 - **Attribute alignment**: Align equals signs in attribute sets
 
 ``` bash
-# Format all Nix files (nixfmt-rfc-style, enforced by flake checks)
+# Format all Nix files (nixfmt, enforced by flake checks)
 nix fmt .
 ```
 

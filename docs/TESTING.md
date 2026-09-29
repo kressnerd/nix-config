@@ -81,7 +81,7 @@ Automated code quality checks run on all platforms via `nix flake check`.
 
 - **deadnix**: Detects unused Nix bindings
 - **statix**: Detects Nix anti-patterns
-- **nixfmt**: Verifies formatting (nixfmt-rfc-style)
+- **nixfmt**: Verifies formatting (nixfmt)
 
 ```bash
 # Run all linters via flake check
@@ -101,7 +101,7 @@ nix build .#checks.aarch64-darwin.lint-nixfmt
 | `integration-vm-minimal-ssh` | Linux only | SSH + firewall behavior |
 | `lint-deadnix` | All | Unused Nix binding detection |
 | `lint-statix` | All | Nix anti-pattern detection |
-| `lint-nixfmt` | All | Formatting verification (nixfmt-rfc-style) |
+| `lint-nixfmt` | All | Formatting verification (nixfmt) |
 
 ## Workflow
 
