@@ -367,7 +367,7 @@
         map
           (system: {
             name = system;
-            value = nixpkgs.legacyPackages.${system}.nixfmt-rfc-style;
+            value = nixpkgs.legacyPackages.${system}.nixfmt;
           })
           [
             "x86_64-linux"
@@ -432,7 +432,7 @@
                 pkgs.runCommand "lint-nixfmt"
                   {
                     src = self;
-                    nativeBuildInputs = [ pkgs.nixfmt-rfc-style ];
+                    nativeBuildInputs = [ pkgs.nixfmt ];
                   }
                   ''
                     find $src -name '*.nix' -not -path '*/result*' -exec nixfmt --check {} +

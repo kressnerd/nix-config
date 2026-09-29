@@ -4,7 +4,7 @@
   home = {
     packages = with pkgs; [
       # Nix formatters
-      nixfmt-rfc-style # Official Nix formatter (RFC 166)
+      nixfmt # Official Nix formatter (RFC 166)
       deadnix # Detect unused bindings and dead code in Nix files
       statix # Lint Nix code for anti-patterns and suggest idiomatic improvements
 

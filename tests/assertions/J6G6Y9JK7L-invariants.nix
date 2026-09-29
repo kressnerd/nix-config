@@ -178,7 +178,7 @@
     # --- development/formatters ---
     {
       assertion = builtins.any (p: lib.getName p == "nixfmt") config.home.packages;
-      message = "formatters: nixfmt-rfc-style must be installed";
+      message = "formatters: nixfmt must be installed";
     }
     # --- development/go ---
     {

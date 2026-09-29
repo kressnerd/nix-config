@@ -43,7 +43,7 @@
 
         # Language formatters
         nixpkgs-fmt # Nix formatter
-        nixfmt-rfc-style # Nix formatter (official)
+        nixfmt # Nix formatter (official)
         prettier
         black # Python formatter
         shfmt # Shell formatter
