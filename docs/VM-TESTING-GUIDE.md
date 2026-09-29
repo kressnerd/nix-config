@@ -105,7 +105,7 @@ nix run github:nix-community/nixos-anywhere -- \
 
 ```bash
 # Download NixOS minimal ISO
-curl -LO https://channels.nixos.org/nixos-25.11/latest-nixos-minimal-x86_64-linux.iso
+curl -LO https://channels.nixos.org/nixos-26.05/latest-nixos-minimal-x86_64-linux.iso
 
 # Create VM
 virt-install \
