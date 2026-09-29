@@ -16,7 +16,6 @@
     inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x270
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
-    ../../modules/nixos/systemd-sleep-settings.nix
     ../../modules/nixos/persistence
     ../../tests/assertions
   ];
@@ -29,6 +28,12 @@
       systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
     };
+
+    # 26.05 defaults to a systemd-based stage 1, which does not support
+    # postDeviceCommands. The btrfs root wipe below needs the scripted stage 1.
+    # Migrate to boot.initrd.systemd.services.<name> before 26.11 removes it.
+    # Guarded by tests/assertions/thiniel-boot-invariants.nix.
+    initrd.systemd.enable = false;
 
     initrd.postDeviceCommands = lib.mkAfter ''
       mkdir /btrfs_tmp

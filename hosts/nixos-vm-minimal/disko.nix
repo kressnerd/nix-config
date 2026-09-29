@@ -1,5 +1,4 @@
-{ lib, ... }:
-{
+_: {
   disko.devices = {
     disk = {
       # Primary VM disk - matches UTM's typical setup
@@ -79,18 +78,6 @@
         bypassWorkqueues = true;
       };
 
-      # Ensure proper disk labels are available during boot
-      postDeviceCommands = lib.mkAfter ''
-        # Wait for disk labels to be available
-        echo "Waiting for disk labels..."
-        for i in $(seq 1 10); do
-          if [ -e /dev/disk/by-partlabel/crypted ] && [ -e /dev/disk/by-label/boot ]; then
-            echo "Disk labels found!"
-            break
-          fi
-          sleep 1
-        done
-      '';
     };
   };
 }

@@ -6,6 +6,7 @@
     ./thiniel-invariants.nix
     ./common-global-invariants.nix
     ./thiniel-services-invariants.nix
+    ./thiniel-boot-invariants.nix
     ./thiniel-impermanence-invariants.nix
     ./thiniel-rice-invariants.nix
     ./thiniel-sleep-invariants.nix

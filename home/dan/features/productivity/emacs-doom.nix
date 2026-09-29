@@ -35,20 +35,20 @@
 
         # LSP servers (managed by Nix, used by Doom)
         nixd # Nix LSP
-        nodePackages.typescript-language-server
+        typescript-language-server
         pyright # Python LSP
         rust-analyzer # Rust LSP
-        nodePackages.bash-language-server
-        nodePackages.yaml-language-server
+        bash-language-server
+        yaml-language-server
 
         # Language formatters
         nixpkgs-fmt # Nix formatter
         nixfmt-rfc-style # Nix formatter (official)
-        nodePackages.prettier
+        prettier
         black # Python formatter
         shfmt # Shell formatter
         stylelint # CSS linter
-        nodePackages.js-beautify # JS beautifier
+        js-beautify # JS beautifier
 
         # Build tools
         cmake
