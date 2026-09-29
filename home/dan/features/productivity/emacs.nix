@@ -248,7 +248,7 @@
   home.packages = with pkgs; [
     # LSP servers for various languages
     nixd # Nix LSP server
-    nodePackages.typescript-language-server
+    typescript-language-server
     pyright # Python LSP (fixed package name)
     rust-analyzer # Rust LSP
 
