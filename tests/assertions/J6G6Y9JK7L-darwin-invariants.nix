@@ -2,7 +2,7 @@
 # Darwin-level (nix-darwin system) invariants for J6G6Y9JK7L.
 # The HM-level file tests/assertions/J6G6Y9JK7L-invariants.nix cannot see
 # nix-darwin system options such as `homebrew.*`, hence this second module.
-{ config, lib, ... }:
+{ config, ... }:
 {
   assertions = [
     {
