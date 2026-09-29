@@ -6,6 +6,8 @@
   ...
 }:
 {
+  imports = [ ../../tests/assertions/J6G6Y9JK7L-darwin-invariants.nix ];
+
   # Disable nix-darwin's Nix management (required for Determinate Nix)
   nix.enable = false;
 
@@ -87,15 +89,7 @@
     enable = true;
     taps = builtins.attrNames config.nix-homebrew.taps;
     onActivation = {
-      # Homebrew 7 removed --cleanup; nix-darwin 25.11 still emits it for
-      # cleanup = "zap". Workaround until backported: disable the built-in
-      # flag and pass Homebrew 7's replacement spelling manually.
-      # https://github.com/nix-darwin/nix-darwin/issues/1787
-      cleanup = "none";
-      extraFlags = [
-        "--zap"
-        "--force-cleanup"
-      ];
+      cleanup = "zap";
       autoUpdate = false;
       upgrade = true;
     };
