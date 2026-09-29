@@ -33,10 +33,7 @@
     };
 
     sops-nix = {
-      # Pinned: sops-nix upstream requires go 1.26 as of rev 16954c1c
-      # (2026-09-16), but nixpkgs-25.11 (stable) ships go 1.25.10.
-      # Unpin once nixpkgs-25.11 carries go >= 1.26, or move off stable.
-      url = "github:Mic92/sops-nix/13616fff713a9f94055c66f15687ebdc17a335df";
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
