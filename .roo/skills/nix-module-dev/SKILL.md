@@ -332,7 +332,7 @@ Always pin transitive `nixpkgs` to avoid duplicate nixpkgs evaluations:
 
 ```nix
 inputs = {
-  nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+  nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
   home-manager.inputs.nixpkgs.follows = "nixpkgs";
   sops-nix.inputs.nixpkgs.follows = "nixpkgs";
   disko.inputs.nixpkgs.follows = "nixpkgs";
