@@ -18,6 +18,10 @@
           message = "thiniel: yazi must be enabled";
         }
         {
+          assertion = config.home-manager.users.dan.programs.yazi.shellWrapperName == "y";
+          message = "thiniel: yazi shellWrapperName must be \"y\" — home.stateVersion < 26.05 keeps the legacy default \"yy\", so the value has to be set explicitly";
+        }
+        {
           assertion = config.home-manager.users.dan.stylix.targets.yazi.enable;
           message = "thiniel: stylix.targets.yazi must remain enabled after refactor";
         }

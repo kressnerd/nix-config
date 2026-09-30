@@ -165,6 +165,10 @@
       assertion = config.programs.yazi.enable;
       message = "yazi: programs.yazi.enable must be true";
     }
+    {
+      assertion = config.programs.yazi.shellWrapperName == "y";
+      message = "yazi: programs.yazi.shellWrapperName must be \"y\" — home.stateVersion < 26.05 keeps the legacy default \"yy\", so the value has to be set explicitly";
+    }
     # --- cli/fish ---
     {
       assertion = config.programs.fish.enable;
