@@ -30,6 +30,10 @@ let
     inherit pkgs;
   };
   nixfmtAliasTests = import ./nixfmt-alias-test.nix { inherit (pkgs) lib; };
+  hostTemplateTests = import ./host-template-test.nix {
+    inherit (pkgs) lib;
+    inherit pkgs;
+  };
   allFailures =
     helperTests
     ++ hmModuleTests
@@ -40,7 +44,8 @@ let
     ++ hmMacosTests
     ++ j6HomebrewTests
     ++ flakeChannelTests
-    ++ nixfmtAliasTests;
+    ++ nixfmtAliasTests
+    ++ hostTemplateTests;
 in
 # lib.debug.runTests returns [] on success — the branch is selected at eval time
 pkgs.runCommand "unit-tests" { } ''
