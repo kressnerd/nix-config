@@ -130,6 +130,10 @@ _: {
         alt-4 = "workspace 4-MSG";
         alt-5 = "workspace 5-MAIL";
         alt-6 = "workspace 6-AGNT";
+        alt-7 = "workspace 7";
+        alt-8 = "workspace 8";
+        alt-9 = "workspace 9";
+        alt-0 = "workspace 0";
 
         # Workspace cycle (keypad replacement)
         alt-leftSquareBracket = "workspace --wrap-around prev";
@@ -142,6 +146,10 @@ _: {
         alt-shift-4 = "move-node-to-workspace 4-MSG";
         alt-shift-5 = "move-node-to-workspace 5-MAIL";
         alt-shift-6 = "move-node-to-workspace 6-AGNT";
+        alt-shift-7 = "move-node-to-workspace 7";
+        alt-shift-8 = "move-node-to-workspace 8";
+        alt-shift-9 = "move-node-to-workspace 9";
+        alt-shift-0 = "move-node-to-workspace 0";
 
         # Service mode
         alt-shift-semicolon = "mode service";
