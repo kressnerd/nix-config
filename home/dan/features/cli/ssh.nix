@@ -18,45 +18,41 @@
       "config.d/nix-builder"
     ];
 
-    matchBlocks = {
+    settings = {
       "*" = {
-        addKeysToAgent = "yes";
-        extraOptions =
-          if pkgs.stdenv.isDarwin then
-            {
-              UseKeychain = "yes";
-              IgnoreUnknown = "UseKeychain";
-            }
-          else
-            { };
+        AddKeysToAgent = "yes";
+      }
+      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+        IgnoreUnknown = "UseKeychain";
+        UseKeychain = "yes";
       };
 
       "github-personal" = {
-        hostname = "github.com";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519_personal_2025-06-18";
-        identitiesOnly = true;
+        HostName = "github.com";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519_personal_2025-06-18";
+        IdentitiesOnly = true;
       };
 
       "github-company" = {
-        hostname = "github.com";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519_company_2025-06-18";
-        identitiesOnly = true;
+        HostName = "github.com";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519_company_2025-06-18";
+        IdentitiesOnly = true;
       };
 
       "github-client001" = {
-        hostname = "github.com";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519_client001_2025-07-22";
-        identitiesOnly = true;
+        HostName = "github.com";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519_client001_2025-07-22";
+        IdentitiesOnly = true;
       };
 
       "bitbucket-client002" = {
-        hostname = "bitbucket.org";
-        user = "git";
-        identityFile = "~/.ssh/id_ed25519_client002_2026-01-13";
-        identitiesOnly = true;
+        HostName = "bitbucket.org";
+        User = "git";
+        IdentityFile = "~/.ssh/id_ed25519_client002_2026-01-13";
+        IdentitiesOnly = true;
       };
     };
   };

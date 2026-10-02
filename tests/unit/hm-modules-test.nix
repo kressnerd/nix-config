@@ -184,7 +184,30 @@ lib.debug.runTests {
     expected = false;
   };
 
-  # ── F-007: SSH UseKeychain must only be present on macOS ──────────────────
+  # ── F-007: SSH settings and UseKeychain must only be present on macOS ────
+
+  testSshUsesSettingsNotMatchBlocks = {
+    expr =
+      let
+        mockPkgsDarwin = pkgs // {
+          stdenv = pkgs.stdenv // {
+            isDarwin = true;
+            isLinux = false;
+          };
+        };
+        mockConfig.myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
+        sshModule = import ../../home/dan/features/cli/ssh.nix {
+          inherit lib;
+          pkgs = mockPkgsDarwin;
+          config = mockConfig;
+        };
+      in
+      sshModule.programs.ssh ? settings;
+    expected = true;
+  };
 
   # RED: current ssh.nix uses `_:` and always sets UseKeychain regardless of
   # platform → expects true (not present on Linux), expr returns false → FAIL
@@ -206,9 +229,9 @@ lib.debug.runTests {
           pkgs = mockPkgsLinux;
           config = mockConfig;
         };
-        extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
+        settings = sshModule.programs.ssh.settings."*";
       in
-      !(builtins.hasAttr "UseKeychain" extraOpts);
+      !(builtins.hasAttr "UseKeychain" settings);
     expected = true;
   };
 
@@ -231,9 +254,9 @@ lib.debug.runTests {
           pkgs = mockPkgsDarwin;
           config = mockConfig;
         };
-        extraOpts = sshModule.programs.ssh.matchBlocks."*".extraOptions;
+        settings = sshModule.programs.ssh.settings."*";
       in
-      builtins.hasAttr "UseKeychain" extraOpts;
+      builtins.hasAttr "UseKeychain" settings;
     expected = true;
   };
 
