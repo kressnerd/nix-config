@@ -5,7 +5,7 @@ _: {
       enable = true;
       keepAlive = true;
     };
-    userSettings = {
+    settings = {
       default-root-container-layout = "tiles";
       default-root-container-orientation = "auto";
       key-mapping.preset = "qwerty";
