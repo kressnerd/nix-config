@@ -5,11 +5,18 @@
 let
   # defaults.nix uses `_:` so it accepts any argument set (including empty)
   defaultsModule = import ../../home/dan/features/macos/defaults.nix { };
+  aerospaceModule = import ../../home/dan/features/macos/aerospace.nix { };
   nsGlobal = defaultsModule.targets.darwin.defaults.NSGlobalDomain;
   dock = defaultsModule.targets.darwin.defaults."com.apple.dock";
   finder = defaultsModule.targets.darwin.defaults."com.apple.finder";
 in
 lib.debug.runTests {
+
+  # ── AeroSpace ────────────────────────────────────────────────────────────────
+  testAerospaceUsesSettingsNotUserSettings = {
+    expr = aerospaceModule.programs.aerospace ? settings;
+    expected = true;
+  };
 
   # ── NSGlobalDomain ───────────────────────────────────────────────────────────
   testDarwinNSGlobalDomainExists = {
