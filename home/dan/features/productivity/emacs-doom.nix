@@ -68,9 +68,6 @@
         # Shell tools
         shellcheck
 
-        # Search tools (used by Doom's search features)
-        ripgrep # rg command
-
         # Document processing
         pandoc # Universal document converter
 

@@ -252,8 +252,7 @@
     pyright # Python LSP (fixed package name)
     rust-analyzer # Rust LSP
 
-    # Additional tools (many already in shell-utils.nix)
-    ripgrep # Another grep alternative (rg)
+    # Additional tools (ripgrep, fd, git already installed in other modules)
 
     # Git tools (git already in git.nix)
     git-crypt

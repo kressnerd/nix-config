@@ -240,6 +240,14 @@
       assertion = config.fonts.fontconfig.enable;
       message = "emacs-doom: fonts.fontconfig.enable must be true";
     }
+    {
+      assertion = builtins.any (p: lib.getName p == "ripgrep") config.home.packages;
+      message = "emacs-doom: ripgrep must be installed (Doom ivy/counsel search uses rg)";
+    }
+    {
+      assertion = !(builtins.any (p: lib.getName p == "silver-searcher") config.home.packages);
+      message = "emacs-doom: silver-searcher (ag) must not be installed — ripgrep replaces it";
+    }
     # --- home.sessionPath ---
     {
       assertion = builtins.elem "$HOME/.cargo/bin" config.home.sessionPath;
