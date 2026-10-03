@@ -91,11 +91,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    opencode-nix = {
-      url = "github:dan-online/opencode-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     givn = {
       url = "git+ssh://git@github.com/buster/givn";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -189,7 +184,6 @@
             {
               nixpkgs.overlays = [
                 nur.overlays.default
-                inputs.opencode-nix.overlays.default
                 inputs.givn.overlays.default
                 (import ./overlays)
               ];
@@ -316,7 +310,6 @@
             {
               nixpkgs.overlays = [
                 nur.overlays.default
-                inputs.opencode-nix.overlays.default
                 inputs.givn.overlays.default
                 (import ./overlays)
               ];
