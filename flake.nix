@@ -3,16 +3,40 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    stylix = {
+      url = "github:nix-community/stylix/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
-    darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
+    home-manager-unstable = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
 
-    home-manager.url = "github:nix-community/home-manager/release-26.05";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    stylix-unstable = {
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
 
-    mac-app-util.url = "github:hraban/mac-app-util";
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
+    darwin = {
+      url = "github:nix-darwin/nix-darwin/master";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
+
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
 
     nur.url = "github:nix-community/NUR";
 
@@ -67,11 +91,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    stylix = {
-      url = "github:nix-community/stylix/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     opencode-nix = {
       url = "github:dan-online/opencode-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -90,6 +109,7 @@
       nixpkgs-unstable,
       darwin,
       home-manager,
+      home-manager-unstable,
       sops-nix,
       impermanence,
       mac-app-util,
@@ -98,7 +118,7 @@
       disko,
       lanzaboote,
       colmena,
-      stylix,
+      stylix-unstable,
       ...
     }@inputs:
     let
@@ -156,7 +176,7 @@
             }
           ];
         };
-        thiniel = nixpkgs.lib.nixosSystem {
+        thiniel = nixpkgs-unstable.lib.nixosSystem {
           system = "x86_64-linux";
           specialArgs = {
             inherit inputs outputs;
@@ -178,8 +198,8 @@
             ./hosts/thiniel
             ./modules/home-manager/persistence/options.nix
             { myHome.persistence.enable = true; }
-            stylix.nixosModules.stylix
-            home-manager.nixosModules.home-manager
+            stylix-unstable.nixosModules.stylix
+            home-manager-unstable.nixosModules.home-manager
             {
               home-manager = {
                 useGlobalPkgs = true;
@@ -305,8 +325,8 @@
             mac-app-util.darwinModules.default
             nix-homebrew.darwinModules.nix-homebrew
             ./hosts/J6G6Y9JK7L
-            stylix.darwinModules.stylix
-            home-manager.darwinModules.home-manager
+            stylix-unstable.darwinModules.stylix
+            home-manager-unstable.darwinModules.home-manager
             {
               home-manager = {
                 useGlobalPkgs = true;
