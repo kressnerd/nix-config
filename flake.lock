@@ -355,6 +355,24 @@
         "type": "indirect"
       }
     },
+    "flake-utils_2": {
+      "inputs": {
+        "systems": "systems_4"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
     "fromYaml": {
       "flake": false,
       "locked": {
@@ -391,6 +409,26 @@
         "owner": "hercules-ci",
         "repo": "gitignore.nix",
         "type": "github"
+      }
+    },
+    "givn": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1791016024,
+        "narHash": "sha256-XyG4JtaBb2FZY1pOP5CbCCcTcBuBVYBamkYKiGLhfus=",
+        "ref": "refs/heads/main",
+        "rev": "f802b32cdeb7bfc1711efe8db027aac9f3b1678b",
+        "revCount": 1739,
+        "type": "git",
+        "url": "ssh://git@github.com/buster/givn"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/buster/givn"
       }
     },
     "gnome-shell": {
@@ -947,6 +985,27 @@
         "type": "github"
       }
     },
+    "opencode-nix": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1777751810,
+        "narHash": "sha256-TmzGCWisrM0vwaUQ3PKllFSNx+FKZnNy0Hoiv7Rpbeo=",
+        "owner": "dan-online",
+        "repo": "opencode-nix",
+        "rev": "5df603be7358122487e41f1249f7df107f3ab43e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dan-online",
+        "repo": "opencode-nix",
+        "type": "github"
+      }
+    },
     "pre-commit-hooks-nix": {
       "inputs": {
         "flake-compat": [
@@ -980,6 +1039,7 @@
         "darwin": "darwin",
         "disko": "disko",
         "firefox-addons": "firefox-addons",
+        "givn": "givn",
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
@@ -993,6 +1053,7 @@
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
+        "opencode-nix": "opencode-nix",
         "score-spec-tap": "score-spec-tap",
         "sops-nix": "sops-nix",
         "stylix": "stylix"
@@ -1084,7 +1145,7 @@
           "nixpkgs"
         ],
         "nur": "nur_2",
-        "systems": "systems_4",
+        "systems": "systems_5",
         "tinted-kitty": "tinted-kitty",
         "tinted-schemes": "tinted-schemes",
         "tinted-tmux": "tinted-tmux",
@@ -1151,6 +1212,21 @@
       }
     },
     "systems_4": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_5": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
