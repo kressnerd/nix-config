@@ -13,6 +13,7 @@
     ./features/cli/yazi.nix
     ./features/development/claude-code.nix
     ./features/development/opencode.nix
+    ./features/development/givn.nix
     ./features/development/containers.nix
     ./features/development/formatters.nix
     ./features/development/go.nix

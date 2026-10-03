@@ -169,6 +169,8 @@
             {
               nixpkgs.overlays = [
                 nur.overlays.default
+                inputs.opencode-nix.overlays.default
+                inputs.givn.overlays.default
                 (import ./overlays)
               ];
               nixpkgs.config.allowUnfree = true;
