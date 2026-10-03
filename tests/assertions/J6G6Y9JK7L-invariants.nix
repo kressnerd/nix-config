@@ -215,6 +215,11 @@
       ) config.home.packages;
       message = "opencode: OpenCode 2.x (>= 2) must be installed";
     }
+    # --- development/givn ---
+    {
+      assertion = builtins.any (p: lib.getName p == "givn") config.home.packages;
+      message = "givn: givn must be installed";
+    }
     # --- productivity/browser ---
     {
       assertion = config.programs.firefox.enable;

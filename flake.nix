@@ -71,6 +71,16 @@
       url = "github:nix-community/stylix/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    opencode-nix = {
+      url = "github:dan-online/opencode-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    givn = {
+      url = "git+ssh://git@github.com/buster/givn";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -284,6 +294,8 @@
             {
               nixpkgs.overlays = [
                 nur.overlays.default
+                inputs.opencode-nix.overlays.default
+                inputs.givn.overlays.default
                 (import ./overlays)
               ];
               nixpkgs.config.allowUnfree = true;
