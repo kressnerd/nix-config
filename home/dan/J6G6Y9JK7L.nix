@@ -67,6 +67,7 @@
   home = {
     username = "daniel.kressner";
     homeDirectory = "/Users/daniel.kressner";
+    sessionPath = [ "$HOME/.cargo/bin" ];
   };
 
   # Host-specific shell aliases

@@ -229,5 +229,10 @@
       assertion = config.fonts.fontconfig.enable;
       message = "emacs-doom: fonts.fontconfig.enable must be true";
     }
+    # --- home.sessionPath ---
+    {
+      assertion = builtins.elem "$HOME/.cargo/bin" config.home.sessionPath;
+      message = "J6G6Y9JK7L: ~/.cargo/bin must be in home.sessionPath";
+    }
   ];
 }
