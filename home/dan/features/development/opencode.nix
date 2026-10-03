@@ -16,9 +16,20 @@
   # modules/home-manager/persistence/default.nix.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
-    plugin = [
+    "plugins" = [
       "opencode-plugin-openspec"
-      "opencode-plugin-litellm"
+      {
+        "package" = "opencode-plugin-litellm";
+        "options" = {
+          "providerID" = "litellm-ai-hub";
+        };
+      }
     ];
+    "providers" = {
+      "litellm-ai-hub" = {
+        "name" = "ai hub (proxy)";
+        "package" = "@opencode/ai/providers/openai-compatible";
+      };
+    };
   };
 }
