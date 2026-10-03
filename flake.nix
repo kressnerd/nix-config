@@ -93,7 +93,7 @@
 
     givn = {
       url = "git+ssh://git@github.com/buster/givn";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };
 
