@@ -216,12 +216,24 @@ lib.debug.runTests {
   };
 
   testOpencodePluginOpenspecDeclared = {
-    expr = builtins.elem "opencode-plugin-openspec" opencodeJsonConfig.plugins;
+    expr = builtins.elem "opencode-plugin-openspec" opencodeJsonConfig.plugin;
     expected = true;
   };
 
   testOpencodePluginLitellmDeclared = {
-    expr = builtins.any (p: (p.package or p) == "opencode-plugin-litellm") opencodeJsonConfig.plugins;
+    expr = builtins.any (
+      p: (if builtins.isList p then builtins.head p else p) == "opencode-plugin-litellm"
+    ) opencodeJsonConfig.plugin;
     expected = true;
+  };
+
+  # opencode 2.x schema (https://opencode.ai/config.json) knows `plugin` and
+  # `provider` only — misspelled keys are silently ignored.
+  testOpencodeNoUnknownTopLevelKeys = {
+    expr = builtins.attrNames opencodeJsonConfig;
+    expected = [
+      "$schema"
+      "plugin"
+    ];
   };
 }
