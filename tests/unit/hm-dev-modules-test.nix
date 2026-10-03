@@ -219,4 +219,9 @@ lib.debug.runTests {
     expr = builtins.elem "opencode-plugin-openspec" opencodeJsonConfig.plugin;
     expected = true;
   };
+
+  testOpencodePluginLitellmDeclared = {
+    expr = builtins.elem "opencode-plugin-litellm" opencodeJsonConfig.plugin;
+    expected = true;
+  };
 }
