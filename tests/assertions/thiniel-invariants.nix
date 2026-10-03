@@ -17,6 +17,12 @@
       in
       [
         {
+          assertion = builtins.any (
+            p: lib.getName p == "opencode" && lib.versionAtLeast (lib.getVersion p) "2"
+          ) config.home-manager.users.dan.home.packages;
+          message = "thiniel: OpenCode 2.x (>= 2) must be installed";
+        }
+        {
           assertion = config.networking.networkmanager.enable;
           message = "thiniel: networking.networkmanager must be enabled (desktop host)";
         }

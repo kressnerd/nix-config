@@ -209,6 +209,12 @@
       assertion = builtins.any (p: lib.getName p == "opencode") config.home.packages;
       message = "opencode: opencode must be installed";
     }
+    {
+      assertion = builtins.any (
+        p: lib.getName p == "opencode" && lib.versionAtLeast (lib.getVersion p) "2"
+      ) config.home.packages;
+      message = "opencode: OpenCode 2.x (>= 2) must be installed";
+    }
     # --- productivity/browser ---
     {
       assertion = config.programs.firefox.enable;
