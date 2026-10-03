@@ -16,3 +16,4 @@ final: prev:
   });
 }
 // (import ./vscode-extensions final prev)
+// (import ./opencode final prev)
