@@ -112,6 +112,10 @@
           assertion = config.programs.mtr.enable;
           message = "thiniel: programs.mtr must be enabled for network path diagnostics (traceroute with SUID wrapper)";
         }
+        {
+          assertion = builtins.elem "$HOME/.cargo/bin" config.home-manager.users.dan.home.sessionPath;
+          message = "thiniel: ~/.cargo/bin must be in home-manager.users.dan.home.sessionPath";
+        }
       ];
   };
 }

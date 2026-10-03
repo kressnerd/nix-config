@@ -46,6 +46,7 @@
   home = {
     username = "dan";
     homeDirectory = "/home/dan";
+    sessionPath = [ "$HOME/.cargo/bin" ];
   };
 
   # SOPS configuration for thiniel - only personal secrets for security
