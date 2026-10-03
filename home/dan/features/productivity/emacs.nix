@@ -253,8 +253,7 @@
     rust-analyzer # Rust LSP
 
     # Additional tools (many already in shell-utils.nix)
-    # ripgrep, fd, git already installed in other modules
-    silver-searcher # Another grep alternative (ag)
+    ripgrep # Another grep alternative (rg)
 
     # Git tools (git already in git.nix)
     git-crypt

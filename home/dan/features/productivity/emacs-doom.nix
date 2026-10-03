@@ -69,7 +69,7 @@
         shellcheck
 
         # Search tools (used by Doom's search features)
-        silver-searcher # ag command
+        ripgrep # rg command
 
         # Document processing
         pandoc # Universal document converter
