@@ -1,0 +1,51 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["CLAUDE.md"],
+  "mcp": {
+    "servers": {
+      "nixos": {
+        "type": "local",
+        "command": ["nix", "run", ".#mcp-nixos", "--"]
+      }
+    }
+  },
+  "permissions": [
+    {
+      "action": "nixos_*",
+      "resource": "*",
+      "effect": "allow"
+    }
+  ],
+  "permission": {
+    "nixos_*": "allow"
+  },
+  "provider": {
+    "aihub": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "AI-Hub",
+      "options": {
+        "baseURL": "https://adesso-ai-hub.3asabc.de/v1"
+      },
+      "models": {
+        "qwen-3.6-35b-sovereign": {
+          "name": "qwen-3.6-35b-sovereign"
+        },
+        "deepseek-v4-flash-sovereign": {
+          "name": "deepseek-v4-flash-sovereign"
+        },
+        "gemma-4-26b-sovereign": {
+          "name": "gemma-4-26b-sovereign"
+        },
+        "claude-haiku-4-5*": {
+          "name": "claude-haiku-4-5*"
+        },
+        "claude-sonnet-5*": {
+          "name": "claude-sonnet-5*"
+        },
+        "claude-opus-4-8*": {
+          "name": "claude-opus-4-8*"
+        }
+      }
+    }
+  }
+}
