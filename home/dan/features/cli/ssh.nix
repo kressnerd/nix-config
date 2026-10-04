@@ -25,7 +25,7 @@
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         IgnoreUnknown = "UseKeychain";
         UseKeychain = "yes";
-        IdentitiesOnly = "yes";
+        IdentitiesOnly = true;
       };
 
       "github-personal" = {

@@ -408,7 +408,7 @@ lib.debug.runTests {
 
   testSshDarwinWildcardIdentitiesOnly = {
     expr = sshModuleDarwin.programs.ssh.settings."*".IdentitiesOnly or null;
-    expected = "yes";
+    expected = true;
   };
 
   # ── cloud-tools: packages ────────────────────────────────────────────────────
