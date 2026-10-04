@@ -32,6 +32,11 @@ let
     home = {
       homeDirectory = "/home/dan";
     };
+    myHome = {
+      persistence = {
+        enable = false;
+      };
+    };
   };
   mockPkgsLinux = pkgs // {
     stdenv = pkgs.stdenv // {
@@ -55,6 +60,13 @@ let
     inherit lib;
   };
   gitModuleDarwin = import ../../home/dan/features/cli/git.nix {
+    config = mockConfig;
+    pkgs = mockPkgsDarwin;
+    inherit lib;
+  };
+
+  # ── ssh.nix ─────────────────────────────────────────────────────────────────
+  sshModuleDarwin = import ../../home/dan/features/cli/ssh.nix {
     config = mockConfig;
     pkgs = mockPkgsDarwin;
     inherit lib;
@@ -284,6 +296,17 @@ lib.debug.runTests {
   testGitIgnoresNoDarwinOnLinux = {
     expr = !(builtins.elem ".DS_Store" gitModuleLinux.programs.git.ignores);
     expected = true;
+  };
+
+  # ── ssh: settings ────────────────────────────────────────────────────────────
+  testSshGithubPersonalKey = {
+    expr = sshModuleDarwin.programs.ssh.settings."github-personal".IdentityFile;
+    expected = "~/.ssh/id_ed25519_personal_2026-10-04";
+  };
+
+  testSshDarwinWildcardIdentitiesOnly = {
+    expr = sshModuleDarwin.programs.ssh.settings."*".IdentitiesOnly or null;
+    expected = "yes";
   };
 
   # ── cloud-tools: packages ────────────────────────────────────────────────────
