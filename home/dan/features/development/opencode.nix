@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   # opencode: 2.x prebuilt npm binary, packaged in overlays/opencode.
-  # bun: required at runtime so OpenCode can install npm plugins (openspec, litellm).
+  # bun: required at runtime so OpenCode can install npm plugins (litellm).
   # opencode-plugin-litellm autodetects a LiteLLM proxy on localhost:4000/8000/8080;
   # otherwise set LITELLM_BASE_URL / LITELLM_API_KEY.
   home.packages = [
@@ -17,7 +17,6 @@
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     plugin = [
-      "opencode-plugin-openspec"
       "opencode-plugin-litellm"
     ];
   };
