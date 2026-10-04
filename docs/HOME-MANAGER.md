@@ -25,72 +25,155 @@ provides a base set of packages and secrets integration for all hosts.
 
 Secrets management is handled centrally and declaratively, making
 secrets available to all feature modules through SOPS and age
-encryption. == CLI Tools Features
+encryption.
+
+# CLI Tools Features
 
 ## Git Configuration ([`features/cli/git.nix`](../home/dan/features/cli/git.nix))
 
-Advanced Git configuration with conditional identity management and SOPS
-integration.
+Advanced Git configuration with conditional identity management, SOPS
+integration, and SSH key isolation.
 
-### Identity Management
+### Identity Management & SSH Key Isolation
 
-The Git configuration uses conditional includes to automatically switch
-identities based on project directory:
+The Git configuration uses conditional includes (`includeIf`) based on project directory
+paths to switch identities (e.g. personal, company, client projects) automatically:
 
 ```nix
-# Main .gitconfig with conditional includes
-sops.templates."gitconfig" = {
-  content = ''
-    [user]
-        name = ${config.sops.placeholder."git/personal/name"}
-        email = ${config.sops.placeholder."git/personal/email"}
+# Main ~/.gitconfig with conditional includes (SOPS template)
+[user]
+    name = ${config.sops.placeholder."git/personal/name"}
+    email = ${config.sops.placeholder."git/personal/email"}
 
-    [includeIf "gitdir:~/dev/${config.sops.placeholder."git/personal/folder"}/"]
-        path = ~/.config/git/personal
+[includeIf "gitdir:~/dev/${config.sops.placeholder."git/personal/folder"}/"]
+    path = ~/.config/git/personal
 
-    [includeIf "gitdir:~/dev/${config.sops.placeholder."git/company/folder"}/"]
-        path = ~/.config/git/company
+[includeIf "gitdir:~/dev/${config.sops.placeholder."git/company/folder"}/"]
+    path = ~/.config/git/company
 
-    [includeIf "gitdir:~/dev/${config.sops.placeholder."git/client001/folder"}/"]
-        path = ~/.config/git/client001
-  '';
+[includeIf "gitdir:~/dev/${config.sops.placeholder."git/client001/folder"}/"]
+    path = ~/.config/git/client001
+```
+
+Each identity profile template (`~/.config/git/<identity>`) combines two mechanisms to
+guarantee that the correct identity and SSH key are strictly isolated:
+
+1. **Explicit Key Isolation (`core.sshCommand`):**
+   ```gitconfig
+   [core]
+       sshCommand = "ssh -i ~/.ssh/id_ed25519_personal_2026-10-04 -o IdentitiesOnly=yes"
+   ```
+   Setting `sshCommand` with `-o IdentitiesOnly=yes` guarantees that SSH uses only the
+   explicitly configured identity file for operations inside that directory tree, preventing
+   the SSH agent from offering arbitrary other keys.
+
+2. **Transparent URL Rewriting (`url.<base>.insteadOf`):**
+   ```gitconfig
+   [url "git@github-personal:"]
+       insteadOf = git@github.com:
+   ```
+   Standard clone URLs (such as `git@github.com:org/repo.git`) are rewritten at runtime to
+   custom SSH host aliases (`github-personal`, `github-company`, `github-client001`,
+   `bitbucket-client002`), which map directly to host entries in `~/.ssh/config`.
+
+---
+
+## SSH Configuration ([`features/cli/ssh.nix`](../home/dan/features/cli/ssh.nix))
+
+Manages SSH client configuration, host aliases, agent lifecycle, and OS keychain integration.
+
+### Host Aliases
+
+SSH host blocks correspond to the identities rewritten by Git:
+
+```nix
+programs.ssh.settings = {
+  "github-personal" = {
+    HostName = "github.com";
+    User = "git";
+    IdentityFile = "~/.ssh/id_ed25519_personal_2026-10-04";
+    IdentitiesOnly = true;
+  };
+
+  "github-company" = {
+    HostName = "github.com";
+    User = "git";
+    IdentityFile = "~/.ssh/id_ed25519_company_2025-06-18";
+    IdentitiesOnly = true;
+  };
+
+  "github-client001" = {
+    HostName = "github.com";
+    User = "git";
+    IdentityFile = "~/.ssh/id_ed25519_client001_2025-07-22";
+    IdentitiesOnly = true;
+  };
+
+  "bitbucket-client002" = {
+    HostName = "bitbucket.org";
+    User = "git";
+    IdentityFile = "~/.ssh/id_ed25519_client002_2026-01-13";
+    IdentitiesOnly = true;
+  };
 };
 ```
 
-The Git feature demonstrates advanced identity management and SOPS
-integration, supporting multiple identities and secure credential
-handling. === Shell Configuration
-([`features/cli/zsh.nix`](../home/dan/features/cli/zsh.nix))
+### SSH Agent Architecture & macOS Keychain vs. GPG Agent
 
-Comprehensive Zsh setup with Oh My Zsh, plugins, and custom
-configurations.
+Authentication agents are configured per platform:
+
+- **Linux (NixOS):** `services.ssh-agent.enable = true` manages the SSH agent as a systemd user service.
+- **macOS (Darwin):** The agent is managed natively by macOS `launchd`. Home Manager configures:
+  ```nix
+  programs.ssh.settings."*" = {
+    AddKeysToAgent = "yes";
+  } // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+    IgnoreUnknown = "UseKeychain";
+    UseKeychain = "yes";
+    IdentitiesOnly = true;
+  };
+  ```
+
+#### macOS Keychain vs. GPG Agent Conflict
+
+On macOS, `services.gpg-agent.enableSshSupport` **must remain disabled** (`false`):
+
+- **Problem:** If `services.gpg-agent.enableSshSupport = true;` is set, shell initialization points
+  `SSH_AUTH_SOCK` to `~/.gnupg/S.gpg-agent.ssh`. The GPG agent does not support Apple's Keychain protocol
+  flags (`--apple-use-keychain`), causing `/usr/bin/ssh-add --apple-use-keychain` to fail with
+  `agent refused operation`.
+- **Resolution:** Disabling `enableSshSupport` keeps `SSH_AUTH_SOCK` connected to the native macOS `launchd`
+  agent, allowing seamless key storage and retrieval via Apple Keychain.
+- **Commit signing:** GPG Agent remains active purely for GPG signing operations (e.g. Magit in Doom Emacs)
+  using `pinentry_mac`, without hijacking SSH authentication.
+
+---
+
+## Shell Configuration ([`features/cli/zsh.nix`](../home/dan/features/cli/zsh.nix), [`features/cli/fish.nix`](../home/dan/features/cli/fish.nix))
+
+Comprehensive shell setups providing modern environments with plugins, completions, and custom configurations.
 
 ### Core Features
 
-The Zsh feature provides a modern shell environment with plugins,
-completion, and usability enhancements. ==== Aliases and Shortcuts
-Common aliases and shortcuts are provided for improved productivity and
-safety.
+- Modern interactive prompt integration (Starship).
+- Shared and shell-specific aliases for common operations (`ll`, `gs`, `icat`, etc.).
+- Vi key bindings and custom helper functions.
 
-### Advanced Configuration
+---
 
 ## Terminal Configuration ([`features/cli/kitty.nix`](../home/dan/features/cli/kitty.nix))
 
-Kitty terminal emulator, Starship prompt, SSH, Vim, and utility tools
-are all configured as feature modules, following the same modular
-pattern. See the respective module files for details. == macOS
-Integration Features
+Kitty terminal emulator, Starship prompt, Vim, and utility tools are configured as composable feature modules following the same modular pattern.
 
-macOS system preferences and platform integration are managed
-declaratively through feature modules, ensuring consistent and
-reproducible settings across machines. == Productivity Features
+# macOS Integration Features
+
+macOS system preferences and platform integration are managed declaratively through feature modules (such as `features/macos/aerospace.nix` and `features/macos/defaults.nix`), ensuring consistent settings across darwin hosts.
 
 # Productivity Features
 
-Productivity applications such as code editors, browsers, and general
-tools are managed as feature modules. Their configuration is fully
-declarative and reproducible, with details available in the respective
-module files. == Feature Development Patterns
+Productivity applications such as code editors (Doom Emacs, VS Code), browsers (Firefox personal/company profiles), and general tools are managed as feature modules. Their configuration is fully declarative and reproducible.
+
+# Feature Development Patterns
 
 ## Standard Module Structure
 
@@ -207,10 +290,3 @@ When features depend on each other:
 - **Secrets**: Use SOPS for any sensitive information
 
 - **Testing**: Test features individually and in combination
-
-- **Documentation**: Document purpose, dependencies, and configuration
-  options
-
-This Home Manager configuration provides a solid foundation for user
-environment management while maintaining flexibility for future
-enhancements and additional features.
