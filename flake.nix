@@ -95,6 +95,8 @@
       url = "github:kressnerd/givn";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    mcp-nixos.url = "github:utensils/mcp-nixos";
   };
 
   outputs =
@@ -114,6 +116,7 @@
       lanzaboote,
       colmena,
       stylix-unstable,
+      mcp-nixos,
       ...
     }@inputs:
     let
@@ -374,6 +377,22 @@
                   ];
                 };
               };
+          })
+          [
+            "x86_64-linux"
+            "aarch64-linux"
+            "aarch64-darwin"
+          ]
+      );
+
+      # ── Packages ─────────────────────────────────────────────────────────
+      packages = builtins.listToAttrs (
+        map
+          (system: {
+            name = system;
+            value = {
+              mcp-nixos = mcp-nixos.packages.${system}.default;
+            };
           })
           [
             "x86_64-linux"
