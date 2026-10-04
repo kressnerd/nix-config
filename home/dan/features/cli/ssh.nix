@@ -25,12 +25,13 @@
       // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         IgnoreUnknown = "UseKeychain";
         UseKeychain = "yes";
+        IdentitiesOnly = "yes";
       };
 
       "github-personal" = {
         HostName = "github.com";
         User = "git";
-        IdentityFile = "~/.ssh/id_ed25519_personal_2025-06-18";
+        IdentityFile = "~/.ssh/id_ed25519_personal_2026-10-04";
         IdentitiesOnly = true;
       };
 
