@@ -233,6 +233,13 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testOpencodeLitellmClaudeFableDeclared = {
+    expr = opencodeJsonConfig.providers.litellm.models."claude-fable-5-1" or null;
+    expected = {
+      name = "Claude Fable 5.1";
+    };
+  };
+
   testOpencodeMcpContext7Declared = {
     expr = opencodeJsonConfig.mcp.servers.context7 or null;
     expected = {
@@ -271,6 +278,7 @@ lib.debug.runTests {
       "$schema"
       "mcp"
       "plugin"
+      "providers"
     ];
   };
 }
