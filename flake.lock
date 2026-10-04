@@ -521,17 +521,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1791016024,
-        "narHash": "sha256-XyG4JtaBb2FZY1pOP5CbCCcTcBuBVYBamkYKiGLhfus=",
-        "ref": "refs/heads/main",
-        "rev": "f802b32cdeb7bfc1711efe8db027aac9f3b1678b",
-        "revCount": 1739,
-        "type": "git",
-        "url": "ssh://git@github.com/buster/givn"
+        "lastModified": 1791095528,
+        "narHash": "sha256-6HWvzDgCU+B0r79qHuVFSPPriXnLe7TKVKHV8VmPciw=",
+        "owner": "kressnerd",
+        "repo": "givn",
+        "rev": "99fc31823c8060a7c717b518136f72e1b5f11ca3",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/buster/givn"
+        "owner": "kressnerd",
+        "repo": "givn",
+        "type": "github"
       }
     },
     "gnome-shell": {
