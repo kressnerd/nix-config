@@ -113,8 +113,11 @@
         [commit]
             gpgsign = false
 
-        [url "git@github.com:"]
-            insteadOf = git@github-personal:
+        [core]
+            sshCommand = "ssh -i ~/.ssh/id_ed25519_personal_2026-10-04 -o IdentitiesOnly=yes"
+
+        [url "git@github-personal:"]
+            insteadOf = git@github.com:
       '';
       path = "${config.home.homeDirectory}/.config/git/personal";
     };
@@ -129,8 +132,11 @@
         [commit]
             gpgsign = false
 
-        [url "git@github.com:"]
-            insteadOf = git@github-company:
+        [core]
+            sshCommand = "ssh -i ~/.ssh/id_ed25519_company_2025-06-18 -o IdentitiesOnly=yes"
+
+        [url "git@github-company:"]
+            insteadOf = git@github.com:
       '';
       path = "${config.home.homeDirectory}/.config/git/company";
     };
@@ -145,8 +151,11 @@
         [commit]
             gpgsign = false
 
-        [url "git@github.com:"]
-            insteadOf = git@github-client001:
+        [core]
+            sshCommand = "ssh -i ~/.ssh/id_ed25519_client001_2025-07-22 -o IdentitiesOnly=yes"
+
+        [url "git@github-client001:"]
+            insteadOf = git@github.com:
       '';
       path = "${config.home.homeDirectory}/.config/git/client001";
     };
@@ -161,8 +170,11 @@
         [commit]
             gpgsign = false
 
-        [url "git@bitbucket.org:"]
-            insteadOf = git@gbitbucket-client002:
+        [core]
+            sshCommand = "ssh -i ~/.ssh/id_ed25519_client002_2026-01-13 -o IdentitiesOnly=yes"
+
+        [url "git@bitbucket-client002:"]
+            insteadOf = git@bitbucket.org:
       '';
       path = "${config.home.homeDirectory}/.config/git/client002";
     };

@@ -54,6 +54,30 @@ let
       };
     };
   };
+  mockConfigWithSecrets = mockConfig // {
+    sops = {
+      placeholder = mockConfig.sops.placeholder // {
+        "git/company/name" = "<placeholder>";
+        "git/company/email" = "<placeholder>";
+        "git/company/folder" = "<placeholder>";
+        "git/client001/name" = "<placeholder>";
+        "git/client001/email" = "<placeholder>";
+        "git/client001/folder" = "<placeholder>";
+        "git/client002/name" = "<placeholder>";
+        "git/client002/email" = "<placeholder>";
+        "git/client002/folder" = "<placeholder>";
+      };
+      secrets = {
+        "git/company/name" = { };
+        "git/company/folder" = { };
+        "git/client001/name" = { };
+        "git/client001/folder" = { };
+        "git/client002/name" = { };
+        "git/client002/folder" = { };
+      };
+      templates = { };
+    };
+  };
   gitModuleLinux = import ../../home/dan/features/cli/git.nix {
     config = mockConfig;
     pkgs = mockPkgsLinux;
@@ -61,6 +85,11 @@ let
   };
   gitModuleDarwin = import ../../home/dan/features/cli/git.nix {
     config = mockConfig;
+    pkgs = mockPkgsDarwin;
+    inherit lib;
+  };
+  gitModuleWithSecrets = import ../../home/dan/features/cli/git.nix {
+    config = mockConfigWithSecrets;
     pkgs = mockPkgsDarwin;
     inherit lib;
   };
@@ -295,6 +324,79 @@ lib.debug.runTests {
 
   testGitIgnoresNoDarwinOnLinux = {
     expr = !(builtins.elem ".DS_Store" gitModuleLinux.programs.git.ignores);
+    expected = true;
+  };
+
+  # ── git: multi-identity templates ───────────────────────────────────────────
+  testGitPersonalSshCommand = {
+    expr =
+      lib.strings.hasInfix
+        "sshCommand = \"ssh -i ~/.ssh/id_ed25519_personal_2026-10-04 -o IdentitiesOnly=yes\""
+        gitModuleDarwin.sops.templates."git-personal".content;
+    expected = true;
+  };
+
+  testGitPersonalUrlInsteadOf = {
+    expr =
+      lib.strings.hasInfix "[url \"git@github-personal:\"]"
+        gitModuleDarwin.sops.templates."git-personal".content
+      &&
+        lib.strings.hasInfix "insteadOf = git@github.com:"
+          gitModuleDarwin.sops.templates."git-personal".content;
+    expected = true;
+  };
+
+  testGitCompanySshCommand = {
+    expr =
+      lib.strings.hasInfix
+        "sshCommand = \"ssh -i ~/.ssh/id_ed25519_company_2025-06-18 -o IdentitiesOnly=yes\""
+        gitModuleWithSecrets.sops.templates."git-company".content;
+    expected = true;
+  };
+
+  testGitCompanyUrlInsteadOf = {
+    expr =
+      lib.strings.hasInfix "[url \"git@github-company:\"]"
+        gitModuleWithSecrets.sops.templates."git-company".content
+      &&
+        lib.strings.hasInfix "insteadOf = git@github.com:"
+          gitModuleWithSecrets.sops.templates."git-company".content;
+    expected = true;
+  };
+
+  testGitClient001SshCommand = {
+    expr =
+      lib.strings.hasInfix
+        "sshCommand = \"ssh -i ~/.ssh/id_ed25519_client001_2025-07-22 -o IdentitiesOnly=yes\""
+        gitModuleWithSecrets.sops.templates."git-client001".content;
+    expected = true;
+  };
+
+  testGitClient001UrlInsteadOf = {
+    expr =
+      lib.strings.hasInfix "[url \"git@github-client001:\"]"
+        gitModuleWithSecrets.sops.templates."git-client001".content
+      &&
+        lib.strings.hasInfix "insteadOf = git@github.com:"
+          gitModuleWithSecrets.sops.templates."git-client001".content;
+    expected = true;
+  };
+
+  testGitClient002SshCommand = {
+    expr =
+      lib.strings.hasInfix
+        "sshCommand = \"ssh -i ~/.ssh/id_ed25519_client002_2026-01-13 -o IdentitiesOnly=yes\""
+        gitModuleWithSecrets.sops.templates."git-client002".content;
+    expected = true;
+  };
+
+  testGitClient002UrlInsteadOf = {
+    expr =
+      lib.strings.hasInfix "[url \"git@bitbucket-client002:\"]"
+        gitModuleWithSecrets.sops.templates."git-client002".content
+      &&
+        lib.strings.hasInfix "insteadOf = git@bitbucket.org:"
+          gitModuleWithSecrets.sops.templates."git-client002".content;
     expected = true;
   };
 
