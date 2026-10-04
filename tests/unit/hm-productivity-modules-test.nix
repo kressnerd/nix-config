@@ -18,14 +18,18 @@ let
   # Platform mocks
   mockPkgsLinux = pkgs // {
     stdenv = pkgs.stdenv // {
-      isDarwin = false;
-      isLinux = true;
+      hostPlatform = {
+        isDarwin = false;
+        isLinux = true;
+      };
     };
   };
   mockPkgsDarwin = pkgs // {
     stdenv = pkgs.stdenv // {
-      isDarwin = true;
-      isLinux = false;
+      hostPlatform = {
+        isDarwin = true;
+        isLinux = false;
+      };
     };
   };
 

@@ -24,7 +24,7 @@
         "**/.claude/settings.local.json"
       ]
       # macOS
-      ++ lib.optionals pkgs.stdenv.isDarwin [
+      ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
         ".DS_Store"
         ".AppleDouble"
         ".LSOverride"
@@ -34,7 +34,7 @@
         "Icon?"
       ]
       # Linux
-      ++ lib.optionals pkgs.stdenv.isLinux [
+      ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
         "*~"
         ".directory"
         ".Trash-*"

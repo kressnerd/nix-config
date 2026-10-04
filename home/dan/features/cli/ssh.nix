@@ -6,7 +6,7 @@
 }:
 {
   # SSH agent as systemd user service (Linux only; macOS uses launchd agent)
-  services.ssh-agent.enable = !pkgs.stdenv.isDarwin;
+  services.ssh-agent.enable = !pkgs.stdenv.hostPlatform.isDarwin;
 
   programs.ssh = {
     enable = true;
@@ -22,7 +22,7 @@
       "*" = {
         AddKeysToAgent = "yes";
       }
-      // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      // lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
         IgnoreUnknown = "UseKeychain";
         UseKeychain = "yes";
       };

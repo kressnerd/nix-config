@@ -1,7 +1,7 @@
 { pkgs, ... }:
 let
-  mod = if pkgs.stdenv.isDarwin then "cmd" else "ctrl+shift";
-  modShift = if pkgs.stdenv.isDarwin then "cmd+shift" else "ctrl+alt";
+  mod = if pkgs.stdenv.hostPlatform.isDarwin then "cmd" else "ctrl+shift";
+  modShift = if pkgs.stdenv.hostPlatform.isDarwin then "cmd+shift" else "ctrl+alt";
 in
 {
   stylix.targets.kitty.enable = true;
@@ -12,7 +12,7 @@ in
     settings = {
       # Window settings
       window_padding_width = 10;
-      hide_window_decorations = if pkgs.stdenv.isDarwin then "titlebar-only" else "no";
+      hide_window_decorations = if pkgs.stdenv.hostPlatform.isDarwin then "titlebar-only" else "no";
       confirm_os_window_close = 0;
 
       # Tab bar

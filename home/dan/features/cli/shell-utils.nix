@@ -38,7 +38,7 @@
         p.bats-assert
       ])) # bats shell test framework + support/assert libraries (bats_load_library)
     ]
-    ++ lib.optionals pkgs.stdenv.isLinux [
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux [
       bluetuith # TUI Bluetooth manager — Linux-only, requires bluez
       pulsemixer # TUI PulseAudio mixer — Linux-only volume control
       iotop # per-process I/O monitoring

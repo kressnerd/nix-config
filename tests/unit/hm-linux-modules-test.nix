@@ -7,7 +7,7 @@
 #
 # NOTE: hyprland/waybar/mako/fuzzel/hyprlock/hypridle/gtk-qt tests are Linux-only
 # (pkgs.hyprland, pkgs.fuzzel etc. are unsupported on Darwin). They are gated with
-# pkgs.stdenv.isLinux so the aarch64-darwin unit-helpers check continues to pass.
+# pkgs.stdenv.hostPlatform.isLinux so the aarch64-darwin unit-helpers check continues to pass.
 { lib, pkgs }:
 let
   normalizeModule =
@@ -41,7 +41,7 @@ let
   # hyprland/waybar/mako/fuzzel/hyprlock/hypridle/gtk-qt — Linux only
   # Wrapped so Darwin evaluation never touches Linux-only packages.
   hyprlandTests =
-    if pkgs.stdenv.isLinux then
+    if pkgs.stdenv.hostPlatform.isLinux then
       let
         hyprlandModule = normalizeModule (
           import ../../home/dan/features/linux/hyprland.nix {

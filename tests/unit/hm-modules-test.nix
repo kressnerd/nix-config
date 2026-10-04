@@ -108,8 +108,10 @@ lib.debug.runTests {
       let
         mockPkgsLinux = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = false;
-            isLinux = true;
+            hostPlatform = {
+              isDarwin = false;
+              isLinux = true;
+            };
           };
         };
         kittyModule = import ../../home/dan/features/cli/kitty.nix { pkgs = mockPkgsLinux; };
@@ -125,8 +127,10 @@ lib.debug.runTests {
       let
         mockPkgsDarwin = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = true;
-            isLinux = false;
+            hostPlatform = {
+              isDarwin = true;
+              isLinux = false;
+            };
           };
         };
         kittyModule = import ../../home/dan/features/cli/kitty.nix { pkgs = mockPkgsDarwin; };
@@ -143,8 +147,10 @@ lib.debug.runTests {
       let
         mockPkgsLinux = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = false;
-            isLinux = true;
+            hostPlatform = {
+              isDarwin = false;
+              isLinux = true;
+            };
           };
         };
         mockConfig.myHome.persistence = {
@@ -166,8 +172,10 @@ lib.debug.runTests {
       let
         mockPkgsDarwin = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = true;
-            isLinux = false;
+            hostPlatform = {
+              isDarwin = true;
+              isLinux = false;
+            };
           };
         };
         mockConfig.myHome.persistence = {
@@ -191,8 +199,10 @@ lib.debug.runTests {
       let
         mockPkgsDarwin = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = true;
-            isLinux = false;
+            hostPlatform = {
+              isDarwin = true;
+              isLinux = false;
+            };
           };
         };
         mockConfig.myHome.persistence = {
@@ -216,8 +226,10 @@ lib.debug.runTests {
       let
         mockPkgsLinux = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = false;
-            isLinux = true;
+            hostPlatform = {
+              isDarwin = false;
+              isLinux = true;
+            };
           };
         };
         mockConfig.myHome.persistence = {
@@ -241,8 +253,10 @@ lib.debug.runTests {
       let
         mockPkgsDarwin = pkgs // {
           stdenv = pkgs.stdenv // {
-            isDarwin = true;
-            isLinux = false;
+            hostPlatform = {
+              isDarwin = true;
+              isLinux = false;
+            };
           };
         };
         mockConfig.myHome.persistence = {
