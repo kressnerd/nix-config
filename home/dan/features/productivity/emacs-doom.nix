@@ -249,7 +249,6 @@
   services.gpg-agent = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     enable = true;
     defaultCacheTtl = 1800;
-    enableSshSupport = true;
     pinentry.package = pkgs.pinentry_mac;
   };
 }

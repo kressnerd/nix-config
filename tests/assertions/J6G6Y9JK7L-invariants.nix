@@ -253,5 +253,10 @@
       assertion = builtins.elem "$HOME/.cargo/bin" config.home.sessionPath;
       message = "J6G6Y9JK7L: ~/.cargo/bin must be in home.sessionPath";
     }
+    # --- productivity/emacs-doom ---
+    {
+      assertion = !config.services.gpg-agent.enableSshSupport;
+      message = "emacs-doom: services.gpg-agent.enableSshSupport must be false to prevent hijacking macOS SSH_AUTH_SOCK";
+    }
   ];
 }
