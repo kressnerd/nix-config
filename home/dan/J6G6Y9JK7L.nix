@@ -54,6 +54,8 @@
       "git/client002/name" = { };
       "git/client002/email" = { };
       "git/client002/folder" = { };
+      "context7/api-key" = { };
+      "kagi/api-key" = { };
     };
   };
 

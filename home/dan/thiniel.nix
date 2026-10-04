@@ -58,6 +58,8 @@
       "git/personal/name" = { };
       "git/personal/email" = { };
       "git/personal/folder" = { };
+      "context7/api-key" = { };
+      "kagi/api-key" = { };
     };
   };
 

@@ -215,6 +215,11 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testOpencodeUvInPackages = {
+    expr = builtins.elem "uv" opencodePkgNames;
+    expected = true;
+  };
+
   # opencode-plugin-openspec is v1-only (@opencode-ai/plugin ^1) and fails to load in OpenCode 2.x.
   testOpencodePluginOpenspecNotDeclared = {
     expr = builtins.elem "opencode-plugin-openspec" opencodeJsonConfig.plugin;
@@ -228,12 +233,43 @@ lib.debug.runTests {
     expected = true;
   };
 
-  # opencode 2.x schema (https://opencode.ai/config.json) knows `plugin` and
-  # `provider` only — misspelled keys are silently ignored.
+  testOpencodeMcpContext7Declared = {
+    expr = opencodeJsonConfig.mcp.servers.context7 or null;
+    expected = {
+      headers = {
+        CONTEXT7_API_KEY = "{env:CONTEXT7_API_KEY}";
+      };
+      type = "remote";
+      url = "https://mcp.context7.com/mcp";
+    };
+  };
+
+  testOpencodeFishShellInitSecrets = {
+    expr =
+      lib.strings.hasInfix "CONTEXT7_API_KEY" (opencodeModule.programs.fish.shellInit or "")
+      && lib.strings.hasInfix "KAGI_API_KEY" (opencodeModule.programs.fish.shellInit or "");
+    expected = true;
+  };
+
+  testOpencodeMcpKagiSearchDeclared = {
+    expr = opencodeJsonConfig.mcp.servers.kagi-search or null;
+    expected = {
+      type = "local";
+      command = [
+        "uvx"
+        "kagimcp"
+      ];
+      environment = {
+        KAGI_API_KEY = "{env:KAGI_API_KEY}";
+      };
+    };
+  };
+
   testOpencodeNoUnknownTopLevelKeys = {
     expr = builtins.attrNames opencodeJsonConfig;
     expected = [
       "$schema"
+      "mcp"
       "plugin"
     ];
   };
