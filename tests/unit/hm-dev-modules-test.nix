@@ -204,7 +204,7 @@ lib.debug.runTests {
     expected = false;
   };
 
-  # ── opencode: RED — opencode.nix must declare opencode + bun + openspec ──────
+  # ── opencode: RED — opencode.nix must declare opencode + bun + litellm ──────
   testOpencodeInPackages = {
     expr = builtins.elem "opencode" opencodePkgNames;
     expected = true;
@@ -215,9 +215,10 @@ lib.debug.runTests {
     expected = true;
   };
 
-  testOpencodePluginOpenspecDeclared = {
+  # opencode-plugin-openspec is v1-only (@opencode-ai/plugin ^1) and fails to load in OpenCode 2.x.
+  testOpencodePluginOpenspecNotDeclared = {
     expr = builtins.elem "opencode-plugin-openspec" opencodeJsonConfig.plugin;
-    expected = true;
+    expected = false;
   };
 
   testOpencodePluginLitellmDeclared = {
