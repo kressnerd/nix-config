@@ -42,6 +42,9 @@
     plugin = [
       "opencode-plugin-litellm"
     ];
+    providers.litellm.models."claude-fable-5-1" = {
+      name = "Claude Fable 5.1";
+    };
   };
 
   # Export API keys from sops-nix decrypted secrets if present
