@@ -278,7 +278,7 @@
   };
 
   # macOS-specific configuration for better app integration
-  targets.darwin.defaults = lib.mkIf pkgs.stdenv.isDarwin {
+  targets.darwin.defaults = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     # Register Emacs with macOS Launch Services
     "com.apple.LaunchServices" = {
       LSHandlers = [

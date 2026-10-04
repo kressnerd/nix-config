@@ -35,14 +35,18 @@ let
   };
   mockPkgsLinux = pkgs // {
     stdenv = pkgs.stdenv // {
-      isDarwin = false;
-      isLinux = true;
+      hostPlatform = {
+        isDarwin = false;
+        isLinux = true;
+      };
     };
   };
   mockPkgsDarwin = pkgs // {
     stdenv = pkgs.stdenv // {
-      isDarwin = true;
-      isLinux = false;
+      hostPlatform = {
+        isDarwin = true;
+        isLinux = false;
+      };
     };
   };
   gitModuleLinux = import ../../home/dan/features/cli/git.nix {

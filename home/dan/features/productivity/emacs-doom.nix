@@ -85,7 +85,7 @@
 
         # macOS specific
       ]
-      ++ lib.optionals pkgs.stdenv.isDarwin [
+      ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
         coreutils # Provides gls
         terminal-notifier # macOS notifications
         pinentry_mac # GPG pinentry for macOS
@@ -131,7 +131,7 @@
       '';
 
       # Restart Emacs daemon after rebuild to pick up new environment (macOS only)
-      restartEmacsDaemon = lib.mkIf pkgs.stdenv.isDarwin (
+      restartEmacsDaemon = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin (
         lib.hm.dag.entryAfter [ "linkGeneration" ] ''
           if /bin/launchctl list | grep -q org.nix-community.home.emacs; then
             $VERBOSE_ECHO "Restarting Emacs daemon to pick up new environment..."
@@ -202,10 +202,10 @@
     startWithUserSession = "graphical";
 
     # Socket activation for faster startup
-    socketActivation.enable = lib.mkIf (!pkgs.stdenv.isDarwin) true;
+    socketActivation.enable = lib.mkIf (!pkgs.stdenv.hostPlatform.isDarwin) true;
 
     # Add Nix packages to Emacs PATH (macOS GUI fix)
-    extraOptions = lib.optionals pkgs.stdenv.isDarwin [
+    extraOptions = lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
       "--eval"
       ''(progn (setenv "PATH" (concat "${config.home.profileDirectory}/bin:" (getenv "PATH"))) (add-to-list 'exec-path "${config.home.profileDirectory}/bin") (jka-compr-update))''
     ];
@@ -219,7 +219,7 @@
   };
 
   # macOS-specific configuration
-  targets.darwin = lib.mkIf pkgs.stdenv.isDarwin {
+  targets.darwin = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     defaults = {
       # Register Emacs with macOS Launch Services
       "com.apple.LaunchServices" = {
@@ -246,7 +246,7 @@
   };
 
   # GPG agent for commit signing (Magit)
-  services.gpg-agent = lib.mkIf pkgs.stdenv.isDarwin {
+  services.gpg-agent = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     enable = true;
     defaultCacheTtl = 1800;
     enableSshSupport = true;

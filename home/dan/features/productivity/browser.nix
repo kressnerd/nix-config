@@ -10,7 +10,7 @@
     enable = true;
 
     package =
-      if pkgs.stdenv.isDarwin then
+      if pkgs.stdenv.hostPlatform.isDarwin then
         null # pre-installed externally
       else
         pkgs.firefox;
