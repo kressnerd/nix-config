@@ -29,36 +29,65 @@
       efi.canTouchEfiVariables = true;
     };
 
-    # 26.05 defaults to a systemd-based stage 1, which does not support
-    # postDeviceCommands. The btrfs root wipe below needs the scripted stage 1.
-    # Migrate to boot.initrd.systemd.services.<name> before 26.11 removes it.
-    # Guarded by tests/assertions/thiniel-boot-invariants.nix.
-    initrd.systemd.enable = false;
+    # Impermanence: wipe the btrfs root subvolume on every boot. Since nixpkgs
+    # 26.05 the systemd-based stage 1 is the default and the scripted stage 1
+    # (which provided postDeviceCommands) is removed in 26.11, so the wipe runs
+    # as a systemd oneshot: after the LVM root device is available and before the
+    # root file system is mounted. Guarded by
+    # tests/assertions/thiniel-boot-invariants.nix.
+    initrd.systemd = {
+      enable = true;
 
-    initrd.postDeviceCommands = lib.mkAfter ''
-      mkdir /btrfs_tmp
-      mount /dev/root_vg/root /btrfs_tmp
-      if [[ -e /btrfs_tmp/root ]]; then
-          mkdir -p /btrfs_tmp/old_roots
-          timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/root)" "+%Y-%m-%-d_%H:%M:%S")
-          mv /btrfs_tmp/root "/btrfs_tmp/old_roots/$timestamp"
-      fi
+      # Tools used by the rollback script that are not already in the initrd.
+      # mkdir/date/stat/mv/cut come from the default coreutils; mount/umount from
+      # util-linux.
+      extraBin = {
+        btrfs = "${pkgs.btrfs-progs}/bin/btrfs";
+        find = "${pkgs.findutils}/bin/find";
+      };
 
-      delete_subvolume_recursively() {
-          IFS=$'\n'
-          for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
-              delete_subvolume_recursively "/btrfs_tmp/$i"
+      services.rollback = {
+        description = "Wipe and recreate the btrfs root subvolume (impermanence)";
+        requiredBy = [ "initrd.target" ];
+        requires = [ "initrd-root-device.target" ];
+        after = [
+          "initrd-root-device.target"
+          # Let hibernation resume run before touching root data.
+          "local-fs-pre.target"
+        ];
+        before = [ "sysroot.mount" ];
+        unitConfig.DefaultDependencies = "no";
+        serviceConfig.Type = "oneshot";
+        script = ''
+          mkdir /btrfs_tmp
+          mount /dev/root_vg/root /btrfs_tmp
+          if [[ -e /btrfs_tmp/root ]]; then
+              mkdir -p /btrfs_tmp/old_roots
+              timestamp=$(date --date="@$(stat -c %Y /btrfs_tmp/root)" "+%Y-%m-%-d_%H:%M:%S")
+              mv /btrfs_tmp/root "/btrfs_tmp/old_roots/$timestamp"
+          fi
+
+          delete_subvolume_recursively() {
+              IFS=$'\n'
+              for i in $(btrfs subvolume list -o "$1" | cut -f 9- -d ' '); do
+                  delete_subvolume_recursively "/btrfs_tmp/$i"
+              done
+              btrfs subvolume delete "$1"
+          }
+
+          for i in $(find /btrfs_tmp/old_roots/ -maxdepth 1 -mtime +30); do
+              # Best-effort GC of aged-out roots. This must never abort the wipe:
+              # the old scripted stage 1 ran without `set -e`, whereas systemd
+              # `script` wrappers do set it, which would otherwise skip the
+              # recreate step below and leave the boot without a root subvolume.
+              delete_subvolume_recursively "$i" || true
           done
-          btrfs subvolume delete "$1"
-      }
 
-      for i in $(find /btrfs_tmp/old_roots/ -maxdepth 1 -mtime +30); do
-          delete_subvolume_recursively "$i"
-      done
-
-      btrfs subvolume create /btrfs_tmp/root
-      umount /btrfs_tmp
-    '';
+          btrfs subvolume create /btrfs_tmp/root
+          umount /btrfs_tmp
+        '';
+      };
+    };
   };
 
   # SOPS configuration
