@@ -307,7 +307,7 @@ The VM uses a template secrets file. For real usage:
 mkdir -p /var/lib/sops-nix
 age-keygen -o /var/lib/sops-nix/key.txt
 
-# Update secrets.yaml with real encrypted values
+# Update secrets.yaml with real encrypted values (human-only — agents must not run sops)
 sops hosts/thiniel-vm/secrets.yaml
 ```
 

@@ -13,7 +13,7 @@
 | R7 | LUKS recovery passphrase lost | 1 | Low | Catastrophic (data loss) | Store in 1Password before provisioning; test recovery scenario once |
 | R8 | WireGuard port-forward conflict with old OpenVPN | 3 | Low | Low | WG uses UDP 51820; OpenVPN uses UDP 1194 — different ports, can coexist during cut-over |
 | R9 | Caddy plugin CVE (caddy-dns/netcup < 2.9.2) | 1+ | Low | Medium | Pin plugin version ≥ 2.9.2 in `caddy.withPlugins`; add assertion or comment |
-| R10 | `ssh-to-age` public key derivation wrong → sops decryption fails on host | 1 | Low | Medium | Verify derived key against `sops -d hosts/adlerkopf/secrets.yaml` on-box before rotating dan_linux key |
+| R10 | `ssh-to-age` public key derivation wrong → sops decryption fails on host | 1 | Low | Medium | Verify derived key against `sops -d hosts/adlerkopf/secrets.yaml` on-box (human operator only — agents must not run `sops`) before rotating dan_linux key |
 | R11 | Mosquitto DB version mismatch Pi→adlerkopf | 4 | Low | Low | Mosquitto persistence format stable across minor versions; test with a single retained message after copy |
 | R12 | NIC name not `eno1` | 1 | Medium | Low (fixable) | Check NIC name from installer: `ip link` or `ls /sys/class/net`; update `networking.nix` accordingly |
 | R13 | M720q SKU missing TPM 2.0 chip | 1 | Low | Medium | Verify in BIOS before install: Security → TPM; some i3-8100T SKUs ship without TPM |

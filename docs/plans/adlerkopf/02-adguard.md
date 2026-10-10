@@ -157,7 +157,7 @@ Change the **primary DNS server** in the router's DHCP settings from the Pi's IP
   - Hardcoded IP `REDACTED-HOME-LAN-SUBNET` replaced with `config.networking.adlerkopf.lanIPv4` option reference (DRY improvement from review)
   - Service file placed in `hosts/adlerkopf/services/adguard.nix` as planned (introduces new `services/` subdirectory pattern)
 - **Remaining before deployment**:
-  - Add bcrypt hash to `hosts/adlerkopf/secrets.yaml` via `sops hosts/adlerkopf/secrets.yaml` under key `adguard/admin-bcrypt-hash`
+  - Add bcrypt hash to `hosts/adlerkopf/secrets.yaml` via `sops hosts/adlerkopf/secrets.yaml` (human-only — agents must not run `sops`) under key `adguard/admin-bcrypt-hash`
   - Deploy: `sudo nixos-rebuild switch --flake .#adlerkopf`
   - Verify acceptance criteria (dig tests, web UI, router DHCP change)
   - Update `private.nix` to set system DNS to `127.0.0.1` (F-005 follow-up)

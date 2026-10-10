@@ -222,10 +222,10 @@ creation_rules:
 Bootstrap procedure (post-install):
 
 ```fish
-# On adlerkopf after first boot:
+# On adlerkopf after first boot (human-only — agents must not run ssh-to-age):
 ssh-to-age < /persist/etc/ssh/ssh_host_ed25519_key.pub
 # → paste resulting age1... into .sops.yaml &adlerkopf line
-# On workstation:
+# On workstation (human-only — agents must not run sops):
 sops updatekeys hosts/adlerkopf/secrets.yaml
 ```
 
@@ -313,7 +313,7 @@ Add as `checks.<linux>.integration-adlerkopf-base` in `flake.nix:382-391`.
 - [x] nixos-anywhere provisioning completes (see [deploy-runbook.md](./deploy-runbook.md))
 - [x] Box boots without keyboard interaction (TPM2 unlocks LUKS)
 - [x] `ssh dan@REDACTED-HOME-LAN-SUBNET` with key succeeds (actual IP differs from plan — see `private.nix`)
-- [ ] `sops decrypt hosts/adlerkopf/secrets.yaml` returns plaintext on the host
+- [ ] `sops decrypt hosts/adlerkopf/secrets.yaml` returns plaintext on the host (human-only — agents must not run `sops`)
 - [x] Reboot: `/` is empty, but `/persist` intact and SSH host key unchanged
 - [x] `systemctl status caddy` → active (no vhosts, just the daemon)
 - [ ] Integration VM test green in CI

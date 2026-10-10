@@ -171,6 +171,7 @@ Test-first is NOT required for:
 ### Secrets
 
 - **NEVER** commit plaintext secrets — use `sops-nix` with age encryption
+- **STRICTLY FORBIDDEN — agents MUST NOT call `sops` or read secret material.** No `sops` subcommand (`sops -d`/`--decrypt`, `sops edit`, `sops exec-env`/`exec-file`, `sops updatekeys`, bare `sops <file>`, …), no other decryption (`age -d`, `ssh-to-age`), and no reading an age private key file (`/var/lib/sops-nix/key.txt`, `~/.config/sops/age/keys.txt`, …) or a decrypted value (`/run/secrets/*`). All tool output is transmitted to the model provider as context, so anything read this way leaves the machine. **Decryption and editing are human-only operations.** Reason about secrets from `.sops.yaml`, the `sops.secrets` declarations, and the encrypted key names/structure — never plaintext.
 - Secret files: `hosts/<host>/secrets.yaml`
 - Reference secrets via `config.sops.placeholder."path"` inside `sops.templates`
 

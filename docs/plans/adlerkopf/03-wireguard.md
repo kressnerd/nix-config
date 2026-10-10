@@ -19,7 +19,7 @@ New PKI, new client configs — no migration of PiVPN certs.
 ```fish
 # Generate server keypair (run on workstation or adlerkopf):
 wg genkey | tee /tmp/wg-server.key | wg pubkey > /tmp/wg-server.pub
-# Add private key to sops:
+# Add private key to sops (human-only — agents must not run `sops`):
 sops hosts/adlerkopf/secrets.yaml
 # → add: wireguard/server-private-key: <paste private key>
 # Keep public key in the module in plaintext (public information)

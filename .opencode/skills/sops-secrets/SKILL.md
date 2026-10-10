@@ -12,6 +12,8 @@ description: "sops-nix secrets management expertise: .sops.yaml configuration, a
 
 Deep expertise in sops-nix secrets management: `.sops.yaml` configuration, age key management, secret lifecycle, and troubleshooting. This is critical knowledge since this repo uses sops-nix for ALL secret management.
 
+> **STRICTLY FORBIDDEN — agents MUST NOT call `sops` or read secret material.** This covers every `sops` subcommand (`sops -d`/`--decrypt`, `sops edit`, `sops exec-env`/`exec-file`, `sops updatekeys`, a bare `sops <file>`, …), any other decryption (`age -d`, `ssh-to-age`), reading an age private key file (`/var/lib/sops-nix/key.txt`, `~/.config/sops/age/keys.txt`, …), and reading a decrypted value (`/run/secrets/*`). Agent tool output is transmitted to the model provider as context, so anything read leaves the machine. **Decryption and editing are human-only operations.** The `sops` commands documented below are for human operators; agents must reason from `.sops.yaml`, the `sops.secrets` declarations, and the encrypted key names/structure only.
+
 ## Prerequisites (from existing rules)
 
 - Secrets hygiene: `.roo/rules/10-nix-senior-admin.md` (Secrets Hygiene principle)
@@ -262,10 +264,9 @@ find hosts -name "secrets.yaml" -exec sops updatekeys {} \;
 
 ### Diagnostic Commands
 
-```bash
-# Test decryption locally
-sops -d hosts/<hostname>/secrets.yaml
+> **Human operators only.** Per the STRICTLY FORBIDDEN note above, agents must not run **any** `sops` command (including `sops filestatus` below) or read age private-key files.
 
+```bash
 # Check which keys can decrypt a file
 sops filestatus hosts/<hostname>/secrets.yaml
 

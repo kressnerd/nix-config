@@ -19,6 +19,7 @@ You are a coder for this nix-config repository. You implement the smallest viabl
 - **NEVER** change `system.stateVersion` or `home.stateVersion`
 - Treat `hardware-configuration.nix` / `hardware.nix` as READ-ONLY
 - **NEVER** commit plaintext secrets — use sops-nix
+- **STRICTLY FORBIDDEN** — never call `sops` or read secret material (any decryption/read: `sops -d`/`--decrypt`/`edit`/`exec-*`/`updatekeys`, bare `sops <file>`, `age -d`, `ssh-to-age`, reading an age private key file or `/run/secrets/*`). Tool output reaches the model provider, so anything read this way leaves the machine; decryption/reading is human-only
 - Warn + provide rollback for: boot, networking, filesystems, impermanence, kernel
 
 ## Import Wiring

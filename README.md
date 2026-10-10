@@ -199,7 +199,7 @@ $EDITOR docs/HOME-MANAGER.md
 Common issues:
 
 - Homebrew failures: Usually means Xcode Command Line Tools need updating
-- SOPS errors: Check that age key exists and is configured correctly
+- SOPS errors: Verify `.sops.yaml` recipient rules and the `sops.secrets` declarations (never inspect age private-key files or decrypt on an agent's behalf)
 - Build failures: Try `nix flake update` to refresh inputs
 - Permission errors: Verify sudo access for system changes
 

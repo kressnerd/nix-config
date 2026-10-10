@@ -14,8 +14,97 @@
       "action": "nixos_*",
       "resource": "*",
       "effect": "allow"
+    },
+    {
+      "action": "shell",
+      "resource": "sops *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "ssh-to-age *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "age -d *",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "age --decrypt *",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "/run/secrets/*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*sops/age/*",
+      "effect": "deny"
+    },
+    {
+      "action": "read",
+      "resource": "*/var/lib/sops-nix/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "cat *sops/age/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "cat */var/lib/sops-nix/*",
+      "effect": "deny"
+    },
+    {
+      "action": "shell",
+      "resource": "cat /run/secrets/*",
+      "effect": "deny"
     }
   ],
+  "experimental": {
+    "policies": [
+      {
+        "action": "permission",
+        "resource": "shell:sops *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:ssh-to-age *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:age -d *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "shell:age --decrypt *",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "read:/run/secrets/*",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "read:*sops/age/*",
+        "effect": "deny"
+      },
+      {
+        "action": "permission",
+        "resource": "read:*/var/lib/sops-nix/*",
+        "effect": "deny"
+      }
+    ]
+  },
   "permission": {
     "nixos_*": "allow"
   },

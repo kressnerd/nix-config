@@ -171,7 +171,7 @@ networking.wg-quick.interfaces.wg0 = {
 # Generate key pair
 wg genkey | tee privatekey | wg pubkey > publickey
 
-# Store private key in sops
+# Store private key in sops (human-only — agents must not run `sops`)
 sops hosts/<hostname>/secrets.yaml
 # Add: wg-private-key: "<private-key-content>"
 ```

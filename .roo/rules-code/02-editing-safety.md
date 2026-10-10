@@ -43,6 +43,7 @@
 
 - **NEVER** commit plaintext secrets to the repository
 - Use `sops-nix` with age encryption (`.sops.yaml` defines encryption rules)
+- **STRICTLY FORBIDDEN — agents MUST NOT call `sops` or read secret material** (any `sops` subcommand: `sops -d`/`--decrypt`, `sops edit`, `sops exec-env`/`exec-file`, `sops updatekeys`, bare `sops <file>`; any other decryption: `age -d`, `ssh-to-age`; reading an age private key file or a decrypted value such as `/run/secrets/*`). Agent tool output is sent to the model provider as context, so anything read this way leaves the machine. **Decryption and editing are human-only**; reason from `.sops.yaml`, `sops.secrets` declarations, and encrypted key names/structure only.
 - Secret files: `hosts/<host>/secrets.yaml`
 - Key locations:
   - NixOS: `/var/lib/sops-nix/key.txt` or `/persist/var/lib/sops-nix/key.txt` (impermanence)

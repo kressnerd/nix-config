@@ -267,11 +267,11 @@ Compare [`pronix-vm/disko.nix`](../hosts/pronix-vm/disko.nix:1) with [`pronix/di
 ### cupix001
 1. Set up SOPS secrets:
    ```bash
-   # Generate age key
+   # Generate age key (human-only — agents must not run ssh-to-age)
    ssh-to-age -private-key -i ~/.ssh/id_ed25519 > /persist/var/lib/sops-nix/key.txt
    sudo chmod 600 /persist/var/lib/sops-nix/key.txt
    
-   # Edit secrets
+   # Edit secrets (human-only — agents must not run sops)
    sops hosts/cupix001/secrets.yaml
    ```
 

@@ -311,8 +311,8 @@ nix build .#darwinConfigurations.J6G6Y9JK7L.system --dry-run
 ### Configuration Validation
 
 ``` bash
-# Test SOPS secrets access
-sops -d hosts/J6G6Y9JK7L/secrets.yaml
+# Test SOPS secrets access (human-only — agents must not run `sops`)
+sops -d hosts/J6G6Y9JK7L/secrets.yaml  # human-only
 
 # Validate Home Manager configuration
 home-manager build --flake .
@@ -357,11 +357,11 @@ nix eval nixpkgs#package-name.pname
 # Verify age key exists and is readable
 ls -la ~/Library/Application\ Support/sops/age/keys.txt
 
-# Test secret decryption
-sops -d hosts/J6G6Y9JK7L/secrets.yaml
+# Test secret decryption (human-only — agents must not run `sops`)
+sops -d hosts/J6G6Y9JK7L/secrets.yaml  # human-only
 
-# Check SOPS configuration
-sops -d --extract '["key"]' hosts/J6G6Y9JK7L/secrets.yaml
+# Check SOPS configuration (human-only)
+sops -d --extract '["key"]' hosts/J6G6Y9JK7L/secrets.yaml  # human-only
 ```
 
 #### Build Failures

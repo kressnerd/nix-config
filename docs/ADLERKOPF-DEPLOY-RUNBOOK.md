@@ -272,6 +272,8 @@ sudo systemd-cryptenroll --tpm2-device=auto --tpm2-pcrs=0+2+7 \
 
 ## Step 5 — Bootstrap sops age key
 
+> **Human operators only.** Agents must not run `sops`/`ssh-to-age` or decrypt secrets (see `CLAUDE.md` → Safety Rules → Secrets).
+
 > **Workstation prerequisite**: ensure `~/.config/sops/age/keys.txt` contains the workstation age
 > private key, so `sops` can decrypt/re-encrypt locally. On thiniel this is set up via
 > `home/dan/features/cli/sops-age-key.nix`.
@@ -290,10 +292,10 @@ On the workstation:
 1. Replace `age1PLACEHOLDER...` in `.sops.yaml` with the real `age1xxxx...` key
 2. Encrypt or re-key secrets for the new recipient:
    ```fish
-   # First deployment (secrets.yaml is still plaintext):
+   # First deployment (secrets.yaml is still plaintext — human-only; agents must not run sops):
    sops encrypt -i hosts/adlerkopf/secrets.yaml
 
-   # Subsequent key changes (secrets.yaml is already encrypted):
+   # Subsequent key changes (secrets.yaml is already encrypted — human-only):
    sops updatekeys hosts/adlerkopf/secrets.yaml
    ```
 3. Commit the updated `.sops.yaml` and `secrets.yaml`, deploy:
@@ -303,10 +305,10 @@ On the workstation:
        --target-host dan@REDACTED-HOME-LAN-SUBNET \
        --sudo
    ```
-4. Verify sops decrypts on the host:
+4. Verify sops decrypts on the host (human-only — agents must not read `/run/secrets/*`):
    ```fish
    # sops CLI is not installed on adlerkopf — verify via cat instead:
-   ssh dan@REDACTED-HOME-LAN-SUBNET sudo cat /run/secrets/<name>
+   ssh dan@REDACTED-HOME-LAN-SUBNET sudo cat /run/secrets/<name>  # human-only
    ```
 
 > **Note**: Phase 1 has no `sops.secrets.*` attributes declared, so `/run/secrets/` will not exist
