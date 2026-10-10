@@ -167,6 +167,17 @@ let
           expected = true;
         };
 
+        # 26.05 renamed `systemd.target` (string) to `systemd.targets` (list).
+        testWaybarUsesSystemdTargets = {
+          expr = waybarModule.programs.waybar.systemd.targets or null;
+          expected = [ "hyprland-session.target" ];
+        };
+
+        testWaybarNoDeprecatedSystemdTarget = {
+          expr = waybarModule.programs.waybar.systemd ? target;
+          expected = false;
+        };
+
         testWaybarHasSettings = {
           expr = waybarModule.programs.waybar.settings ? mainBar;
           expected = true;
