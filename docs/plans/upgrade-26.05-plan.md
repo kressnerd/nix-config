@@ -36,8 +36,14 @@ Status: **durchgeführt** (2026-09-29). Alle non-adlerkopf-Hosts evaluieren auf 
 - `programs.aerospace.userSettings` → `programs.aerospace.settings`
 - `programs.ssh.matchBlocks` (+ `.*.extraOptions`) → `programs.ssh.settings`
 - `programs.firefox.configPath` Legacy-Default — bleibt wegen `home.stateVersion < 26.05` bewusst so
+- `programs.waybar.systemd.target` → `programs.waybar.systemd.targets` — **erledigt**, migriert
+  (Unit-Test `tests/unit/hm-linux-modules-test.nix`)
 
-**26.11-Pflicht:** Scripted Initrd wird entfernt → thiniels Root-Wipe muss auf `boot.initrd.systemd.services.<name>` (`before = [ "sysroot.mount" ]`) migriert werden.
+**Erledigt (unstable/26.11): Scripted Initrd entfernt** → thiniels Root-Wipe läuft jetzt als
+`boot.initrd.systemd.services.rollback` (`requiredBy = [ "initrd.target" ]`,
+`requires`/`after = [ "initrd-root-device.target" ]`, `before = [ "sysroot.mount" ]`), benötigte
+Tools über `boot.initrd.systemd.extraBin` (`btrfs`, `find`). Die Invarianten erzwingt
+`tests/assertions/thiniel-boot-invariants.nix`.
 
 ## Verifikation
 
