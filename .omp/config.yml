@@ -1,0 +1,25 @@
+# Sops prohibitions for omp, mirroring the shell deny rules in this
+# repository's `opencode.json`.
+#
+# `deny` is absolute: it blocks the call before execution in every approval
+# mode, including yolo, and is matched against the whole command as well as
+# each shell segment (`cd /tmp && sops -d x` is caught).
+#
+# Path-scoped read rules have no declarative equivalent in omp, so they live in
+# `.omp/hooks/pre/secret-access-guard.js`.
+bash:
+  patterns:
+    - match: "sops *"
+      approval: deny
+    - match: "ssh-to-age *"
+      approval: deny
+    - match: "age -d *"
+      approval: deny
+    - match: "age --decrypt *"
+      approval: deny
+    - match: "cat *sops/age/*"
+      approval: deny
+    - match: "cat */var/lib/sops-nix/*"
+      approval: deny
+    - match: "cat /run/secrets/*"
+      approval: deny
