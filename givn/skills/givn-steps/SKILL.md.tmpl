@@ -1,0 +1,283 @@
+---
+name: givn-steps
+description: Shared target-writing mechanics for Gherkin scenarios — how to add and extend the native verification target (unit test, assertion, VM test, deploy test) and run it targeted. Referenced by givn-implement and givn-characterize.
+---
+
+# givn-steps
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Shared target-writing mechanics for Gherkin `.feature` scenarios. Reference
+skill, not a standalone workflow — read by `/givn-implement` and
+`/givn-characterize` subagents before writing or extending a verification
+target.
+
+## Context
+
+- Verification model: `docs/GIVN-VERIFICATION.md` (canonical — read it)
+- Non-@e2e runner: `{{VERIFY_COMMAND}}`
+- @e2e runner: `verify.e2e_command` (`givn/commands.yaml`)
+- Features path: `GIVN_FEATURES={{FEATURES_PATH}}`
+- Change: `givn/changes/{{CHANGE_ID}}/`
+
+## Before starting
+
+Before writing or executing any target, confirm your orientation:
+
+1. Run `givn instructions --change {{CHANGE_ID}}` — this tells you exactly what
+   to do next, derived from the project's current filesystem state. Do not
+   guess, search files, or explore to determine next steps.
+2. Run `givn status --change {{CHANGE_ID}}` — this shows the full artifact
+   checklist, task progress, and any pending task descriptions. Check state
+   before acting.
+3. The task you are about to implement: read its full entry in `tasks.md`,
+   including which target already exists, the commit status of previous
+   tasks, and the Design constraints block. An unchecked box means the scenario
+   is not done — tick it off immediately after completing each scenario, with
+   evidence and commit hash filled in. Never batch-check boxes later.
+
+## The `.feature` file is the executable spec
+
+The `.feature` file is the sole source of scenario identity. The scenario's
+**binding tag** names the native target that proves it; the target's assertion
+is the executable evidence. Never maintain a parallel hand-written test file
+that restates the scenario, and never leave a scenario bound to a target that
+does not actually assert its `Then`.
+
+## Binding tags
+
+Every scenario carries exactly one binding tag. `scripts/givn-spec-trace.py`
+enforces this and is run by the `tasks` and `review` hooks.
+
+| Tag | Target | Targeted command |
+|---|---|---|
+| `@check:<name>` | a flake check (`unit-helpers`, `lint-deadnix`, `integration-*`, …) | `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).<name>` |
+| `@host:<name>` (NixOS) | `nixosConfigurations.<name>` | `nix eval --raw .#nixosConfigurations.<name>.config.system.build.toplevel.drvPath` |
+| `@host:<name>` (darwin) | `darwinConfigurations.<name>` | `nix eval --raw .#darwinConfigurations.<name>.config.system.build.toplevel.drvPath` |
+| `@deploy:<name>` | a pytest-testinfra deploy test | `pytest tests/deploy/test_<name>.py` |
+
+`nixos-rebuild build --flake .#<name>` / `darwin-rebuild build --flake
+.#<name>` are the stronger host variants when a full build is wanted.
+Evaluating the toplevel derivation is enough to fire module assertions and is
+the default targeted command.
+
+`@e2e` scenarios MUST bind to `@check:integration-*` (a
+`pkgs.testers.runNixOSTest` VM test), `@host:<name>`, or `@deploy:<name>`.
+
+## Target locations
+
+One target per scenario need — extend an existing file before creating a new
+one. A giant all-in-one assertion file hides tautologies and unrelated
+invariants; keep each file scoped to a host or topic.
+
+- Unit tests — `tests/unit/<name>-test.nix`, aggregated in
+  `tests/unit/default.nix`, exposed as the flake check `unit-helpers`.
+- Host invariants — `tests/assertions/<host>-<topic>-invariants.nix`, imported
+  by `tests/assertions/default.nix` and fired when the host configuration
+  evaluates.
+- VM integration tests — `tests/integration/<name>-test.nix`, aggregated in
+  `tests/integration/default.nix`; each attribute is a flake check named
+  `integration-<name>`.
+- Deploy tests — `tests/deploy/test_<name>.py` (pytest-testinfra), run against a
+  live host after deployment.
+
+## Wire a new target in before RED
+
+A new target that is not wired in does not exist as a check:
+
+- Unit test → add it to `tests/unit/default.nix` and, if it is a new check, to
+  `flake.nix`.
+- Assertion → add the file to the `imports` list in
+  `tests/assertions/default.nix`.
+- VM test → add the attribute to `tests/integration/default.nix` (the flake
+  `checks` output picks it up for Linux systems).
+- Deploy test → create `tests/deploy/test_<name>.py`; the `@deploy:<name>`
+  binding resolves only when that file exists.
+
+## How to write a `lib.debug.runTests` unit test
+
+Pure-function checks and file-content invariants live here. Each case compares
+an `expr` to an `expected` value; the check fails when they differ.
+
+```nix
+# tests/unit/<name>-test.nix
+{ lib }:
+let
+  offenders = builtins.filter (
+    f: lib.strings.hasInfix "forbidden-pattern" (builtins.readFile f)
+  ) [ ../../flake.nix ];
+in
+lib.debug.runTests {
+  testNoForbiddenPattern = {
+    expr = offenders;
+    expected = [ ];
+  };
+}
+```
+
+## How to write an assertion
+
+Evaluation-time invariants live in `tests/assertions/*.nix`. They run whenever
+the host configuration evaluates — no build or boot needed. Each assertion
+compares a concrete configured value; the message names the violated invariant.
+
+```nix
+# tests/assertions/<host>-<topic>-invariants.nix
+{ config, lib, ... }:
+{
+  config = lib.mkIf (config.networking.hostName == "<host>") {
+    assertions = [
+      {
+        assertion = config.networking.firewall.allowedTCPPorts == [ 22 ];
+        message = "<host> invariant violated: only port 22 may be open";
+      }
+    ];
+  };
+}
+```
+
+## How to write a `runNixOSTest`
+
+A VM integration test boots a real system and asserts running state. It is the
+`@e2e` boundary for a declarative configuration.
+
+```nix
+# tests/integration/<name>-test.nix
+{ pkgs, ... }:
+pkgs.testers.runNixOSTest {
+  name = "<name>";
+  nodes.machine = _: {
+    services.<service>.enable = true;
+  };
+  testScript = ''
+    machine.start()
+    machine.wait_for_unit("<service>.service")
+    machine.wait_for_open_port(<port>)
+    machine.succeed("systemctl is-active <service>.service")
+  '';
+}
+```
+
+Run it targeted:
+`nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).integration-<name>`.
+Interactive debugging:
+`nix build .#checks.<system>.integration-<name>.driverInteractive && result/bin/nixos-test-driver`.
+VM checks need a Linux builder with KVM.
+
+## How to write a deploy test
+
+A deploy test is pytest-testinfra against a live host, for state that only
+exists after deployment (a materialised secret, a listening service on real
+hardware). Place it at `tests/deploy/test_<name>.py` and bind the scenario with
+`@deploy:<name>`; the file's existence is checked by
+`scripts/givn-spec-trace.py`.
+
+## Rule: an assertion is never a tautology
+
+`assertion = true;`, `expected = expr;` (a value compared to itself), an empty
+`lib.debug.runTests { }`, and a `testScript` that only starts the machine are
+all indistinguishable from a real PASS while proving nothing. Banned at every
+phase, not just RED. Every target must assert a concrete value:
+
+- a unit case whose `expr` derives from the code under change and whose
+  `expected` is the required value;
+- an assertion that compares a configured value to a literal;
+- a VM test that waits for a unit/port and asserts the observable state;
+- a deploy test that asserts the post-deployment state.
+
+Before trusting any PASS, confirm the target fails without the change (RED) —
+an already-passing target is not evidence the scenario is proven.
+
+## RED → GREEN → REFACTOR → COMMIT (one scenario at a time)
+
+Every phase runs the scenario's bound target **at this scenario only** and
+captures output verbatim as evidence.
+
+### RED
+
+1. Remove `@wip` from this scenario only.
+2. Add or extend the bound target so it asserts this scenario's `Then`, and
+   wire a new target in (see above).
+3. Run the targeted command. Non-@e2e: the targeted command from the table
+   above. @e2e: `verify.e2e_command`, or the targeted integration-check build.
+   Capture output.
+   - Non-zero exit → RED confirmed, proceed to GREEN.
+   - Zero exit → the target does not assert the scenario, or it already
+     passes. STOP, fix the target before writing configuration.
+
+### GREEN
+
+4. Implement the minimum configuration change (module option, service,
+   firewall rule, secret wiring, host definition). List every file
+   created/modified — empty list on a non-characterization scenario is a red
+   flag.
+   - Characterization: probe observed behaviour, no production code changes.
+     On failure, run the mismatch diagnostic.
+   - @e2e: implement the real boot/service and assert the observable state
+     from the VM test — a pure evaluation standing in for a real boot is not
+     e2e.
+5. Run targeting this scenario → zero exit. Capture output.
+
+### REFACTOR
+
+6. Clean up without changing behaviour. Characterization: testability seams
+   only — revert if red.
+7. Re-run targeting this scenario → still zero exit. Capture output.
+
+### COMMIT
+
+8. One commit for RED+GREEN+REFACTOR. The revision message
+   carries the release note as its message subject, and
+   the scenario title goes in the message body
+   (`feat(<capability>): <release note>`,
+   `characterize(<capability>): <release note>`, or
+   `test(e2e): <release note>`). Record the hash. No commit, or a commit
+   touching only the spec, means the work is not done.
+
+### Done
+
+9. Paste RED/GREEN/REFACTOR evidence, files touched, and commit hash into
+   the task in `tasks.md`. Only then check it: `- [ ]` → `- [x]`. Do this
+   **immediately** — before moving to the next scenario. tasks.md must
+   always reflect true state: an unchecked box means the scenario is not
+   complete. Never leave boxes unchecked and batch-check them later.
+   Using `sed` or any text-replacement tool to mass-check boxes is
+   prohibited — each box is checked individually, with evidence and
+   commit hash filled in.
+10. Move to the next scenario.
+
+## Reuse
+
+Check for an existing target that already asserts this scenario's `Then`
+before writing a new one. A reused target whose assertion already proves the
+scenario is not RED — extend the target so it exercises the scenario, or bind
+the scenario to a different target. Never add a duplicate assertion for an
+invariant another target already proves.
+
+## Rule: `@e2e` tags are immutable — never remove them
+
+Once a scenario is tagged `@e2e` in a delta `.feature` file, the tag MUST
+NOT be removed. If the verify-e2e gate fails, configure `verify.e2e_command`
+in `givn/commands.yaml` — never delete the `@e2e` tag. Removing `@e2e` tags to
+bypass the gate is a procedure violation and is independently detected at
+review time (`givn check review`), lint time (`givn lint --change <id>`), and
+by `scripts/givn-spec-trace.py`.
+
+## Distinctions
+
+`givn lint`: static check, no tests. `{{VERIFY_COMMAND}}`: GREEN for
+non-@e2e. `verify.e2e_command`: GREEN for @e2e (builds the `integration-*`
+scope). `python3 scripts/givn-spec-trace.py`: traceability — every scenario
+bound to an existing target. Never conflate the four.
+
+## Verify command
+
+Unit/integration:
+```
+{{VERIFY_COMMAND}}
+```
+
+E2E smoke tests:
+```
+verify.e2e_command (configured in givn/commands.yaml)
+```

@@ -1,0 +1,200 @@
+---
+name: givn-implement
+description: Execute the RED/GREEN/REFACTOR TDD loop for a givn change, one scenario at a time, against the scenario's bound verification target.
+---
+
+# givn-implement
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Implement change `{{CHANGE_ID}}` using scenario-by-scenario TDD.
+
+## Context
+
+- Tasks: `givn/changes/{{CHANGE_ID}}/tasks.md`
+- Spec: `givn/changes/{{CHANGE_ID}}/specs/`
+- Design: `givn/changes/{{CHANGE_ID}}/design.md`
+- Verification model: `docs/GIVN-VERIFICATION.md` (canonical — read it)
+- Non-@e2e runner: `{{VERIFY_COMMAND}}`
+- @e2e runner: `verify.e2e_command` (`givn/commands.yaml`)
+- Features path: `GIVN_FEATURES={{FEATURES_PATH}}`
+
+## Use-case context
+
+Read the selected use-case `usecase.md`, the proposal's Persona impact, and any
+ideation source before implementing. Preserve approved domain terms and
+guarantees. Treat the Gherkin feature as executable authority when prose and
+implementation context disagree; Persona biographies are review context, not
+Gherkin actors.
+
+## Before starting
+
+1. Run `givn instructions --change {{CHANGE_ID}}` to confirm what to do
+   next — do not guess or explore files to determine next steps.
+2. Check progress: `givn status --change {{CHANGE_ID}}`
+3. `givn lint` to confirm the spec is well-formed (no tests run).
+4. Read the `givn-steps` and `givn-dev-principles` skills in full
+   (target-writing mechanics, the never-tautological-assertion rule,
+   lint-vs-verify distinction, engineering principles).
+5. Confirm the setup task is checked AND has pasted proof that a targeted run
+   can fail — a deliberately failing target (assertion, unit case, VM test)
+   that exited non-zero, captured verbatim. Missing/zero → do the proof now —
+   every later RED depends on it.
+
+## How a scenario is verified
+
+The scenario's **binding tag** names the target that proves it; there is no
+step runner. The targeted command comes from `docs/GIVN-VERIFICATION.md`:
+
+| Binding | Targeted command |
+|---|---|
+| `@check:<name>` | `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).<name>` |
+| `@host:<name>` (NixOS) | `nix eval --raw .#nixosConfigurations.<name>.config.system.build.toplevel.drvPath` |
+| `@host:<name>` (darwin) | `nix eval --raw .#darwinConfigurations.<name>.config.system.build.toplevel.drvPath` |
+| `@deploy:<name>` | `pytest tests/deploy/test_<name>.py` |
+
+`nixos-rebuild build --flake .#<name>` / `darwin-rebuild build --flake
+.#<name>` are the stronger host variants when a full build is wanted.
+Evaluating the toplevel derivation is enough to fire module assertions and is
+the default targeted command.
+
+## Rule: never claim PASS without re-checking
+
+A whole change has been checked off complete before, every task claiming
+"RED failed, GREEN passed," while the target never actually failed — an
+assertion that was a tautology, a check that was already green, a scenario
+whose binding pointed at a target that did not exercise it. Before writing
+"PASSES":
+- Re-run the scenario's targeted command and confirm it exits non-zero
+  without the change and zero with it. An already-passing target is not RED.
+- Confirm every target you added or extended asserts a concrete value — no
+  `assertion = true;`, no `expected = expr;` self-comparison, no empty
+  `lib.debug.runTests { }`.
+- Confirm the configuration change was actually created/modified (list
+  `*.nix`/script files touched), unless this is a genuine characterization of
+  existing behaviour.
+- Confirm the captured output is a targeted run of THIS scenario, not an
+  inference from the whole suite.
+
+## The loop
+
+Non-@e2e scenarios first, then @e2e. Every phase runs the scenario's bound
+target **targeted at this scenario only** and captures output as evidence.
+
+### Non-@e2e scenarios
+
+#### RED
+1. Remove `@wip` from this scenario only.
+2. Add or extend the scenario's bound target so it asserts the scenario's
+   `Then` — a `lib.debug.runTests` case, an assertion in the relevant
+   `tests/assertions/*.nix`, a `runNixOSTest`, or a deploy test. Wire a new
+   target in before running: unit tests into `tests/unit/default.nix` and
+   `flake.nix`, assertions into `tests/assertions/default.nix`, VM tests into
+   `tests/integration/default.nix`.
+3. Run the targeted command for this binding (see the table above). Capture
+   output. Must exit non-zero. Exit 0 = the target does not yet assert the
+   scenario, or it already passes — STOP, fix the target before writing
+   configuration.
+
+#### GREEN
+4. Implement the configuration change (module option, service, firewall rule,
+   secret wiring, host definition). List every file created/modified — empty
+   list on a non-characterization scenario means investigate before calling
+   this GREEN.
+5. Run targeting this scenario → zero exit. Capture output.
+
+#### REFACTOR
+6. Clean up, no behaviour change.
+7. Re-run targeting this scenario → still zero exit. Capture output.
+
+#### COMMIT
+8. One commit for RED+GREEN+REFACTOR. The revision message
+   carries the release note as its message subject, and
+   the scenario title goes in the message body
+   (`feat(<capability>): <release note>`). Record the hash.
+
+#### Done
+9. Paste evidence, files touched, and commit hash into the task in
+   `tasks.md`. Only then check it: `- [ ]` → `- [x]`. Do this
+   **immediately** — before moving to the next scenario or spawning
+   another subagent. tasks.md must always reflect true state: an
+   unchecked box means the scenario is not complete. Never leave boxes
+   unchecked and batch-check them later. Using `sed` or any
+   text-replacement tool to mass-check boxes is prohibited — each box
+   is checked individually, with evidence and commit hash filled in.
+10. Move to the next scenario.
+
+**Delegated contexts:** a fresh delegated context does not inherit the parent's loaded policy. Pass the obligation explicitly — for every user-facing question, follow the effective policy from `givn instructions dialog`; load it in the fresh context before the first question. The presenting agent remains responsible for the question, and a question tool's recommendation or option label does not replace context and answer consequences.
+
+### @e2e scenarios (after all non-@e2e are GREEN)
+
+**Rule: @e2e tags are immutable.** Once a scenario is tagged `@e2e` in a
+delta `.feature` file, the tag MUST NOT be removed. If you cannot run e2e
+tests, configure `verify.e2e_command` in `givn/commands.yaml` — never remove
+`@e2e` tags as a workaround. Removing `@e2e` tags to bypass the verify-e2e
+gate is a procedure violation and is independently detected by `givn check
+review`, `givn lint`, and `scripts/givn-spec-trace.py`.
+
+Before the first @e2e scenario: confirm `verify.e2e_command` builds the
+`integration-*` checks (Linux + KVM required) and bring up the target named in
+design.md's Local Runnability section (the `*-vm` configuration boots locally;
+`nixos-vm-minimal` is the reference). Confirm clean startup.
+
+Same loop, `verify.e2e_command`. Read the canonical policy with
+`givn instructions specs --change {{CHANGE_ID}}`; GREEN applies its resolved
+action scope and real-interface rules while setting up the design's
+infrastructure. An @e2e scenario's target MUST actually boot the system or
+reach the live host — a pure evaluation standing in for a real boot is not
+e2e.
+
+The canonical specs policy owns primary assertions and real-interface fidelity.
+If an interface obstacle appears, apply the concrete fix named in design.md;
+do not substitute a repository-only or alternate-interface shortcut.
+
+Commit message: `test(e2e): <release note>` — the revision message
+carries the release note as its message subject, and
+the scenario title goes in the message body.
+
+## When all tasks are checked
+
+Final independent sanity check — do not skip because scenarios were
+already verified individually:
+1. Run `{{VERIFY_COMMAND}}` and `verify.e2e_command` (full scope, not
+   scenario-targeted). Confirm zero exit.
+2. Run `python3 scripts/givn-spec-trace.py` — must exit 0: every scenario
+   bound to exactly one existing target.
+3. Grep every target you added/extended for tautologies (`assertion = true;`,
+   `expected = expr`, empty `lib.debug.runTests { }`). Must be 0.
+4. Confirm commit count matches scenario task count.
+5. Read the canonical specs policy and cross-reference its normalized
+   inventory against completed E2E tasks and real-interface assertions.
+
+Run `givn status --change {{CHANGE_ID}}` to confirm progress. Proceed to review.
+
+## Verify command
+
+Unit/integration:
+```
+{{VERIFY_COMMAND}}
+```
+
+E2E smoke tests:
+```
+verify.e2e_command (configured in givn/commands.yaml)
+```
+
+## Committing
+
+Commit each finished scenario atomically:
+
+```sh
+givn commit -m "feat(<capability>): <release note>"
+```
+
+The revision message
+carries the release note as its message subject, and
+the scenario title goes in the message body.
+`givn commit` works on every backend and stamps the managed attribution
+trailer when the harness provides context. Raw commits are stamped by the
+Git `commit-msg` hook; a raw `fossil commit` carries no attribution, so use
+`givn commit` when attribution matters.

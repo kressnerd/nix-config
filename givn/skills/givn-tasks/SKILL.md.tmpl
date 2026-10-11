@@ -1,0 +1,184 @@
+---
+name: givn-tasks
+description: Break down implementation into a scenario-by-scenario RED/GREEN/REFACTOR task list for a givn change, bound to the scenario's native verification target.
+---
+
+# givn-tasks
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Write the implementation task breakdown for change `{{CHANGE_ID}}`.
+
+## Context
+
+- Tasks file: `givn/changes/{{CHANGE_ID}}/tasks.md`
+- Instructions: run `givn instructions tasks --change {{CHANGE_ID}}`
+- Design (HOW): `givn/changes/{{CHANGE_ID}}/design.md`
+- Verification model: `docs/GIVN-VERIFICATION.md` (canonical — read it)
+- Non-@e2e runner: `{{VERIFY_COMMAND}}`
+
+## Use-case constraints
+
+Read the owning `usecase.md`, its guarantees and rules, confirmed Persona
+references, and any ideation seed before writing tasks. Copy the relevant
+domain constraints into every scenario task. The feature file remains the
+executable authority, but implementation agents must not lose the use-case
+contract between scenarios.
+
+## Verify verification bindings before writing tasks (mandatory)
+
+Before writing any task, cross-reference every scenario against the native
+targets it will be proven by:
+
+1. Read every `.feature` file in `givn/changes/{{CHANGE_ID}}/specs/` and list
+   each scenario with its binding tag.
+2. Confirm every scenario carries exactly one binding tag —
+   `@check:<name>`, `@host:<name>`, or `@deploy:<name>`. A scenario with no
+   binding or more than one is a finding.
+3. Confirm every binding resolves: `@check:` names exist in the flake
+   `checks` output; `@host:` names exist in `nixosConfigurations` /
+   `darwinConfigurations`; `@deploy:` names have a `tests/deploy/test_<name>.py`
+   file. A binding that does not resolve is a hard failure of
+   `scripts/givn-spec-trace.py`.
+4. Confirm every `@e2e` scenario binds to `@check:integration-*`, `@host:`, or
+   `@deploy:` — an `@e2e` scenario bound to a plain unit/lint check is a
+   traceability failure.
+5. Read the design's Verification Binding table and confirm every scenario
+   appears there with the target file/check/host, the targeted command, and
+   the expected RED failure.
+
+Any gap is a finding: report it to the user before proceeding. Do not write
+task entries for scenarios whose binding does not resolve yet — the design
+must name the target first.
+
+## The setup task (first task, always)
+
+The first task wires and proves the verification plumbing so no later GREEN
+is meaningless:
+
+- Run `python3 scripts/givn-spec-trace.py` and confirm it exits 0 (every
+  scenario bound to an existing target). Paste command + output.
+- For each new target the change introduces, wire it in: unit tests into
+  `tests/unit/default.nix` and `flake.nix`, assertions into
+  `tests/assertions/default.nix`, VM tests into `tests/integration/default.nix`.
+- **Proof-of-RED**: add one deliberately failing target (an assertion
+  comparing a configured value to a wrong literal, or a unit case with an
+  unmet `expected`), run the scenario's targeted command, and confirm a
+  NON-ZERO exit. Paste command + output. Exit 0 → the target is a tautology
+  or is not wired in; fix and re-prove. An already-passing target can never
+  be RED.
+- Confirm `verify.command` and `verify.e2e_command` in `givn/commands.yaml`
+  are not identical.
+
+## The TDD loop (one scenario at a time, ending in a commit)
+
+Non-@e2e scenarios first:
+
+```
+For each non-@e2e scenario:
+  RED:      Remove @wip from THIS scenario only.
+            Add or extend the scenario's bound target so it asserts the
+              scenario's Then (a lib.debug.runTests case, an assertion in
+              tests/assertions/*.nix, a runNixOSTest, or a deploy test) —
+              never a tautology (no `assertion = true;`, no `expected = expr`).
+            Run the targeted command for this binding (docs/GIVN-VERIFICATION.md)
+              → MUST FAIL with non-zero exit. Paste the output as evidence.
+  GREEN:    Implement the minimum configuration change (module option,
+              service, firewall rule, secret wiring, host definition).
+              List every file created/modified — empty list on a
+              non-characterization scenario means investigate before
+              claiming GREEN.
+            Run the targeted command for this binding → PASSES.
+              Paste the output as evidence.
+  REFACTOR: Clean up without changing behaviour.
+            Run the targeted command for this binding → still PASSES.
+              Paste the output as evidence.
+  COMMIT:   One atomic commit for RED+GREEN+REFACTOR. The message
+              carries the release note as its message subject, and
+              the scenario title goes in the message body.
+              Record the commit hash.
+Then move to the next scenario.
+```
+
+Then @e2e scenarios (after all non-@e2e scenarios are GREEN):
+
+**Rule: @e2e tags are immutable.** Once a scenario is tagged `@e2e` in a
+delta `.feature` file, the tag MUST NOT be removed. If the verify-e2e gate
+fails, configure `verify.e2e_command` — never remove the `@e2e` tag. Tag
+removal is independently detected by `givn check review`, `givn lint
+--change {{CHANGE_ID}}`, and `scripts/givn-spec-trace.py`.
+
+```
+For each @e2e scenario:
+  RED:      Remove @wip. Add or extend the bound target — a
+              runNixOSTest that boots the system, a host evaluation a
+              deploy test confirms, or a deploy test against a live host.
+            Run: verify.e2e_command (or the targeted integration-check
+              build), targeting this scenario only → MUST FAIL. Paste evidence.
+  GREEN:    Read `givn instructions specs --change {{CHANGE_ID}}` and the
+              reviewed design's interface section. Set up the named
+              infrastructure and assert the observable state from the real
+              boot/live host — a pure evaluation standing in for a real boot
+              is not e2e. List files touched.
+            Run: verify.e2e_command, targeting this scenario only →
+              scenario PASSES. Paste evidence.
+  REFACTOR: Clean up e2e code. Target still PASSES. Paste evidence.
+  COMMIT:   One atomic commit. The message
+              carries the release note as its message subject, and
+              the scenario title goes in the message body.
+              Record the commit hash.
+Then move to the next @e2e scenario.
+```
+
+## Important
+
+- `givn lint` is a STATIC Gherkin check only. It does NOT run tests.
+- An assertion is NEVER a tautology (`assertion = true;`, `expected = expr`,
+  an empty `lib.debug.runTests { }`). A target that cannot fail proves
+  nothing.
+- GREEN for non-@e2e is confirmed by `{{VERIFY_COMMAND}}` only.
+- GREEN for @e2e is confirmed by `verify.e2e_command` only.
+- Never conflate lint, verify.command, or verify.e2e_command.
+- `python3 scripts/givn-spec-trace.py` is the traceability gate: every
+  scenario bound to exactly one existing target, every `@e2e` scenario bound
+  to a VM/host/deploy target.
+- **Never silently deviate from design.md.** If the exact target, file
+  layout, or command design.md names turns out inconvenient (e.g. reusing an
+  assertion file design.md split, or pointing `verify.e2e_command` at the
+  same string as `verify.command`), STOP — do not implement the shortcut.
+  Update design.md with the corrected decision, re-run design-review, then
+  resume.
+{{#if addons.arc42}}
+  When the design.md fix is structural, reassess the affected arc42 chapters
+  before resuming.
+{{/if}}
+  A shortcut that never touches design.md is an
+  unreviewed design decision made by the wrong artifact, and review.md's
+  fabrication audit is built to catch it.
+- Every scenario task ends in a COMMIT sub-task with a recorded hash. A
+  checked task with no commit is not done.
+- Every RED/GREEN/REFACTOR sub-task has a place to paste captured targeted-run
+  output — describing what should happen is not the same as recording what
+  did happen.
+- **tasks.md must always be up-to-date.** Check each scenario's box
+  immediately after completing it — before starting the next one. An
+  unchecked box means the scenario is incomplete. Never batch-check all
+  boxes at the end. Using `sed` or any text-replacement tool to
+  mass-check boxes without filling in evidence and commit hashes is
+  prohibited — each box is checked individually as each scenario is done.
+- Read the canonical specs instruction before evaluating E2E action scope,
+  primary assertions, or real-interface fidelity. A scenario that violates it
+  is not done, regardless of the targeted-run result.
+- Track progress: `givn status --change {{CHANGE_ID}}`
+
+## Verify command
+
+Unit/integration:
+```
+{{VERIFY_COMMAND}}
+```
+
+E2E smoke tests:
+```
+verify.e2e_command (configured in givn/commands.yaml)
+```

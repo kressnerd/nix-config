@@ -1,0 +1,202 @@
+---
+name: givn-review
+description: Complete the traceability review for a givn change — audit for fabrication, classify every gap, sign off, and confirm GREEN.
+---
+
+# givn-review
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Complete the traceability review for change `{{CHANGE_ID}}`.
+
+## Context
+
+- Review file: `givn/changes/{{CHANGE_ID}}/review.md`
+- Instructions: run `givn instructions review --change {{CHANGE_ID}}`
+- Verification model: `docs/GIVN-VERIFICATION.md` (canonical — read it)
+- Non-@e2e runner: `{{VERIFY_COMMAND}}`
+
+## Use-case and Persona conformance
+
+Verify that implementation preserves the owning use-case contract, guarantees,
+rules, typed relationships, capability ownership, and confirmed Persona-relevant
+outcomes. Confirm the accepted `usecase.md` is represented in the change and
+that no actor was replaced by a Persona biography. Migration changes must also
+account for every ledger entry and preserve E2E evidence.
+
+Record the disposition for every confirmed Persona; when none is confirmed,
+record the reason. A user-visible surface requires at least one confirmed
+Persona.
+
+A deferral of a mandatory check without a recorded operator decision fails the
+review.
+
+## Step 0: fabrication audit (mandatory, before anything else)
+
+A change can reach review with every task checked off, the runner exiting
+0, and almost nothing implemented — if a target asserts nothing (a tautology,
+an already-green check) or a binding points at a target that never exercises
+the scenario. Mechanical check, not a judgment call:
+
+0. **@e2e tag integrity:** no scenario's tags were changed from including
+   `@e2e` to excluding it; `scripts/givn-spec-trace.py` shows every `@e2e`
+   bound to `@check:integration-*` / `@host:` / `@deploy:`.
+1. **Traceability:** `python3 scripts/givn-spec-trace.py` exits 0 — every
+   scenario bound to exactly one existing target; no unbound scenario; no
+   `@e2e` bound to a unit/lint check.
+2. **Commit cross-check:** every checked `[x]` task has a commit whose diff
+   touches real configuration (`*.nix`, `scripts/`, `tests/`), not only
+   spec/artifact files.
+3. **Promised-target existence:** every module, option, host definition,
+   assertion, VM test, or flake check that design.md promised exists in the
+   tree; list anything missing.
+4. **RED evidence:** for each scenario the targeted command from
+   `docs/GIVN-VERIFICATION.md` failed before implementation (pasted, non-zero)
+   and passes after; a target that never failed is fabricated.
+5. **E2E reality:** each `@e2e` scenario's integration test/host/deploy target
+   actually boots or reaches the real interface and asserts the observable
+   state — not a pure evaluation standing in for a real boot.
+6. **E2E isolation:** `verify.command` and `verify.e2e_command` in
+   `givn/commands.yaml` are not identical; the e2e command builds the
+   `integration-*` scope only.
+7. **Safety:** no plaintext secret committed; no `sops`/decrypt invocation in
+   any commit or script; `system.stateVersion`/`home.stateVersion` unchanged;
+   `hardware.nix` unchanged unless the change is explicitly a hardware change.
+8. **Dangerous areas:** if the change touches `boot.loader`, `networking`,
+   `fileSystems`/disko, `environment.persistence`/impermanence, kernel, or
+   secret wiring, design.md carries a Deployment & Rollback section with a
+   concrete rollback command.
+9. **Design conformance:** implementation's commands, file layout, and check
+   names match design.md; any deviation was recorded by updating design.md and
+   re-running design-review, never silently kept.
+10. **Findings from 1–9 are unfinished work, not coverage gaps** — reopen the
+    task and run RED→GREEN→REFACTOR→COMMIT.
+
+Record the result (files scanned, findings, remediation) in review.md even
+when clean: e.g. "0 tautological targets found across N target files."
+
+{{#if addons.arc42}}
+## Arc42 implementation conformance
+
+Run this mandatory check before gap classification.
+Read the durable `docs/arc42/` chapters and the change-level `arc42.md`, then
+independently derive the affected chapters and architecture facts from the
+completed implementation, `design.md`, and `tasks.md`. For every chapter or
+fact named by either assessment, compare the durable source, Arc42 claim,
+design treatment, task mapping, and implementation evidence in review.md's
+**Arc42 implementation conformance** table.
+
+This check catches both stale Arc42 documentation and design, task, or
+implementation drift from documented facts. Every omission or contradiction is
+a finding. Fix the affected artifact and repeat the comparison; if design.md
+changes, re-run design-review. Record `ARC42 CONFORMANCE: CLEAN` only when all
+rows match. Do not write `REVIEW: PASS` while an Arc42 finding remains.
+{{/if}}
+
+{{#if addons.arc42}}
+{{#if addons.domain_modeling}}
+## Ubiquitous language conformance
+
+Before sign-off, run this mandatory
+check: confirm that the specs, design, and code reuse the durable glossary's
+exact terms — the ubiquitous language is used consistently everywhere and
+recorded in the project's arc42 glossary. Every spec or design term the
+glossary does not hold, or any inconsistent reuse, is a finding: fix the
+affected artifact and record the resolved term in `docs/arc42/12-glossary.md`.
+Do not write `REVIEW: PASS` while a ubiquitous-language finding remains.
+{{/if}}
+{{/if}}
+
+## Deterministic gate dispositions
+
+Before sign-off, inspect the deterministic overlap findings. Complete the
+**Overlap dispositions** table for every shape match, add a **split-or-keep**
+decision for every long scenario, and explain every removed+added pair as
+supersession or unrelated work. Do not use scores as a substitute for a human
+disposition.
+
+## README impact decision (readme addon enabled)
+
+When the readme addon is enabled, review.md must record the machine-checkable
+README impact decision — the review gate refuses sign-off without it:
+
+- `README-IMPACT: none` — this change did not touch the project's public face.
+- `README-IMPACT: updated - <comma-separated sections>` — the named README
+  sections (Description, Quick start, Prerequisites, Usage, Configuration,
+  Contributing, License) were refreshed to match this change.
+
+Make the decision consciously before sign-off: if the change introduced,
+changed, or removed anything a consumer observes (commands, flags, config,
+output), the corresponding README sections belong in the updated list, and the
+README must actually be edited — not just declared updated. An open
+placeholder in the README blocks the archive gate regardless of this line, so
+filling the scaffold sections during the change that made the project usable
+is the cheap path.
+
+## Traceability gate (completeness, not percentage)
+
+`scripts/givn-spec-trace.py` is the coverage evidence: it maps every scenario
+to the native target that proves it. Classify every gap into exactly one
+bucket:
+
+1. **Dead configuration** (YAGNI/KISS) → delete it now — an unreferenced
+   check/assertion/module, or an `integration-*` check no scenario binds.
+2. **Missing binding or target** → add the scenario's target (or bind the
+   scenario to an existing one) and run RED/GREEN/REFACTOR/COMMIT. A missing
+   or downgraded `@e2e` scenario is always bucket 2.
+3. **Legitimately hard to bind** — rare; needs concrete technical
+   justification (e.g. hardware-dependent state that no VM can reproduce).
+
+These three buckets are exhaustive — **never invent a fourth**. Phrases like
+"acceptable for this iteration scope," "sufficient for current scope," or
+"future scope" that excuse a gap instead of naming one of the three buckets
+are themselves a fabrication-audit finding.
+
+Traceability is complete when every scenario is bound to exactly one existing
+target and every gap is classified and resolved (or justified). **There is no
+minimum percentage.** The traceability script warns about unreferenced
+`integration-*` checks — classify each as bucket 1 (delete) or bucket 2 (add
+the scenario that should bind it).
+
+## Steps
+
+1. Run `{{VERIFY_COMMAND}}` — confirm all non-@e2e verification passes
+   (traceability, flake evaluation, non-VM check builds, host evaluation).
+2. Run `verify.e2e_command` — confirm the `integration-*` scope passes.
+3. Run `python3 scripts/givn-spec-trace.py` — confirm it exits 0 and read the
+   unreferenced-integration-check warnings.
+4. Classify each gap (1, 2, or 3 above).
+5. Resolve each gap:
+   - Dead configuration → delete.
+   - Missing binding/target → add the target + RED/GREEN/REFACTOR/COMMIT.
+   - Hard to bind → write the concrete technical justification.
+6. Read `givn instructions specs --change {{CHANGE_ID}}` and verify its
+   normalized inventory, real-interface assertion, and interface-fidelity
+   rules. Missing, downgraded, or over-produced coverage is unfinished work.
+   Before concluding a real target is unavailable, search the tree yourself,
+   including untracked files.
+7. Re-read the fabrication audit (Step 0) and confirm every finding is
+   remediated.
+8. Run both runners again — confirm still GREEN.
+9. Complete the sign-off checklist in review.md, including the fabrication
+   audit result.
+10. Write `REVIEW: PASS` at the end of review.md when all items are checked
+    AND the fabrication audit is clean.
+
+## After sign-off
+
+```
+givn check review --change {{CHANGE_ID}}
+```
+
+## Verify command
+
+Unit/integration:
+```
+{{VERIFY_COMMAND}}
+```
+
+E2E smoke tests:
+```
+verify.e2e_command (configured in givn/commands.yaml)
+```

@@ -188,3 +188,41 @@ nix develop
 # Then run the tests
 cd scripts && python3 -m pytest tests/test_netcup_firewall.py -v
 ```
+
+## givn verification scripts
+
+These implement the givn verification model described in
+[`docs/GIVN-VERIFICATION.md`](../docs/GIVN-VERIFICATION.md). They are wired as
+the `verify.command` / `verify.e2e_command` and the `tasks` / `review` post
+hooks in `givn/commands.yaml` and `givn/config.yaml`.
+
+### givn-verify.sh
+
+The non-`@e2e` gate: spec traceability, `nix flake check --no-build`, the unit
+and lint check builds, evaluation of every host configuration (fires
+`tests/assertions`), and the `scripts/tests` Python suite.
+
+```bash
+scripts/givn-verify.sh
+```
+
+### givn-verify-e2e.sh
+
+The `@e2e` gate: builds every `integration-*` check (QEMU VM tests) for the
+current system. Requires a Linux builder with KVM; fails loudly on a
+non-Linux host.
+
+```bash
+scripts/givn-verify-e2e.sh
+```
+
+### givn-spec-trace.py
+
+Traceability check: every Gherkin scenario in a change delta must carry exactly
+one binding tag (`@check:<name>`, `@host:<name>`, or `@deploy:<name>`) that
+resolves to a real flake check, host configuration, or deploy test. This is the
+repository's replacement for a coverage metric.
+
+```bash
+python3 scripts/givn-spec-trace.py
+```

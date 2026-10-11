@@ -1,0 +1,153 @@
+---
+name: givn-design-review
+description: Stress-test the plan before tasks are written — grill the design one question at a time, harden the artifacts, then sign off.
+---
+
+# givn-design-review
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Stress-test the complete plan for change `{{CHANGE_ID}}` before the task list
+is written. Grill every branch of the design, harden the artifacts with what
+you learn, then sign off.
+
+## Mandatory, non-skippable, fresh context
+
+Never skip this step. Never run it as a continuation of the session that
+wrote the design — a model grilling its own just-written plan will confirm
+its own assumptions instead of finding blind spots. Spawn the grilling
+subagent into a genuinely fresh context via the Task tool. If the harness
+lets you choose a model or reasoning-effort tier for the spawned subagent,
+choose the most capable one available and set reasoning/thinking effort to
+high — this step exists to catch subtle scope gaps and untestable scenarios
+that a fast/low-effort model tends to rubber-stamp instead of catching.
+
+**Delegated contexts:** a fresh delegated context does not inherit the parent's loaded policy. Pass the obligation explicitly — for every user-facing question, follow the effective policy from `givn instructions dialog`; load it in the fresh context before the first question. The presenting agent remains responsible for the question, and a question tool's recommendation or option label does not replace context and answer consequences.
+
+## Context
+
+- Design review file: `givn/changes/{{CHANGE_ID}}/design-review.md`
+- Instructions: run `givn instructions design-review --change {{CHANGE_ID}}`
+- Runs after: design
+- Runs before: tasks
+
+## Two phases
+
+### Phase 1: Grilling (subagent → orchestrator → user)
+
+A grilling subagent reads all planning artifacts (proposal, specs, design) and
+the relevant codebase, then returns a ranked question list with recommended
+answers. The orchestrator presents questions to the user one at a time — waiting
+for each answer before the next.
+
+When presenting a question, follow the canonical dialog policy
+(`givn instructions dialog`): name every artifact in domain language with its
+identifier in parentheses, and give every option its meaning, gain, cost, and
+a concrete example. Never present a bare identifier or an abstract label.
+
+<bad_example>
+Q1: Should the host use D2 or D3? ADR12 says no.
+</bad_example>
+
+<good_example>
+Q1: Should the edge gateway (cupix001) terminate TLS in the reverse proxy (D2)
+or forward to the internal endpoint (D3)? The minimize-public-surface decision
+(ADR-012) argues against a second public listener.
+
+D2 in practice: the proxy listens on 443 and serves the certificate directly.
+D3 in practice: the listener stays on the internal interface and the public
+port remains closed.
+</good_example>
+
+Required branches:
+- **Scope** — spec matches proposal exactly?
+- **Tech choices** — right stack for these scenarios? Simpler alternatives?
+- **Missing scenarios** — observable behaviours without a scenario? Error paths?
+- **Testability** — every scenario can genuinely fail in RED?
+- **Verification binding completeness** — every scenario carries exactly one
+  binding tag (`@check:`/`@host:`/`@deploy:`) and every binding resolves in the
+  flake, a host configuration, or a deploy test; every `@e2e` scenario binds to
+  `@check:integration-*`/`@host:`/`@deploy:`; `verify.e2e_command` is not
+  identical to `verify.command`. Read `docs/GIVN-VERIFICATION.md`.
+- **Deployment & rollback** — for a change touching `boot.loader`,
+  `networking`, `fileSystems`/disko, `environment.persistence`/impermanence,
+  kernel, or secret wiring, confirm `design.md` carries a concrete apply
+  command, on-host verification, and a rollback path.
+- **Persona disposition** — record, per persona, the relevance and evidence; when no persona is confirmed, record the reason. This repository's surface is host configuration, so most changes record `none`.
+- **Deferrals** — a mandatory check may be deferred only after an operator question; record the operator's decision, otherwise do not sign off.
+- **Binding coverage** — does every scenario in `specs/**/*.feature` have a row
+  in the design's Verification Binding table with a valid, non-empty bound
+  target and targeted run command? `scripts/givn-spec-trace.py` must exit 0.
+  Any scenario without a resolving binding is a finding.
+- **Risk** — most likely failure mode and mitigation?
+- **Domain context** — confirm the selected use-case contract, typed
+  relationships, capability ownership, confirmed Persona coverage, and the
+  actor/Persona distinction. Record an explicit disposition for each Persona
+  finding. No Persona may be invented or auto-promoted.
+{{#if addons.arc42}}
+- **ADR qualification** — use the complete procedure from the canonical Arc42
+  addon instruction. Only a structured verdict with every mandatory gate
+  passing requires a MADR. A non-qualifying choice names exactly one canonical
+  lower-level artifact; a refinement amends an existing ADR and a replacement
+  supersedes it. For every proposed `NEW_ADR`, name the cheaper home: the
+  specific canonical artifact that would own the rationale instead; a missing
+  cheaper home is a finding. `Must be shared` is supporting evidence only. This
+  is guidance, not runtime enforcement.
+- **Architecture documentation (arc42)** — independently re-derive the
+  expected chapter set before trusting `arc42.md`'s claim: walk all 12 rows of
+  the arc42-docs instruction's selection table yourself against
+  proposal.md/design.md, form your own Yes/No per row, then diff against
+  `arc42.md`'s table. A row
+  you mark "Yes" that `arc42.md` marks "No" or omits is a finding —
+  omission is the failure mode that slips through, not just contradiction.
+   For every "Yes" row (either party), confirm the chapter content actually
+   matches design.md, not placeholder text or a stale contradiction. Does
+   chapter 09 have a MADR entry for every qualified ADR candidate in design.md,
+   and does chapter 11 reflect that decision's consequences? A non-qualifying
+   design choice is complete when its canonical destination is recorded.
+   `arc42.md`'s `STATUS: DONE` is a self-report, not verification — treat any
+   mismatch, including a missing row, as a finding.
+{{/if}}
+{{#if addons.arc42}}
+{{#if addons.domain_modeling}}
+- **Ubiquitous language** — confirm that the ubiquitous language is used consistently and recorded in the project's arc42 glossary before sign-off is mandatory: `docs/arc42/12-glossary.md` must already contain the design's agreed terms. If the design introduces a term the glossary does not hold, or reuses an existing term inconsistently, raise it as a question — do not sign off.
+{{/if}}
+{{/if}}
+
+If a question can be answered by exploring the codebase, the subagent does that
+and reports the finding instead of asking the user.
+
+### Phase 2: Hardening (hardening subagent)
+
+Applies decisions reached during grilling:
+- Update `design.md` if tech decisions changed.
+- Add missing scenarios to `specs/**/*.feature` with `@givn.added @wip`.
+- **Never remove `@e2e` tags from any scenario.** If the e2e infrastructure
+  (`verify.e2e_command`) is not configured yet, leave the `@e2e` tags in
+  place. The verify-e2e hook will fail at check/archive time — that failure
+  is correct: an `@e2e` scenario without a configured runner IS an unenforced
+  gap. Removing `@e2e` tags to bypass the gate is a procedure violation and
+  will be caught by the review fabrication audit. If the e2e infrastructure
+  is genuinely not buildable yet, record this as a tracked open question in
+  `design-review.md` with a concrete date or condition for resolving it —
+  never as a tag removal.
+- Run `givn lint --change {{CHANGE_ID}}` — must exit 0 or 2.
+- Does NOT write `tasks.md` — that is the next step.
+
+## Sign-off
+
+When both phases are complete, `design-review.md` ends with:
+
+```
+DESIGN-REVIEW: PASS
+```
+
+All questions resolved. Otherwise: `DESIGN-REVIEW: FAIL`.
+
+## After sign-off
+
+```
+givn status --change {{CHANGE_ID}}
+```
+
+Next step: `/givn-tasks`.

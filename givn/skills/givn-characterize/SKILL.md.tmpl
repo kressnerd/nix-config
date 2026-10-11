@@ -1,0 +1,102 @@
+---
+name: givn-characterize
+description: Execute the characterization loop for a reverse-engineering change — RED/GREEN/REFACTOR with target reuse, testability seams, reverse review.
+---
+
+# givn-characterize
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Execute the characterization loop for change `{{CHANGE_ID}}`.
+
+## Context
+
+- Tasks: `givn/changes/{{CHANGE_ID}}/tasks.md`
+- Spec: `givn/changes/{{CHANGE_ID}}/specs/`
+- Verification model: `docs/GIVN-VERIFICATION.md` (canonical — read it)
+- Non-@e2e runner: `{{VERIFY_COMMAND}}`
+- Features path: `GIVN_FEATURES={{FEATURES_PATH}}`
+- Shared target mechanics: read the `givn-steps` skill before writing or
+  extending a target.
+
+## The characterization technique
+
+RED/GREEN/REFACTOR (same loop structure as normal TDD — see `givn-steps` skill
+for the shared mechanics). What differs is the GREEN and REFACTOR content:
+
+1. **RED**: Remove `@wip` from this scenario only. Check for a target that
+   already asserts the scenario's `Then`; if one exists, extend it so it
+   exercises the scenario. Otherwise add a target (a `lib.debug.runTests`
+   case, an assertion in the relevant `tests/assertions/*.nix`, a
+   `runNixOSTest`, or a deploy test) and wire it in. Run the targeted command
+   for the scenario's binding → must fail (or pass if the target already
+   proves the scenario and no new assertion is needed).
+2. **GREEN**: Implement real assertions probing **observed** behaviour (read
+   the actual code). Run the targeted command → must pass. No production code
+   changes. If it fails: diagnose (infrastructure → fix plumbing;
+   spec/mismatch → correct the spec, never the code).
+3. **REFACTOR**: if the task's Seam block calls for a testability seam, apply
+   it. Run the targeted command → must still pass. If red, revert the refactor.
+4. Check off the task. Move to the next scenario.
+
+The targeted command comes from `docs/GIVN-VERIFICATION.md`: `@check:<name>` →
+`nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).<name>`;
+`@host:<name>` → `nix eval --raw .#nixosConfigurations.<name>.config.system.build.toplevel.drvPath`
+(or `darwinConfigurations`); `@deploy:<name>` → `pytest tests/deploy/test_<name>.py`.
+
+## What not to do
+
+- Do NOT change production code behaviour to satisfy a test.
+- Do NOT fix bugs discovered during characterization. Flag them.
+- Do NOT use `givn check <artifact>` during the loop — run the scenario's
+  targeted command directly. `givn check` is only for the review epilogue.
+- Do NOT do general cleanup (rename, dedup, logic simplification) during
+  REFACTOR — only testability seams (extract helper, add a module option, make
+  a private definition public).
+- Do NOT remove `TODO: REVERSE-ENGINEERING NOTE` markers — they are
+  intentional debt markers.
+- Do NOT write a tautological assertion (`assertion = true;`, `expected =
+  expr`, an empty `lib.debug.runTests { }`) — a characterization target must
+  pin the observed value.
+
+## Spec/implementation mismatch diagnostic
+
+When the targeted run fails and infrastructure is sound:
+
+1. **Diagnose**: documentation was wrong, or code is ambiguous/misleading.
+2. **If docs wrong**: update tasks.md + the .feature scenario + the source
+   documentation. Re-run the targeted command.
+3. **If code ambiguous**: update the .feature scenario to AS-IS behaviour. Add
+   a code comment: `TODO: REVERSE-ENGINEERING NOTE: <what was misleading> —
+   actual behaviour: <Z>. Code smell, refactor candidate.` (Use the language's
+   comment syntax.) Do NOT change code behaviour. Re-run the targeted command.
+
+## Reverse review epilogue
+
+After all tasks are checked, a review subagent:
+- Reads the `givn-review` skill for shared traceability mechanics.
+- Applies reverse-mode rules (from `review-reverse.md`):
+  - Runs `python3 scripts/givn-spec-trace.py` (every scenario bound to an
+    existing target; classify any unbound scenario).
+  - Dead configuration → flag as `@givn.removed` candidate (do NOT delete).
+  - Missing target → flag as `@givn.added` candidate (do NOT add during
+    review).
+  - Confirms behaviour-preservation invariant (all characterization targets
+    still GREEN after refactoring).
+- Compiles: spec corrections, documentation corrections, code smell markers,
+  suspected bugs.
+- Writes `review.md` with `REVIEW: PASS`.
+- Runs `givn check review --change {{CHANGE_ID}}`.
+
+**Delegated contexts:** a fresh delegated context does not inherit the parent's loaded policy. Pass the obligation explicitly — for every user-facing question, follow the effective policy from `givn instructions dialog`; load it in the fresh context before the first question. The presenting agent remains responsible for the question, and a question tool's recommendation or option label does not replace context and answer consequences.
+
+## Transition out
+
+When characterization + review are complete, suggest:
+`/givn-archive` — archive the change and create the baseline spec.
+
+## Verify command
+
+```
+{{VERIFY_COMMAND}}
+```

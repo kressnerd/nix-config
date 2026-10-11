@@ -1,0 +1,56 @@
+---
+name: givn-propose
+description: Write the proposal for a givn change — describe WHAT and WHY in domain language, without implementation detail.
+---
+
+# givn-propose
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Write the proposal for change `{{CHANGE_ID}}`.
+
+## Context
+
+- Proposal file: `givn/changes/{{CHANGE_ID}}/proposal.md`
+- Instructions: run `givn instructions proposal --change {{CHANGE_ID}}`
+- Spec will follow: `givn/changes/{{CHANGE_ID}}/specs/`
+
+## Use-case context
+
+If the change is linked to a permanent use case or ideation change seed, read
+its `usecase.md` before writing the proposal. Record the stable use-case ID,
+source topic, and confirmed affected Persona IDs in the proposal. Never invent
+or silently promote a Persona, and never copy Persona biographies into the
+proposal.
+
+A change with a user-visible surface names at least one confirmed Persona, or records `none` with the reason. This repository's surface is host configuration, not a rendered screen, so most changes record `none`.
+
+## Rules
+
+- Write from the user's perspective. Use domain language (not technical terms).
+- Describe observable host/system state only. No module paths, option names,
+  helper functions, or target mechanics.
+- The only exception: observable requirements that are themselves externally
+  measurable (e.g. "the unit is active", "the port is listening", "the secret
+  file has mode 0400").
+- Every behaviour you describe must be bindable to exactly one native target
+  (`@check:`/`@host:`/`@deploy:`) — see `docs/GIVN-VERIFICATION.md`.
+- If implementation details surface, move them to design.md.
+
+## Structure
+
+Fill in the proposal template sections:
+1. **Release note** — one complete, user-facing sentence naming what the
+   change does. Every revision the change records
+   carries the release note as its message subject, and
+   the scenario title goes in the message body.
+2. **Problem / Opportunity** — what is wrong or missing?
+3. **Proposed Solution** — what should the system do?
+4. **Out of Scope** — what is not changing?
+5. **Open Questions** — unresolved decisions before writing specs.
+
+## Verify command
+
+```
+{{VERIFY_COMMAND}}
+```

@@ -1,0 +1,33 @@
+# ============================================================================
+#  givn commands  —  test runner configuration
+#
+#  This file is the SINGLE source of truth for the project's givn commands.
+#  `givn check`, `givn archive`, and the harness evaluator all read from here.
+#  `givn/config.yaml` stores project structure config; test commands live HERE.
+#
+#  This is a declarative Nix repository: there is no in-process application
+#  interface and no Gherkin/Cucumber step runner. Scenarios are bound to the
+#  native verification targets with tags (@check:/@host:/@deploy:) and the
+#  runners below execute those targets. See docs/GIVN-VERIFICATION.md.
+# ============================================================================
+
+# --- Non-e2e verification ----------------------------------------------------
+# Runs the evaluation-level verification of the repository: spec traceability,
+# flake evaluation (all outputs and checks for the current system), the unit
+# and lint check builds, and every host configuration evaluation (which fires
+# tests/assertions). VM integration tests are NOT part of this command.
+verify:
+  command: "./scripts/givn-verify.sh"
+
+  # --- E2E verification -------------------------------------------------------
+  # Runs the @e2e scope: the QEMU VM integration checks for the current system
+  # (pkgs.testers.runNixOSTest). Must be a strict subset of verify.command —
+  # running the whole suite here would defeat the separate e2e gate.
+  e2e_command: "./scripts/givn-verify-e2e.sh"
+
+# --- Product start ------------------------------------------------------------
+# This repository is not a running product; it is consumed by NixOS /
+# nix-darwin hosts. There is nothing to start, so product_type is `library`.
+# `givn run` reports that and exits 0.
+run:
+  product_type: library

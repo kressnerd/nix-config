@@ -1,0 +1,233 @@
+# ============================================================================
+#  givn configuration  —  https://github.com/TBD/givn
+#  See arc42 chapter 8 (cross-cutting concepts) for detailed explanations.
+#
+#  How this file works:
+#    - Commented lines (# ...) are the givn-managed documentation scaffold.
+#      They may be refreshed by `givn upgrade` (which preserves your overrides).
+#    - Uncommented key/value lines are user-owned and are never touched by
+#      `givn upgrade`.
+#    - To override a setting: uncomment the relevant key and edit its value.
+#    - After `givn upgrade`: review the managed revision (for example `git show` on Git, `fossil diff --checkin current` on Fossil) and
+#      resolve project-specific migration work in the visible maintenance change.
+# ============================================================================
+
+# Managed by givn. Do not delete the next line.
+givn_config_version: "0.8.4"
+
+# --- Test runner -------------------------------------------------------------
+# The command givn invokes to run your test suite. Configured in
+# givn/commands.yaml — NOT in this file. See givn/commands.yaml for the
+# verify.command and verify.e2e_command keys.
+#
+# The shipped default is a sentinel that prints setup guidance and exits
+# non-zero — so nothing ever falsely reports GREEN until you configure a
+# real runner in givn/commands.yaml.
+#
+
+# --- Coverage gate (archive-level, requires addons.coverage: true) ------------
+# Commands that run tests with coverage instrumentation. Configured in
+# givn/commands.yaml — NOT in this file. See givn/commands.yaml for the
+# coverage.measure_command and coverage.merge_command keys.
+#
+
+# --- E2E test runner ----------------------------------------------------------
+# Configured in givn/commands.yaml — see verify.e2e_command there.
+#
+
+# --- Artifact graph overlay --------------------------------------------------
+# Patch the embedded default artifact graph without replacing it. Declare only
+# the additions, modifications, or removals you want. Everything else keeps its
+# default. See arc42 ch.8.2 for examples and full semantics.
+#
+# Examples:
+#
+#   # a) Remove the review gate entirely:
+#   # artifacts:
+#   #   - id: review
+#   #     remove: true
+#   # apply:
+#   #   requires: [tasks]
+#
+#   # b) Make review optional (skip without blocking):
+#   # artifacts:
+#   #   - id: review
+#   #     optional: true
+#   # apply:
+#   #   requires: [tasks]
+#
+#   # NEVER do this to design-review (optional: true or remove: true). It is
+#   # a planning-layer gate that catches a flawed plan before tasks and code
+#   # are written from it — removing it does not save time, it defers the
+#   # same problems to implementation where they cost far more to fix.
+#
+#   # c) Add a custom refactor step after implementation:
+#   # artifacts:
+#   #   - id: refactor
+#   #     generates: refactor.md
+#   #     requires: [tasks]
+#   #     template: refactor.md
+#   #     instruction: |
+#   #       Record refactorings: what was cleaned up, why, and confirmation
+#   #       that all scenarios still pass. No behaviour change.
+#   # apply:
+#   #   requires: [tasks, refactor, review]
+
+# --- Archive gate ------------------------------------------------------------
+# Control which artifacts must be complete before `givn archive` succeeds.
+# Default: [tasks, review]  — both must be done and their hooks must pass.
+#
+# apply:
+#   requires: [tasks, review]
+#   tracks: "tasks.md"         # file whose checkboxes givn tracks
+
+# --- Hooks (post-artifact gate checks) ---------------------------------------
+# Each artifact may declare `post:` hooks that run after it is completed.
+# `givn check <artifact>` runs them on demand.
+# `givn archive` auto-runs the hooks of all apply.requires artifacts as the gate.
+#
+# Built-in hook names:
+#   verify      -> run verify.command (the test runner)
+#   verify-e2e  -> run verify.e2e_command (the e2e smoke test runner).
+#                  If any in-scope .feature file has an @e2e-tagged scenario,
+#                  this hook HARD FAILS when verify.e2e_command is empty —
+#                  it only skips silently when there is genuinely no @e2e
+#                  scenario in scope. An @e2e scenario with no configured
+#                  runner is an unenforced gap, never an acceptable default.
+#   lint        -> run `givn lint` (static .feature check)
+# Or: any shell command string.
+# Object form adds options: { run: verify, allow_failure: false, name: "..." }
+#
+# Defaults already in the embedded manifest:
+#   tasks.post:  [verify]
+#   review.post: [verify, verify-e2e]
+#
+# Override examples:
+# artifacts:
+#   - id: tasks
+#     post: [lint, verify]
+#   - id: review
+#     post:
+#       - { run: verify, name: "full suite green" }
+#       - { run: "scripts/coverage.sh", allow_failure: true }
+
+# --- Addons ------------------------------------------------------------------
+# Pre-packaged artifact sets. See arc42 ch.8.11.
+# `givn init` enables ALL addons by default (opt-out via `givn init --no-addons`).
+# This project's actual settings are below, written by `givn init`/`givn addons`:
+#
+addons:
+  arc42: true
+  absolute_mode: true
+#                          # policy. Manages a fenced <!-- givn:begin:absolute-mode -->
+#                          # block in AGENTS.md; the rest of AGENTS.md is untouched.
+  readme: false
+#                          # Disabled: the project README is hand-maintained; the
+#                          # addon only scaffolds one and would manage blocks the
+#                          # repository does not want rewritten.
+  coverage: false
+#                          # Disabled: a declarative Nix repository has no
+#                          # instrumented production process, so Cobertura line/
+#                          # branch coverage does not exist. Scenario-to-target
+#                          # traceability (scripts/givn-spec-trace.py) is the
+#                          # coverage evidence instead.
+#                          # Toggle with: givn addons enable|disable <name>, or
+#                          # `givn addons list` to see all known addons.
+
+# --- arc42 configuration (requires addons.arc42: true) -----------------------
+# arc42:
+#   output_dir: "docs/arc42"     # where durable arc42 docs live (not per-change)
+#   chapters:                    # subset/superset of the 12 standard chapters
+#     - introduction-and-goals
+#     - architecture-constraints
+#     - context-and-scope
+#     - solution-strategy
+#     - building-block-view
+#     - runtime-view
+#     - deployment-view
+#     - crosscutting-concepts
+#     - architecture-decisions
+#     - quality-requirements
+#     - risks-and-technical-debt
+#     - glossary
+#
+# When addons.arc42 is true, the arc42 document is produced during the
+# design phase and checked in design-review: design-review requires
+# arc42-docs, and arc42-docs itself gates archive (added to
+# apply.requires) -- an enabled-but-unfinished arc42 doc blocks
+# `givn archive`, not just the "ready-to-archive" status label.
+
+# --- Addon: domain_modeling ---------------------------------------------------
+# Skill — model a change's domain (ubiquitous language, aggregates, invariants)
+# before design. Generates the givn-domain-modeling skill file on
+# `givn skills sync`. Toggle with: givn addons enable|disable domain_modeling.
+#
+  domain_modeling: true
+
+# --- Addon: dev_principles ----------------------------------------------------
+# Skill — apply the team's engineering principles during implementation.
+# Generates the givn-dev-principles skill file on `givn skills sync`.
+# Toggle with: givn addons enable|disable dev_principles.
+#
+  dev_principles: true
+
+# --- Addon: grill_me ----------------------------------------------------------
+# Command — Socratically grill the current plan/design, one question at a time.
+# Generates the /grill-me command for every command-owning target on `givn skills sync`.
+# Toggle with: givn addons enable|disable grill_me.
+#
+  grill_me: true
+
+# --- Addon: grill_with_docs ---------------------------------------------------
+# Command — grill the plan/design, citing a source in the project's own docs
+# for every challenge. Generates the /grill-with-docs command for every
+# command-owning target on `givn skills sync`. Toggle with: givn addons
+# enable|disable grill_with_docs.
+#
+  grill_with_docs: true
+
+# --- Generated-rules policy ---------------------------------------------------
+# Whether Givn's generated rules (skills, commands, plugins, hooks, and the
+# attribution plumbing) are repository content or stay on this machine.
+#   local-only  (default) - the rules are written locally and kept out of the
+#                           repository; a tracked rule is removed from the
+#                           current revision without deleting its file.
+#   versioned             - the rules are repository content, staged and
+#                           committed like source.
+# An absent key resolves to local-only. An unrecognized value warns and
+# continues as local-only. AGENTS.md is never staged by Givn under either
+# policy; the fenced ignore block is project content and may be committed.
+#
+# rules: local-only
+
+# --- Skill agent targets ------------------------------------------------------
+# Which agent targets receive the generated skills and commands.
+# `givn init` requires a selection: the interactive prompt opens with opencode
+# marked and re-asks until something is marked; scripts pass --agents, and a
+# missing or unknown-only selection is refused.
+# `givn skills sync` installs to exactly the persisted targets, falling back
+# to opencode when no skills block exists. Toggle by editing the list below
+# (allowed values: opencode, agents, claude, omp).
+#
+# skills:
+#   targets: [opencode]      # set to e.g. [opencode, agents, claude, omp] for all
+
+skills:
+  targets: [opencode, agents, claude, omp]
+rules: local-only
+
+# --- Artifact graph overlay: verification hooks -------------------------------
+# Patch the embedded default graph so that completing the task list and the
+# review both run spec traceability + the native verification runners. The
+# traceability check is what replaces the coverage gate: every scenario must
+# be bound to a real Nix target. See docs/GIVN-VERIFICATION.md.
+artifacts:
+  - id: tasks
+    post:
+      - { run: "python3 scripts/givn-spec-trace.py", name: "spec traceability" }
+      - verify
+  - id: review
+    post:
+      - { run: "python3 scripts/givn-spec-trace.py", name: "spec traceability" }
+      - verify
+      - verify-e2e

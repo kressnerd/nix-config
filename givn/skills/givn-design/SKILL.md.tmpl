@@ -1,0 +1,148 @@
+---
+name: givn-design
+description: Write the technical design for a givn change — the HOW layer with technology decisions, verification bindings, and architecture impact.
+---
+
+# givn-design
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Write the design for change `{{CHANGE_ID}}`.
+
+## Context
+
+- Design file: `givn/changes/{{CHANGE_ID}}/design.md`
+- Instructions: run `givn instructions design --change {{CHANGE_ID}}`
+- Spec (WHAT): `givn/changes/{{CHANGE_ID}}/specs/`
+- Verification model: `docs/GIVN-VERIFICATION.md` (canonical — read it)
+- Non-@e2e runner: `{{VERIFY_COMMAND}}`
+
+## This is the HOW layer
+
+Everything technical belongs here — do not add implementation details to the spec.
+
+- Technology decisions: module structure, helpers, overlays, nixpkgs inputs.
+- Architecture impact: which modules/components/hosts are affected, what is new.
+- Data model changes: module options, host definitions, secret wiring, file
+  systems.
+- Verification bindings: the native target that proves each scenario (see
+  "Verification Binding" below).
+- Runner command: confirm `verify.command` and `verify.e2e_command` in
+  `givn/commands.yaml`.
+- Justify non-obvious technical choices.
+
+## Verification Binding (mandatory)
+
+There is no step runner. Every scenario is proven by a native target, named by
+its binding tag. Add a `## Verification Binding` section with one row per
+scenario:
+
+| Scenario title | Binding tag | Target file / check / host | Targeted command | Expected RED failure |
+|---|---|---|---|---|
+| Root filesystem is wiped on every boot | `@host:thiniel` | `tests/assertions/thiniel-boot-invariants.nix` (fired by host eval) | `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` | the new assertion fails against the current config (non-zero eval) until the config change lands |
+
+For each row, record:
+
+- the exact target file (unit test, assertion file, VM test, deploy test) or
+  the flake check / host name the binding resolves to;
+- the targeted command from `docs/GIVN-VERIFICATION.md` for that binding kind;
+- the concrete assertion the target will make, and why it fails before the
+  implementation (RED) — an assertion that is a tautology cannot go RED.
+
+Binding rules:
+
+- `@check:<name>` — `nix build .#checks.<system>.<name>`; the name must exist
+  in the flake `checks` output.
+- `@host:<name>` — the host configuration evaluates; this fires the
+  `tests/assertions` module invariants. Name the assertion file the scenario
+  relies on.
+- `@deploy:<name>` — `pytest tests/deploy/test_<name>.py`; the file must exist.
+- `@e2e` — MUST bind to `@check:integration-*` (a `pkgs.testers.runNixOSTest`),
+  `@host:`, or `@deploy:`. A pure evaluation standing in for a real boot is
+  not e2e.
+- When the change introduces a new target, name where it is wired in:
+  `tests/unit/default.nix` + `flake.nix`, `tests/assertions/default.nix`, or
+  `tests/integration/default.nix`.
+
+`scripts/givn-spec-trace.py` enforces that every scenario is bound to an
+existing target and that every `@e2e` scenario binds to a VM/host/deploy
+target.
+
+## Domain traceability
+
+Read the selected use-case `usecase.md` and any linked ideation change seed.
+Record a traceability table mapping use-case guarantees, rules, events, and
+confirmed Persona impact to technical decisions, capabilities, and E2E
+evidence. Actors in scenarios remain distinct from Personas; Persona impact is
+review context, not a replacement for an actor interaction.
+
+## Decisions ledger (mandatory)
+
+Add a `## Decisions` section resolving the proposal's open questions. Every
+`D<n>` either appears there as `Decides D<n>: <decision> — <where it is
+realized>`, or is explicitly carried with a named owner. A question sourced
+from an ideation seed keeps its seed reference (`Decides D2 (seed Q5): …`). An
+unresolved, unrecorded `D<n>` is a design-review finding.
+
+## Version freshness (mandatory)
+
+Never write a nixpkgs channel, kernel, package, or runtime version from
+memory. Training data has an unknown cutoff — a remembered "current" version
+can now be outdated or end-of-life. For every versioned choice, either state
+"latest stable" explicitly, or look up the current value now and record it
+with what was checked (e.g. "nixpkgs 26.05 — checked via `nix flake
+metadata`"). A bare specific version with no lookup note and no
+"latest/LTS" designation is an unverified guess.
+
+## Local runnability (mandatory)
+
+The system MUST be evaluable and testable locally, fully, with one command.
+"The evaluation had a technical problem so we tested something weaker" is not
+an acceptable outcome — it is a design gap.
+
+- **Local run command**: the single command that evaluates/builds the affected
+  hosts (e.g. `nix flake check --no-build`, or `nixos-rebuild build --flake
+  .#<host>`).
+- **VM runnability**: name the `*-vm` configuration that boots locally
+  (`nixos-vm-minimal` is the reference) and the integration check that runs
+  it. State explicitly when a scenario cannot be exercised without specific
+  hardware, and record the operator decision that permits the deferral.
+- **Anticipated obstacles get a named fix**: if you can foresee a technical
+  obstacle to verifying a scenario (a service that only starts after a real
+  boot, a secret that needs a host key, a port that conflicts in the VM), name
+  the concrete fix here. A scenario blocked on an undesigned obstacle during
+  implementation is a design gap, not a reason to assert something weaker.
+
+## Deployment & rollback (dangerous areas)
+
+If the change touches a dangerous area — `boot.loader`, `networking`,
+`fileSystems`/disko, `environment.persistence`/impermanence, kernel, or secret
+wiring — design.md MUST carry a `## Deployment & Rollback` section with a
+concrete rollback command and the warning that the change needs a tested
+rollback path. Never change `system.stateVersion`/`home.stateVersion`;
+`hardware.nix` is read-only unless the change is explicitly a hardware change.
+
+## Canonical verification policy
+
+Read `docs/GIVN-VERIFICATION.md` and `givn instructions specs --change
+<change-id>` before designing verification. They own the binding tags, the
+runners, the targeted run commands, and the `@e2e` scope. This skill owns the
+technical design fields and the verification-binding table above.
+
+## Black-Box-First policy
+
+Prefer the real interface. For every internal test retained, answer the
+question: **which case this test covers that the E2E does not**? Without a
+concrete answer, use the E2E scenario instead of adding a weaker duplicate.
+
+## Verify command
+
+Unit/integration:
+```
+{{VERIFY_COMMAND}}
+```
+
+E2E smoke tests:
+```
+verify.e2e_command (configured in givn/commands.yaml)
+```

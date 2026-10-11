@@ -1,0 +1,80 @@
+---
+name: givn-spec
+description: Write Gherkin .feature delta files for a givn change — observable behaviour in domain language, no implementation detail.
+---
+
+# givn-spec
+
+**Dialog policy:** for every user-facing question, follow the effective policy from `givn instructions dialog`; load it before this context's first question.
+
+Write the Gherkin spec delta for change `{{CHANGE_ID}}`.
+
+## Context
+
+- Delta spec location: `givn/changes/{{CHANGE_ID}}/specs/<usecase-id>/<capability>.feature`
+- Instructions: run `givn instructions specs --change {{CHANGE_ID}}`
+- Proposal (WHY): `givn/changes/{{CHANGE_ID}}/proposal.md`
+- Permanent specs: `givn/specs/`
+
+## Use-case context
+
+Before writing a delta, read the owning `givn/specs/<usecase-id>/usecase.md`
+or the ideation change seed that names it. Preserve its goal, guarantees,
+rules, typed relationships, Persona references, and capability interaction
+inventory. Gherkin names domain actors and observable actions; it never embeds
+Persona biographies. If this is a new capability, create or update the
+complete change-side `usecase.md` under the use-case ID selected by routing.
+
+## Delta tags
+
+| Tag | Scope | Meaning |
+|---|---|---|
+| `@givn.delta` | Feature | Marks this as a delta document |
+| `@<capability>` | Feature | Capability identifier (kebab-case) |
+| `@givn.added` | Scenario | Append to permanent spec (default) |
+| `@givn.modified` | Scenario | Replace scenario by title |
+| `@givn.removed` | Scenario | Delete scenario by title |
+| `@wip` | Scenario | The bound target is not yet implemented |
+
+## Binding tags
+
+Every scenario carries exactly one binding tag naming the native target that
+proves it: `@check:<name>` (a flake check), `@host:<name>` (a host
+configuration evaluation), or `@deploy:<name>` (a deploy test). `@e2e`
+scenarios MUST bind to `@check:integration-*`, `@host:<name>`, or
+`@deploy:<name>`. `docs/GIVN-VERIFICATION.md` is the canonical source.
+
+## Rules
+
+- Scenarios assert observable host/system state in domain language
+  (Given/When/Then): a service active and listening, a firewall decision, a
+  file/user/group/systemd unit, a materialised secret, or evaluation/boot
+  state. No module paths, option names, helper functions, or target mechanics.
+- One scenario = one observable behaviour.
+- `@givn.removed` scenarios include exactly one placeholder step.
+- On archive, all `@givn.*` tags are stripped automatically.
+  The `@e2e` tag is preserved (it is not a `@givn.*` tag).
+
+## Canonical verification policy
+
+Before writing any scenario, read:
+
+```sh
+givn instructions specs --change {{CHANGE_ID}}
+```
+
+and `docs/GIVN-VERIFICATION.md`. They are the normative source for the binding
+tags, the runners, and the targeted run commands. This skill only choreographs
+when to read them and how to write the delta; it does not restate the policy.
+
+## Verify command
+
+Unit/integration:
+```
+{{VERIFY_COMMAND}}
+```
+
+E2E smoke tests:
+```
+verify.e2e_command (configured in givn/config.yaml)
+```
