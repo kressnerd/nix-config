@@ -17,6 +17,7 @@ in
         ".local/share/netcup-scp"
         ".local/share/opencode"
         ".cache/opencode"
+        ".omp"
       ];
       files = [
         ".bash_history"

@@ -23,6 +23,10 @@
           message = "thiniel: OpenCode 2.x (>= 2) must be installed";
         }
         {
+          assertion = hmHasPkg "omp";
+          message = "thiniel: Oh My Pi (omp) must be installed via Home Manager";
+        }
+        {
           assertion = config.networking.networkmanager.enable;
           message = "thiniel: networking.networkmanager must be enabled (desktop host)";
         }
