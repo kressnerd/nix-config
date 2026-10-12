@@ -97,24 +97,34 @@ corpus by this change; ideation topic `infrastructure-growth`). Capability:
         $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath   -> HOST_OK
         $ nix build .#checks.x86_64-linux.unit-helpers --no-link   -> UNIT_OK
         ```
-  - [ ] COMMIT: `<hash>` — `feat(permitted-identity-selection): a device declares only the identities whose material it holds` (one commit for RED+GREEN+REFACTOR)
+  - [x] COMMIT: `dfec80f` — `feat(permitted-identity-selection): a device declares only the identities whose material it holds` (one commit for RED+GREEN+REFACTOR)
 
-- [ ] Scenario: `The work laptop keeps its per-purpose identity selection` (`@host:J6G6Y9JK7L`)
-  - [ ] RED: extend `tests/assertions/J6G6Y9JK7L-invariants.nix` so the MacBook must declare its three include files, keep its identity file, its workspace identity configuration and its three work connection entries; run the targeted command. Must fail for the expected reason.
+- [x] Scenario: `The work laptop keeps its per-purpose identity selection` (`@host:J6G6Y9JK7L`)
+  - [x] RED: extended `tests/assertions/J6G6Y9JK7L-invariants.nix` with the MacBook's identity file, its workspace identity configuration, its three work connection entries and its three include files. Targeted run:
         ```
-        <!-- paste the targeted command + non-zero output -->
+        $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath
+        error:
+               Failed assertions:
+               - daniel.kressner profile: J6G6Y9JK7L: the three manually maintained work-laptop ssh configuration files must remain included, got []
+        exit 1
         ```
-  - [ ] GREEN: declare the MacBook's include files in its host user module.
-        Files created/modified: <!-- list them -->
-        Re-run the targeted command. Must pass.
+  - [x] GREEN: `home/dan/J6G6Y9JK7L.nix` declares the MacBook's three include files.
+        Files created/modified: `home/dan/J6G6Y9JK7L.nix`, `tests/assertions/J6G6Y9JK7L-invariants.nix`.
+        Re-run:
         ```
-        <!-- paste GREEN evidence -->
+        $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath   -> MACBOOK_OK (exit 0)
+        $ nix eval --json .#darwinConfigurations.J6G6Y9JK7L.config.home-manager.users."daniel.kressner".programs.ssh.includes
+        ["config.d/company","config.d/client002","config.d/nix-builder"]
+        $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath   -> HOST_OK
+        $ nix build .#checks.x86_64-linux.unit-helpers --no-link   -> UNIT_OK
         ```
-  - [ ] REFACTOR: no behaviour change; re-run. Must still pass.
+  - [x] REFACTOR: no behaviour change; changed files formatted with the repository's pinned `nixfmt` and re-verified.
         ```
-        <!-- paste REFACTOR evidence -->
+        $ nixfmt home/dan/J6G6Y9JK7L.nix tests/assertions/J6G6Y9JK7L-invariants.nix   -> FORMATTED
+        $ nix build .#checks.x86_64-linux.lint-deadnix .#checks.x86_64-linux.lint-statix .#checks.x86_64-linux.lint-nixfmt --no-link   -> LINTS_OK
+        $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath   -> MACBOOK_OK
         ```
-  - [ ] COMMIT: `<hash>` — `<message>` (one commit for RED+GREEN+REFACTOR)
+  - [ ] COMMIT: `<hash>` — `feat(permitted-identity-selection): the work laptop keeps its identity surface` (one commit for RED+GREEN+REFACTOR)
 
 ---
 

@@ -258,5 +258,37 @@
       assertion = !config.services.gpg-agent.enableSshSupport;
       message = "emacs-doom: services.gpg-agent.enableSshSupport must be false to prevent hijacking macOS SSH_AUTH_SOCK";
     }
+    # --- cli/ssh: identity selection ---
+    # Scenario: The work laptop keeps its per-purpose identity selection.
+    {
+      assertion =
+        config.programs.ssh.settings."github-personal".data.IdentityFile
+        == "~/.ssh/id_ed25519_personal_2026-10-04";
+      message = "J6G6Y9JK7L: the private-repository connection must keep its per-purpose identity file, got ${
+        config.programs.ssh.settings."github-personal".data.IdentityFile
+      }";
+    }
+    {
+      assertion =
+        lib.hasInfix "ssh -i ~/.ssh/id_ed25519_personal_2026-10-04 -o IdentitiesOnly=yes"
+          config.sops.templates."git-personal".content;
+      message = "J6G6Y9JK7L: the workspace identity configuration must keep its per-purpose identity file";
+    }
+    {
+      assertion =
+        config.programs.ssh.settings ? "github-company"
+        && config.programs.ssh.settings ? "github-client001"
+        && config.programs.ssh.settings ? "bitbucket-client002";
+      message = "J6G6Y9JK7L: the work identity connection entries must remain declared";
+    }
+    {
+      assertion =
+        config.programs.ssh.includes == [
+          "config.d/company"
+          "config.d/client002"
+          "config.d/nix-builder"
+        ];
+      message = "J6G6Y9JK7L: the three manually maintained work-laptop ssh configuration files must remain included, got ${builtins.toJSON config.programs.ssh.includes}";
+    }
   ];
 }
