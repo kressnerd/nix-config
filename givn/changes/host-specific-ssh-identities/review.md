@@ -195,14 +195,28 @@ $ givn archive --change host-specific-ssh-identities     # two files unstaged
   ✗ verify: command './scripts/givn-verify.sh' exited with status: 1
 ```
 
-Operator decision: the two `private.nix` files must not be committed; their
-contents stay out of git history, and they are restored in the working tree
-(staged, as before) for the evaluation. Consequence: this change is **not
-archived** — it stays in `givn/changes/host-specific-ssh-identities/` with every
-artifact complete and this review signed off. Unblock condition:
+Operator decision: the two `private.nix` files must not be committed — they exist
+only so that `nix` can evaluate `cupix001` and `adlerkopf` — and
+`docs/plans/private-data-remediation-plan.md` must not be committed either (it
+quotes the leaked values it plans to remove). The private files are therefore
+unstaged in the working tree, where `.gitignore` keeps them.
+
+Consequence: this change is **not archived** — it stays in
+`givn/changes/host-specific-ssh-identities/` with every artifact complete and
+this review signed off. With the operator's pending work committed (`d8957fc`
+flake inputs, `7e2cf9b` ideation topic and personas) the archive's dirty-tree
+check now reports exactly one item:
+
+```
+$ givn archive --change host-specific-ssh-identities
+error: archive blocked: the project has uncommitted work: docs/plans/private-data-remediation-plan.md
+```
+
+Two unblock conditions, in order: (1) that plan file leaves `git status` (moved
+outside the repository, or ignored) while its content stays uncommitted; (2)
 `hosts/{cupix001,adlerkopf}` stop requiring a path literal inside the git source
-for their private values (for example a sops-provided or runtime path); then a
-clean tree passes `./scripts/givn-verify.sh` and `givn archive` completes. The
-in-flight `docs/plans/private-data-remediation-plan.md` owns that remediation.
+for their private values, so an unstaged `private.nix` is still visible to `nix`
+(for example a private flake input per the plan's Strategy C). Then
+`./scripts/givn-verify.sh` passes on a clean tree and `givn archive` completes.
 
 REVIEW: PASS
