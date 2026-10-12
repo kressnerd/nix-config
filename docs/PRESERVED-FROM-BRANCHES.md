@@ -82,3 +82,20 @@ git bundle create ~/dev/PRIVATE/nix-config-allrefs-2026-10-12.bundle --all
 Restore with `git clone ~/dev/PRIVATE/nix-config-allrefs-2026-10-12.bundle <dir>`
 or `git fetch <bundle> <ref>`. Keep it until the private-data remediation's
 history rewrite has completed and its own mirror backup is no longer needed.
+
+## Removal
+
+Once the content above was in `main` and the bundle was verified, the branches
+were removed on 2026-10-12:
+
+- the two linked worktrees (`/home/dan/.roo/worktrees/nix-config-{f8e9n,geph2}`)
+  and every local branch (`backup-before-squash`, `backup-f8`, `backup-ge`,
+  `refactor-dir`, `worktree/roo-f8e9n`, `worktree/roo-geph2`);
+- the two published branches on `origin` (`refactor-dir`, `wip/luks`), which
+  also removes their pre-remediation content from the public remote before the
+  history rewrite.
+
+`main` is the only branch left, locally and on `origin`.
+
+The stash (`refs/stash`, holding the last real `hosts/*/private.nix` values) is
+untouched and is not pushed; it is captured in the bundle.
