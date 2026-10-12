@@ -165,7 +165,7 @@ corpus by this change; ideation topic `infrastructure-growth`). Capability:
         ```
         $ ./scripts/givn-verify-e2e.sh   -> [givn-verify-e2e] OK (exit 0)
         ```
-  - [ ] COMMIT: `<hash>` — `test(e2e): a booted device resolves private repositories to the identity it declares` (one commit)
+  - [x] COMMIT: `8fd175a` — `test(e2e): a booted device resolves private repositories to the identity it declares` (one commit)
 
 ## Live confirmation on the real device
 

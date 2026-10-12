@@ -61,11 +61,14 @@ guarantee that the correct identity and SSH key are strictly isolated:
 1. **Explicit Key Isolation (`core.sshCommand`):**
    ```gitconfig
    [core]
-       sshCommand = "ssh -i ~/.ssh/id_ed25519_personal_2026-10-04 -o IdentitiesOnly=yes"
+       sshCommand = "ssh -i <the device's declared identity file> -o IdentitiesOnly=yes"
    ```
    Setting `sshCommand` with `-o IdentitiesOnly=yes` guarantees that SSH uses only the
    explicitly configured identity file for operations inside that directory tree, preventing
-   the SSH agent from offering arbitrary other keys.
+   the SSH agent from offering arbitrary other keys. The path is rendered from the device's
+   own declaration (`myHome.ssh.personalIdentityFile`), so each device reaches private
+   repositories with the key it holds — `~/.ssh/id_ed25519_personal_2026-10-04` on the work
+   MacBook, `~/.ssh/id_ed25519` on thiniel.
 
 2. **Transparent URL Rewriting (`url.<base>.insteadOf`):**
    ```gitconfig
@@ -84,35 +87,44 @@ Manages SSH client configuration, host aliases, agent lifecycle, and OS keychain
 
 ### Host Aliases
 
-SSH host blocks correspond to the identities rewritten by Git:
+SSH host blocks correspond to the identities rewritten by Git. The identity
+selection is declared per device in the host's user module
+(`home/dan/<host>.nix`), and the feature module renders from that declaration:
 
 ```nix
+# Device declaration (example: thiniel)
+myHome.ssh = {
+  personalIdentityFile = "~/.ssh/id_ed25519";
+  includedConfigs = [ ];
+};
+```
+
+- `github-personal` is always rendered and takes its `IdentityFile` from
+  `myHome.ssh.personalIdentityFile`, so a device presents the key it holds.
+- The work identity blocks (`github-company`, `github-client001`,
+  `bitbucket-client002`) are rendered only where the device declares that
+  identity's secret material (`git/<identity>/name`). The work MacBook declares
+  all three and renders all three; thiniel declares none and renders none.
+- `programs.ssh.includes` comes from `myHome.ssh.includedConfigs`: the work
+  MacBook declares its three manually maintained files
+  (`config.d/company`, `config.d/client002`, `config.d/nix-builder`), thiniel
+  declares none.
+
+```nix
+# Rendered by home/dan/features/cli/ssh.nix
 programs.ssh.settings = {
   "github-personal" = {
     HostName = "github.com";
     User = "git";
-    IdentityFile = "~/.ssh/id_ed25519_personal_2026-10-04";
+    IdentityFile = config.myHome.ssh.personalIdentityFile;
     IdentitiesOnly = true;
   };
-
+};
+// lib.optionalAttrs (config.sops.secrets ? "git/company/name") {
   "github-company" = {
     HostName = "github.com";
     User = "git";
     IdentityFile = "~/.ssh/id_ed25519_company_2025-06-18";
-    IdentitiesOnly = true;
-  };
-
-  "github-client001" = {
-    HostName = "github.com";
-    User = "git";
-    IdentityFile = "~/.ssh/id_ed25519_client001_2025-07-22";
-    IdentitiesOnly = true;
-  };
-
-  "bitbucket-client002" = {
-    HostName = "bitbucket.org";
-    User = "git";
-    IdentityFile = "~/.ssh/id_ed25519_client002_2026-01-13";
     IdentitiesOnly = true;
   };
 };
