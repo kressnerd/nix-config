@@ -267,6 +267,6 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
       procedure in `docs/plans/private-data-remediation-plan.md` §9.1 from a
       fresh clone after a mirror backup, then confirms the published history
       records no operational value. This change's tasks end here.
-- [ ] **Operational responses (out of scope).** New address from the provider,
+- [x] **Operational responses (out of scope).** New address from the provider,
       provider token rotation, host-key regeneration, SSH-port move — actions on
       live providers and hosts, tracked separately.
