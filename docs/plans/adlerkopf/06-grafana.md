@@ -77,7 +77,7 @@ as recovery in case of login issues post-migration.
         {
           name = "Local Mosquitto";
           type = "grafana-mqtt-datasource";
-          url = "tcp://REDACTED-HOME-LAN-SUBNET:1883";
+          url = "tcp://192.0.2.15:1883";
           jsonData = { subscriptionQos = 0; };
           # secureJsonData.password injected separately if broker requires auth
         }
@@ -163,7 +163,7 @@ Grafana's provisioner imports them on startup; `allowUiUpdates = false` prevents
 ## Rollback
 
 ```fish
-nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild switch --flake .#adlerkopf --target-host dan@192.0.2.15
 # (with services.grafana.enable = false + caddy vhost removed)
 ```
 

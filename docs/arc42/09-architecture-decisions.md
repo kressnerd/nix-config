@@ -13,12 +13,12 @@ scaffold ADR files.
 
 | ADR | Title | Status | Date | File |
 |---|---|---|---|---|
-| — | *No qualified decisions yet* | — | — | — |
+| [ADR-0001](adr/ADR-0001-private-data-strategy.md) | Supply private operational values through an overridable flake input | accepted | 2026-10-12 | [ADR-0001-private-data-strategy.md](adr/ADR-0001-private-data-strategy.md) |
 
-The register is empty because no candidate passed the qualification gate (see
-below). An empty register is the correct outcome for a baseline whose
-foundational choices are still owned by their existing artifacts; it is not a
-missing artifact.
+The register holds one accepted decision, from the change
+`private-data-remediation`. The other foundational choices of the baseline are
+still owned by their existing artifacts (see the candidate assessment below); an
+empty candidate row is not a missing artifact.
 
 ## Qualification gate
 

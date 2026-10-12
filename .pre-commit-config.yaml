@@ -1,0 +1,17 @@
+# Refuse a revision that would record operational data before it leaves the
+# machine. The rule is `scripts/private_data_hygiene.py`; `gitleaks` adds
+# entropy-based detection. Both come from the flake's nixpkgs pin (see
+# `shell.nix`), so no tool version is pinned here.
+repos:
+  - repo: local
+    hooks:
+      - id: private-data-hygiene
+        name: refuse recorded operational data
+        entry: python3 scripts/private_data_hygiene.py
+        language: system
+        files: .*
+      - id: gitleaks
+        name: gitleaks
+        entry: gitleaks detect --no-banner --redact
+        language: system
+        pass_filenames: false

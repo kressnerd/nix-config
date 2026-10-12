@@ -51,7 +51,7 @@ mosquitto/passwd-file: |
     persistence = true;
     listeners = [
       {
-        address = "REDACTED-HOME-LAN-SUBNET";  # LAN only — never 0.0.0.0 on this listener
+        address = "192.0.2.15";  # LAN only — never 0.0.0.0 on this listener
         port = 1883;
         settings = {
           password_file = config.sops.secrets."mosquitto/passwd-file".path;
@@ -97,20 +97,20 @@ ssh pi@<pi-ip> sudo systemctl stop mosquitto
 
 # 2. Copy the persistence DB to adlerkopf's persist volume
 scp pi@<pi-ip>:/var/lib/mosquitto/mosquitto.db \
-    dan@REDACTED-HOME-LAN-SUBNET:/persist/system/var/lib/mosquitto/mosquitto.db
+    dan@192.0.2.15:/persist/system/var/lib/mosquitto/mosquitto.db
 
 # 3. Fix ownership (mosquitto UID may differ — check /var/lib/nixos/uid-map)
-ssh dan@REDACTED-HOME-LAN-SUBNET \
+ssh dan@192.0.2.15 \
     sudo chown mosquitto:mosquitto /persist/system/var/lib/mosquitto/mosquitto.db
 
 # 4. Start Mosquitto on adlerkopf
-ssh dan@REDACTED-HOME-LAN-SUBNET sudo systemctl start mosquitto
+ssh dan@192.0.2.15 sudo systemctl start mosquitto
 ```
 
 Verify retained messages:
 
 ```fish
-mosquitto_sub -h REDACTED-HOME-LAN-SUBNET -u nodered -P <pw> -t '#' -v --retained-only -C 20
+mosquitto_sub -h 192.0.2.15 -u nodered -P <pw> -t '#' -v --retained-only -C 20
 ```
 
 ## New assertions
@@ -123,17 +123,17 @@ mosquitto_sub -h REDACTED-HOME-LAN-SUBNET -u nodered -P <pw> -t '#' -v --retaine
 ## Acceptance criteria
 
 - [ ] `nix flake check --no-build` green
-- [ ] `mosquitto_pub -h REDACTED-HOME-LAN-SUBNET -u sensor1 -P <pw> -t sensors/sensor1/temp -m 21.5 -r`
-- [ ] `mosquitto_sub -h REDACTED-HOME-LAN-SUBNET -u nodered -P <pw> -t sensors/#` receives the message
+- [ ] `mosquitto_pub -h 192.0.2.15 -u sensor1 -P <pw> -t sensors/sensor1/temp -m 21.5 -r`
+- [ ] `mosquitto_sub -h 192.0.2.15 -u nodered -P <pw> -t sensors/#` receives the message
 - [ ] Retained topic from Pi appears on a fresh subscribe without a new publish
-- [ ] Anonymous connection rejected: `mosquitto_sub -h REDACTED-HOME-LAN-SUBNET -t test` → error
+- [ ] Anonymous connection rejected: `mosquitto_sub -h 192.0.2.15 -t test` → error
 - [ ] Port 1883 not reachable from WAN (test from outside LAN or via WG peer)
 - [ ] State survives a reboot (`mosquitto.db` persisted, retained messages intact)
 
 ## Rollback
 
 ```fish
-nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild switch --flake .#adlerkopf --target-host dan@192.0.2.15
 # (with services.mosquitto.enable = false)
 # Pi MQTT keeps running until clients are repointed
 ```

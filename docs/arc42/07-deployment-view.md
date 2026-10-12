@@ -2,8 +2,9 @@
 
 Mapping of the declared configurations to infrastructure. The repository
 declares the host configurations; it does not record live deployment state. All
-addresses below are defaults or placeholders from non-committed `private.nix`
-files, not values verified in this repository.
+addresses below are documentation-range defaults from `hosts/<host>/options.nix`
+or values from the `private` flake input, not values verified in this
+repository.
 
 ## Infrastructure level 1
 
@@ -16,7 +17,7 @@ files, not values verified in this repository.
   </defs>
 
   <rect x="12" y="12" width="470" height="396" rx="10" fill="none" stroke="var(--border)" stroke-dasharray="4 4"/>
-  <text x="26" y="36" font-size="14" fill="var(--fg)">Owner site (one LAN, addresses from private.nix)</text>
+  <text x="26" y="36" font-size="14" fill="var(--fg)">Owner site (one LAN, addresses from the private input)</text>
 
   <rect x="34" y="56" width="200" height="96" rx="8" fill="none" stroke="var(--border)"/>
   <text x="46" y="82" font-size="14" fill="var(--fg)">J6G6Y9JK7L</text>
@@ -55,7 +56,7 @@ files, not values verified in this repository.
   <text x="558" y="82" font-size="14" fill="var(--fg)">cupix001 (netcup VPS, x86_64-linux)</text>
   <text x="558" y="104" font-size="12" fill="var(--muted)">declared skeleton: hostName, firewall on,</text>
   <text x="558" y="122" font-size="12" fill="var(--muted)">sops, disko; no services, no VPN, no ingress</text>
-  <text x="558" y="144" font-size="12" fill="var(--muted)">resolve the actual values in private.nix</text>
+  <text x="558" y="144" font-size="12" fill="var(--muted)">resolve the actual values in the private input</text>
 
   <rect x="544" y="176" width="340" height="72" rx="8" fill="none" stroke="var(--border)"/>
   <text x="558" y="202" font-size="14" fill="var(--fg)">netcup SCP account firewall</text>
@@ -80,7 +81,7 @@ files, not values verified in this repository.
 | `adlerkopf` | Home server | `nixos-anywhere` first install (`docs/ADLERKOPF-DEPLOY-RUNBOOK.md`), then `nixos-rebuild --target-host` |
 | `adlerkopf` vmVariant (`adlerkopf.vmMode = true`) | A declared VM variant that relaxes the hardware assertions (no LUKS/TPM2/lanzaboote) | **Not materialized**: no flake attribute builds it, and the `integration-adlerkopf` check boots a synthetic machine with the same services instead |
 | `nixos-vm-minimal` | Minimal aarch64 VM (test and provisioning template target) | `disko` on `/dev/vda`, LUKS root; `scripts/deploy-vm.sh` |
-| `cupix001` | netcup KVM VPS, intended edge gateway | `disko` on `/dev/vda`; values from non-committed `private.nix` |
+| `cupix001` | netcup KVM VPS, intended edge gateway | `disko` on `/dev/vda`; values from the `private` flake input |
 | netcup SCP account firewall | External firewall state for the VPS | `scripts/netcup_firewall.py` run from thiniel inside `nix develop` |
 | Colmena hive | Declared fleet-deployment path | **Empty** — no node is registered |
 
@@ -96,8 +97,8 @@ files, not values verified in this repository.
 | State model | Initrd rollback service recreates `@root` from `@root-blank`; persistent paths declared in `hosts/adlerkopf/impermanence.nix` |
 | Services | `openssh` (key-only), `caddy` (custom build with the netcup DNS plugin, no virtual hosts), `adguardhome` (declarative settings, `mutableSettings = false`), networkd static address, nftables firewall |
 | Secrets | `hosts/adlerkopf/secrets.yaml`; age key from the SSH host key under `/persist/system` |
-| Network (defaults) | Static `REDACTED-HOME-LAN-SUBNET/24` on `eno1`, gateway `REDACTED-HOME-LAN-SUBNET`, DNS `1.1.1.1`/`9.9.9.9`; overridden by `private.nix` |
-| Build dependency | Non-committed `hosts/adlerkopf/private.nix`; the host does not evaluate without it |
+| Network (defaults) | Documentation-range defaults: static `192.0.2.10/24` on `eno1`, gateway `192.0.2.1`, DNS `1.1.1.1`/`9.9.9.9`; the real values come from the `private` flake input |
+| Build dependency | The `private` flake input; the public default is `private-stub/`, so the host evaluates without private access |
 
 ### `thiniel` (owner's laptop)
 
@@ -121,7 +122,7 @@ files, not values verified in this repository.
 | Services | **None.** No OpenSSH, no ingress, no DNS, no VPN |
 | Secrets | `hosts/cupix001/secrets.yaml` contains a single `placeholder` key; age key from the SSH host key under `/persist` |
 | Persistence | `modules/nixos/persistence` is imported but `mySystem.persistence.enable` is never set, so it is inert |
-| Ingress / VPN | **Planned, not started.** `cupix001` is the intended edge ingress gateway; the design document `docs/edge-all.md` and the cupix001 plan set describe Caddy forward-auth, derper, WireGuard, CrowdSec, nftables and Authentik. Sequenced after the private-data remediation that must precede a public release ([`docs/plans/private-data-remediation-plan.md`](../plans/private-data-remediation-plan.md), not started). None of it exists in the working tree. |
+| Ingress / VPN | **Planned, not started.** `cupix001` is the intended edge ingress gateway; the design document `docs/edge-all.md` and the cupix001 plan set describe Caddy forward-auth, derper, WireGuard, CrowdSec, nftables and Authentik. Sequenced after the private-data remediation that must precede a public release ([`docs/plans/private-data-remediation-plan.md`](../plans/private-data-remediation-plan.md), now the change `private-data-remediation`). None of it exists in the working tree. |
 
 ### `J6G6Y9JK7L` (work macOS workstation)
 

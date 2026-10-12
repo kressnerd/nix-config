@@ -35,8 +35,8 @@ wg genkey | tee /tmp/wg-<name>.key | wg pubkey > /tmp/wg-<name>.pub
 { config, lib, ... }: let
   listenPort = 51820;
   wgIface = "wg0";
-  serverIP = "REDACTED-WIREGUARD-SUBNET";
-  subnet = "REDACTED-WIREGUARD-SUBNET/24";
+  serverIP = "10.0.0.1";
+  subnet = "10.0.0.0/24";
 in {
   sops.secrets."wireguard/server-private-key" = {
     owner = "root";
@@ -52,11 +52,11 @@ in {
     peers = [
       {
         publicKey = "<phone-public-key>";
-        allowedIPs = [ "REDACTED-WIREGUARD-SUBNET/32" ];
+        allowedIPs = [ "10.0.0.10/32" ];
       }
       {
         publicKey = "<laptop-public-key>";
-        allowedIPs = [ "REDACTED-WIREGUARD-SUBNET/32" ];
+        allowedIPs = [ "10.0.0.20/32" ];
       }
     ];
   };
@@ -84,13 +84,13 @@ in {
 ```ini
 [Interface]
 PrivateKey = <client-private-key>
-Address = REDACTED-WIREGUARD-SUBNET/24
-DNS = REDACTED-HOME-LAN-SUBNET    # AdGuard Home via tunnel
+Address = 10.0.0.10/24
+DNS = 192.0.2.15    # AdGuard Home via tunnel
 
 [Peer]
 PublicKey = <server-public-key>
 Endpoint = <adlerkopf-public-ip>:51820
-AllowedIPs = 0.0.0.0/0, ::/0     # full tunnel; use REDACTED-WIREGUARD-SUBNET/24,REDACTED-HOME-LAN-SUBNET/24 for split
+AllowedIPs = 0.0.0.0/0, ::/0     # full tunnel; use 10.0.0.0/24,192.0.2.0/24 for split
 PersistentKeepalive = 25
 ```
 
@@ -98,7 +98,7 @@ Distribute via 1Password or QR code (qrencode). **Never commit client private ke
 
 ## Router change (manual step, after acceptance)
 
-1. Add port-forward: UDP `51820` WAN → `REDACTED-HOME-LAN-SUBNET:51820`
+1. Add port-forward: UDP `51820` WAN → `192.0.2.15:51820`
 2. Remove old OpenVPN port-forward (UDP `1194`) once the new WG endpoint is smoke-tested
 
 ## New assertions
@@ -114,8 +114,8 @@ Distribute via 1Password or QR code (qrencode). **Never commit client private ke
 - [ ] `nix flake check --no-build` green
 - [ ] `sudo wg show wg0` shows server listening on UDP 51820 with peer entries
 - [ ] One peer connects from outside the LAN (e.g. phone on mobile data)
-- [ ] Peer pings `REDACTED-HOME-LAN-SUBNET` (LAN gateway) via tunnel
-- [ ] Peer resolves `grafana.lan` → REDACTED-HOME-LAN-SUBNET (AdGuard via tunnel DNS)
+- [ ] Peer pings `192.0.2.1` (LAN gateway) via tunnel
+- [ ] Peer resolves `grafana.lan` → 192.0.2.15 (AdGuard via tunnel DNS)
 - [ ] Peer reaches the internet (NAT masquerade working)
 - [ ] No port 51820 leakage on `lo` or non-WAN interfaces
 
@@ -123,7 +123,7 @@ Distribute via 1Password or QR code (qrencode). **Never commit client private ke
 
 ```fish
 # Disable WG interface:
-nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild switch --flake .#adlerkopf --target-host dan@192.0.2.15
 # (with networking.wireguard.interfaces = {} + UDP 51820 closed)
 # Revert router port-forward to old PiVPN IP
 ```

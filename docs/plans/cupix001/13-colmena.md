@@ -35,7 +35,7 @@
     cupix001 = {
       imports = [ ./hosts/cupix001 ];
       deployment = {
-        targetHost = "REDACTED-WIREGUARD-SUBNET";  # WireGuard tunnel IP — from private.nix; use placeholder until real values available
+        targetHost = "10.0.0.1";  # WireGuard tunnel IP — from private.nix; use placeholder until real values available
         targetUser = "dan";
         tags = [ "edge" ];
         buildOnTarget = false;  # builds happen on laptop; cupix001 has no compilers

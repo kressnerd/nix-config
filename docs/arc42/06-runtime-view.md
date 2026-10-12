@@ -32,8 +32,10 @@ sequenceDiagram
 1. Nix reads `flake.nix` and resolves inputs from `flake.lock`.
 2. For each system in `[ x86_64-linux, aarch64-linux, aarch64-darwin ]` the
    `checks` output provides `unit-helpers` (a `runCommand` that fails unless all
-   `lib.debug.runTests` cases pass) and the three lint derivations.
-3. For Linux systems the three `integration-*` checks are added; they are not
+   `lib.debug.runTests` cases pass), the three lint derivations, and
+   `private-data-hygiene` (the guard over the recorded tree plus its built-in
+   reject fixtures).
+3. For Linux systems the four `integration-*` checks are added; they are not
    built by `nix flake check` in the non-e2e scope.
 4. Every host configuration is evaluated, firing the imported assertion modules.
 
@@ -43,6 +45,58 @@ scenarios bind to a specific check. A target that does not resolve is a hard
 traceability failure (`scripts/givn-spec-trace.py`). The integration checks
 require a Linux builder with KVM; `scripts/givn-verify-e2e.sh` fails loudly
 instead of reporting a false pass on a non-Linux host.
+
+## Scenario: Private operational values at evaluation and deploy time
+
+**Trigger:** `nix flake check` on a clean clone, or a host deploy.
+
+```mermaid
+sequenceDiagram
+  participant Dev as "Operator / CI"
+  participant Flake as "flake.nix"
+  participant Priv as "inputs.private"
+  participant Stub as "private-stub module"
+  participant Real as "nix-private module"
+  participant Host as "host configuration"
+
+  Dev->>Flake: nix flake check
+  Flake->>Priv: resolve the default (path:./private-stub)
+  Priv->>Stub: no-op module + placeholder assertion
+  Stub->>Host: assert the declared network values are documentation-range
+  Note over Dev,Host: a deploy overrides the input
+  Dev->>Flake: nixos-rebuild switch --flake .#<host> --override-input private git+file:///…/nix-private
+  Flake->>Priv: resolve the override
+  Priv->>Real: nixosModules.&lt;host&gt; with the real values
+  Real->>Host: systemd.network gets the real address, gateway and resolvers
+```
+
+**Steps:**
+
+1. `flake.nix` declares `inputs.private` with the default `path:./private-stub`
+   and includes `inputs.private.nixosModules.<host>` in the matching host's
+   `modules` list.
+2. With the default, the stub module is active: it adds no values and asserts
+   that the host's declared network values are documentation-range placeholders,
+   so `nix flake check` evaluates with placeholders and no private access.
+3. A deploy passes `--override-input private git+file:///home/dan/dev/PRIVATE/nix-private`;
+   the private flake's module supplies the real values, the stub is absent, and
+   `hosts/<host>/networking.nix` renders `systemd.network` from them.
+4. The private-data guard runs over the recorded tree (the check), over the
+   staged paths (the pre-commit hook) and in CI.
+
+**Notes / verified behaviour:** the mechanism is verified by
+`@e2e @check:integration-private-data-separation`, which boots a machine whose
+network values are supplied from outside the repository and asserts the booted
+interface carries them. The failure mode of a forgotten override is a failed
+evaluation (the stub assertion), not a placeholder address applied to a host.
+The `git+file://` constraint that forces this shape is recorded in
+[chapter 2](02-architecture-constraints.md) and
+[ADR-0001](adr/ADR-0001-private-data-strategy.md).
+
+*Intended: this scenario's artifacts — the `private` input, the stub, the guard
+and the VM check — land with the change `private-data-remediation`; the deploy
+preflight that catches a forgotten override is the operator's process control,
+not a repository check.*
 
 ## Scenario: Boot with impermanence (thiniel)
 
@@ -192,6 +246,9 @@ firewall. Treat this scenario as **declared only**.
 
 **Trigger:** the operator runs a rebuild from a workstation — the runbook's
 default is `nixos-rebuild switch --flake .#adlerkopf --target-host dan@<host> --sudo`.
+For `adlerkopf` and `cupix001` the command also carries
+`--override-input private git+file:///home/dan/dev/PRIVATE/nix-private`, so the
+host is built with its real values rather than the stub's placeholders.
 
 **Steps:** build the closure on the workstation (or on the host after the
 bootstrap workaround), copy it, activate the new generation, and confirm the

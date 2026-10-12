@@ -23,3 +23,4 @@ infra/http/http-client.private.env.json
 .omp/hooks/pre/givn-attribution.js
 .githooks/commit-msg
 # givn:end:rules
+docs/plans/private-data-remediation-plan.md

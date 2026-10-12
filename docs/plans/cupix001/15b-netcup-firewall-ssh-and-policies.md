@@ -356,7 +356,7 @@ The schema matches the SCP API `FirewallPolicy` payload exactly, with an additio
 - **File**: `scripts/tests/test_netcup_firewall.py` (extend `TestArgParsing`)
 - **What to test**:
   - `parse_args(["ssh-open", "--server", "cupix001", "--source", "1.2.3.4"])` → `command == "ssh-open"`, `server == "cupix001"`, `source == "1.2.3.4"`, `port == "22"` (default)
-  - `parse_args(["ssh-open", "--server", "s", "--source", "1.2.3.4", "--port", "REDACTED-NON-STANDARD-SSH-PORT"])` → `port == "REDACTED-NON-STANDARD-SSH-PORT"`
+  - `parse_args(["ssh-open", "--server", "s", "--source", "1.2.3.4", "--port", "<SSH_PORT>"])` → `port == "<SSH_PORT>"`
   - `parse_args(["ssh-open", "--server", "s"])` → `SystemExit` (missing `--source`)
   - `parse_args(["ssh-close", "--server", "cupix001"])` → `command == "ssh-close"`, `server == "cupix001"`
   - `parse_args(["ssh-open", "--server", "s", "--source", "1.2.3.4", "--yes"])` → `yes is True`
@@ -448,7 +448,7 @@ The schema matches the SCP API `FirewallPolicy` payload exactly, with an additio
   - Created policy has `name == "ssh-temp-cupix001"`
   - Created policy has exactly one rule: `direction=INGRESS, protocol=TCP, sourceIp=203.0.113.1/32, destinationPort=22, action=ACCEPT`
   - Different server name produces different policy name: `_find_or_create_ssh_policy(..., "myserver", ...)` → `name == "ssh-temp-myserver"`
-  - Different port: `_find_or_create_ssh_policy(..., "cupix001", "10.0.0.1/32", "REDACTED-NON-STANDARD-SSH-PORT")` → `destinationPort=REDACTED-NON-STANDARD-SSH-PORT` in rule
+  - Different port: `_find_or_create_ssh_policy(..., "cupix001", "10.0.0.1/32", "<SSH_PORT>")` → `destinationPort=<SSH_PORT>` in rule
 - **Verify**: `cd scripts && python3 -m pytest tests/test_netcup_firewall.py -v -k "find_or_create_ssh_policy"` → FAIL
 - **Expected**: FAIL
 

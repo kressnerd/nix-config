@@ -117,8 +117,8 @@
 - **Test type**: integration
 - **File**: `tests/integration/cupix001-ssh-test.nix` (extend or add second test node)
 - **What to test**:
-  - Node A (`enablePublicSSH = true`): `ss -tlnp | grep ':REDACTED-NON-STANDARD-SSH-PORT'` succeeds
-  - Node B (`enablePublicSSH = false`): `ss -tlnp | grep ':REDACTED-NON-STANDARD-SSH-PORT'` fails
+  - Node A (`enablePublicSSH = true`): `ss -tlnp | grep ':<SSH_PORT>'` succeeds
+  - Node B (`enablePublicSSH = false`): `ss -tlnp | grep ':<SSH_PORT>'` fails
 - **Verify**: `nix build .#checks.x86_64-linux.integration-cupix001-ssh`
 - **Expected**: FAIL (flag-flip test not yet in test script)
 
@@ -128,6 +128,6 @@
 - **What to implement**: Two NixOS test nodes in the same `runNixOSTest`:
   - `machine_public` with `networking.cupix001.enablePublicSSH = true`
   - `machine_wg_only` with `networking.cupix001.enablePublicSSH = false`
-  - Test: `machine_public.succeed("ss -tlnp | grep ':REDACTED-NON-STANDARD-SSH-PORT'")`, `machine_wg_only.fail("ss -tlnp | grep ':REDACTED-NON-STANDARD-SSH-PORT'")`
+  - Test: `machine_public.succeed("ss -tlnp | grep ':<SSH_PORT>'")`, `machine_wg_only.fail("ss -tlnp | grep ':<SSH_PORT>'")`
 - **Verify**: `nix build .#checks.x86_64-linux.integration-cupix001-ssh`
 - **Expected**: PASS

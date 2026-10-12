@@ -16,12 +16,9 @@ here. Archived historical records keep their ID and move to
 
 ## Active records
 
-None. No candidate decision passed the qualification gate; see the chapter-09
-register and its candidate assessment.
-
 | ADR | Title | Status | Date |
 |---|---|---|---|
-| — | *No qualified decisions yet* | — | — |
+| [ADR-0001](ADR-0001-private-data-strategy.md) | Supply private operational values through an overridable flake input | accepted | 2026-10-12 |
 
 ## Archived records
 

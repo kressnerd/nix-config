@@ -26,10 +26,11 @@ the ideation topic are never presented as implemented architecture.
 
 ## Current state summary
 
-- The register in chapter 9 and the ADR directory index are **empty**: no
-  candidate decision passed the five-dimension qualification gate. Each
-  candidate is routed once to its canonical artifact in the chapter-09
-  assessment table.
+- The register in chapter 9 and the ADR directory index hold one accepted
+  record, [ADR-0001](adr/ADR-0001-private-data-strategy.md) (private operational
+  values through an overridable flake input). The remaining foundational choices
+  did not pass the five-dimension qualification gate; each is routed once to its
+  canonical artifact in the chapter-09 assessment table.
 - The repository declares five hosts: `adlerkopf`, `cupix001`, `thiniel`,
   `nixos-vm-minimal` (NixOS) and `J6G6Y9JK7L` (nix-darwin). `cupix001` is a
   skeleton with no services; the family-application requirements are

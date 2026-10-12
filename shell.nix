@@ -9,6 +9,7 @@
       nix
       home-manager
       git
+      gitleaks
 
       #sops
       #ssh-to-age

@@ -1212,6 +1212,17 @@
         "type": "github"
       }
     },
+    "private": {
+      "locked": {
+        "path": "./private-stub",
+        "type": "path"
+      },
+      "original": {
+        "path": "./private-stub",
+        "type": "path"
+      },
+      "parent": []
+    },
     "root": {
       "inputs": {
         "colmena": "colmena",
@@ -1234,6 +1245,7 @@
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
+        "private": "private",
         "score-spec-tap": "score-spec-tap",
         "sops-nix": "sops-nix",
         "stylix": "stylix",

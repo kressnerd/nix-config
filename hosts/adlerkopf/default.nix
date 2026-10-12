@@ -20,7 +20,6 @@
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
     ../../tests/assertions
-    ./private.nix
   ];
 
   nixpkgs.hostPlatform = "x86_64-linux";

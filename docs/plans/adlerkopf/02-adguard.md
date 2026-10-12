@@ -1,7 +1,7 @@
 # Phase 2 — AdGuard Home (DNS resolver)
 
 **Goal**: Replace Pi-hole on the old Pi with AdGuard Home running on adlerkopf.
-LAN clients resolve DNS via `REDACTED-HOME-LAN-SUBNET`. Blocking works. Internal `.lan` A-records resolve.
+LAN clients resolve DNS via `192.0.2.15`. Blocking works. Internal `.lan` A-records resolve.
 
 ## Files
 
@@ -30,7 +30,7 @@ LAN clients resolve DNS via `REDACTED-HOME-LAN-SUBNET`. Blocking works. Internal
       bind_host = "0.0.0.0";   # web UI; lock to LAN once behind Caddy
       bind_port = 3000;
       dns = {
-        bind_hosts = [ "REDACTED-HOME-LAN-SUBNET" "127.0.0.1" ];
+        bind_hosts = [ "192.0.2.15" "127.0.0.1" ];
         port = 53;
         upstream_dns = [
           "https://dns.quad9.net/dns-query"
@@ -42,11 +42,11 @@ LAN clients resolve DNS via `REDACTED-HOME-LAN-SUBNET`. Blocking works. Internal
         refuse_any = true;
       };
       filtering.rewrites = [
-        { domain = "adlerkopf.lan"; answer = "REDACTED-HOME-LAN-SUBNET"; }
-        { domain = "grafana.lan";   answer = "REDACTED-HOME-LAN-SUBNET"; }
-        { domain = "nodered.lan";   answer = "REDACTED-HOME-LAN-SUBNET"; }
-        { domain = "mqtt.lan";      answer = "REDACTED-HOME-LAN-SUBNET"; }
-        { domain = "vpn.lan";       answer = "REDACTED-HOME-LAN-SUBNET"; }
+        { domain = "adlerkopf.lan"; answer = "192.0.2.15"; }
+        { domain = "grafana.lan";   answer = "192.0.2.15"; }
+        { domain = "nodered.lan";   answer = "192.0.2.15"; }
+        { domain = "mqtt.lan";      answer = "192.0.2.15"; }
+        { domain = "vpn.lan";       answer = "192.0.2.15"; }
       ];
       filters = [
         { enabled = true; id = 1; name = "AdGuard DNS filter";
@@ -123,7 +123,7 @@ Manual translation required:
 ## Router DHCP change (manual step, after acceptance)
 
 Change the **primary DNS server** in the router's DHCP settings from the Pi's IP to
-`REDACTED-HOME-LAN-SUBNET`. This is the DNS cut-over. Keep Pi-hole running until smoke-test passes.
+`192.0.2.15`. This is the DNS cut-over. Keep Pi-hole running until smoke-test passes.
 
 ## New assertions
 
@@ -136,10 +136,10 @@ Change the **primary DNS server** in the router's DHCP settings from the Pi's IP
 ## Acceptance criteria
 
 - [x] `nix flake check --no-build` green
-- [ ] `dig @REDACTED-HOME-LAN-SUBNET doubleclick.net` → blocked (NXDOMAIN or 0.0.0.0)
-- [ ] `dig @REDACTED-HOME-LAN-SUBNET google.com` → real answer (upstream DoH resolves)
-- [ ] `dig @REDACTED-HOME-LAN-SUBNET grafana.lan` → REDACTED-HOME-LAN-SUBNET (rewrite works)
-- [ ] AdGuard web UI reachable at `http://REDACTED-HOME-LAN-SUBNET:3000`
+- [ ] `dig @192.0.2.15 doubleclick.net` → blocked (NXDOMAIN or 0.0.0.0)
+- [ ] `dig @192.0.2.15 google.com` → real answer (upstream DoH resolves)
+- [ ] `dig @192.0.2.15 grafana.lan` → 192.0.2.15 (rewrite works)
+- [ ] AdGuard web UI reachable at `http://192.0.2.15:3000`
 - [ ] After router DHCP DNS change: a LAN client resolves `grafana.lan` without manual DNS override
 - [ ] AdGuard state survives a reboot (query log, custom rewrites intact)
 
@@ -154,7 +154,7 @@ Change the **primary DNS server** in the router's DHCP settings from the Pi's IP
 - **Deviations from plan**:
   - `settings.bind_host` / `settings.bind_port` deprecated in current nixpkgs → replaced with top-level `services.adguardhome.host` / `services.adguardhome.port`
   - Plan specified `sops.templates` for password injection → implemented via `systemd.services.adguardhome.preStart` with `lib.mkAfter` + `yq-go` (simpler, no extra template file needed)
-  - Hardcoded IP `REDACTED-HOME-LAN-SUBNET` replaced with `config.networking.adlerkopf.lanIPv4` option reference (DRY improvement from review)
+  - Hardcoded IP `192.0.2.15` replaced with `config.networking.adlerkopf.lanIPv4` option reference (DRY improvement from review)
   - Service file placed in `hosts/adlerkopf/services/adguard.nix` as planned (introduces new `services/` subdirectory pattern)
 - **Remaining before deployment**:
   - Add bcrypt hash to `hosts/adlerkopf/secrets.yaml` via `sops hosts/adlerkopf/secrets.yaml` (human-only — agents must not run `sops`) under key `adguard/admin-bcrypt-hash`
@@ -166,6 +166,6 @@ Change the **primary DNS server** in the router's DHCP settings from the Pi's IP
 
 ```fish
 # Disable AdGuard, revert router DHCP DNS to Pi's IP — takes effect on next DHCP lease renewal
-nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild switch --flake .#adlerkopf --target-host dan@192.0.2.15
 # (with services.adguardhome.enable = false + port 53 closed)
 ```

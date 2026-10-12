@@ -2,8 +2,9 @@
 
 The fundamental choices that shape the whole configuration. Rationale lives
 with its owning artifact; this chapter states the choices and points to the
-evidence. No decision here currently qualifies as an ADR — see
-[chapter 9](09-architecture-decisions.md) for why.
+evidence. One choice here — operational-data separation — qualifies as an ADR
+([ADR-0001](adr/ADR-0001-private-data-strategy.md)); the others do not, see
+[chapter 9](09-architecture-decisions.md).
 
 ## Key decisions
 
@@ -48,6 +49,13 @@ evidence. No decision here currently qualifies as an ADR — see
    qualified hosted applications and the infrastructure around them; it does
    not build application features. This is a confirmed boundary from ideation
    and is **not yet implemented** for any application.
+9. **Operational-data separation.** The public repository holds the option
+   schema and documentation-range defaults; a host's real values reach it only
+   through the overridable `private` flake input, whose public default is an
+   in-tree stub. A guard refuses any revision that would record an operational
+   value, a per-host private-value file, or an unencrypted secret. Owner:
+   [ADR-0001](adr/ADR-0001-private-data-strategy.md); the concept is in
+   [chapter 8](08-crosscutting-concepts.md).
 
 ## Technology choices
 
@@ -68,6 +76,7 @@ evidence. No decision here currently qualifies as an ADR — see
 | Edge DNS filtering | AdGuard Home (adlerkopf) | **Declared** on one host only; `hosts/adlerkopf/services/adguard.nix` |
 | Edge firewall management | netcup SCP external firewall via Python CLI | The VPS firewall is managed account-side, not on the host; `scripts/netcup_firewall.py` |
 | Specification workflow | `givn` with native bindings | Specs stay executable without a step runner; `givn/`, `docs/GIVN-VERIFICATION.md` |
+| Private operational values | Overridable `private` flake input with an in-tree stub default | The `git+file://` source rule forbids a gitignored file; the input is visible and overridable; [ADR-0001](adr/ADR-0001-private-data-strategy.md) |
 
 ## Approach to quality goals
 
@@ -91,7 +100,8 @@ imply a settled design.
   and the cupix001 plan set describe it, and it is sequenced **after** the
   private-data remediation that must precede a public GitHub release
   ([`docs/plans/private-data-remediation-plan.md`](../plans/private-data-remediation-plan.md),
-  itself not started). The working tree contains none of it.
+  now the change `private-data-remediation`). The working tree contains none of
+  the ingress tier.
 - Which application supplies album sharing, document editing, or calendar
   (open input Q17).
 - Which personal state/identity sources constitute the usable-work baseline

@@ -45,7 +45,7 @@ Supporting docs:
 ```
 PR-1  docs/plans/adlerkopf/  (this file + siblings) — planning artifacts only
 PR-2  Phase 1: hosts/adlerkopf/, .sops.yaml, flake.nix, assertions, integration test
-PR-3  Phase 2: AdGuard Home module   → end: router DHCP DNS → REDACTED-HOME-LAN-SUBNET
+PR-3  Phase 2: AdGuard Home module   → end: router DHCP DNS → 192.0.2.15
 PR-4  Phase 3: WireGuard module      → end: router port-forward UDP 51820
 PR-5  Phase 4: Mosquitto module      → end: clients repointed; Pi MQTT retired
 PR-6  Phase 5: Node-RED + Caddy vhost (first real Caddy config here)
@@ -59,8 +59,8 @@ PR-8  Phase X: restic, monitoring, colmena, Pi retirement
 nix flake check
 nix build .#nixosConfigurations.adlerkopf.config.system.build.toplevel
 ssh dan@adlerkopf systemctl is-active adguardhome wg-quick-wg0 mosquitto node-red grafana caddy
-dig @REDACTED-HOME-LAN-SUBNET doubleclick.net       # blocked
-dig @REDACTED-HOME-LAN-SUBNET grafana.lan           # REDACTED-HOME-LAN-SUBNET
+dig @192.0.2.15 doubleclick.net       # blocked
+dig @192.0.2.15 grafana.lan           # 192.0.2.15
 curl -fsSI https://grafana.lan            # 200, valid LE cert
 curl -fsSI https://nodered.lan            # 200, valid LE cert
 wg show wg0                               # peers handshaked

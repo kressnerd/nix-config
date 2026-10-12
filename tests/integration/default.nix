@@ -14,4 +14,7 @@
     inherit pkgs sops-nix;
     home-manager = home-manager-unstable;
   };
+  integration-private-data-separation = import ./private-data-separation-test.nix {
+    inherit pkgs;
+  };
 }

@@ -40,6 +40,14 @@
 
     nur.url = "github:nix-community/NUR";
 
+    # Operational values (addresses, gateway, resolvers, ports) are supplied
+    # through this overridable input. The public default is the in-tree stub,
+    # which supplies nothing and asserts the host defaults are non-operational;
+    # a deploy overrides it with the private flake:
+    #   --override-input private git+file:///home/dan/dev/PRIVATE/nix-private
+    # See docs/arc42/adr/ADR-0001-private-data-strategy.md.
+    private.url = "path:./private-stub";
+
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
     homebrew-core = {
@@ -236,6 +244,7 @@
               nixpkgs.config.allowUnfree = true;
             }
             ./hosts/cupix001
+            inputs.private.nixosModules.cupix001
             disko.nixosModules.disko
             home-manager.nixosModules.home-manager
             {
@@ -276,6 +285,7 @@
               nixpkgs.config.allowUnfree = true;
             }
             ./hosts/adlerkopf
+            inputs.private.nixosModules.adlerkopf
             disko.nixosModules.disko
             lanzaboote.nixosModules.lanzaboote
             home-manager.nixosModules.home-manager
@@ -446,6 +456,72 @@
             in
             {
               unit-helpers = import ./tests/unit/default.nix { inherit pkgs; };
+
+              # The public defaults must stay non-operational: with the stub
+              # `private` input (no override) every host's declared network
+              # values must be documentation-range placeholders or empty.
+              private-data-defaults =
+                let
+                  lib' = nixpkgs.lib;
+                  adlerkopf = self.nixosConfigurations.adlerkopf.config.networking.adlerkopf;
+                  cupix001 = self.nixosConfigurations.cupix001.config.networking.cupix001;
+                  offending = lib'.flatten [
+                    (lib'.optional (adlerkopf.lanIPv4 != "192.0.2.10") "adlerkopf.lanIPv4")
+                    (lib'.optional (adlerkopf.gateway4 != "192.0.2.1") "adlerkopf.gateway4")
+                    (lib'.optional (adlerkopf.wgSubnet != "10.0.0.0/24") "adlerkopf.wgSubnet")
+                    (lib'.optional (adlerkopf.wgServerIPv4 != "10.0.0.1") "adlerkopf.wgServerIPv4")
+                    (lib'.optional (cupix001.publicIPv4 != "") "cupix001.publicIPv4")
+                    (lib'.optional (cupix001.gateway4 != "") "cupix001.gateway4")
+                    (lib'.optional (cupix001.wgTunnelIPv4 != "") "cupix001.wgTunnelIPv4")
+                  ];
+                  offendingText = builtins.concatStringsSep "\n" offending;
+                in
+                pkgs.runCommand "private-data-defaults"
+                  {
+                    inherit offendingText;
+                    passAsFile = [ "offendingText" ];
+                  }
+                  (
+                    if offending == [ ] then
+                      ''
+                        echo "host network defaults are documentation-range placeholders or empty"
+                        touch $out
+                      ''
+                    else
+                      ''
+                        echo "host network defaults carry operational values:"
+                        cat $offendingTextPath
+                        exit 1
+                      ''
+                  );
+
+              # The recorded content must carry no operational value, no
+              # per-host private-value file and no unencrypted secret.
+              private-data-hygiene =
+                pkgs.runCommand "private-data-hygiene"
+                  {
+                    src = self;
+                    nativeBuildInputs = [ pkgs.python3 ];
+                    guard = ./scripts/private_data_hygiene.py;
+                  }
+                  ''
+                    # 1. the recorded tree must be clean
+                    python3 $guard --tree $src
+                    # 2. the value rule must reject an in-class value that is
+                    #    not any literal currently in the tree
+                    mkdir -p bad/value bad/file bad/secret
+                    # Assembled at run time so this file records no literal.
+                    printf 'lanIPv4 = "192.168.%s.77";\n' 168 > bad/value/x.nix
+                    printf '_: { }\n' > bad/file/private.nix
+                    printf 'placeholder: initial-setup\n' > bad/secret/secrets.yaml
+                    for case in value file secret; do
+                      if python3 $guard --tree bad/$case; then
+                        echo "guard accepted the $case fixture" >&2
+                        exit 1
+                      fi
+                    done
+                    touch $out
+                  '';
 
               lint-deadnix =
                 pkgs.runCommand "lint-deadnix"

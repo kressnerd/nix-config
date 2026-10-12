@@ -120,7 +120,7 @@ The box boots to NixOS; Caddy starts with empty config; no sops secrets decrypte
 ## Step 3 — Verify basic boot
 
 ```fish
-ssh dan@REDACTED-HOME-LAN-SUBNET   # or IP from DHCP if static not active yet
+ssh dan@192.0.2.56   # or IP from DHCP if static not active yet
 
 # Check:
 systemctl is-active caddy sshd
@@ -129,14 +129,14 @@ cat /persist/system/etc/ssh/ssh_host_ed25519_key.pub  # should exist
 ```
 
 > **Note**: The actual static IP depends on the `adlerkopf.lan.ip` value in `private.nix`. The
-> default in the example file is `REDACTED-HOME-LAN-SUBNET`.
+> default in the example file is `192.0.2.56`.
 
 To deploy a follow-up rebuild before TPM/sops are set up:
 
 ```fish
 nixos-rebuild switch \
     --flake .#adlerkopf \
-    --target-host dan@REDACTED-HOME-LAN-SUBNET \
+    --target-host dan@192.0.2.56 \
     --sudo
 ```
 
@@ -147,10 +147,10 @@ nixos-rebuild switch \
 > ```fish
 > # From workstation:
 > git archive HEAD -o /tmp/nix-config.tar
-> scp /tmp/nix-config.tar dan@REDACTED-HOME-LAN-SUBNET:/tmp/
-> ssh dan@REDACTED-HOME-LAN-SUBNET "mkdir -p /tmp/nix-config && tar -xf /tmp/nix-config.tar -C /tmp/nix-config && cd /tmp/nix-config && sudo nixos-rebuild switch --flake .#adlerkopf"
+> scp /tmp/nix-config.tar dan@192.0.2.56:/tmp/
+> ssh dan@192.0.2.56 "mkdir -p /tmp/nix-config && tar -xf /tmp/nix-config.tar -C /tmp/nix-config && cd /tmp/nix-config && sudo nixos-rebuild switch --flake .#adlerkopf"
 > rm -f /tmp/nix-config.tar
-> ssh dan@REDACTED-HOME-LAN-SUBNET "rm -rf /tmp/nix-config /tmp/nix-config.tar && sudo nix-collect-garbage"
+> ssh dan@192.0.2.56 "rm -rf /tmp/nix-config /tmp/nix-config.tar && sudo nix-collect-garbage"
 > ```
 >
 > After this one-time bootstrap, `trusted-users` is active and all subsequent remote deploys work normally.
@@ -195,7 +195,7 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
    ```fish
    nixos-rebuild switch \
        --flake .#adlerkopf \
-       --target-host dan@REDACTED-HOME-LAN-SUBNET \
+       --target-host dan@192.0.2.56 \
        --sudo
    ```
 4. **\[adlerkopf\]** Verify lanzaboote is active:
@@ -217,7 +217,7 @@ Test: `sudo reboot` → box should unlock automatically (no passphrase prompt).
    ```fish
    nixos-rebuild switch \
        --flake .#adlerkopf \
-       --target-host dan@REDACTED-HOME-LAN-SUBNET \
+       --target-host dan@192.0.2.56 \
        --sudo
    ```
 9. **\[adlerkopf\]** Verify all boot entries are signed:
@@ -302,13 +302,13 @@ On the workstation:
    ```fish
    nixos-rebuild switch \
        --flake .#adlerkopf \
-       --target-host dan@REDACTED-HOME-LAN-SUBNET \
+       --target-host dan@192.0.2.56 \
        --sudo
    ```
 4. Verify sops decrypts on the host (human-only — agents must not read `/run/secrets/*`):
    ```fish
    # sops CLI is not installed on adlerkopf — verify via cat instead:
-   ssh dan@REDACTED-HOME-LAN-SUBNET sudo cat /run/secrets/<name>  # human-only
+   ssh dan@192.0.2.56 sudo cat /run/secrets/<name>  # human-only
    ```
 
 > **Note**: Phase 1 has no `sops.secrets.*` attributes declared, so `/run/secrets/` will not exist
@@ -325,7 +325,7 @@ Three options; **Option A is the default** for day-to-day changes.
 # From workstation (J6G6Y9JK7L):
 nixos-rebuild switch \
     --flake .#adlerkopf \
-    --target-host dan@REDACTED-HOME-LAN-SUBNET \
+    --target-host dan@192.0.2.56 \
     --sudo
 ```
 
@@ -334,10 +334,10 @@ an authorized SSH key for the workstation.
 
 ```fish
 # Test-only (no activation):
-nixos-rebuild build --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild build --flake .#adlerkopf --target-host dan@192.0.2.56
 
 # Rollback last activation:
-nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET --sudo
+nixos-rebuild --rollback --target-host dan@192.0.2.56 --sudo
 ```
 
 ### Option B — colmena (after Phase X PR-8)
@@ -370,11 +370,11 @@ All three options share the same `/nix/var/nix/profiles/system` generation chain
 
 ```fish
 # List generations:
-ssh dan@REDACTED-HOME-LAN-SUBNET sudo nix-env --list-generations \
+ssh dan@192.0.2.56 sudo nix-env --list-generations \
     --profile /nix/var/nix/profiles/system
 
 # Activate a specific generation:
-ssh dan@REDACTED-HOME-LAN-SUBNET \
+ssh dan@192.0.2.56 \
     sudo /nix/var/nix/profiles/system-<N>-link/bin/switch-to-configuration switch
 ```
 
@@ -382,10 +382,10 @@ ssh dan@REDACTED-HOME-LAN-SUBNET \
 
 ```fish
 # Remote (if previous generation still activatable):
-nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET --sudo
+nixos-rebuild --rollback --target-host dan@192.0.2.56 --sudo
 
 # List generations:
-ssh dan@REDACTED-HOME-LAN-SUBNET sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
+ssh dan@192.0.2.56 sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 
 # Boot from installer USB and rescue /persist if all else fails:
 # (LUKS always openable with recovery passphrase from 1Password)
@@ -395,7 +395,7 @@ ssh dan@REDACTED-HOME-LAN-SUBNET sudo nix-env --list-generations --profile /nix/
 
 | Phase | Change | Detail |
 |---|---|---|
-| 2 | DHCP DNS → `REDACTED-HOME-LAN-SUBNET` | Replace Pi-hole IP in router DHCP server settings |
-| 3 | Port-forward UDP 51820 | Forward to `REDACTED-HOME-LAN-SUBNET:51820` (WireGuard) |
+| 2 | DHCP DNS → `192.0.2.56` | Replace Pi-hole IP in router DHCP server settings |
+| 3 | Port-forward UDP 51820 | Forward to `192.0.2.56:51820` (WireGuard) |
 | 3 | Remove old port-forward UDP 1194 | PiVPN/OpenVPN no longer needed |
 | X | Remove DHCP reservation for Pi | After full decommission |

@@ -148,10 +148,10 @@ ssh pi@<pi-ip> sudo systemctl stop nodered
 scp pi@<pi-ip>:~/.node-red/flows.json \
     pi@<pi-ip>:~/.node-red/flows_cred.json \
     pi@<pi-ip>:~/.node-red/package.json \
-    dan@REDACTED-HOME-LAN-SUBNET:/persist/system/var/lib/node-red/
+    dan@192.0.2.15:/persist/system/var/lib/node-red/
 
 # Fix ownership:
-ssh dan@REDACTED-HOME-LAN-SUBNET sudo chown -R node-red:node-red /persist/system/var/lib/node-red/
+ssh dan@192.0.2.15 sudo chown -R node-red:node-red /persist/system/var/lib/node-red/
 ```
 
 Installed palette packages: on first start, Node-RED reads `package.json` and installs
@@ -193,6 +193,6 @@ systemd.services.node-red.postStart = ''
 ## Rollback
 
 ```fish
-nixos-rebuild switch --flake .#adlerkopf --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild switch --flake .#adlerkopf --target-host dan@192.0.2.15
 # (with services.node-red.enable = false + caddy vhost removed)
 ```

@@ -34,6 +34,7 @@ nix-config/
 │   └── <name>/default.nix       # Individual overlay
 ├── pkgs/                        # Custom package derivations
 ├── modules/                     # Custom NixOS/HM modules (optional)
+├── private-stub/                # Public fallback for the overridable `private` input
 ├── scripts/                     # Build/deploy shell scripts
 ├── tests/                       # Test infrastructure
 │   ├── unit/                    # Pure Nix unit tests (lib.debug.runTests)
@@ -88,6 +89,24 @@ nix-config/
 
 - Shared helper functions
 - Currently: `helpers.nix` (mkPkgsUnstable, mkFirefoxExtensions)
+
+### Private Operational Values (`private-stub/`, `flake.nix`)
+
+Operational values (addresses, gateway, hardware address, resolvers, ports)
+never live in this repository. A host receives them only through the overridable
+`private` flake input, whose public default is `private-stub/` (a no-op module
+per host that asserts the host defaults are documentation-range placeholders or
+empty). A deploy overrides the input:
+
+```bash
+nixos-rebuild switch --flake .#<host> \
+  --override-input private git+file:///home/dan/dev/PRIVATE/nix-private
+```
+
+`scripts/private_data_hygiene.py` refuses a revision that would record an
+operational value, a per-host private-value file, or an unencrypted secret; it
+runs as the `private-data-hygiene` flake check, as a pre-commit hook, and in CI.
+Rationale: [ADR-0001](../docs/arc42/adr/ADR-0001-private-data-strategy.md).
 
 ## Composition Strategy
 

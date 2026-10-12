@@ -156,10 +156,10 @@ class TestArgParsing:
                 "--source",
                 "1.2.3.4",
                 "--port",
-                "REDACTED-NON-STANDARD-SSH-PORT",
+                "2222",
             ]
         )
-        assert args.port == REDACTED-NON-STANDARD-SSH-PORT
+        assert args.port == 2222
 
     def test_ssh_open_yes_flag(self) -> None:
         """ssh-open accepts --yes flag."""
@@ -2697,13 +2697,13 @@ class TestFindOrCreateSshPolicy:
                     "direction": "INGRESS",
                     "protocol": "TCP",
                     "sourceIp": "5.6.7.8/32",
-                    "destinationPort": "REDACTED-NON-STANDARD-SSH-PORT",
+                    "destinationPort": "2222",
                     "action": "ACCEPT",
                 }
             ],
         }
         result = _find_or_create_ssh_policy(
-            client, 42, "cupix001", "5.6.7.8/32", REDACTED-NON-STANDARD-SSH-PORT, server_id=123, interfaces=[]
+            client, 42, "cupix001", "5.6.7.8/32", 2222, server_id=123, interfaces=[]
         )
         assert result["id"] == 888
         client.delete_policy.assert_called_once_with(42, 555)
@@ -2719,11 +2719,11 @@ class TestFindOrCreateSshPolicy:
             "rules": [],
         }
         _find_or_create_ssh_policy(
-            client, 42, "cupix001", "10.0.0.1/32", REDACTED-NON-STANDARD-SSH-PORT, server_id=123, interfaces=[]
+            client, 42, "cupix001", "10.0.0.1/32", 2222, server_id=123, interfaces=[]
         )
         call_args = client.create_policy.call_args
         rules = call_args[0][2]
-        assert rules[0]["destinationPort"] == "REDACTED-NON-STANDARD-SSH-PORT"
+        assert rules[0]["destinationPort"] == "2222"
 
     def test_unassigns_stale_policy_before_deleting(self) -> None:
         """Stale policy is unassigned from interfaces before deletion."""
@@ -2756,7 +2756,7 @@ class TestFindOrCreateSshPolicy:
             42,
             "cupix001",
             "5.6.7.8/32",
-            REDACTED-NON-STANDARD-SSH-PORT,
+            2222,
             server_id=123,
             interfaces=interfaces,
         )

@@ -17,8 +17,8 @@ in
       };
       lanIPv4 = mkOption {
         type = types.str;
-        default = "REDACTED-HOME-LAN-SUBNET";
-        description = "Static LAN IPv4 address";
+        default = "192.0.2.10";
+        description = "Static LAN IPv4 address (documentation-range placeholder; the real value comes from the private flake input)";
       };
       lanPrefix = mkOption {
         type = types.int;
@@ -27,8 +27,8 @@ in
       };
       gateway4 = mkOption {
         type = types.str;
-        default = "REDACTED-HOME-LAN-SUBNET";
-        description = "Default IPv4 gateway";
+        default = "192.0.2.1";
+        description = "Default IPv4 gateway (documentation-range placeholder; the real value comes from the private flake input)";
       };
       dns = mkOption {
         type = types.listOf types.str;
@@ -40,13 +40,13 @@ in
       };
       wgSubnet = mkOption {
         type = types.str;
-        default = "REDACTED-WIREGUARD-SUBNET/24";
-        description = "WireGuard VPN subnet (Phase 3)";
+        default = "10.0.0.0/24";
+        description = "WireGuard VPN subnet (generic placeholder; the real value comes from the private flake input)";
       };
       wgServerIPv4 = mkOption {
         type = types.str;
-        default = "REDACTED-WIREGUARD-SUBNET";
-        description = "Server WireGuard tunnel IP (Phase 3)";
+        default = "10.0.0.1";
+        description = "Server WireGuard tunnel IP (generic placeholder; the real value comes from the private flake input)";
       };
       wgListenPort = mkOption {
         type = types.port;

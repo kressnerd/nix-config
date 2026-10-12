@@ -9,7 +9,6 @@
     ./hardware.nix
     ./disko.nix
     ./options.nix
-    ./private.nix
     inputs.sops-nix.nixosModules.sops
     inputs.impermanence.nixosModules.impermanence
     ../../modules/nixos/persistence

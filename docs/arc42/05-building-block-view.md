@@ -8,7 +8,8 @@ and test layers (L3).
 
 ```mermaid
 flowchart TB
-  flake["flake.nix<br/>nixosConfigurations x4<br/>darwinConfigurations x1<br/>checks, formatter, devShells,<br/>overlays, templates, colmenaHive"]
+  flake["flake.nix<br/>nixosConfigurations x4<br/>darwinConfigurations x1<br/>inputs.private (path stub)<br/>checks, formatter, devShells,<br/>overlays, templates, colmenaHive"]
+  stub["private-stub/<br/>public fallback modules<br/>for the private input"]
   lib["lib/helpers.nix<br/>mkPkgsUnstable<br/>mkFirefoxExtensions"]
   common["hosts/common<br/>global base, shared user,<br/>optional NixOS modules"]
   hostmods["hosts/&lt;host&gt;<br/>system modules: hardware,<br/>disko, networking, services,<br/>boot, impermanence, options"]
@@ -16,12 +17,13 @@ flowchart TB
   hmglobal["home/dan/global/default.nix<br/>Home Manager base"]
   optmods["modules/*/&lt;concern&gt;/<br/>options.nix + default.nix"]
   feats["home/dan/features/&lt;category&gt;/<br/>59 feature modules"]
-  scripts["scripts/<br/>netcup firewall CLI,<br/>scp_client, verify scripts"]
+  scripts["scripts/<br/>netcup firewall CLI,<br/>scp_client, private-data guard,<br/>verify scripts"]
   infra["infra/<br/>firewall policy JSON,<br/>OpenAPI spec, .http files"]
   tests["tests/<br/>unit, assertions, integration"]
   givnspec["givn/<br/>changes, personas,<br/>ideation, commands/config"]
 
   lib --> flake
+  stub --> flake
   common --> hostmods
   hostmods --> flake
   optmods --> hmprof
@@ -37,6 +39,7 @@ flowchart TB
 | Building block | Responsibility |
 |---|---|
 | Flake (`flake.nix`, `flake.lock`) | Declare inputs, all host configurations, dev shells, packages, formatter, checks, overlays, the host template, and the (empty) Colmena hive. The only entry point. |
+| Private-input stub (`private-stub/`) | The public fallback for the `private` flake input: one no-op module per host that asserts the host's declared network values are documentation-range placeholders or empty, so a clean clone and CI evaluate without private access. Owner: [ADR-0001](adr/ADR-0001-private-data-strategy.md). *Intended: introduced by the change `private-data-remediation`.* |
 | Helpers (`lib/helpers.nix`) | `mkPkgsUnstable` (unstable package set with `allowUnfree`) and `mkFirefoxExtensions` (categorised addon sets for the Firefox profiles). |
 | Shared NixOS base (`hosts/common/`) | `global/` sets timezone, locale, Nix experimental features, trusted users, `allowUnfree`; `users/dan.nix` is the shared non-root user; `optional/` holds opt-in modules (`networkmanager`, `virtualisation`, and an empty `docker.nix`). |
 | Host system modules (`hosts/<host>/`) | Per-machine NixOS or nix-darwin declarations: hardware, disk layout, networking, boot/loader, services, persistence lists, typed host options. |
@@ -45,7 +48,7 @@ flowchart TB
 | Option modules (`modules/<kind>/<concern>/`) | Reusable option + default pairs. Present concerns: `home-manager/ssh`, `home-manager/persistence`, `nixos/persistence`. |
 | Feature modules (`home/dan/features/**`) | 59 modules rendering one concern each from host declarations, platform conditionals, and declared secrets. |
 | Tests (`tests/`) | Three present layers (`unit`, `assertions`, `integration`); the documented `deploy` layer does not exist. |
-| Support tooling (`scripts/`, `infra/`) | Python CLI and generated OpenAPI client for the netcup SCP firewall, firewall policy definitions, `.http` request collections, VM build/deploy scripts, and the givn verification scripts. |
+| Support tooling (`scripts/`, `infra/`) | Python CLI and generated OpenAPI client for the netcup SCP firewall, the private-data guard `private_data_hygiene.py`, firewall policy definitions, `.http` request collections, VM build/deploy scripts, and the givn verification scripts. |
 | Specification workflow (`givn/`) | Active change artifacts, promoted personas, the ideation topic, givn config/commands and hooks. |
 
 ### Declared hosts
@@ -134,7 +137,7 @@ identity file with `IdentitiesOnly=yes`.
 |---|---|
 | `tests/unit/default.nix` + 12 files | Aggregate `lib.debug.runTests` cases into check `unit-helpers` (all systems). |
 | `tests/assertions/` | 17 `*-invariants.nix` modules adding `config.assertions`, aggregated by `tests/assertions/default.nix`; imported by thiniel, cupix001, adlerkopf and nixos-vm-minimal, while the Darwin host and Mac profile import their own two files. |
-| `tests/integration/default.nix` + 3 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. |
+| `tests/integration/default.nix` + 4 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. *`integration-private-data-separation` is intended: the change `private-data-remediation` adds it.* |
 
 `tests/deploy/` (pytest-testinfra) is documented in `CLAUDE.md` and
 `docs/GIVN-VERIFICATION.md` but does not exist; the `@deploy:` binding tag

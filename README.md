@@ -77,6 +77,19 @@ cd /etc/nixos
 sudo nixos-rebuild switch --flake .#<hostname>
 ```
 
+Hosts whose network values are held outside the repository (`adlerkopf`,
+`cupix001`) must add the private input override, or the build uses the public
+documentation-range placeholders:
+
+```bash
+sudo nixos-rebuild switch --flake .#<hostname> \
+  --override-input private git+file:///home/dan/dev/PRIVATE/nix-private
+```
+
+The per-host `rebuild` alias runs a preflight that refuses to deploy when the
+override supplied no values. See
+[docs/arc42/adr/ADR-0001-private-data-strategy.md](docs/arc42/adr/ADR-0001-private-data-strategy.md).
+
 **NixOS VM (using nixos-anywhere):**
 
 See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SETUP.md](docs/VM-SETUP.md) for VM deployment.
@@ -152,16 +165,24 @@ Managed via SOPS. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for setup det
 
 Each host imports `hosts/common/global` (NixOS only) plus optional modules and features as needed. Check the layering structure in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-### Host Setup — cupix001
+### Host Setup — hosts with private values
 
-cupix001 requires a `private.nix` file with host-specific network values that are not committed to git.
+Host-specific network values are never committed. They live in a separate
+private flake (`~/dev/PRIVATE/nix-private`) that supplies one
+`nixosModules.<host>` per host, and the public flake's `private` input defaults
+to the in-tree stub `private-stub/`.
 
-1. Copy the template:
-   ```bash
-   cp hosts/cupix001/private.nix.example hosts/cupix001/private.nix
-   ```
-2. Fill in real values using the gathering commands documented in the template comments (run on the Debian VPS before NixOS install)
-3. `private.nix` is gitignored — it must exist on the build machine before `nix build` or `nix flake check` succeeds for cupix001
+Adding a host that has private values therefore touches both sides:
+
+1. Add a no-op module for the host to `private-stub/flake.nix` (it asserts the
+   host's declared values are documentation-range placeholders or empty).
+2. Add the real module to `~/dev/PRIVATE/nix-private/flake.nix`.
+3. Wire `inputs.private.nixosModules.<host>` into the host's
+   `nixosConfigurations` entry in `flake.nix`.
+4. Add the `rebuild` preflight alias to `home/dan/<host>.nix`.
+
+`nix flake check` and CI always evaluate with the stub, so no private access is
+needed to build or review the repository.
 
 ## Documentation
 

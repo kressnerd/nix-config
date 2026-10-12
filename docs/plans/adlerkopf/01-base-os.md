@@ -10,7 +10,7 @@ hosts/adlerkopf/
 ├── default.nix             # entry point — imports, hostName, sops, stateVersion
 ├── hardware.nix            # kernel modules, systemd-boot, CPU/NIC settings
 ├── disko.nix               # GPT → ESP + LUKS2 → btrfs subvolumes
-├── networking.nix          # static REDACTED-HOME-LAN-SUBNET/24, nftables firewall
+├── networking.nix          # static 192.0.2.15/24, nftables firewall
 ├── impermanence.nix        # environment.persistence + initrd rollback service
 ├── tpm2.nix                # boot.initrd.systemd + crypttabExtraOpts
 ├── caddy.nix               # custom Caddy build with caddy-dns/netcup (no vhosts)
@@ -164,7 +164,7 @@ security.sudo.wheelNeedsPassword = false;
 Note: the public key above is illustrative. Use the actual key from `~/.ssh/id_ed25519.pub` on the
 workstation (J6G6Y9JK7L). The key is public information and safe to commit in the host config.
 
-After Phase 1 is deployed: `ssh dan@REDACTED-HOME-LAN-SUBNET` from the workstation should succeed immediately.
+After Phase 1 is deployed: `ssh dan@192.0.2.15` from the workstation should succeed immediately.
 
 New assertion to add:
 
@@ -181,8 +181,8 @@ New assertion to add:
 
   systemd.network.networks."10-lan" = {
     matchConfig.Name = "eno1";   # Intel I219-V — verify name after first boot
-    address = [ "REDACTED-HOME-LAN-SUBNET/24" ];
-    gateway = [ "REDACTED-HOME-LAN-SUBNET" ];
+    address = [ "192.0.2.15/24" ];
+    gateway = [ "192.0.2.1" ];
     dns = [ "1.1.1.1" "9.9.9.9" ];   # replaced by 127.0.0.1 in Phase 2
     DHCP = "no";
   };
@@ -312,7 +312,7 @@ Add as `checks.<linux>.integration-adlerkopf-base` in `flake.nix:382-391`.
 - [x] `nix build .#nixosConfigurations.adlerkopf.config.system.build.toplevel` succeeds
 - [x] nixos-anywhere provisioning completes (see [deploy-runbook.md](./deploy-runbook.md))
 - [x] Box boots without keyboard interaction (TPM2 unlocks LUKS)
-- [x] `ssh dan@REDACTED-HOME-LAN-SUBNET` with key succeeds (actual IP differs from plan — see `private.nix`)
+- [x] `ssh dan@192.0.2.55` with key succeeds (actual IP differs from plan — see `private.nix`)
 - [ ] `sops decrypt hosts/adlerkopf/secrets.yaml` returns plaintext on the host (human-only — agents must not run `sops`)
 - [x] Reboot: `/` is empty, but `/persist` intact and SSH host key unchanged
 - [x] `systemctl status caddy` → active (no vhosts, just the daemon)
@@ -322,7 +322,7 @@ Add as `checks.<linux>.integration-adlerkopf-base` in `flake.nix:382-391`.
 
 ```fish
 # Remote:
-nixos-rebuild --rollback --target-host dan@REDACTED-HOME-LAN-SUBNET
+nixos-rebuild --rollback --target-host dan@192.0.2.15
 # Local (LUKS always openable with recovery passphrase even on total failure):
 # boot from USB, mount /persist, rescue data
 ```

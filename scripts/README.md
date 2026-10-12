@@ -128,7 +128,7 @@ Opens temporary SSH access from a specific source IP via the netcup SCP external
 python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4
 
 # Open a custom SSH port
-python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4 --port REDACTED-NON-STANDARD-SSH-PORT
+python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4 --port <SSH_PORT>
 
 # Skip confirmation prompt
 python3 scripts/netcup_firewall.py ssh-open --server cupix001 --source 1.2.3.4 --yes

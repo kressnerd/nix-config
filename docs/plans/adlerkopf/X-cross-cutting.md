@@ -79,7 +79,7 @@ colmenaHive = colmena.lib.makeHive {
   adlerkopf = {
     nixpkgs.system = "x86_64-linux";
     deployment = {
-      targetHost = "REDACTED-HOME-LAN-SUBNET";
+      targetHost = "192.0.2.15";
       targetUser = "dan";
       tags = [ "home-server" ];
     };
@@ -109,9 +109,9 @@ Consider gating this behind a flag until the host has proven stable for 30 days.
 
 Before powering off the Pi, confirm all of the following:
 
-- [ ] DNS: All LAN clients resolve via adlerkopf (`dig @REDACTED-HOME-LAN-SUBNET google.com` from each device)
+- [ ] DNS: All LAN clients resolve via adlerkopf (`dig @192.0.2.15 google.com` from each device)
 - [ ] VPN: WireGuard client connects; no route to old PiVPN endpoint
-- [ ] MQTT: All sensors publishing to `REDACTED-HOME-LAN-SUBNET:1883`; Pi MQTT has zero active clients
+- [ ] MQTT: All sensors publishing to `192.0.2.15:1883`; Pi MQTT has zero active clients
 - [ ] Node-RED: Flows running on adlerkopf; Pi Node-RED idling with no MQTT connections
 - [ ] Grafana: All dashboards green on adlerkopf; Pi Grafana idling
 - [ ] Backup: First restic snapshot completed successfully on adlerkopf

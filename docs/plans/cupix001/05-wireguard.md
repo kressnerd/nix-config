@@ -21,7 +21,7 @@
 - **File**: `hosts/cupix001/networking.nix`
 - **What to implement**: `networking.wireguard.interfaces.wg0` with `listenPort = priv.wgListenPort`, `privateKeyFile = config.sops.secrets."wireguard/private-key".path`, `ips = [priv.wgTunnelIPv4]`, peer with:
   - `publicKey = "HOMELAB_WG_PUBKEY_HERE"` (not sensitive, public repo)
-  - `allowedIPs = ["REDACTED-WIREGUARD-SUBNET/30"]`
+  - `allowedIPs = ["10.0.0.0/30"]`
   - **Do NOT set `persistentKeepalive`** on this side — cupix001 is the passive endpoint (listens); the homelab side initiates. Setting `persistentKeepalive` on the passive endpoint is harmless but misleading. The spec states "homelab initiates (PersistentKeepalive = 25)" — configure that on the homelab IPFire config, not here. Add a comment: `# persistentKeepalive is set on the homelab side (IPFire), not here — cupix001 is the passive listener`
 - **Also**: Add `sops.secrets."wireguard/private-key"` definition in `default.nix` or a dedicated secrets section
 - **Verify**: `nix flake check`

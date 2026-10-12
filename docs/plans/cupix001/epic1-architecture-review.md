@@ -219,7 +219,7 @@ No. This is standard infrastructure-as-code practice:
 2. **Industry precedent**: Terraform, Ansible, Pulumi all publish variable declarations (schemas) in public repos while keeping `.tfvars`, `vault` secrets, and inventory files private. The NixOS module option pattern follows the same principle.
 3. **No exploitable information**: The option names reveal the host has IPv4/v6, WireGuard, and SSH — all of which are detectable via network scanning anyway. The sensitive data (actual IPs, ports, keys) remains in `private.nix` and `secrets.yaml`.
 4. **WireGuard default port**: `wgListenPort` has `default = 51820` (the well-known WireGuard port). This is not a secret — WireGuard is designed to be resistant to port scanning (silent to unauthenticated packets).
-5. **`sshBootstrapPort` default REDACTED-NON-STANDARD-SSH-PORT**: This reveals the intended non-standard SSH port. Minor information leak, but security-through-obscurity via port numbers provides negligible protection. The real SSH hardening happens via key-only auth, fail2ban, and firewall rules.
+5. **`sshBootstrapPort` default <SSH_PORT>**: This reveals the intended non-standard SSH port. Minor information leak, but security-through-obscurity via port numbers provides negligible protection. The real SSH hardening happens via key-only auth, fail2ban, and firewall rules.
 
 **One minor improvement** (not blocking): The `sshBootstrapPort` default could be moved to `private.nix` to avoid revealing the chosen port. This is cosmetic — the port is trivially discoverable via scanning.
 

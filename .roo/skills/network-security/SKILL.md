@@ -117,14 +117,14 @@ programs.ssh = {
 
 ```nix
 networking.wg-quick.interfaces.wg0 = {
-  address = [ "REDACTED-WIREGUARD-SUBNET/24" ];
+  address = [ "10.0.0.1/24" ];
   listenPort = 51820;
   privateKeyFile = config.sops.secrets.wg-private-key.path;
   
   peers = [
     {
       publicKey = "CLIENT_PUBLIC_KEY";
-      allowedIPs = [ "REDACTED-WIREGUARD-SUBNET/32" ];
+      allowedIPs = [ "10.0.0.2/32" ];
     }
   ];
   
@@ -150,9 +150,9 @@ networking.firewall.allowedUDPPorts = [ 51820 ];
 
 ```nix
 networking.wg-quick.interfaces.wg0 = {
-  address = [ "REDACTED-WIREGUARD-SUBNET/24" ];
+  address = [ "10.0.0.2/24" ];
   privateKeyFile = config.sops.secrets.wg-private-key.path;
-  dns = [ "REDACTED-WIREGUARD-SUBNET" ];
+  dns = [ "10.0.0.1" ];
 
   peers = [
     {

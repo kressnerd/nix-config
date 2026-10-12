@@ -8,7 +8,7 @@
 
 `hosts/adlerkopf/private.nix` and `hosts/cupix001/private.nix` are listed in [`.gitignore`](../../.gitignore:2). Nix flakes only copy git-tracked files into the evaluation store. As a result, `builtins.pathExists ./private.nix` in [`hosts/adlerkopf/default.nix`](../../hosts/adlerkopf/default.nix:23) and [`hosts/cupix001/default.nix`](../../hosts/cupix001/default.nix:18) always returns `false` during flake evaluation, even when the file exists on the developer's filesystem.
 
-Consequence on adlerkopf: option defaults from [`hosts/adlerkopf/options.nix`](../../hosts/adlerkopf/options.nix:20) are silently used, producing `lanIPv4 = "REDACTED-HOME-LAN-SUBNET"` instead of the intended `REDACTED-HOME-LAN-SUBNET` from `private.nix`. The same trap affects cupix001 — its defaults are empty strings, masking the bug as "everything still evaluates" while shipping broken networking.
+Consequence on adlerkopf: option defaults from [`hosts/adlerkopf/options.nix`](../../hosts/adlerkopf/options.nix:20) are silently used, producing `lanIPv4 = "192.0.2.56"` instead of the intended `192.0.2.55` from `private.nix`. The same trap affects cupix001 — its defaults are empty strings, masking the bug as "everything still evaluates" while shipping broken networking.
 
 ## Acceptance Criteria
 
@@ -62,7 +62,7 @@ In a private repository, tracking the deployment-specific values in git is not a
 
 After the fix, `private.nix` is unconditionally imported. If the file is ever deleted or moved, `nix flake check` fails immediately with a "file not found" eval error. This is a stronger guarantee than any assertion: the failure mode is "loud and immediate" instead of "silent wrong-value".
 
-No additional Nix assertion is needed. (An assertion like `lanIPv4 != "REDACTED-HOME-LAN-SUBNET"` would be fragile — it conflates "default value" with "wrong value" and would false-positive in environments that legitimately use the default.)
+No additional Nix assertion is needed. (An assertion like `lanIPv4 != "192.0.2.56"` would be fragile — it conflates "default value" with "wrong value" and would false-positive in environments that legitimately use the default.)
 
 ## Validation Strategy (Phase 0)
 
@@ -75,7 +75,7 @@ Run before, during, and after implementation:
 | `git ls-files hosts/adlerkopf/private.nix` | After fix: should print the path (tracked) |
 | `git ls-files hosts/cupix001/private.nix` | After fix: should print the path (tracked) |
 | `nix flake check` | Must pass at every step |
-| `nix eval .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4` | Must return real value after fix, not `"REDACTED-HOME-LAN-SUBNET"` |
+| `nix eval .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4` | Must return real value after fix, not `"192.0.2.56"` |
 | `nix eval .#nixosConfigurations.cupix001.config.networking.cupix001.publicIPv4` | Must return real value after fix, not `""` |
 | `nix build .#nixosConfigurations.adlerkopf.config.system.build.toplevel --dry-run` | Must succeed |
 | `nix build .#nixosConfigurations.cupix001.config.system.build.toplevel --dry-run` | Must succeed |
@@ -117,9 +117,9 @@ On a misbehaving live host: `nixos-rebuild --rollback switch` from the host itse
 
 ### Phase 1 — Pre-flight: confirm both `private.nix` files exist on disk with intended values
 
-- [ ] **Step 1.1** — Verify [`hosts/adlerkopf/private.nix`](../../hosts/adlerkopf/private.nix) exists and contains `lanIPv4 = "REDACTED-HOME-LAN-SUBNET"` (or the user's actual intended value). If missing, create from [`hosts/adlerkopf/private.nix.example`](../../hosts/adlerkopf/private.nix.example) and fill in real values.
+- [ ] **Step 1.1** — Verify [`hosts/adlerkopf/private.nix`](../../hosts/adlerkopf/private.nix) exists and contains `lanIPv4 = "192.0.2.55"` (or the user's actual intended value). If missing, create from [`hosts/adlerkopf/private.nix.example`](../../hosts/adlerkopf/private.nix.example) and fill in real values.
 - [ ] **Step 1.2** — Verify [`hosts/cupix001/private.nix`](../../hosts/cupix001/private.nix) exists and contains the actual VPS networking values. If missing, create from [`hosts/cupix001/private.nix.example`](../../hosts/cupix001/private.nix.example) and fill in real values.
-- [ ] **Step 1.3** — Run `nix flake check` with the current code as a baseline. Record the (silently-wrong) resolved `lanIPv4` for evidence: `nix eval .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4` should print `"REDACTED-HOME-LAN-SUBNET"`.
+- [ ] **Step 1.3** — Run `nix flake check` with the current code as a baseline. Record the (silently-wrong) resolved `lanIPv4` for evidence: `nix eval .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4` should print `"192.0.2.56"`.
 
 ### Phase 2 — Remove the gitignore entries
 
@@ -132,7 +132,7 @@ On a misbehaving live host: `nixos-rebuild --rollback switch` from the host itse
 
 - [ ] **Step 3.1** — `git add hosts/adlerkopf/private.nix hosts/cupix001/private.nix .gitignore`
 - [ ] **Step 3.2** — Verify with `git ls-files hosts/adlerkopf/private.nix hosts/cupix001/private.nix` — both paths must be listed.
-- [ ] **Step 3.3** — Run `nix flake check`. With the files now in the store, the existing `lib.optional` import still works, but `nix eval .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4` must now return the real value (e.g. `"REDACTED-HOME-LAN-SUBNET"`). This proves the root cause is fixed.
+- [ ] **Step 3.3** — Run `nix flake check`. With the files now in the store, the existing `lib.optional` import still works, but `nix eval .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4` must now return the real value (e.g. `"192.0.2.55"`). This proves the root cause is fixed.
 
 ### Phase 4 — Convert conditional imports to unconditional imports
 

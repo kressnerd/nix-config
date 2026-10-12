@@ -74,10 +74,10 @@ The file must define values consumed by the public configuration via a custom op
     prefixLengthV6 = 64;               # from: ip -6 addr show scope global
     gateway4 = "203.0.113.1";          # from: ip route show default
     gateway6 = "fe80::1";              # from: ip -6 route show default
-    dns = ["REDACTED-HOSTING-PROVIDER-RESOLVER" "REDACTED-HOSTING-PROVIDER-RESOLVER"]; # from: cat /etc/resolv.conf (netcup defaults)
+    dns = ["1.1.1.1" "1.1.1.1"]; # from: cat /etc/resolv.conf (netcup defaults)
     wgListenPort = 51820;
-    wgTunnelIPv4 = "REDACTED-WIREGUARD-SUBNET/30";    # VPS side
-    wgPeerTunnelIPv4 = "REDACTED-WIREGUARD-SUBNET/30"; # Homelab/IPFire side
+    wgTunnelIPv4 = "10.0.0.1/30";    # VPS side
+    wgPeerTunnelIPv4 = "10.0.0.2/30"; # Homelab/IPFire side
   };
 }
 ```
@@ -103,7 +103,7 @@ in {
     privateKeyFile = config.sops.secrets."wireguard/private-key".path;
     peers = [{
       publicKey = "HOMELAB_WG_PUBKEY_HERE"; # not sensitive, public repo is fine
-      allowedIPs = ["REDACTED-WIREGUARD-SUBNET/30"];
+      allowedIPs = ["10.0.0.0/30"];
       # No endpoint needed – homelab initiates
       persistentKeepalive = 25; # set on homelab side, not here; included for clarity
     }];
@@ -244,7 +244,7 @@ umount /mnt
 
 - Default deny on all interfaces
 - Public interface: allow inbound 80/tcp, 443/tcp, 3478/udp (STUN), WireGuard port/udp (from private.nix)
-- **Bootstrap SSH: allow inbound on a configurable high port (default REDACTED-NON-STANDARD-SSH-PORT/tcp) on public interface, controlled by a boolean flag `networking.cupix001.enablePublicSSH` (default: true). Once WireGuard is verified, set to false and redeploy.**
+- **Bootstrap SSH: allow inbound on a configurable high port (default <SSH_PORT>/tcp) on public interface, controlled by a boolean flag `networking.cupix001.enablePublicSSH` (default: true). Once WireGuard is verified, set to false and redeploy.**
 - WireGuard interface (wg0): allow all (trusted)
 - No standard-port (22) SSH on public interface at any time
 - Once WireGuard is estabished: no public SSH. SSH only via WireGuard interface
@@ -305,7 +305,7 @@ umount /mnt
 ### 6. SSH Hardening
 
 - sshd listens on WireGuard interface IP (from private.nix tunnel IP) on port 22
-- **Additionally, when `networking.cupix001.enablePublicSSH` is true: sshd also listens on public IP on the high port (from private.nix, default REDACTED-NON-STANDARD-SSH-PORT). This is the bootstrap/fallback listener.**
+- **Additionally, when `networking.cupix001.enablePublicSSH` is true: sshd also listens on public IP on the high port (from private.nix, default <SSH_PORT>). This is the bootstrap/fallback listener.**
 - Once WireGuard connection is established, sshd listens ONLY on WireGuard interface IP
 - Key-only authentication (PasswordAuthentication no, KbdInteractiveAuthentication no)
 - AllowUsers or AllowGroups restricted
@@ -392,7 +392,7 @@ Declare the networking.cupix001 option set in a module (e.g., hosts/cupix001/opt
    - 80/tcp inbound ALLOW (ACME HTTP-01 fallback, first try to use DNS-01)
    - 3478/udp inbound ALLOW (STUN)
    - WireGuard-port/udp inbound ALLOW
-   - Bootstrap-SSH-port/tcp inbound ALLOW (e.g., REDACTED-NON-STANDARD-SSH-PORT)
+   - Bootstrap-SSH-port/tcp inbound ALLOW (e.g., <SSH_PORT>)
    - 22/tcp inbound ALLOW **temporarily** (nixos-anywhere needs Debian's SSH)
    - Default: DENY all other inbound
 3. Assign policy `cupix001-bootstrap` to the VPS via API
@@ -402,9 +402,9 @@ Declare the networking.cupix001 option set in a module (e.g., hosts/cupix001/opt
 
 **Post-first-boot:**
 
-1. Verify bootstrap SSH on high port: `ssh -p REDACTED-NON-STANDARD-SSH-PORT user@<PUBLIC-IP>`
-2. Verify WireGuard tunnel: `ping REDACTED-WIREGUARD-SUBNET`
-3. Verify SSH via WireGuard: `ssh user@REDACTED-WIREGUARD-SUBNET`
+1. Verify bootstrap SSH on high port: `ssh -p <SSH_PORT> user@<PUBLIC-IP>`
+2. Verify WireGuard tunnel: `ping 10.0.0.2`
+3. Verify SSH via WireGuard: `ssh user@10.0.0.1`
 4. Verify Caddy: `curl -I https://example.de`
 5. Update firewall policy via API → remove 22/tcp rule (Debian SSH no longer needed)
 6. Set `networking.cupix001.enablePublicSSH = false`, redeploy via `colmena apply --on @edge`
@@ -490,9 +490,9 @@ Declare the networking.cupix001 option set in a module (e.g., hosts/cupix001/opt
 - Bootstrap SSH flag test:
   ```python
   # With enablePublicSSH = true:
-  gateway.succeed("ss -tlnp | grep ':REDACTED-NON-STANDARD-SSH-PORT'")
+  gateway.succeed("ss -tlnp | grep ':<SSH_PORT>'")
   # After flag flip to false + rebuild (separate test node or reconfigure):
-  gateway.fail("ss -tlnp | grep ':REDACTED-NON-STANDARD-SSH-PORT'")
+  gateway.fail("ss -tlnp | grep ':<SSH_PORT>'")
   ```
 
 **Layer 3: Post-deployment (Testinfra/pytest)**
@@ -526,7 +526,7 @@ Declare the networking.cupix001 option set in a module (e.g., hosts/cupix001/opt
 - WireGuard tunnel reachable
   ```python
   def test_wg_tunnel_connectivity(host):
-      assert host.check_output("ping -c1 -W2 REDACTED-WIREGUARD-SUBNET").find("1 received") != -1
+      assert host.check_output("ping -c1 -W2 10.0.0.2").find("1 received") != -1
   ```
 
 **Test-first workflow:**
@@ -558,7 +558,7 @@ Create `docs/cupix001-deployment.md` with:
    - After first boot: create blank btrfs snapshot:
 
      ```bash
-     ssh -p REDACTED-NON-STANDARD-SSH-PORT user@<PUBLIC-IP>
+     ssh -p <SSH_PORT> user@<PUBLIC-IP>
      sudo mount -t btrfs -o subvol=/ /dev/disk/by-label/nixos /mnt
      sudo btrfs subvolume snapshot -r /mnt/@root /mnt/@root-blank
      sudo umount /mnt

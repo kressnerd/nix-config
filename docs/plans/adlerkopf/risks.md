@@ -26,7 +26,7 @@
 |---|---|---|
 | A1 | M720q has TPM 2.0 and it is enabled in BIOS | Must use passphrase boot or initrd-SSH-unlock instead |
 | A2 | NIC is Intel I219-V (driver: `e1000e`) | Add correct NIC driver to `hardware.nix`; verify from installer |
-| A3 | Static IP `REDACTED-HOME-LAN-SUBNET` is free on the LAN | IP conflict on boot → change in `networking.nix` |
+| A3 | Static IP `192.0.2.15` is free on the LAN | IP conflict on boot → change in `networking.nix` |
 | A4 | Router allows static DHCP assignments and DNS override | Manual router admin access needed |
 | A5 | Old Pi can remain online through the migration | No forced rollout; phased cut-over possible |
 | A6 | Single admin user — no multi-tenancy for Grafana/Node-RED | If multi-user needed, PostgreSQL + LDAP adds complexity |

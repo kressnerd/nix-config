@@ -35,6 +35,47 @@ evaluation time in `tests/assertions/thiniel-invariants.nix` and
 proven by the QEMU VM check
 `tests/integration/ssh-identity-selection-test.nix`.
 
+## Operational-data separation
+
+The public repository holds the option schema and documentation-range defaults;
+the operator's real operational values — addresses, gateway, hardware address,
+resolvers, ports — reach a host only through the overridable `private` flake
+input. The public flake's default for that input is the in-tree stub
+`private-stub/flake.nix`, so a clean clone and CI evaluate with placeholders and
+need no private access; the operator's deploy commands replace it with
+`--override-input private git+file:///home/dan/dev/PRIVATE/nix-private`.
+
+Rationale: when a flake lives in a git worktree, the evaluator reads a
+`git+file://` source that only sees the git index, so a gitignored `private.nix`
+is invisible and every host build fails once it is untracked. The values
+therefore cannot come from a file in the public repository; they come from an
+input the evaluator can see and the operator can override. The full comparison
+and the rejected alternatives are in
+[ADR-0001](adr/ADR-0001-private-data-strategy.md).
+
+Three rules hold the boundary: the recorded content and the published history
+carry no operational value; the public fallback stays non-operational, which the
+stub enforces by asserting the host defaults are documentation-range
+placeholders; and a guard refuses any revision that would record an operational
+value, a per-host private-value file, or an unencrypted secret.
+
+Failure mode: a deploy that forgets `--override-input` evaluates the stub, and
+the stub's placeholder assertion fails the evaluation rather than applying a
+placeholder address. The assertion is therefore load-bearing, not decoration.
+
+Verification: `scripts/private_data_hygiene.py` runs over the recorded tree as
+the flake check `private-data-hygiene` and is reused by the pre-commit hook and
+CI; `@host:adlerkopf` fires the stub assertion; and
+`tests/integration/private-data-separation-test.nix` boots a machine whose
+network values are supplied from outside the repository and asserts the booted
+interface carries them. The deploy path additionally refuses to deploy when the
+override supplied no values (a preflight in the per-host rebuild alias), because
+a clean-clone evaluation and a forgotten override are the same stub evaluation
+and the assertion cannot tell them apart.
+
+*Intended: this concept's artifacts land with the change
+`private-data-remediation`.*
+
 ## Typed option modules as the host/module contract
 
 Reusable concerns are a pair of files: `options.nix` declares the typed surface
