@@ -71,7 +71,7 @@ No new laptop, workstation or VPN persona is introduced; family/guest
 preferences are not invented for the owner's work context.
 
 ## Capabilities
-- `permitted-identity-selection` — a chosen device reaches private repositories and uses the workspace identity configuration with the identity material that device holds, and declares no connection for an identity whose material lives elsewhere.
+- `permitted-identity-selection`
 
 ## Interactions
 

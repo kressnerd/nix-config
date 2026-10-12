@@ -105,7 +105,7 @@ tracked. No family or application-user interest is invented: no hosted
 application, access path or shared resource changes here.
 
 ## Capabilities
-- `operational-data-separation` — the published configuration records no operational value while every host still builds and deploys from the values held outside the repository.
+- `operational-data-separation`
 
 ## Interactions
 
