@@ -105,7 +105,7 @@ tracked. No family or application-user interest is invented: no hosted
 application, access path or shared resource changes here.
 
 ## Capabilities
-- `operational-data-separation`
+- operational-data-separation
 
 ## Interactions
 

@@ -71,7 +71,7 @@ No new laptop, workstation or VPN persona is introduced; family/guest
 preferences are not invented for the owner's work context.
 
 ## Capabilities
-- `permitted-identity-selection`
+- permitted-identity-selection
 
 ## Interactions
 
