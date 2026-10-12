@@ -5,6 +5,7 @@
 
 | Term | Definition |
 |---|---|
+| Connection entry | The SSH client configuration entry (host block) a device renders for one identity, naming that identity's file. |
 | Identity declaration | A host's statement of which identity material that device holds (`myHome.ssh`), from which the connection entries and the workspace identity configuration are rendered. |
 | Identity file | The private key file a device presents to authenticate to a remote Git host. |
 | Identity material | The private keys a device holds for the identities it uses; a device declares it, and a connection entry is rendered only where the device declares the material for that identity. |

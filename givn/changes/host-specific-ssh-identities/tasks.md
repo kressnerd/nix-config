@@ -188,6 +188,14 @@ same claim on the running device is confirmed here.
       Host *
         AddKeysToAgent yes
       ```
+- [x] The rendered surface resolves correctly when SSH reads it, and the system
+      builds:
+      ```
+      $ ssh -G -F <out>/home-files/.ssh/config github-personal | grep -i identityfile
+      identityfile ~/.ssh/id_ed25519
+      $ nixos-rebuild build --flake .#thiniel
+      Done. The new configuration is /nix/store/zb8hc07b9343lh3xbmiigf6526hxr07v-nixos-system-thiniel-26.11.20261008.8edc0c7
+      ```
 - [ ] Activation on the running system requires the owner's password
       (`sudo -n true` reports `a password is required`), so
       `sudo nixos-rebuild switch --flake .#thiniel` is the owner's step; the

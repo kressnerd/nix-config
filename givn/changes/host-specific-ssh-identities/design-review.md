@@ -20,8 +20,8 @@ the affected modules, hosts, tests and flake wiring.
 | Scope | No finding. The spec covers exactly the proposal: host-declared personal key, work entries only where secret material exists, includes only on the host that maintains them. Out-of-scope items (key generation/movement, MacBook effective change, include-file contents) are asserted by no step. |
 | Tech choices | No finding. `myHome.ssh.personalIdentityFile` (no default) plus `myHome.ssh.includedConfigs` plus the existing `config.sops.secrets ? "git/<identity>/name"` gate is the repository's established shape. Only the two hosts that need it import the option module. |
 | Missing scenarios | One low-severity gap found (the MacBook's workspace identity surface was unasserted) and closed. Error paths (a host importing the feature without declaring a key; a declared-but-absent key) are design/chapter-11 material, not spec material. |
-| Testability | Verified against today's rendering: thiniel resolves `github-personal` to `~/.ssh/id_ed25519_personal_2026-10-04`, renders the three work entries and the three includes, and its workspace profile names the same foreign path — so scenarios 1, 2 and 4 are genuinely RED-able. Scenario 3 is a regression guard whose RED is the not-yet-existing option. A deliberately false home-manager assertion was proven to fail the darwin toplevel evaluation, which validates scenario 3's bound target. |
-| Verification binding completeness | 5 scenarios, exactly one binding tag each; `scripts/givn-spec-trace.py` exits 0; every `@check:`/`@host:` name resolves; `verify.e2e_command` differs from `verify.command`. |
+| Testability | Verified against today's rendering: thiniel resolves `github-personal` to `~/.ssh/id_ed25519_personal_2026-10-04`, renders the three work entries and the three includes, and its workspace profile names the same foreign path — so scenarios 1, 2 and 4 are genuinely RED-able. Scenario 3 is a regression guard: its RED is the MacBook's include list, which the preceding scenario turns into a host declaration the MacBook has not yet filled. A deliberately false home-manager assertion was proven to fail the darwin toplevel evaluation, which validates scenario 3's bound target. |
+| Verification binding completeness | 4 scenarios, exactly one binding tag each; `scripts/givn-spec-trace.py` exits 0; every `@check:`/`@host:` name resolves; `verify.e2e_command` differs from `verify.command`. (The count was 5 when this branch was grilled; the second hardening round below folded the module-granularity scenario into scenario 1's RED step, leaving the unit check as a target of scenario 1 in `design.md`, not a scenario.) |
 | Binding coverage | Every scenario has a design row with a non-empty bound target and targeted run command. |
 | Deployment & rollback | Apply command, on-host verification and rollback recorded; the rollback claim holds because `/nix` is persisted on thiniel. |
 | Persona disposition | `owner--operator` (confirmed 2026-10-11): relevant, the owner is the only actor who evaluates private-repository access on their own device. `family--application-user`: not affected — no hosted application, shared resource or access grant changes. No persona is used as a Gherkin actor; no persona invented or promoted. |
@@ -61,12 +61,12 @@ host rather than passing vacuously — that is the repository's existing policy,
 not something this change alters.
 
 The `@e2e` tag consequently moves from the thiniel scenario to the booted-device
-scenario. No committed revision of this change ever carried the tag on the
-thiniel scenario (the change's first commit is still ahead), and no gate is
-bypassed: the `@e2e` scope is now enforced by a real boot instead of being
-asserted without a target. Keeping the tag on the host-bound scenario would have
-left it permanently unenforced by the `@e2e` runner, which builds `integration-*`
-checks only.
+scenario. The single commit that introduced the delta spec (`2a20ef6`) already
+carries the tag on the booted-device scenario, so no committed revision of this
+change ever had it on the thiniel scenario, and no gate is bypassed: the `@e2e`
+scope is now enforced by a real boot instead of being asserted without a target.
+Keeping the tag on the host-bound scenario would have left it permanently
+unenforced by the `@e2e` runner, which builds `integration-*` checks only.
 
 ## Hardening performed
 

@@ -21,7 +21,7 @@ eight are unaffected.
 | 09 | Architecture Decisions | No | No ADR. The decision is not qualified: falsification test 1 (reversible within this change) and test 2 (constrains no second component or future change) both fail the candidate, `durable_consequence` and `lower_level_artifact` fail, and the register is empty (only `adr-template.md` exists). Canonical destination of the rationale: `design.md` (single owner — the capability spec owns the observable behaviour, not the rationale). |
 | 10 | Quality Requirements | No | No measurable quality scenario changes; the security posture is preserved (fail-closed identity selection). |
 | 11 | Risks and Technical Debt | **Yes** | A declared identity file that is absent fails closed and stays silent until the first connection (R-001); the work identity key names remain device-specific literals (TD-001). |
-| 12 | Glossary | **Yes** | New terms: identity declaration, identity file, identity material, personal identity, private workspace, work identity. |
+| 12 | Glossary | **Yes** | New terms: connection entry, identity declaration, identity file, identity material, personal identity, private workspace, work identity. |
 
 Chapters 01, 02, 03, 04, 06, 07 and 10 still contain only their scaffold
 placeholders (created in `5027ac4`, before this change) and are deliberately
