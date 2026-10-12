@@ -75,6 +75,14 @@ then compared against the durable chapters and `arc42.md`.
 
 ARC42 CONFORMANCE: CLEAN
 
+Post-review note: the durable chapters were rebaselined repository-wide by
+`78dc86c` ("docs(arc42): current-state architecture baseline for the whole
+repository") after this check ran. The change's own facts survived that edit —
+all seven glossary terms, R-001 to R-003 and TD-001 in chapter 11, the
+`home-manager/ssh` option row and the per-host `myHome.ssh` declarations in
+chapter 05, and the per-host identity declaration concept in chapter 08 — so the
+conformance claim above still holds against the current chapters.
+
 ## Ubiquitous language
 
 F-3: the spec's observable assertions name "connection entry", and the glossary's
