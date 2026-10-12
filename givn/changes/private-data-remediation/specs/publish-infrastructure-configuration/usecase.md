@@ -1,8 +1,6 @@
 # Use case: publish-infrastructure-configuration
 
-Status: new contract introduced by change `private-data-remediation`
-(2026-10-12). It owns that change's capability; its goal, rules and guarantees
-are stated here for the first time — no ideation topic elaborated it.
+Status: new contract introduced by change `private-data-remediation` (2026-10-12); it owns that change's capability, and no ideation topic elaborated it.
 
 ## Level
 !
