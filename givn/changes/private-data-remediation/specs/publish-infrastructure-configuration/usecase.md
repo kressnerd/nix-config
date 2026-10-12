@@ -105,12 +105,7 @@ tracked. No family or application-user interest is invented: no hosted
 application, access path or shared resource changes here.
 
 ## Capabilities
-- `operational-data-separation` — the published configuration records no
-  operational value while every host still builds and deploys from the values
-  held outside the repository.
-
-This contract was introduced by the change private-data-remediation on
-2026-10-12; no ideation topic elaborated it.
+- `operational-data-separation` — the published configuration records no operational value while every host still builds and deploys from the values held outside the repository.
 
 ## Interactions
 - none — no secret store, publication service or backup product is selected.
