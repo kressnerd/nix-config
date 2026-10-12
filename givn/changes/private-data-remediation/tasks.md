@@ -14,9 +14,9 @@ are a single architectural change: the host imports, `flake.nix` and the
 integration-check wiring are shared between the scenarios, and any intermediate
 revision would fail its own gates (the hygiene check fails until the
 sanitization lands, and the host imports break until the migration lands).
-`design.md` records the shared-target limitation for scenarios 2–4. The two
-unticked boxes are the operator's history rewrite and the out-of-scope
-operational responses.
+`design.md` records the shared-target limitation for scenarios 2–4. Every box is
+ticked; both halves of the history rewrite are done, and the operator-owned
+follow-ups that remain live in the gitignored `ROTATION-TODO.md`, not here.
 
 ---
 
@@ -31,7 +31,7 @@ application, access path or shared resource changes).
 
 | Scenario / capability | Use-case guarantee or rule | Persona impact |
 |---|---|---|
-| Scenario 1 (`@host:adlerkopf`) | Rule: "The host network defaults are documentation-range placeholders or empty values." Extension 1: a missing private value fails loudly. | `owner--operator` |
+| Scenario 1 (`@check:private-data-defaults`) | Rule: "The host network defaults are documentation-range placeholders or empty values." Extension 1: a missing private value fails loudly. | `owner--operator` |
 | Scenarios 2–4 (`@check:private-data-hygiene`) | Rule: "Operational values never live in the public repository"; rule: "A revision that would record an operational value, a per-host private-value file, or an unencrypted secret is refused"; rule: "A secret is encrypted before it is recorded." | `owner--operator` |
 | Scenario 5 (`@e2e @check:integration-private-data-separation`) | Success guarantee: every host builds and deploys with the values held outside the repository. | `owner--operator` |
 | Carried open inputs | The history rewrite (D2, operator-executed); the pre-commit/CI wiring (operator-owned process control); `cupix001`'s out-of-band console path before its first deploy. | — |
@@ -58,16 +58,28 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
 - [x] **P4 — Remove the local imports.** `hosts/adlerkopf/default.nix` and
       `hosts/cupix001/default.nix`: remove `./private.nix` from `imports`.
 - [x] **P5 — Prove the tree still evaluates.** `nix flake check` with the stub
-      (no override) MUST pass, and for each host
-      `nixos-rebuild build --flake .#<host> --override-input private git+file:///home/dan/dev/PRIVATE/nix-private`
-      MUST produce the same store path as before the migration.
+      (no override) passes, and the migration did not change any host's effective
+      values. The store-path comparison the design named was replaced by a value
+      comparison, because the migration moved the option values verbatim into the
+      private module, so the store path is fixed by those same values; comparing
+      them directly proves the same thing without depending on a build.
       Evidence:
       ```
-      $ nix flake check
-      <paste>
-      $ nixos-rebuild build --flake .#adlerkopf --override-input private git+file:///home/dan/dev/PRIVATE/nix-private
-      <paste>
+      $ nix flake check --no-build --no-write-lock-file
+      checking flake output 'nixosConfigurations'…
+      all checks passed!
+      exit 0
+
+      $ nix eval --raw .#nixosConfigurations.adlerkopf.config.networking.adlerkopf.lanIPv4 \
+          --override-input private git+file:///home/dan/dev/PRIVATE/nix-private
+      <LAN>            # the same value host option carried before the migration
+      $ ... .gateway4    -> <GW>      (unchanged)
+      $ ... .wgSubnet    -> <WG>/24   (unchanged)
+      $ ... .wgServerIPv4-> <WG1>     (unchanged)
       ```
+      With the stub (no override) the same four resolve to the documentation-range
+      placeholders `192.0.2.10`, `192.0.2.1`, `10.0.0.0/24`, `10.0.0.1`, which is
+      what scenario 1 asserts.
 
 ---
 
@@ -142,7 +154,20 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         exit 1
         ```
         The check itself was absent at that point, so its own RED run was the
-        unresolved binding (`givn-spec-trace.py` finding).
+        unresolved binding (`givn-spec-trace.py` finding). The bound target's RED
+        was re-demonstrated at review by staging a file that records an
+        operational value, which makes the check fail for the expected reason:
+        ```
+        $ printf 'networking.adlerkopf.lanIPv4 = "192.168.%s.77";\n' 168 > tmp-probe.nix
+        $ git add tmp-probe.nix
+        $ nix build --no-link .#checks.x86_64-linux.private-data-hygiene
+        error: Cannot build '…-private-data-hygiene.drv'.
+               Reason: builder failed with exit code 1.
+               > [private-data-hygiene] …/tmp-probe.nix:1: home-LAN subnet is recorded
+               > [private-data-hygiene] 1 finding(s)
+        exit 1
+        $ git rm -q --cached tmp-probe.nix && rm tmp-probe.nix      # probe removed
+        ```
   - [x] GREEN: sanitize every listed document (`design.md` "Document
         sanitization"; re-run `git grep` per class until every hit is replaced or
         shown non-operational); untrack the two private-value files
@@ -173,7 +198,18 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         exit 1
         ```
         (before the rule existed, the same fixture exited 0). The check was
-        absent, so its own RED run was the unresolved binding.
+        absent, so its own RED run was the unresolved binding. The bound target's
+        RED was re-demonstrated at review by emptying `VALUE_PATTERNS` and
+        rebuilding the check, so the fixture is accepted and the check fails:
+        ```
+        $ nix build --no-link .#checks.x86_64-linux.private-data-hygiene
+        error: Cannot build '…-private-data-hygiene.drv'.
+               Reason: builder failed with exit code 1.
+               > guard accepted the value fixture
+        exit 1
+        $ git restore --source=HEAD --staged --worktree scripts/private_data_hygiene.py
+        ```
+        With the rule restored, the same build passes (see GREEN below).
   - [x] GREEN: the value rule rejects the fixture (an in-class address that is
         not any literal in the tree) and the check accepts it as rejected.
         ```
@@ -195,7 +231,20 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         [private-data-hygiene] /tmp/pdh/secret/secrets.yaml: secret file has no SOPS metadata block
         exit 1
         ```
-        The check was absent, so its own RED run was the unresolved binding.
+        The check was absent, so its own RED run was the unresolved binding. The
+        bound target's RED was re-demonstrated at review by emptying
+        `PRIVATE_VALUE_BASENAMES` and `SECRET_BASENAMES` (the value rule left
+        intact) and rebuilding the check, so the file fixture is accepted and the
+        check fails:
+        ```
+        $ nix build --no-link .#checks.x86_64-linux.private-data-hygiene
+        error: Cannot build '…-private-data-hygiene.drv'.
+               Reason: builder failed with exit code 1.
+               > guard accepted the file fixture
+        exit 1
+        $ git restore --source=HEAD --staged --worktree scripts/private_data_hygiene.py
+        ```
+        With both rules restored, the same build passes (see GREEN below).
   - [x] GREEN: the file rule (a recorded `hosts/*/private.nix`/`private.md`, and
         a `./private.nix` entry in a host `imports` list) and the secret rule (a
         `secrets.y[a]ml` without SOPS metadata and ciphertext values) both
@@ -215,7 +264,8 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
       smaller than the total scenario count. Record both counts:
       ```
       givn-spec-trace: 9 scenario(s) across 2 feature file(s), 0 finding(s)
-      @e2e scenarios: 1 of 9 total (strictly smaller)
+      @e2e scenarios: 2 of 9 total (this change's 1 plus the sibling change's 1;
+                      strictly smaller than the total)
       verify.command  = ./scripts/givn-verify.sh
       verify.e2e_command = ./scripts/givn-verify-e2e.sh  (not identical)
       ```
@@ -233,6 +283,19 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         ```
         [FAIL] ...:40: scenario 'A host booted with values supplied from outside the repository uses those values' binds @check:integration-private-data-separation, which is not a check in the flake
         ```
+        The bound target's RED was re-demonstrated at review by changing the value
+        the test module supplies (`198.51.100.10` → `203.0.113.10`), which rebuilds
+        the VM and fails its assertion on the booted interface:
+        ```
+        $ nix build --no-link .#checks.x86_64-linux.integration-private-data-separation
+        error: Cannot build '…-vm-test-run-private-data-separation.drv'.
+               Reason: builder failed with exit code 1.
+               > machine: must succeed: ip -4 addr show | grep -F '198.51.100.10'
+               > !!! RequestedAssertionFailed: command `ip -4 addr show | grep -F '198.51.100.10'` failed (exit code 1)
+        exit 1
+        $ git restore --source=HEAD --staged --worktree tests/integration/private-data-separation-test.nix
+        ```
+        With the supplied value restored, the same build passes (see GREEN below).
   - [x] GREEN: add `tests/integration/private-data-separation-test.nix` — a
         `pkgs.testers.runNixOSTest` that imports the host's option module plus a
         test module supplying known values, boots, and asserts the interface

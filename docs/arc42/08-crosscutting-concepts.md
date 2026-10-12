@@ -60,12 +60,16 @@ placeholders; and a guard refuses any revision that would record an operational
 value, a per-host private-value file, or an unencrypted secret.
 
 Failure mode: a deploy that forgets `--override-input` evaluates the stub, and
-the stub's placeholder assertion fails the evaluation rather than applying a
-placeholder address. The assertion is therefore load-bearing, not decoration.
+that evaluation is indistinguishable from a clean clone's, so the stub assertion
+cannot catch it — the assertion guards the defaults, not the forgotten override.
+What refuses such a deploy is the deploy path's preflight in the per-host
+rebuild alias.
 
 Verification: `scripts/private_data_hygiene.py` runs over the recorded tree as
 the flake check `private-data-hygiene` and is reused by the pre-commit hook and
-CI; `@host:adlerkopf` fires the stub assertion; and
+CI; `@check:private-data-defaults` asserts the declared defaults are
+placeholders or empty, and the stub assertion re-checks the same obligation in
+the `verify.command` suite; and
 `tests/integration/private-data-separation-test.nix` boots a machine whose
 network values are supplied from outside the repository and asserts the booted
 interface carries them. The deploy path additionally refuses to deploy when the

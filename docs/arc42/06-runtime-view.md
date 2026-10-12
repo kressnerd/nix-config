@@ -32,9 +32,10 @@ sequenceDiagram
 1. Nix reads `flake.nix` and resolves inputs from `flake.lock`.
 2. For each system in `[ x86_64-linux, aarch64-linux, aarch64-darwin ]` the
    `checks` output provides `unit-helpers` (a `runCommand` that fails unless all
-   `lib.debug.runTests` cases pass), the three lint derivations, and
-   `private-data-hygiene` (the guard over the recorded tree plus its built-in
-   reject fixtures).
+   `lib.debug.runTests` cases pass), the three lint derivations,
+   `private-data-defaults` (the declared host network defaults are placeholders
+   or empty) and `private-data-hygiene` (the guard over the recorded tree plus
+   its built-in reject fixtures).
 3. For Linux systems the four `integration-*` checks are added; they are not
    built by `nix flake check` in the non-e2e scope.
 4. Every host configuration is evaluated, firing the imported assertion modules.
@@ -87,14 +88,13 @@ sequenceDiagram
 **Notes / verified behaviour:** the mechanism is verified by
 `@e2e @check:integration-private-data-separation`, which boots a machine whose
 network values are supplied from outside the repository and asserts the booted
-interface carries them. The failure mode of a forgotten override is a failed
-evaluation (the stub assertion), not a placeholder address applied to a host.
+interface carries them. A forgotten override evaluates the stub, which is
+indistinguishable from a clean clone's evaluation, so the stub assertion cannot
+catch it; what refuses such a deploy is the deploy path's preflight in the
+per-host rebuild alias — an operator process control, not a repository check.
 The `git+file://` constraint that forces this shape is recorded in
 [chapter 2](02-architecture-constraints.md) and
 [ADR-0001](adr/ADR-0001-private-data-strategy.md).
-
-The deploy preflight that catches a forgotten override is the operator's process
-control, not a repository check.
 
 ## Scenario: Boot with impermanence (thiniel)
 

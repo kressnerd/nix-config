@@ -29,11 +29,11 @@ replacement_adr: null
 Evidence:
 
 - `alternatives`: six materially different mechanisms were compared in
-  `docs/plans/private-data-remediation-plan.md` (Part 3A.7, Section 3.1): a
-  gitignored file in the public repository, a permanently staged file,
-  `builtins.pathExists` + `--impure`, `extraSpecialArgs` + `--impure`,
-  SOPS-nix for the values, and a private git submodule, against the chosen
-  overridable input.
+  `docs/plans/private-data-remediation-plan.md` (Part 1.5, Section 3.1): a
+  gitignored file in the public repository, a permanently staged file, the
+  chosen overridable input, `builtins.pathExists` / `extraSpecialArgs` with
+  `--impure`, git-crypt on the per-host file, and SOPS-nix for the values. The
+  plan also records a private git submodule as a variant of the chosen shape.
 - `architectural_impact`: it fixes where a host's operational values come from —
   a deployment and data boundary. Every host configuration is completed by an
   input module, every deploy command must override that input, and the public
