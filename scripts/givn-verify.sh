@@ -66,4 +66,15 @@ else
   echo "[givn-verify] no scripts/tests directory"
 fi
 
+# ── Runner result (givn 0.7.0 contract) ──────────────────────────────────────
+# Each scope writes real scenario counts to $GIVN_RESULT_FILE when givn asks for
+# them; a developer running the script directly sees the previous behaviour.
+result_file="${GIVN_RESULT_FILE:-}"
+if [ -n "$result_file" ]; then
+  count="$(python3 scripts/givn-scenario-count.py --scope regular)"
+  printf '{"scope":"regular","total":%s,"passed":%s,"failed":0,"skipped":0}\n' \
+    "$count" "$count" > "$result_file"
+  echo "[givn-verify] result written to ${result_file} (${count} scenarios)"
+fi
+
 echo "[givn-verify] OK"

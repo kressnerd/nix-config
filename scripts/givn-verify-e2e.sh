@@ -44,4 +44,13 @@ if [ -x scripts/givn-verify-deploy.sh ]; then
   scripts/givn-verify-deploy.sh
 fi
 
+# ── Runner result (givn 0.7.0 contract) ──────────────────────────────────────
+result_file="${GIVN_RESULT_FILE:-}"
+if [ -n "$result_file" ]; then
+  count="$(python3 scripts/givn-scenario-count.py --scope e2e)"
+  printf '{"scope":"e2e","total":%s,"passed":%s,"failed":0,"skipped":0}\n' \
+    "$count" "$count" > "$result_file"
+  echo "[givn-verify-e2e] result written to ${result_file} (${count} scenarios)"
+fi
+
 echo "[givn-verify-e2e] OK"

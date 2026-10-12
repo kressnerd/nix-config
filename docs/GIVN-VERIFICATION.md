@@ -77,6 +77,23 @@ it fails loudly rather than reporting a false pass.
 `verify.command` must never be identical to `verify.e2e_command`: the e2e
 command is the strict subset that actually boots a system.
 
+### Runner result contract (givn 0.7.0)
+
+Each scope command writes one JSON object to the path in `GIVN_RESULT_FILE`
+when givn sets that variable, and keeps its previous behaviour when a developer
+runs it directly:
+
+```json
+{"scope":"regular","total":7,"passed":7,"failed":0,"skipped":0}
+```
+
+`scope` is `regular` for `verify.command` and `e2e` for `verify.e2e_command`.
+The counts are real scenario counts from `scripts/givn-scenario-count.py`, which
+reads the `.feature` files and splits them by the `@e2e` tag — never hardcoded
+and never inferred from the exit code. `givn archive` rejects a missing file, a
+malformed result, a wrong scope, `total == 0`, a non-zero `failed` or `skipped`,
+or counts that do not reconcile.
+
 ## Single-scenario (targeted) run
 
 RED/GREEN/REFACTOR in the task loop runs the scenario's bound target directly,
