@@ -147,6 +147,19 @@
               config.home-manager.users.dan.sops.templates."git-personal".content;
           message = "thiniel: the workspace identity configuration must name the identity file thiniel holds";
         }
+        # Scenario: A device declares no connection for an identity whose
+        # material it does not hold.
+        {
+          assertion =
+            !(config.home-manager.users.dan.programs.ssh.settings ? "github-company")
+            && !(config.home-manager.users.dan.programs.ssh.settings ? "github-client001")
+            && !(config.home-manager.users.dan.programs.ssh.settings ? "bitbucket-client002");
+          message = "thiniel: no work identity connection entry may be declared without that identity's secret material, got ${builtins.toJSON (builtins.attrNames config.home-manager.users.dan.programs.ssh.settings)}";
+        }
+        {
+          assertion = config.home-manager.users.dan.programs.ssh.includes == [ ];
+          message = "thiniel: no manually maintained work-laptop ssh configuration file may be included, got ${builtins.toJSON config.home-manager.users.dan.programs.ssh.includes}";
+        }
       ];
   };
 }

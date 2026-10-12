@@ -161,6 +161,8 @@ lib.debug.runTests {
           personalIdentityFile = "~/.ssh/id_ed25519";
           includedConfigs = [ ];
         };
+        # No work identity material on this device.
+        mockConfig.sops.secrets = { };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsLinux;
@@ -190,6 +192,8 @@ lib.debug.runTests {
           personalIdentityFile = "~/.ssh/id_ed25519";
           includedConfigs = [ ];
         };
+        # No work identity material on this device.
+        mockConfig.sops.secrets = { };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsDarwin;
@@ -221,6 +225,8 @@ lib.debug.runTests {
           personalIdentityFile = "~/.ssh/id_ed25519";
           includedConfigs = [ ];
         };
+        # No work identity material on this device.
+        mockConfig.sops.secrets = { };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsDarwin;
@@ -252,6 +258,8 @@ lib.debug.runTests {
           personalIdentityFile = "~/.ssh/id_ed25519";
           includedConfigs = [ ];
         };
+        # No work identity material on this device.
+        mockConfig.sops.secrets = { };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsLinux;
@@ -283,6 +291,8 @@ lib.debug.runTests {
           personalIdentityFile = "~/.ssh/id_ed25519";
           includedConfigs = [ ];
         };
+        # No work identity material on this device.
+        mockConfig.sops.secrets = { };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsDarwin;

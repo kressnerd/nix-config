@@ -66,24 +66,38 @@ corpus by this change; ideation topic `infrastructure-growth`). Capability:
         $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath   -> MACBOOK_OK
         $ python3 scripts/givn-spec-trace.py   -> 4 scenario(s) across 1 feature file(s), 0 finding(s)
         ```
-  - [ ] COMMIT: `<hash>` — `feat(permitted-identity-selection): each personal device uses the SSH identity it holds` (one commit for RED+GREEN+REFACTOR)
+  - [x] COMMIT: `050622e` — `feat(permitted-identity-selection): each personal device uses the SSH identity it holds` (one commit for RED+GREEN+REFACTOR)
 
-- [ ] Scenario: `A device declares no connection for an identity whose material it does not hold` (`@host:thiniel`)
-  - [ ] RED: extend `tests/assertions/thiniel-invariants.nix` so thiniel must render no company/client001/client002 connection entry and include no manually maintained work-laptop file; run the targeted command. Must fail for the expected reason.
+- [x] Scenario: `A device declares no connection for an identity whose material it does not hold` (`@host:thiniel`)
+  - [x] RED: extended `tests/assertions/thiniel-invariants.nix` so thiniel must render no company/client001/client002 connection entry and include no manually maintained work-laptop file. Targeted run:
         ```
-        <!-- paste the targeted command + non-zero output -->
+        $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+        error:
+               Failed assertions:
+               - thiniel: no work identity connection entry may be declared without that identity's secret material, got ["*","bitbucket-client002","github-client001","github-company","github-personal"]
+               - thiniel: no manually maintained work-laptop ssh configuration file may be included, got ["config.d/company","config.d/client002","config.d/nix-builder"]
+        exit 1
         ```
-  - [ ] GREEN: render the work connection entries only where the host declares that identity's secret material, and take the include list from the host declaration.
-        Files created/modified: <!-- list them -->
-        Re-run the targeted command. Must pass.
+  - [x] GREEN: `home/dan/features/cli/ssh.nix` renders a work connection entry only where the host declares that identity's secret material, and takes the include list from `myHome.ssh.includedConfigs`; `tests/unit/hm-modules-test.nix` mocks declare that they hold no work material.
+        Files created/modified: `home/dan/features/cli/ssh.nix`, `tests/assertions/thiniel-invariants.nix`, `tests/unit/hm-modules-test.nix`.
+        Re-run:
         ```
-        <!-- paste GREEN evidence -->
+        $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath   -> HOST_OK (exit 0)
+        $ nix build .#checks.x86_64-linux.unit-helpers --no-link   -> UNIT_OK
+        $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath   -> MACBOOK_OK
+        $ nix eval --json .#darwinConfigurations.J6G6Y9JK7L.config.home-manager.users."daniel.kressner".programs.ssh.includes
+        []
         ```
-  - [ ] REFACTOR: no behaviour change; re-run. Must still pass.
+        The MacBook's rendered include list is empty at this point: its include
+        declaration is scenario 3's GREEN, which follows immediately.
+  - [x] REFACTOR: no behaviour change; changed files formatted with the repository's pinned `nixfmt` and re-verified.
         ```
-        <!-- paste REFACTOR evidence -->
+        $ nixfmt home/dan/features/cli/ssh.nix tests/assertions/thiniel-invariants.nix tests/unit/hm-modules-test.nix   -> FORMATTED
+        $ nix build .#checks.x86_64-linux.lint-deadnix .#checks.x86_64-linux.lint-statix .#checks.x86_64-linux.lint-nixfmt --no-link   -> LINTS_OK
+        $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath   -> HOST_OK
+        $ nix build .#checks.x86_64-linux.unit-helpers --no-link   -> UNIT_OK
         ```
-  - [ ] COMMIT: `<hash>` — `<message>` (one commit for RED+GREEN+REFACTOR)
+  - [ ] COMMIT: `<hash>` — `feat(permitted-identity-selection): a device declares only the identities whose material it holds` (one commit for RED+GREEN+REFACTOR)
 
 - [ ] Scenario: `The work laptop keeps its per-purpose identity selection` (`@host:J6G6Y9JK7L`)
   - [ ] RED: extend `tests/assertions/J6G6Y9JK7L-invariants.nix` so the MacBook must declare its three include files, keep its identity file, its workspace identity configuration and its three work connection entries; run the targeted command. Must fail for the expected reason.
