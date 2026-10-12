@@ -72,9 +72,9 @@ stay exactly as they are today.
 no command, token, or lexical overlap**. The permanent corpus is empty
 (`givn/specs/` holds no use case), so both columns record the decision.
 
-| Proposed capability | Decision | Rationale |
-|---|---|---|
-| permitted-identity-selection | `NEW in reproduce-working-environment` | The identity condition of the personal-work contract is the only fitting owner: the actor goal is the device owner resuming usual work on a chosen device, and "permitted usable identities" is one of its named conditions. No component-shaped use case is introduced (the sizing rules reject names like "ssh configuration"), and no other leaf owns device identity access. |
+| Proposed capability | Route's recommendation | Decision | Rationale (if you deviated from route) |
+|---|---|---|---|
+| permitted-identity-selection | no signal — no command, token or lexical overlap, because the permanent corpus is empty | NEW in reproduce-working-environment | The identity condition of the personal-work contract is the only fitting owner: the actor goal is the device owner resuming usual work on a chosen device, and "permitted usable identities" is one of its named conditions. No component-shaped use case is introduced (the sizing rules reject names like "ssh configuration"), and no other leaf owns device identity access. |
 
 Because this is the first permanent capability in the repository, the change
 carries the owning use-case document (`reproduce-working-environment`) together

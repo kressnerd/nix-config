@@ -72,12 +72,12 @@ Observable outcomes of this change:
 ## Capability Routing
 
 `givn spec route --change private-data-remediation` reports no signal: the
-permanent corpus is empty (`givn/specs/` does not exist), so there is nothing
-to match against and the recommendation column is omitted.
+permanent corpus is empty (`givn/specs/` does not exist), so there is nothing to
+match against. The recommendation column records that and the decision follows.
 
-| Proposed capability | Decision | Rationale |
-|---|---|---|
-| operational-data-separation | `NEW in publish-infrastructure-configuration` | No existing goal owns this. The six confirmed goals cover application availability, per-application reachability, application-state protection, hosted recovery, personal working-environment reproduction, and shared-information access — none owns repository content or publication. The new goal's single outcome — the published configuration discloses no operational data while the hosts remain deployable — is the only fitting owner. |
+| Proposed capability | Route's recommendation | Decision | Rationale (if you deviated from route) |
+|---|---|---|---|
+| operational-data-separation | no signal — no command, token or lexical overlap, because the permanent corpus is empty | NEW in publish-infrastructure-configuration | No existing goal owns this. The six confirmed goals cover application availability, per-application reachability, application-state protection, hosted recovery, personal working-environment reproduction, and shared-information access — none owns repository content or publication. The new goal's single outcome — the published configuration discloses no operational data while the hosts remain deployable — is the only fitting owner. |
 
 ## Out of Scope
 
