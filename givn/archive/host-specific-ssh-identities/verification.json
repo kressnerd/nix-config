@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "host-specific-ssh-identities",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "dc1817e6bed83d3ecb6ee4960b705095530a8fe4",
+  "tested_revision": "dc1817e6bed83d3ecb6ee4960b705095530a8fe4",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 12.397079143
+    },
+    "regular": {
+      "status": "passed",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 68.835615156
+    }
+  },
   "coverage": null,
   "started_at_unix": 1791840543,
-  "finished_at_unix": null
+  "finished_at_unix": 1791840624
 }
