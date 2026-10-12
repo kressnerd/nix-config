@@ -132,17 +132,23 @@ non-VM checks are built by its step 3, and the host assertion fires in step 4.
 
 **Scenario 1 binds to a check, not `@host:adlerkopf` — implementation
 discovery, 2026-10-12.** `nix eval .#nixosConfigurations.adlerkopf.config.system.build.toplevel.drvPath`
-exits 1 for adlerkopf on this repository *before* this change:
-`boot.initrd.luks.devices.cryptroot.device` has conflicting definitions
+exited 1 for adlerkopf on the revision this change started from:
+`boot.initrd.luks.devices.cryptroot.device` had conflicting definitions
 (disko's `disk-nvme0n1-cryptroot` against `hosts/adlerkopf/tpm2.nix`'s
 `cryptroot`). `nix flake check` passes because it does not force that option, so
-the canonical `@host:` targeted command cannot distinguish a stub-assertion
-failure from the pre-existing defect and can never exit 0. The placeholder
-obligation therefore binds to `@check:private-data-defaults`, which forces only
-the networking options. The stub's assertion stays as the evaluation-time guard
-(the `verify.command` suite fires every host's `config.assertions`), but it is
-not the bound target. The pre-existing toplevel defect is recorded as R-017 in
-[chapter 11](../../../../docs/arc42/11-risks-and-technical-debt.md).
+the canonical `@host:` targeted command could not distinguish a stub-assertion
+failure from that defect. The placeholder obligation therefore binds to
+`@check:private-data-defaults`, which forces only the networking options.
+
+The defect is fixed within this change by preserving the adlerkopf branch work
+(`worktree/roo-f8e9n`'s `f8dd195`, whose `flake.nix` half was already in `main`
+but whose `tpm2.nix` half was not), so the canonical command exits 0 again
+(R-017 in [chapter 11](../../../../docs/arc42/11-risks-and-technical-debt.md)).
+The check binding is **retained** on its own merits: it asserts the declared
+defaults directly and does not depend on the host's disk/LUKS evaluation, so it
+cannot be masked by an unrelated defect in a different subsystem. The stub's
+assertion stays as the evaluation-time guard (the `verify.command` suite fires
+every host's `config.assertions`), but it is not the bound target.
 
 The three `@check:private-data-hygiene` scenarios share one check because the
 rule is one implementation with three obligations (the tree is clean; the value

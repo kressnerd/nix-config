@@ -143,4 +143,24 @@ consistency gaps the correction had left behind; all four are fixed:
 No further finding was raised; the reviewer's confidence in the remaining
 consistency was 0.9 and every raised item is closed above.
 
+## Third correction — the R-017 rationale
+
+The operator asked that local adlerkopf branch work be preserved. Inspecting the
+branches showed `main` already carries 22 of the 23 commits on
+`worktree/roo-f8e9n` / `worktree/roo-geph2` by patch-id, except one hunk of
+`f8dd195`: `main` has the lanzaboote `v1.0.0` half of that commit but not its
+`hosts/adlerkopf/tpm2.nix` half (removing the stale
+`device = "/dev/disk/by-partlabel/cryptroot"` line). That missing half is the
+exact cause of R-017. Applying it makes
+`nix eval .#nixosConfigurations.adlerkopf.config.system.build.toplevel.drvPath`
+exit 0.
+
+This is a factual correction, not a decision change: scenario 1 keeps its
+`@check:private-data-defaults` binding, now justified on its own merits (a check
+that forces only the networking options cannot be masked by a defect in a
+different subsystem) rather than by the host command being unusable. `design.md`
+(paragraph), R-017 and `ADR-0001` (parenthetical) are corrected accordingly; the
+spec, the verification table and the tasks are unaffected. No new decision was
+taken, so no additional grill was required.
+
 DESIGN-REVIEW: PASS

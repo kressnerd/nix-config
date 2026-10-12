@@ -133,9 +133,10 @@ which no gitignored or encrypted file can do.
   or an unencrypted secret is recorded.
 - `@check:private-data-defaults` fails when the stub is active and a host
   default is not a documentation-range placeholder or empty. (The bound target
-  is a check, not `@host:adlerkopf`: that host's toplevel does not evaluate on
-  any revision — see R-017 — so the canonical `@host:` command cannot isolate
-  the assertion.)
+  is a check, not `@host:adlerkopf`: that host's toplevel did not evaluate on
+  the revision this change started from — R-017, fixed here — and a check that
+  forces only the networking options cannot be masked by an unrelated defect in
+  a different subsystem.)
 - The deploy path's preflight refuses to deploy when the override supplied no
   values (the per-host rebuild alias; operator-owned, recorded in the change's
   design).
