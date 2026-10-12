@@ -8,6 +8,9 @@ hosts/adlerkopf/private.nix
 __pycache__/
 infra/http/http-client.private.env.json
 
+# Local rotation checklist: names operational values, never commit.
+ROTATION-TODO.md
+
 # givn:begin:rules
 .opencode/skills/givn-*/
 .agents/skills/givn-*/
