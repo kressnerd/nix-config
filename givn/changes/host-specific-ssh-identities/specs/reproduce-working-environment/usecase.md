@@ -15,7 +15,7 @@ The Device owner requests reproduction of the specified usual working environmen
 
 ## Preconditions
 - The Device owner is authorized to configure the target and handle the requested working state/identities.
-- The intended tools/settings and required working files/application state/identity access are specified for that device; exact approved items, sources and state/version requirements must be supplied before implementation (open: Q16).
+- The intended tools/settings and required working files/application state/identity access are specified for that device; exact approved items sources and state/version requirements must be supplied before implementation (open: Q16).
 - Permitted definition/bootstrap inputs can be supplied without assuming the target's completed usual environment already exists.
 - The required handling has supported semantics for the selected platform/application state; identical installations or exported hardware-bound credentials are not assumed.
 
@@ -28,9 +28,9 @@ The Device owner requests reproduction of the specified usual working environmen
 
 ## Extensions
 - 1: Required state/source/version scope is incomplete or unauthorized → report the missing approved input and do not substitute a configuration-only goal; protects accepted full readiness (open: Q16).
-- 2a: Independent bootstrap material is missing, unreadable or denied → report not ready; protects authorized access without pretending a credential path regenerates its secret.
+- 2a: Independent bootstrap material is missing or unreadable or denied → report not ready; protects authorized access without pretending a credential path regenerates its secret.
 - 2b: The selected identity cannot be exported but supports permitted re-establishment → use that supported owner/provider step without cloning it blindly; protects authorized usable identity access rather than byte-identical credentials.
-- 3a: Source state is missing, wrong-version, unreadable or incompatible with supported handling → preserve usable existing state and report the failed requirement; protects usable required state.
+- 3a: Source state is missing or wrong-version or unreadable or incompatible with supported handling → preserve usable existing state and report the failed requirement; protects usable required state.
 - 3b: Applying incoming state would silently discard existing required work → stop that replacement unless specifically authorized; protects existing working data and does not invent an automatic conflict-resolution product.
 - 4: Tools launch but required working data or identity access fails → report not ready rather than accepting installation as the result; protects the success guarantee.
 - 5: A selected application needs private connectivity → treat its supported connection configuration/access as that application's requirement; protects the user's usual task without making VPN a universal base-device goal.
@@ -47,9 +47,9 @@ The Device owner requests reproduction of the specified usual working environmen
 - Check actual usable work context; a successful evaluation, launcher, directory creation or green transfer job is not alone work readiness.
 
 ## Examples
-- The required context includes a configured editor/shell, a project workspace containing `work-in-progress.txt` with the approved `draft B` content, and permitted access to its intended development resource. The owner can open/use that work and authenticate through the approved identity after reproduction; only then is the requested context ready.
-- The editor launches with the right settings, but the source did not supply the required uncommitted working file. The result is not ready even if a clean repository checkout exists.
-- A source declaration refers to an age-key file, but no permitted bootstrap material makes it usable. The workflow cannot reconstruct the private credential from that reference and reports the missing input.
+- The required context includes a configured editor/shell plus a project workspace containing `work-in-progress.txt` with the approved `draft B` content plus permitted access to its intended development resource. The owner can open/use that work and authenticate through the approved identity after reproduction; only then is the requested context ready.
+- The editor launches with the right settings but the source did not supply the required uncommitted working file. The result is not ready even if a clean repository checkout exists.
+- A source declaration refers to an age-key file but no permitted bootstrap material makes it usable. The workflow cannot reconstruct the private credential from that reference and reports the missing input.
 - A platform-bound identity is re-established through its supported owner/provider procedure rather than exported blindly. The required authorized resource becomes usable without a new permission grant.
 - The selected usual context has no application requiring the family private path. Reproducing it does not impose VPN enrollment. A different selected application's private-path requirement is handled as that application's need.
 

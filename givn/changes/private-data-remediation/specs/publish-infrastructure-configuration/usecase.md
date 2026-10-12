@@ -17,11 +17,8 @@ or records a change to it.
 
 ## Preconditions
 - The repository is the operator's declarative configuration for the hosts.
-- Each host's operational values — its addresses, gateway, hardware address,
-  resolvers and ports — are available to the operator outside the public
-  repository.
-- The operator holds whatever is needed to publish the repository and to deploy
-  the hosts.
+- Every operational value a host needs — address gateway hardware address resolvers and port — is available to the operator outside the public repository.
+- The operator holds whatever is needed to publish the repository and to deploy the hosts.
 
 ## Main flow
 1. Actor Owner/operator supplies a host's operational values from outside the
@@ -69,18 +66,11 @@ or records a change to it.
   repository, they are not encrypted.
 
 ## Examples
-- The operator deploys the home server with its real LAN address supplied from
-  outside the repository; the repository records `192.0.2.10` as the default. A
-  reader of the repository learns the schema, not the address.
-- A reader clones the repository and runs its checks; they pass, because every
-  host evaluates with documentation-range placeholders and no private value.
-- The operator stages a document that contains the real LAN address; the guard
-  refuses the revision and names the offending location.
-- The operator's private notes file and per-host value files exist only on the
-  operator's machine and are never recorded.
-- The operator runs the history rewrite and confirms the published history
-  records none of the values; until then the repository is not treated as safe
-  to publish.
+- The operator deploys the home server with its real LAN address supplied from outside the repository; the repository records `192.0.2.10` as the default. A reader of the repository learns the schema but not the address.
+- A reader clones the repository and runs its checks; they pass because every host evaluates with documentation-range placeholders and no private value.
+- The operator stages a document that contains the real LAN address; the guard refuses the revision and names the offending location.
+- The operator's private notes file and per-host value files exist only on the operator's machine and are never recorded.
+- The operator runs the history rewrite and confirms the published history records none of the values; until then the repository is not treated as safe to publish.
 
 ## Minimal guarantee
 A repository state that records an operational value, a per-host private-value
