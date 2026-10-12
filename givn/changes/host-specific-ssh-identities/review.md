@@ -110,11 +110,12 @@ flag or configuration surface.
 
 | Gap | Classification | Disposition |
 |---|---|---|
-| `integration-adlerkopf` unreferenced | Bucket 1 — dead configuration as measured by the traceability model (an `integration-*` check no scenario binds; it is a reproducible VM boot, so not bucket 3) | Pre-existing (commit `78b5309`), not introduced or worsened by this change. Deleting another change's VM test is outside this change's authority, so the operator decided its disposition (recorded below). |
-| `integration-vm-minimal-ssh` unreferenced | Bucket 1 — same | Pre-existing (commit `81698eb`), same disposition. |
+| `integration-adlerkopf` unreferenced | Bucket 1 — dead configuration as measured by the traceability model (an `integration-*` check no scenario binds; it is a reproducible VM boot, so not bucket 3) | **Operator decision (2026-10-12): keep the check; it is bound by the change that specifies its owning capability** (adlerkopf's service stack). The check predates this change (`78b5309`) and its assertions are real boots, so deleting another change's verification was rejected; the gap stays visible in the traceability warning until that capability is specified. |
+| `integration-vm-minimal-ssh` unreferenced | Bucket 1 — same | **Operator decision (2026-10-12): keep the check; it is bound by the change that specifies its owning capability** (the minimal VM's SSH access). Pre-existing (`81698eb`), same reasoning. |
 
 The change's own new check is referenced by the `@e2e` scenario, so it adds no
-new gap. No fourth bucket is used.
+new gap. No fourth bucket is used; the deferral is recorded above with the
+operator's decision, as the review skill requires.
 
 ## Findings
 
