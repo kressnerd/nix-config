@@ -108,15 +108,16 @@ application, access path or shared resource changes here.
 - `operational-data-separation` — the published configuration records no operational value while every host still builds and deploys from the values held outside the repository.
 
 ## Interactions
-- none — no secret store, publication service or backup product is selected.
+
+| Capability | Consumer action | E2E scenario |
+|---|---|---|
+| operational-data-separation | the operator deploys a host with the values supplied from outside the repository | A host booted with values supplied from outside the repository uses those values |
 
 ## Includes
-- none — supplying values to a build, guarding recorded content, and confirming
-  the published history are subfunctions of this one outcome, not separate actor
-  goals.
+- none
 
 ## Extends
-- none.
+- none
 
 ## Out of scope
 - Rotating, regenerating or assigning credentials and addresses on live

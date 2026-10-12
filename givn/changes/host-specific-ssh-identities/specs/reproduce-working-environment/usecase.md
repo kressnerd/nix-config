@@ -74,13 +74,16 @@ preferences are not invented for the owner's work context.
 - `permitted-identity-selection` — a chosen device reaches private repositories and uses the workspace identity configuration with the identity material that device holds, and declares no connection for an identity whose material lives elsewhere.
 
 ## Interactions
-- none — no source URI, credential transport, new secret store or generic restoration API selected.
+
+| Capability | Consumer action | E2E scenario |
+|---|---|---|
+| permitted-identity-selection | a device opens a connection to a private repository | A booted device reaches private repositories with the identity it declares |
 
 ## Includes
-- none — required-state and identity preparation are subfunctions of this complete outcome, not three independent actor goals or a leaf-to-leaf relationship.
+- none
 
 ## Extends
-- none.
+- none
 
 ## Out of scope
 - Reconfiguring family applications' infrastructure reachability as a separate goal — `adjust-application-reachability`.
