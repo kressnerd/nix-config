@@ -1,7 +1,5 @@
 # Use case: publish-infrastructure-configuration
 
-Status: new contract introduced by change `private-data-remediation` (2026-10-12); it owns that change's capability, and no ideation topic elaborated it.
-
 ## Level
 !
 
@@ -109,7 +107,8 @@ application, access path or shared resource changes here.
 ## Capabilities
 - `operational-data-separation` — the published configuration records no
   operational value while every host still builds and deploys from the values
-  held outside the repository (change `private-data-remediation`).
+  held outside the repository (change `private-data-remediation`, which
+  introduced this contract on 2026-10-12; no ideation topic elaborated it).
 
 ## Interactions
 - none — no secret store, publication service or backup product is selected.

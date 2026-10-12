@@ -1,14 +1,5 @@
 # Use case: reproduce-working-environment
 
-Status: elaborated accepted-scope draft; approved state/source bindings remain an operating input, not a configuration-only completion.
-
-Carried into the permanent corpus by change `host-specific-ssh-identities`
-(2026-10-12) as the owning use case of its capability. The contract below is the
-accepted-scope ideation text unchanged, except this status line and the
-Capabilities section, which names the first capability built on this contract.
-The thiniel personal identity source is answered (change D2); the remaining
-approved state/source inventory stays open (Q16).
-
 ## Level
 !
 
