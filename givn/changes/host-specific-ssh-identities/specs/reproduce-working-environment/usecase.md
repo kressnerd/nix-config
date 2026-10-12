@@ -4,8 +4,8 @@
 !
 
 ## Actors
-- Primary: Device owner.
-- Supporting: Operators/providers of approved state or identity sources where their supported procedures require participation.
+- Device owner
+- Supporting: Operators/providers of approved state or identity sources
 
 ## Goal
 The Device owner reproduces a usable usual working environment on the selected personal device.
@@ -47,8 +47,6 @@ The Device owner requests reproduction of the specified usual working environmen
 - Check actual usable work context; a successful evaluation, launcher, directory creation or green transfer job is not alone work readiness.
 
 ## Examples
-Illustrative values describe the accepted outcome, not real personal contents or selected sources.
-
 - The required context includes a configured editor/shell, a project workspace containing `work-in-progress.txt` with the approved `draft B` content, and permitted access to its intended development resource. The owner can open/use that work and authenticate through the approved identity after reproduction; only then is the requested context ready.
 - The editor launches with the right settings, but the source did not supply the required uncommitted working file. The result is not ready even if a clean repository checkout exists.
 - A source declaration refers to an age-key file, but no permitted bootstrap material makes it usable. The workflow cannot reconstruct the private credential from that reference and reports the missing input.
@@ -63,12 +61,6 @@ The Device owner can resume the specified usual work on the selected device with
 
 ## Personas
 - owner--operator
-
-Applied to the Device owner role as an advisory critique: actual
-project/application state and permitted access are necessary readiness
-conditions; references, local retention and installed tools are not proof.
-No new laptop, workstation or VPN persona is introduced; family/guest
-preferences are not invented for the owner's work context.
 
 ## Capabilities
 - permitted-identity-selection

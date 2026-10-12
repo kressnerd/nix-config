@@ -4,9 +4,7 @@
 !
 
 ## Actors
-- Primary: Owner/operator.
-- Supporting: none — the repository's own automation carries out the operator's
-  rule (the guard and continuous integration) but is not a second actor.
+- Owner/operator
 
 ## Goal
 The Owner/operator publishes the declarative configuration publicly without
@@ -71,8 +69,6 @@ or records a change to it.
   repository, they are not encrypted.
 
 ## Examples
-Illustrative values describe the rule, not the operator's real network.
-
 - The operator deploys the home server with its real LAN address supplied from
   outside the repository; the repository records `192.0.2.10` as the default. A
   reader of the repository learns the schema, not the address.
@@ -97,12 +93,6 @@ and deploys with the values held outside the repository.
 
 ## Personas
 - owner--operator
-
-Applied to the Owner/operator role as an advisory critique: the operator both
-publishes and deploys, so the separation must survive the operator's own
-habitual shortcuts — recording a value "just for now", leaving a private file
-tracked. No family or application-user interest is invented: no hosted
-application, access path or shared resource changes here.
 
 ## Capabilities
 - operational-data-separation
