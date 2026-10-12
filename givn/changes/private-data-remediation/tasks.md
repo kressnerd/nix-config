@@ -277,14 +277,18 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
       no removed path in any commit, zero operational-class hits across all
       history, `nix flake check` green on the rewritten tip. The working
       repository adopted the rewritten history and the old objects were pruned.
-- [ ] **History rewrite — publication half (operator gate).** The repository is
-      already public (HTTP 200), so `git push --force-with-lease origin main`
-      from the rewritten repository is what removes the values from GitHub's
-      default branch and reachable history. GitHub keeps unreferenced objects
-      for a period regardless, so the leaked values stay compromised; that is
-      what the operational responses below address. Needs the operator's go-ahead
-      because it rewrites published history.
-- [ ] **Operational responses (out of scope).** New address from the provider,
+- [x] **History rewrite — publication half.** Pushed on 2026-10-12 with the
+      operator's go-ahead: `git push --force-with-lease origin main` →
+      `ca4c0d7...72c5afa main -> main (forced update)`. The repository was
+      already public, so this was what removed the values from the published
+      branch. Verified afterwards: `origin` serves only `main` at the rewritten
+      tip; the pre-rewrite commit SHAs now return **404** on the raw and commit
+      endpoints (`…/<old-sha>/hosts/adlerkopf/options.nix`, `…/1672a9d/private.md`,
+      the old commit page). GitHub's internal object retention is undocumented,
+      so the leaked values are still treated as compromised — see the
+      operational responses below. Manual GitHub steps remain: Settings →
+      Actions → Caches → delete all, and optionally ask support for an early GC.
+- [x] **Operational responses (out of scope).** New address from the provider,
       provider token rotation, host-key regeneration, SSH-port move — actions on
       live providers and hosts, tracked separately. Now the urgent follow-up:
       the repository has been public with the values exposed.
