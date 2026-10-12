@@ -124,7 +124,7 @@ corpus by this change; ideation topic `infrastructure-growth`). Capability:
         $ nix build .#checks.x86_64-linux.lint-deadnix .#checks.x86_64-linux.lint-statix .#checks.x86_64-linux.lint-nixfmt --no-link   -> LINTS_OK
         $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath   -> MACBOOK_OK
         ```
-  - [ ] COMMIT: `<hash>` — `feat(permitted-identity-selection): the work laptop keeps its identity surface` (one commit for RED+GREEN+REFACTOR)
+  - [x] COMMIT: `0244a91` — `feat(permitted-identity-selection): the work laptop keeps its identity surface` (one commit for RED+GREEN+REFACTOR)
 
 ---
 
@@ -144,20 +144,56 @@ corpus by this change; ideation topic `infrastructure-growth`). Capability:
         the run failed on that assertion (exit 1) — a boot, not an evaluation error.
       ```
 
-- [ ] @e2e Scenario: `A booted device reaches private repositories with the identity it declares` (`@e2e @check:integration-ssh-identity-selection`)
-  - [ ] RED: the wired VM check boots a device that declares `~/.ssh/id_ed25519` and asserts the resolution plus the absence of work entries; run the targeted command. Must fail for the expected reason.
+- [x] @e2e Scenario: `A booted device reaches private repositories with the identity it declares` (`@e2e @check:integration-ssh-identity-selection`)
+  - [x] RED: the wired VM check boots a device that declares `~/.ssh/id_ed25519` and asserts the resolution plus the absence of work entries. Targeted run (before the rendering fix):
         ```
-        <!-- paste the targeted command + non-zero output -->
+        $ nix build .#checks.x86_64-linux.integration-ssh-identity-selection --no-link
+        … the VM booted, applied the configuration, and the assertion failed; the check dumped the booted device's rendered ~/.ssh/config:
+        Host github-personal
+          IdentityFile ~/.ssh/id_ed25519_personal_2026-10-04
+        Host github-company … github-client001 … bitbucket-client002 …
+        exit 1
         ```
-  - [ ] GREEN: no further configuration change — the rendering fix from the scenarios above makes the booted device reach the described state. Re-run the targeted command. Must pass.
+  - [x] GREEN: no further configuration change — the rendering fix from scenarios 1 to 3 makes the booted device reach the described state. Targeted run:
         ```
-        <!-- paste GREEN evidence -->
+        $ ./scripts/givn-verify-e2e.sh
+        [givn-verify-e2e] building: integration-adlerkopf integration-ssh-identity-selection integration-vm-minimal-ssh
+        [givn-verify-e2e] OK
+        exit 0
         ```
-  - [ ] REFACTOR: no behaviour change; re-run. Must still pass.
+  - [x] REFACTOR: no behaviour change; the check and its wiring were formatted with the repository's pinned `nixfmt` and the lint checks pass. Re-run:
         ```
-        <!-- paste REFACTOR evidence -->
+        $ ./scripts/givn-verify-e2e.sh   -> [givn-verify-e2e] OK (exit 0)
         ```
-  - [ ] COMMIT: `<hash>` — `test(e2e): <message>` (one commit)
+  - [ ] COMMIT: `<hash>` — `test(e2e): a booted device resolves private repositories to the identity it declares` (one commit)
+
+## Live confirmation on the real device
+
+The `@host:thiniel` scenarios are enforced by the configuration evaluation; the
+same claim on the running device is confirmed here.
+
+- [x] The activation generation that a switch would install renders the identity
+      surface thiniel is supposed to have. Built without root from the same
+      configuration:
+      ```
+      $ nix build --print-out-paths .#nixosConfigurations.thiniel.config.home-manager.users.dan.home.activationPackage
+      /nix/store/lwmh7i5qxj0kgrppicd9af5x00hr0vma-home-manager-generation
+      $ cat <out>/home-files/.ssh/config
+      Host github-personal
+        HostName github.com
+        IdentitiesOnly yes
+        IdentityFile ~/.ssh/id_ed25519
+        User git
+
+      Host *
+        AddKeysToAgent yes
+      ```
+- [ ] Activation on the running system requires the owner's password
+      (`sudo -n true` reports `a password is required`), so
+      `sudo nixos-rebuild switch --flake .#thiniel` is the owner's step; the
+      post-activation check is `ssh -G github-personal` reporting
+      `identityfile ~/.ssh/id_ed25519` (the current symlink still points at the
+      previous generation, which is why the live check is not yet recorded).
 
 ---
 
