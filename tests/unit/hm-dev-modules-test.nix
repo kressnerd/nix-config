@@ -61,6 +61,13 @@ let
   opencodePkgNames = builtins.map (p: p.pname or p.name or "") (getHomePackages opencodeModule);
   opencodeConfigFiles = getXdgConfigFiles opencodeModule;
   opencodeJsonConfig = builtins.fromJSON opencodeConfigFiles."opencode/opencode.json".text;
+
+  # ── omp.nix ──────────────────────────────────────────────────────────────────
+  ompModule = import ../../home/dan/features/development/omp.nix {
+    inherit pkgs lib;
+    pkgs-unstable = pkgs;
+  };
+  ompMcpConfig = builtins.fromJSON ompModule.home.file.".omp/agent/mcp.json".text;
 in
 lib.debug.runTests {
 
@@ -280,5 +287,25 @@ lib.debug.runTests {
       "plugin"
       "providers"
     ];
+  };
+
+  # ── omp: user-level MCP servers, parity with opencode.nix ────────────────────
+  testOmpMcpContext7Declared = {
+    expr = ompMcpConfig.mcpServers.context7 or null;
+    expected = {
+      type = "http";
+      url = "https://mcp.context7.com/mcp";
+      headers.CONTEXT7_API_KEY = "!cat $HOME/.config/sops-nix/secrets/context7/api-key";
+    };
+  };
+
+  testOmpMcpKagiSearchDeclared = {
+    expr = ompMcpConfig.mcpServers.kagi-search or null;
+    expected = {
+      type = "stdio";
+      command = "uvx";
+      args = [ "kagimcp" ];
+      env.KAGI_API_KEY = "!cat $HOME/.config/sops-nix/secrets/kagi/api-key";
+    };
   };
 }
