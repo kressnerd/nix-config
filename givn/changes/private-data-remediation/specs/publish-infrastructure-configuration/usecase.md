@@ -136,20 +136,3 @@ application, access path or shared resource changes here.
 None — no ideation canvas exists for this goal; it was introduced by the change.
 The change's design record carries the architecture.
 
-## Scenario skeletons
-- Given a host whose values are held outside the repository, When the host is
-  built and deployed, Then it uses exactly those values.
-- Given no private source, When the host defaults are inspected, Then the
-  declared network values are documentation-range placeholders.
-- Given recorded content that contains an operational value, a per-host
-  private-value file, or an unencrypted secret, When the guard runs, Then it
-  refuses the revision.
-- Given a checkout that holds no private values, When its checks run, Then they
-  pass.
-- Given a repository whose history still records the values, When publication is
-  prepared, Then it is reported as not yet safe rather than published.
-
-These are contract skeletons, not an implementation. Future proof must exercise
-a real boot with externally supplied values and the guard's actual refusal
-behaviour through native targets; a path listing or a source-text match does not
-prove the separation.

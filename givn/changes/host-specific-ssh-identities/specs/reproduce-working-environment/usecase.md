@@ -98,10 +98,3 @@ infrastructure-growth event storming
 (`givn/ideation/infrastructure-growth/eventstorming.md`). These show source
 inputs and failure outcomes, not actual personal-data retrieval.
 
-## Scenario skeletons
-- Given the specified usual environment and usable approved sources for its required work state/identities, When the Device owner reproduces and checks it, Then the intended work can resume with that required context.
-- Given configured tools but a missing required working file, When readiness is checked, Then the environment is not declared ready.
-- Given an identity reference without usable independent bootstrap inputs, When source/identity preparation is attempted, Then the unmet prerequisite is reported without fabricating or blindly cloning credentials.
-- Given no selected application requiring private connectivity, When the usual context is reproduced, Then no universal VPN enrollment requirement is added.
-
-These are contract skeletons, not a rebuilt device or source-binding implementation. Future end-to-end proof must exercise meaningful actual work-state and permitted-identity behavior through native VM/live targets, with the appropriate platform limit disclosed; evaluation/path membership does not prove the outcome.
