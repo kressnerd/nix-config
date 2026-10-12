@@ -21,49 +21,26 @@ or records a change to it.
 - The operator holds whatever is needed to publish the repository and to deploy the hosts.
 
 ## Main flow
-1. Actor Owner/operator supplies a host's operational values from outside the
-   repository; System builds and deploys that host with exactly those values.
-2. Actor Owner/operator records configuration and documentation changes; System
-   keeps the recorded content free of operational values and uses
-   documentation-range placeholders or empty values for the host network
-   defaults.
-3. Actor Owner/operator attempts to record a revision; System refuses any
-   revision that would record an operational value, a per-host private-value
-   file, or an unencrypted secret file.
-4. Actor Owner/operator publishes the repository; System yields a checkout that
-   evaluates and passes its checks without any private value.
-5. Actor Owner/operator confirms the published history; System records no
-   operational value in it.
+1. Actor Owner/operator supplies a host's operational values from outside the repository; System builds and deploys that host with exactly those values.
+2. Actor Owner/operator records configuration and documentation changes; System keeps the recorded content free of operational values and uses documentation-range placeholders or empty values for the host network defaults.
+3. Actor Owner/operator attempts to record a revision; System refuses any revision that would record an operational value, a per-host private-value file, or an unencrypted secret file.
+4. Actor Owner/operator publishes the repository; System yields a checkout that evaluates and passes its checks without any private value.
+5. Actor Owner/operator confirms the published history; System records no operational value in it.
 
 ## Extensions
-- 1: A host's operational value is missing from the private source → the deploy
-  refuses rather than falling back to an operational default; protects the
-  separation between public content and operational values.
-- 2a: A default would carry an operational value → the guard refuses the
-  revision; protects the recorded content.
-- 3a: A per-host private-value file or an unencrypted secret file would be
-  recorded → the guard refuses the revision; protects the separation.
-- 4: A checkout that holds no private values cannot evaluate → the repository is
-  not publishable as it stands; report the unmet requirement rather than
-  publishing it.
-- 5: The rewrite has not run → the history still records the values; report it
-  rather than treating the repository as safe to publish.
+- 1: A host's operational value is missing from the private source → the deploy refuses rather than falling back to an operational default; protects the separation between public content and operational values.
+- 2a: A default would carry an operational value → the guard refuses the revision; protects the recorded content.
+- 3a: A per-host private-value file or an unencrypted secret file would be recorded → the guard refuses the revision; protects the separation.
+- 4: A checkout that holds no private values cannot evaluate → the repository is not publishable as it stands; report the unmet requirement rather than publishing it.
+- 5: The rewrite has not run → the history still records the values; report it rather than treating the repository as safe to publish.
 
 ## Rules
-- Operational values never live in the public repository: neither its recorded
-  content nor its published history carries an address, gateway, hardware
-  address, provider resolver or non-standard port that identifies the operator's
-  infrastructure.
-- The host network defaults are documentation-range placeholders or empty
-  values. A missing private value fails loudly; it never falls back to an
-  operational value.
+- Operational values never live in the public repository: neither its recorded content nor its published history carries an address, gateway, hardware address, provider resolver or non-standard port that identifies the operator's infrastructure.
+- The host network defaults are documentation-range placeholders or empty values. A missing private value fails loudly; it never falls back to an operational value.
 - Per-host private-value files are held outside the repository.
-- A revision that would record an operational value, a per-host private-value
-  file, or an unencrypted secret is refused, both before it leaves the
-  operator's machine and on the repository's continuous integration.
+- A revision that would record an operational value, a per-host private-value file, or an unencrypted secret is refused, both before it leaves the operator's machine and on the repository's continuous integration.
 - A secret is encrypted before it is recorded.
-- Separation is not encryption: operational values are kept out of the public
-  repository, they are not encrypted.
+- Separation is not encryption: operational values are kept out of the public repository, they are not encrypted.
 
 ## Examples
 - The operator deploys the home server with its real LAN address supplied from outside the repository; the repository records `192.0.2.10` as the default. A reader of the repository learns the schema but not the address.
@@ -100,15 +77,10 @@ and deploys with the values held outside the repository.
 - none
 
 ## Out of scope
-- Rotating, regenerating or assigning credentials and addresses on live
-  providers and hosts — the operational response to a disclosure, not repository
-  or configuration state.
-- Encrypting operational values: they are kept out of the repository, not
-  encrypted.
+- Rotating, regenerating or assigning credentials and addresses on live providers and hosts — the operational response to a disclosure, not repository or configuration state.
+- Encrypting operational values: they are kept out of the repository, not encrypted.
 - Changing any host's network behaviour, topology, firewall or tunnels.
-- The infrastructure-growth goals: application availability, per-application
-  reachability, application-state protection, hosted recovery, personal
-  working-environment reproduction, and shared-information access.
+- The infrastructure-growth goals: application availability, per-application reachability, application-state protection, hosted recovery, personal working-environment reproduction, and shared-information access.
 
 ## Diagram
 None — no ideation canvas exists for this goal; it was introduced by the change.
