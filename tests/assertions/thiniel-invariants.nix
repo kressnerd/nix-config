@@ -130,6 +130,23 @@
           assertion = builtins.elem "$HOME/.cargo/bin" config.home-manager.users.dan.home.sessionPath;
           message = "thiniel: ~/.cargo/bin must be in home-manager.users.dan.home.sessionPath";
         }
+        # --- cli/ssh: identity selection ---
+        # Scenario: The personal device reaches private repositories with the
+        # identity it holds.
+        {
+          assertion =
+            config.home-manager.users.dan.programs.ssh.settings."github-personal".data.IdentityFile
+            == "~/.ssh/id_ed25519";
+          message = "thiniel: the private-repository connection must resolve to the identity file thiniel holds (~/.ssh/id_ed25519), got ${
+            config.home-manager.users.dan.programs.ssh.settings."github-personal".data.IdentityFile
+          }";
+        }
+        {
+          assertion =
+            lib.hasInfix "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes"
+              config.home-manager.users.dan.sops.templates."git-personal".content;
+          message = "thiniel: the workspace identity configuration must name the identity file thiniel holds";
+        }
       ];
   };
 }

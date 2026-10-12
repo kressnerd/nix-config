@@ -31,7 +31,7 @@
       "github-personal" = {
         HostName = "github.com";
         User = "git";
-        IdentityFile = "~/.ssh/id_ed25519_personal_2026-10-04";
+        IdentityFile = config.myHome.ssh.personalIdentityFile;
         IdentitiesOnly = true;
       };
 

@@ -78,5 +78,8 @@
     call = "colmena apply";
   };
 
+  # Identity material this device holds: the one personal key on the machine.
+  myHome.ssh.personalIdentityFile = "~/.ssh/id_ed25519";
+
   myHome.persistence.enable = true;
 }

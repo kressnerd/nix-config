@@ -36,6 +36,26 @@ let
       persistence = {
         enable = false;
       };
+      # The device's identity declaration: this mock stands for a host that
+      # holds only its own key and keeps no manually maintained ssh_config file.
+      ssh = {
+        personalIdentityFile = "~/.ssh/id_ed25519";
+        includedConfigs = [ ];
+      };
+    };
+  };
+  # The work MacBook: its own per-purpose key and the three manually maintained
+  # ssh_config files it keeps.
+  mockConfigDarwin = mockConfig // {
+    myHome = mockConfig.myHome // {
+      ssh = {
+        personalIdentityFile = "~/.ssh/id_ed25519_personal_2026-10-04";
+        includedConfigs = [
+          "config.d/company"
+          "config.d/client002"
+          "config.d/nix-builder"
+        ];
+      };
     };
   };
   mockPkgsLinux = pkgs // {
@@ -84,7 +104,7 @@ let
     inherit lib;
   };
   gitModuleDarwin = import ../../home/dan/features/cli/git.nix {
-    config = mockConfig;
+    config = mockConfigDarwin;
     pkgs = mockPkgsDarwin;
     inherit lib;
   };
@@ -95,8 +115,13 @@ let
   };
 
   # ── ssh.nix ─────────────────────────────────────────────────────────────────
-  sshModuleDarwin = import ../../home/dan/features/cli/ssh.nix {
+  sshModuleLinux = import ../../home/dan/features/cli/ssh.nix {
     config = mockConfig;
+    pkgs = mockPkgsLinux;
+    inherit lib;
+  };
+  sshModuleDarwin = import ../../home/dan/features/cli/ssh.nix {
+    config = mockConfigDarwin;
     pkgs = mockPkgsDarwin;
     inherit lib;
   };
@@ -408,6 +433,25 @@ lib.debug.runTests {
 
   testSshDarwinWildcardIdentitiesOnly = {
     expr = sshModuleDarwin.programs.ssh.settings."*".IdentitiesOnly or null;
+    expected = true;
+  };
+
+  # ── ssh: the declared device identity drives the connection ────────────────
+  testSshLinuxPersonalKeyFromDeclaration = {
+    expr = sshModuleLinux.programs.ssh.settings."github-personal".IdentityFile;
+    expected = "~/.ssh/id_ed25519";
+  };
+
+  testSshDarwinPersonalKeyFromDeclaration = {
+    expr = sshModuleDarwin.programs.ssh.settings."github-personal".IdentityFile;
+    expected = "~/.ssh/id_ed25519_personal_2026-10-04";
+  };
+
+  # ── git: the declared device identity drives the workspace configuration ───
+  testGitPersonalSshCommandFromDeclaration = {
+    expr =
+      lib.strings.hasInfix "sshCommand = \"ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes\""
+        gitModuleLinux.sops.templates."git-personal".content;
     expected = true;
   };
 

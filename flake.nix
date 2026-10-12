@@ -212,6 +212,7 @@
                 sharedModules = [
                   sops-nix.homeManagerModules.sops
                   ./modules/home-manager/persistence
+                  ./modules/home-manager/ssh/options.nix
                 ];
               };
             }
@@ -339,6 +340,7 @@
                   mac-app-util.homeManagerModules.default
                   sops-nix.homeManagerModules.sops
                   ./modules/home-manager/persistence/options.nix
+                  ./modules/home-manager/ssh/options.nix
                 ];
               };
             }
@@ -484,7 +486,9 @@
               system:
               let
                 pkgs = nixpkgs.legacyPackages.${system};
-                integrationTests = import ./tests/integration/default.nix { inherit pkgs; };
+                integrationTests = import ./tests/integration/default.nix {
+                  inherit pkgs sops-nix home-manager-unstable;
+                };
               in
               integrationTests
             )

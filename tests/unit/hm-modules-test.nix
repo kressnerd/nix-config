@@ -157,6 +157,10 @@ lib.debug.runTests {
           enable = false;
           root = "/persist";
         };
+        mockConfig.myHome.ssh = {
+          personalIdentityFile = "~/.ssh/id_ed25519";
+          includedConfigs = [ ];
+        };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsLinux;
@@ -181,6 +185,10 @@ lib.debug.runTests {
         mockConfig.myHome.persistence = {
           enable = false;
           root = "/persist";
+        };
+        mockConfig.myHome.ssh = {
+          personalIdentityFile = "~/.ssh/id_ed25519";
+          includedConfigs = [ ];
         };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
@@ -209,6 +217,10 @@ lib.debug.runTests {
           enable = false;
           root = "/persist";
         };
+        mockConfig.myHome.ssh = {
+          personalIdentityFile = "~/.ssh/id_ed25519";
+          includedConfigs = [ ];
+        };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsDarwin;
@@ -236,6 +248,10 @@ lib.debug.runTests {
           enable = false;
           root = "/persist";
         };
+        mockConfig.myHome.ssh = {
+          personalIdentityFile = "~/.ssh/id_ed25519";
+          includedConfigs = [ ];
+        };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;
           pkgs = mockPkgsLinux;
@@ -262,6 +278,10 @@ lib.debug.runTests {
         mockConfig.myHome.persistence = {
           enable = false;
           root = "/persist";
+        };
+        mockConfig.myHome.ssh = {
+          personalIdentityFile = "~/.ssh/id_ed25519";
+          includedConfigs = [ ];
         };
         sshModule = import ../../home/dan/features/cli/ssh.nix {
           inherit lib;

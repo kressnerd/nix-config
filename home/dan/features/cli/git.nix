@@ -114,7 +114,7 @@
             gpgsign = false
 
         [core]
-            sshCommand = "ssh -i ~/.ssh/id_ed25519_personal_2026-10-04 -o IdentitiesOnly=yes"
+            sshCommand = "ssh -i ${config.myHome.ssh.personalIdentityFile} -o IdentitiesOnly=yes"
 
         [url "git@github-personal:"]
             insteadOf = git@github.com:
