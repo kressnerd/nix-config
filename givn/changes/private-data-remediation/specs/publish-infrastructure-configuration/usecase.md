@@ -107,8 +107,10 @@ application, access path or shared resource changes here.
 ## Capabilities
 - `operational-data-separation` — the published configuration records no
   operational value while every host still builds and deploys from the values
-  held outside the repository (change `private-data-remediation`, which
-  introduced this contract on 2026-10-12; no ideation topic elaborated it).
+  held outside the repository.
+
+This contract was introduced by the change private-data-remediation on
+2026-10-12; no ideation topic elaborated it.
 
 ## Interactions
 - none — no secret store, publication service or backup product is selected.

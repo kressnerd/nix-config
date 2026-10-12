@@ -74,7 +74,7 @@ preferences are not invented for the owner's work context.
 - `permitted-identity-selection` — a chosen device reaches private repositories
   and uses the workspace identity configuration with the identity material that
   device holds, and declares no connection for an identity whose material lives
-  elsewhere (change `host-specific-ssh-identities`).
+  elsewhere.
 
 ## Interactions
 - none — no source URI, credential transport, new secret store or generic restoration API selected.
