@@ -4,7 +4,7 @@ RED→GREEN→REFACTOR→COMMIT per scenario. Non-@e2e first, then @e2e. Every p
 runs the scenario's bound target (its `@check:`/`@host:`/`@deploy:` tag) with
 the targeted command from `docs/GIVN-VERIFICATION.md` — never the whole suite.
 
-Legend: `[ ]` pending · `[x]` done only when evidence + commit hash are filled in. Check boxes immediately after each scenario — tasks.md must always reflect true state.
+Legend: an unticked box is pending; a ticked box counts as done only when evidence and the commit hash are filled in. Check each scenario's box immediately after completing it — tasks.md must always reflect true state.
 
 ---
 
