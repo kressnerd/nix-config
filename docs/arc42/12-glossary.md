@@ -8,7 +8,7 @@ the implemented architecture.
 |---|---|
 | Assertion (`config.assertions`) | An evaluation-time check declared by a module (`tests/assertions/*-invariants.nix`). The host configuration fails to evaluate if it does not hold. |
 | Binding tag | The single `@check:<name>`, `@host:<name>`, or `@deploy:<name>` tag a scenario carries to name the native target that proves it (`docs/GIVN-VERIFICATION.md`). |
-| Check (flake `checks`) | A derivation exposed by the flake: `unit-helpers`, `lint-deadnix`, `lint-statix`, `lint-nixfmt`, `private-data-defaults`, `private-data-hygiene` on all systems; `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` on Linux. `private-data-defaults`, `private-data-hygiene` and `integration-private-data-separation` are intended: the change `private-data-remediation` adds them. |
+| Check (flake `checks`) | A derivation exposed by the flake: `unit-helpers`, `lint-deadnix`, `lint-statix`, `lint-nixfmt`, `private-data-defaults`, `private-data-hygiene` on all systems; `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` on Linux. `private-data-defaults`, `private-data-hygiene` and `integration-private-data-separation` are added by the change `private-data-remediation`. |
 | Colmena hive | The `colmenaHive` flake output intended for coordinated fleet deployment. Currently declared with **zero** nodes. |
 | Connection entry | The SSH client configuration entry (host block) a device renders for one identity, naming that identity's file. |
 | Declared | Evidence label: the Nix source states it and it is rendered into a configuration. It is not proof of live behaviour. |

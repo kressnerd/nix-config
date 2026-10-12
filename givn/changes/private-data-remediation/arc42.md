@@ -20,11 +20,12 @@
 ## Notes
 
 - Chapters 5, 6, 8, 12 and the ADR describe the pieces this change introduces
-  (`private-stub/`, the `private` input wiring, `private-data-hygiene`,
-  `integration-private-data-separation`, `ADR-0001`). They do not exist in the
-  working tree until this change's tasks land; the inline markers read
-  *Intended: introduced by the change `private-data-remediation`* and become
-  plain declarations once the tasks land.
+  (`private-stub/`, the `private` input wiring, `private-data-defaults`,
+  `private-data-hygiene`, `integration-private-data-separation`, `ADR-0001`).
+  They were marked *Intended* while the tasks were pending; the tasks have since
+  landed and the markers were removed, so those chapters are now plain
+  declarations. Re-checked at review: every named artifact exists in the tree and
+  every named check is exposed by `flake.nix`.
 - The one-time history rewrite is a task of this change, not an arc42 chapter
   update: no repository check can read git history, so it is recorded as an
   operator-confirmed task (change decision D2) and as risk R-016.

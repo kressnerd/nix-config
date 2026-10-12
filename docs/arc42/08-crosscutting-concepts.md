@@ -73,9 +73,6 @@ override supplied no values (a preflight in the per-host rebuild alias), because
 a clean-clone evaluation and a forgotten override are the same stub evaluation
 and the assertion cannot tell them apart.
 
-*Intended: this concept's artifacts land with the change
-`private-data-remediation`.*
-
 ## Typed option modules as the host/module contract
 
 Reusable concerns are a pair of files: `options.nix` declares the typed surface

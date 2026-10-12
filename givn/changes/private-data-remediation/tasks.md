@@ -6,7 +6,9 @@ targeted command from `docs/GIVN-VERIFICATION.md` — never the whole suite.
 
 Legend: an unticked box is pending; a ticked box counts as done only when evidence and the commit hash are filled in. Check each scenario's box immediately after completing it — tasks.md must always reflect true state.
 
-All five scenarios landed in **one revision** (`4c456b7`), not one per scenario.
+All five scenarios landed in **one revision**, not one per scenario —
+`bbc97c1` after the history rewrite (`4c456b7` before it; the rewrite changed
+every commit SHA, so this is the same revision).
 The private-input migration, the placeholder defaults, the guard and its checks
 are a single architectural change: the host imports, `flake.nix` and the
 integration-check wiring are shared between the scenarios, and any intermediate
@@ -121,7 +123,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         all checks passed!
         exit 0
         ```
-  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"` with the scenario title in the body. Hash: `4c456b7`
+  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"` with the scenario title in the body. Hash: `bbc97c1`
 
 - [x] Scenario: `The repository records no operational value` (`@check:private-data-hygiene`)
   - [x] RED: the check runs the guard over the recorded tree; the tree still
@@ -157,7 +159,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         exit 0
         ```
   - [x] REFACTOR: none expected.
-  - [x] COMMIT: `givn commit -m "chore(operational-data-separation): <release note>"`. Hash: `4c456b7`
+  - [x] COMMIT: `givn commit -m "chore(operational-data-separation): <release note>"`. Hash: `bbc97c1`
 
 - [x] Scenario: `The hygiene rule rejects recorded content that contains an operational value` (`@check:private-data-hygiene`)
   - [x] RED: the check's value fixture (an in-class address that is not any
@@ -179,7 +181,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         exit 0
         ```
   - [x] REFACTOR: none expected.
-  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `4c456b7`
+  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `bbc97c1`
 
 - [x] Scenario: `The hygiene rule rejects a recorded per-host private-value file or unencrypted secret` (`@check:private-data-hygiene`)
   - [x] RED: the check's file and secret fixtures must be rejected; the file
@@ -203,7 +205,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         exit 0
         ```
   - [x] REFACTOR: none expected.
-  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `4c456b7`
+  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `bbc97c1`
 
 ### E2E setup task (before the first @e2e scenario)
 
@@ -243,7 +245,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         The booted machine's interface carries `198.51.100.10` (the supplied
         value) and not `192.0.2.10` (the public placeholder).
   - [x] REFACTOR: none expected.
-  - [x] COMMIT: `givn commit -m "test(e2e): <release note>"`. Hash: `4c456b7`
+  - [x] COMMIT: `givn commit -m "test(e2e): <release note>"`. Hash: `bbc97c1`
 
 ---
 

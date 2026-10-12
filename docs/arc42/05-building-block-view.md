@@ -39,7 +39,7 @@ flowchart TB
 | Building block | Responsibility |
 |---|---|
 | Flake (`flake.nix`, `flake.lock`) | Declare inputs, all host configurations, dev shells, packages, formatter, checks, overlays, the host template, and the (empty) Colmena hive. The only entry point. |
-| Private-input stub (`private-stub/`) | The public fallback for the `private` flake input: one no-op module per host that asserts the host's declared network values are documentation-range placeholders or empty, so a clean clone and CI evaluate without private access. Owner: [ADR-0001](adr/ADR-0001-private-data-strategy.md). *Intended: introduced by the change `private-data-remediation`.* |
+| Private-input stub (`private-stub/`) | The public fallback for the `private` flake input: one no-op module per host that asserts the host's declared network values are documentation-range placeholders or empty, so a clean clone and CI evaluate without private access. Owner: [ADR-0001](adr/ADR-0001-private-data-strategy.md). |
 | Helpers (`lib/helpers.nix`) | `mkPkgsUnstable` (unstable package set with `allowUnfree`) and `mkFirefoxExtensions` (categorised addon sets for the Firefox profiles). |
 | Shared NixOS base (`hosts/common/`) | `global/` sets timezone, locale, Nix experimental features, trusted users, `allowUnfree`; `users/dan.nix` is the shared non-root user; `optional/` holds opt-in modules (`networkmanager`, `virtualisation`, and an empty `docker.nix`). |
 | Host system modules (`hosts/<host>/`) | Per-machine NixOS or nix-darwin declarations: hardware, disk layout, networking, boot/loader, services, persistence lists, typed host options. |
@@ -137,7 +137,7 @@ identity file with `IdentitiesOnly=yes`.
 |---|---|
 | `tests/unit/default.nix` + 12 files | Aggregate `lib.debug.runTests` cases into check `unit-helpers` (all systems). |
 | `tests/assertions/` | 17 `*-invariants.nix` modules adding `config.assertions`, aggregated by `tests/assertions/default.nix`; imported by thiniel, cupix001, adlerkopf and nixos-vm-minimal, while the Darwin host and Mac profile import their own two files. |
-| `tests/integration/default.nix` + 4 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. *`integration-private-data-separation` is intended: the change `private-data-remediation` adds it.* |
+| `tests/integration/default.nix` + 4 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. |
 
 `tests/deploy/` (pytest-testinfra) is documented in `CLAUDE.md` and
 `docs/GIVN-VERIFICATION.md` but does not exist; the `@deploy:` binding tag

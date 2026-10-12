@@ -93,10 +93,8 @@ The `git+file://` constraint that forces this shape is recorded in
 [chapter 2](02-architecture-constraints.md) and
 [ADR-0001](adr/ADR-0001-private-data-strategy.md).
 
-*Intended: this scenario's artifacts — the `private` input, the stub, the guard
-and the VM check — land with the change `private-data-remediation`; the deploy
-preflight that catches a forgotten override is the operator's process control,
-not a repository check.*
+The deploy preflight that catches a forgotten override is the operator's process
+control, not a repository check.
 
 ## Scenario: Boot with impermanence (thiniel)
 
