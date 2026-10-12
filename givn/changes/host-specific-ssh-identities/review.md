@@ -121,7 +121,7 @@ operator's decision, as the review skill requires.
 
 | # | Finding | Status |
 |---|---|---|
-| F-1 | The live-activation item in `tasks.md` was open, so the tasks gate could not pass. | Resolved by the operator's decision to activate on the running system and record the live check (below). |
+| F-1 | The live-activation item in `tasks.md` was open, so the tasks gate could not pass. | **Closed**: the owner activated the generation and the live check is recorded in `tasks.md` and in the sign-off checklist below. |
 | F-2 | `design-review.md` stated "5 scenarios" after the second hardening round reduced the delta to 4. | Fixed: the row now says 4 and explains the fold; the stale "first commit is still ahead" parenthetical was corrected to name `2a20ef6`. |
 | F-3 | "connection entry" was load-bearing in the spec and used by the glossary without a definition. | Fixed: term added to `docs/arc42/12-glossary.md` and to the chapter-12 impact list. |
 
@@ -153,4 +153,18 @@ until the owner commits the ideation topic.
 - [x] Ubiquitous-language check clean.
 - [x] Overlap dispositions recorded; README impact decided.
 - [x] Gap classification recorded for both unreferenced checks.
-- [ ] Live activation on the running system recorded (`ssh -G github-personal` after the owner's switch) — this is the open item F-1.
+- [x] Live activation on the running system recorded (F-1 closed): the owner
+      activated the generation, `~/.ssh/config` now links
+      `/nix/store/kb54w23r80yamldx6phslxz0593sxc1j-home-manager-files/.ssh/config`,
+      `ssh -G github-personal` reports `identityfile ~/.ssh/id_ed25519` with
+      `identitiesonly yes`, the rendered file holds no work entry and no include,
+      and `~/.config/git/personal` names the same key.
+
+Observation for the owner (not a finding of this change): the live
+authentication probe `ssh -o BatchMode=yes -T git@github-personal` is denied
+because `~/.ssh/id_ed25519` is passphrase-protected and the agent holds no
+identities, so the key was never offered; loading it with
+`ssh-add ~/.ssh/id_ed25519` is the owner's step. The change decides which key a
+device presents, not whether that key is registered with the account.
+
+REVIEW: PASS

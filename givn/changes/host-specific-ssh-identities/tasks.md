@@ -196,12 +196,40 @@ same claim on the running device is confirmed here.
       $ nixos-rebuild build --flake .#thiniel
       Done. The new configuration is /nix/store/zb8hc07b9343lh3xbmiigf6526hxr07v-nixos-system-thiniel-26.11.20261008.8edc0c7
       ```
-- [ ] Activation on the running system requires the owner's password
-      (`sudo -n true` reports `a password is required`), so
-      `sudo nixos-rebuild switch --flake .#thiniel` is the owner's step; the
-      post-activation check is `ssh -G github-personal` reporting
-      `identityfile ~/.ssh/id_ed25519` (the current symlink still points at the
-      previous generation, which is why the live check is not yet recorded).
+- [x] The owner activated the generation on the running system (`sudo
+      nixos-rebuild switch --flake .#thiniel`; the running system is
+      `/nix/store/zb8hc07b9343lh3xbmiigf6526hxr07v-nixos-system-thiniel-26.11.20261008.8edc0c7`,
+      the derivation this change built). Live check:
+      ```
+      $ readlink ~/.ssh/config
+      /nix/store/kb54w23r80yamldx6phslxz0593sxc1j-home-manager-files/.ssh/config
+      $ ssh -G github-personal | grep -iE "^identityfile|^identitiesonly"
+      identitiesonly yes
+      identityfile ~/.ssh/id_ed25519
+      $ cat ~/.ssh/config
+      Host github-personal
+        HostName github.com
+        IdentitiesOnly yes
+        IdentityFile ~/.ssh/id_ed25519
+        User git
+
+      Host *
+        AddKeysToAgent yes
+      $ grep -E "sshCommand|insteadOf" ~/.config/git/personal
+          sshCommand = "ssh -i ~/.ssh/id_ed25519 -o IdentitiesOnly=yes"
+          insteadOf = git@github.com:
+      ```
+      No work identity connection entry and no include remains on the device.
+Observation for the owner (a note, not a task — no defect of this change, which
+is delivered by `050622e`, `dfec80f`, `0244a91`): the live authentication probe
+`ssh -o BatchMode=yes -T git@github-personal` reports
+`git@github.com: Permission denied (publickey)` because `~/.ssh/id_ed25519` is
+passphrase-protected (`ssh-keygen -y -P ''` → `incorrect passphrase supplied to
+decrypt private key`) and the agent holds no identities (`ssh-add -l` → `The
+agent has no identities`), so the key was never offered. Loading it
+(`ssh-add ~/.ssh/id_ed25519`) is the owner's step; the configuration change only
+decides *which* key a device presents, not whether the key is registered with
+the account.
 
 ---
 
