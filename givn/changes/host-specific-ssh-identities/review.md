@@ -153,6 +153,9 @@ until the owner commits the ideation topic.
 - [x] Ubiquitous-language check clean.
 - [x] Overlap dispositions recorded; README impact decided.
 - [x] Gap classification recorded for both unreferenced checks.
+- [x] Archive deferral recorded with the operator's decision and its unblock
+      condition (see "Archive deferral" below) — the gate cannot run while the
+      two gitignored host files must stay out of commits.
 - [x] Live activation on the running system recorded (F-1 closed): the owner
       activated the generation, `~/.ssh/config` now links
       `/nix/store/kb54w23r80yamldx6phslxz0593sxc1j-home-manager-files/.ssh/config`,
@@ -166,5 +169,40 @@ because `~/.ssh/id_ed25519` is passphrase-protected and the agent holds no
 identities, so the key was never offered; loading it with
 `ssh-add ~/.ssh/id_ed25519` is the owner's step. The change decides which key a
 device presents, not whether that key is registered with the account.
+
+## Archive deferral — operator decision (2026-10-12)
+
+`givn archive` refuses to run while the project has uncommitted work, and this
+repository cannot evaluate `cupix001` and `adlerkopf` from a clean tree:
+`hosts/cupix001/default.nix:12` and `hosts/adlerkopf/default.nix:23` import
+`./private.nix` unconditionally, `.gitignore` lines 2–3 hide those files, and
+`5f2928b` ("chore(security): untrack private.md and private.nix files") removed
+them from tracking. Nix's flake source filter only exposes tracked files, so the
+archive gate's hook passes only while the two files are staged — and staged
+files are exactly what the archive's dirty-tree check rejects. Both ways were
+observed:
+
+```
+$ ./scripts/givn-verify.sh                              # two files staged
+[givn-verify] OK
+
+$ givn archive --change host-specific-ssh-identities     # two files staged
+error: archive blocked: the project has uncommitted work: flake.lock,
+hosts/adlerkopf/private.nix, hosts/cupix001/private.nix, …
+
+$ givn archive --change host-specific-ssh-identities     # two files unstaged
+… error: Path 'hosts/cupix001/private.nix' in the repository "…" is not tracked by Git.
+  ✗ verify: command './scripts/givn-verify.sh' exited with status: 1
+```
+
+Operator decision: the two `private.nix` files must not be committed; their
+contents stay out of git history, and they are restored in the working tree
+(staged, as before) for the evaluation. Consequence: this change is **not
+archived** — it stays in `givn/changes/host-specific-ssh-identities/` with every
+artifact complete and this review signed off. Unblock condition:
+`hosts/{cupix001,adlerkopf}` stop requiring a path literal inside the git source
+for their private values (for example a sops-provided or runtime path); then a
+clean tree passes `./scripts/givn-verify.sh` and `givn archive` completes. The
+in-flight `docs/plans/private-data-remediation-plan.md` owns that remediation.
 
 REVIEW: PASS
