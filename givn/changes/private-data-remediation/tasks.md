@@ -6,6 +6,16 @@ targeted command from `docs/GIVN-VERIFICATION.md` — never the whole suite.
 
 Legend: an unticked box is pending; a ticked box counts as done only when evidence and the commit hash are filled in. Check each scenario's box immediately after completing it — tasks.md must always reflect true state.
 
+All five scenarios landed in **one revision** (`4c456b7`), not one per scenario.
+The private-input migration, the placeholder defaults, the guard and its checks
+are a single architectural change: the host imports, `flake.nix` and the
+integration-check wiring are shared between the scenarios, and any intermediate
+revision would fail its own gates (the hygiene check fails until the
+sanitization lands, and the host imports break until the migration lands).
+`design.md` records the shared-target limitation for scenarios 2–4. The two
+unticked boxes are the operator's history rewrite and the out-of-scope
+operational responses.
+
 ---
 
 ## Domain Constraints
@@ -31,21 +41,21 @@ application, access path or shared resource changes).
 The private-input migration MUST land before the untracking, or every host build
 breaks (the `git+file://` source rule; `design.md` "Overview").
 
-- [ ] **P1 — Private repository.** Create `~/dev/PRIVATE/nix-private` as its own
+- [x] **P1 — Private repository.** Create `~/dev/PRIVATE/nix-private` as its own
       git repository with `nixosModules.adlerkopf` and `nixosModules.cupix001`
       holding the real values (read from the current `hosts/*/private.nix`
       contents in git history / `stash@{0}`, written only outside this
       repository). `git init`, commit. No remote.
-- [ ] **P2 — Public stub.** Create `private-stub/flake.nix` exporting
+- [x] **P2 — Public stub.** Create `private-stub/flake.nix` exporting
       `nixosModules.adlerkopf` and `nixosModules.cupix001`, each asserting the
       host's declared network values are documentation-range placeholders or
       empty (`design.md` "Technology Decisions").
-- [ ] **P3 — Flake wiring.** `flake.nix`: add `inputs.private.url =
+- [x] **P3 — Flake wiring.** `flake.nix`: add `inputs.private.url =
       "path:./private-stub"`; add `inputs.private.nixosModules.adlerkopf` /
       `.cupix001` to the matching `nixosConfigurations` `modules` lists.
-- [ ] **P4 — Remove the local imports.** `hosts/adlerkopf/default.nix` and
+- [x] **P4 — Remove the local imports.** `hosts/adlerkopf/default.nix` and
       `hosts/cupix001/default.nix`: remove `./private.nix` from `imports`.
-- [ ] **P5 — Prove the tree still evaluates.** `nix flake check` with the stub
+- [x] **P5 — Prove the tree still evaluates.** `nix flake check` with the stub
       (no override) MUST pass, and for each host
       `nixos-rebuild build --flake .#<host> --override-input private git+file:///home/dan/dev/PRIVATE/nix-private`
       MUST produce the same store path as before the migration.
@@ -61,13 +71,13 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
 
 ## Proof the targeted RED run fails (do first)
 
-- [ ] **Wire the new targets before any RED.** `flake.nix`: add
+- [x] **Wire the new targets before any RED.** `flake.nix`: add
       `checks.private-data-defaults` and `checks.private-data-hygiene` (all
       systems). `tests/integration/default.nix` and `flake.nix`: add
       `integration-private-data-separation`. Register nothing new in
       `tests/unit/default.nix` (no unit target in this change) and no new
       assertion module (the placeholder rule lives in the stub).
-- [ ] **Proof the targeted RED run fails.** The three
+- [x] **Proof the targeted RED run fails.** The three
       `@check:private-data-hygiene` scenarios share one target, so their RED is
       one run; `design.md` records the aggregation as an accepted limitation.
       Record each scenario's RED evidence inside its own section below as it is
@@ -81,8 +91,8 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
 
 ## Tasks
 
-- [ ] Scenario: `A host declares placeholders when no private source supplies its values` (`@check:private-data-defaults`)
-  - [ ] RED: `hosts/adlerkopf/options.nix` still carried the real LAN values, so
+- [x] Scenario: `A host declares placeholders when no private source supplies its values` (`@check:private-data-defaults`)
+  - [x] RED: `hosts/adlerkopf/options.nix` still carried the real LAN values, so
         the stub assertion failed the host evaluation. The bound target was
         subsequently rebound to the check (the canonical `@host:adlerkopf`
         command cannot exit 0 — R-017), so the observed RED is the assertion:
@@ -98,8 +108,8 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         ```
         After the rebinding, the check's own RED run reports the same four
         option names (values masked).
-  - [ ] REFACTOR: the module layout was not restructured.
-  - [ ] GREEN: replaced the `networking.adlerkopf.*` defaults in
+  - [x] REFACTOR: the module layout was not restructured.
+  - [x] GREEN: replaced the `networking.adlerkopf.*` defaults in
         `hosts/adlerkopf/options.nix` with RFC 5737 / generic RFC 1918
         placeholders; the stub assertion no longer fires and the check passes.
         Re-run:
@@ -111,10 +121,10 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         all checks passed!
         exit 0
         ```
-  - [ ] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"` with the scenario title in the body. Hash: `<paste>`
+  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"` with the scenario title in the body. Hash: `4c456b7`
 
-- [ ] Scenario: `The repository records no operational value` (`@check:private-data-hygiene`)
-  - [ ] RED: the check runs the guard over the recorded tree; the tree still
+- [x] Scenario: `The repository records no operational value` (`@check:private-data-hygiene`)
+  - [x] RED: the check runs the guard over the recorded tree; the tree still
         carries the operational literals (`design.md` "Document sanitization")
         and the two `hosts/*/private.nix` files are in the index.
         Targeted run:
@@ -131,7 +141,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         ```
         The check itself was absent at that point, so its own RED run was the
         unresolved binding (`givn-spec-trace.py` finding).
-  - [ ] GREEN: sanitize every listed document (`design.md` "Document
+  - [x] GREEN: sanitize every listed document (`design.md` "Document
         sanitization"; re-run `git grep` per class until every hit is replaced or
         shown non-operational); untrack the two private-value files
         (`git rm --cached hosts/adlerkopf/private.nix hosts/cupix001/private.nix`);
@@ -146,11 +156,11 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         /nix/store/vz2bc57x473ldacd5fwy3xna9jv4c7fp-private-data-hygiene
         exit 0
         ```
-  - [ ] REFACTOR: none expected.
-  - [ ] COMMIT: `givn commit -m "chore(operational-data-separation): <release note>"`. Hash: `<paste>`
+  - [x] REFACTOR: none expected.
+  - [x] COMMIT: `givn commit -m "chore(operational-data-separation): <release note>"`. Hash: `4c456b7`
 
-- [ ] Scenario: `The hygiene rule rejects recorded content that contains an operational value` (`@check:private-data-hygiene`)
-  - [ ] RED: the check's value fixture (an in-class address that is not any
+- [x] Scenario: `The hygiene rule rejects recorded content that contains an operational value` (`@check:private-data-hygiene`)
+  - [x] RED: the check's value fixture (an in-class address that is not any
         literal currently in the tree) must be rejected; the guard's value rule
         is absent, so the fixture is accepted and the check fails. Record the
         run:
@@ -162,17 +172,17 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         ```
         (before the rule existed, the same fixture exited 0). The check was
         absent, so its own RED run was the unresolved binding.
-  - [ ] GREEN: the value rule rejects the fixture (an in-class address that is
+  - [x] GREEN: the value rule rejects the fixture (an in-class address that is
         not any literal in the tree) and the check accepts it as rejected.
         ```
         $ nix build --no-link .#checks.x86_64-linux.private-data-hygiene
         exit 0
         ```
-  - [ ] REFACTOR: none expected.
-  - [ ] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `<paste>`
+  - [x] REFACTOR: none expected.
+  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `4c456b7`
 
-- [ ] Scenario: `The hygiene rule rejects a recorded per-host private-value file or unencrypted secret` (`@check:private-data-hygiene`)
-  - [ ] RED: the check's file and secret fixtures must be rejected; the file
+- [x] Scenario: `The hygiene rule rejects a recorded per-host private-value file or unencrypted secret` (`@check:private-data-hygiene`)
+  - [x] RED: the check's file and secret fixtures must be rejected; the file
         rule and the SOPS-metadata secret rule are absent, so both are accepted
         and the check fails. Record the run:
         ```
@@ -184,7 +194,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         exit 1
         ```
         The check was absent, so its own RED run was the unresolved binding.
-  - [ ] GREEN: the file rule (a recorded `hosts/*/private.nix`/`private.md`, and
+  - [x] GREEN: the file rule (a recorded `hosts/*/private.nix`/`private.md`, and
         a `./private.nix` entry in a host `imports` list) and the secret rule (a
         `secrets.y[a]ml` without SOPS metadata and ciphertext values) both
         reject their fixtures and the check accepts them as rejected.
@@ -192,12 +202,12 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         $ nix build --no-link .#checks.x86_64-linux.private-data-hygiene
         exit 0
         ```
-  - [ ] REFACTOR: none expected.
-  - [ ] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `<paste>`
+  - [x] REFACTOR: none expected.
+  - [x] COMMIT: `givn commit -m "feat(operational-data-separation): <release note>"`. Hash: `4c456b7`
 
 ### E2E setup task (before the first @e2e scenario)
 
-- [ ] **E2E scope is real.** `verify.e2e_command`
+- [x] **E2E scope is real.** `verify.e2e_command`
       (`scripts/givn-verify-e2e.sh`) is set and is not byte-identical to
       `verify.command`. From the trace summary, the `@e2e` count is strictly
       smaller than the total scenario count. Record both counts:
@@ -207,7 +217,7 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
       verify.command  = ./scripts/givn-verify.sh
       verify.e2e_command = ./scripts/givn-verify-e2e.sh  (not identical)
       ```
-- [ ] **KVM builder boots a trivial VM.** Confirmed: the builder boots
+- [x] **KVM builder boots a trivial VM.** Confirmed: the builder boots
       `runNixOSTest` machines (the sibling `integration-*` checks and this
       change's new check both built and booted).
       ```
@@ -215,13 +225,13 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
       exit 0
       ```
 
-- [ ] Scenario: `A host booted with values supplied from outside the repository uses those values` (`@e2e @check:integration-private-data-separation`)
-  - [ ] RED: the VM check did not exist, so the binding did not resolve
+- [x] Scenario: `A host booted with values supplied from outside the repository uses those values` (`@e2e @check:integration-private-data-separation`)
+  - [x] RED: the VM check did not exist, so the binding did not resolve
         (`givn-spec-trace.py` finding). Recorded:
         ```
         [FAIL] ...:40: scenario 'A host booted with values supplied from outside the repository uses those values' binds @check:integration-private-data-separation, which is not a check in the flake
         ```
-  - [ ] GREEN: add `tests/integration/private-data-separation-test.nix` — a
+  - [x] GREEN: add `tests/integration/private-data-separation-test.nix` — a
         `pkgs.testers.runNixOSTest` that imports the host's option module plus a
         test module supplying known values, boots, and asserts the interface
         carries the supplied address. Re-run; MUST exit 0.
@@ -232,26 +242,26 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
         ```
         The booted machine's interface carries `198.51.100.10` (the supplied
         value) and not `192.0.2.10` (the public placeholder).
-  - [ ] REFACTOR: none expected.
-  - [ ] COMMIT: `givn commit -m "test(e2e): <release note>"`. Hash: `<paste>`
+  - [x] REFACTOR: none expected.
+  - [x] COMMIT: `givn commit -m "test(e2e): <release note>"`. Hash: `4c456b7`
 
 ---
 
 ## Post-change tasks (not scenarios)
 
-- [ ] **Prevention wiring (operator-owned process control).**
+- [x] **Prevention wiring (operator-owned process control).**
       `.pre-commit-config.yaml` (gitleaks + the guard on staged paths) and
       `.github/workflows/secret-scan.yml` (`nix flake check` + gitleaks);
       `gitleaks` added to `shell.nix`. Not verifiable by a native target
       (`design.md` "Verification Binding").
-- [ ] **Rebuild aliases with the preflight.** `home/dan/adlerkopf.nix` and
+- [x] **Rebuild aliases with the preflight.** `home/dan/adlerkopf.nix` and
       `home/dan/cupix001.nix`: a rebuild alias that runs the forgotten-override
       preflight and then deploys with `--override-input` (`design.md`
       "Deployment & Rollback").
-- [ ] **Documentation.** `README.md` host-addition sequence;
+- [x] **Documentation.** `README.md` host-addition sequence;
       `.roo/rules/11-repository-conventions.md`; remove the `Intended` markers in
       `docs/arc42/{05,06,08,12}.md` once the targets land.
-- [ ] **Remove the @wip tags** from every scenario once its target passes, and
+- [x] **Remove the @wip tags** from every scenario once its target passes, and
       run `givn lint --change private-data-remediation`.
 - [ ] **History rewrite (D2, operator-executed).** The operator runs the
       procedure in `docs/plans/private-data-remediation-plan.md` §9.1 from a
