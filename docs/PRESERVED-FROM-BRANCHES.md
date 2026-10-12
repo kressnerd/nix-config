@@ -79,7 +79,10 @@ be pushed):
 git bundle create ~/dev/PRIVATE/nix-config-allrefs-2026-10-12.bundle --all
 ```
 
-Restore with `git clone ~/dev/PRIVATE/nix-config-allrefs-2026-10-12.bundle <dir>`
+A second, complete safety net was taken for the history rewrite:
+`~/dev/PRIVATE/nix-config-mirror-20261012.git` (`git clone --mirror`), plus a
+refreshed `~/dev/PRIVATE/nix-config-allrefs-20261012.bundle`. Restore from the
+bundle with `git clone ~/dev/PRIVATE/nix-config-allrefs-2026-10-12.bundle <dir>`
 or `git fetch <bundle> <ref>`. Keep it until the private-data remediation's
 history rewrite has completed and its own mirror backup is no longer needed.
 

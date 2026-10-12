@@ -263,10 +263,28 @@ breaks (the `git+file://` source rule; `design.md` "Overview").
       `docs/arc42/{05,06,08,12}.md` once the targets land.
 - [x] **Remove the @wip tags** from every scenario once its target passes, and
       run `givn lint --change private-data-remediation`.
-- [ ] **History rewrite (D2, operator-executed).** The operator runs the
-      procedure in `docs/plans/private-data-remediation-plan.md` §9.1 from a
-      fresh clone after a mirror backup, then confirms the published history
-      records no operational value. This change's tasks end here.
-- [x] **Operational responses (out of scope).** New address from the provider,
+- [x] **History rewrite — local half (D2; executor changed).** Run on
+      2026-10-12 at the operator's explicit instruction (the design recorded it
+      as operator-executed). Safety nets first:
+      `~/dev/PRIVATE/nix-config-mirror-20261012.git` and
+      `~/dev/PRIVATE/nix-config-allrefs-20261012.bundle` (both verified).
+      `git filter-repo` in a fresh `--no-local` clone removed `private.md`,
+      `hosts/*/private.nix`, `hosts/*/private.nix.example` and the dated firewall
+      backups from all history, and replaced the operational classes with
+      `REDACTED-…` markers (the replacement patterns were generated from
+      `scripts/private_data_hygiene.py`, so no literal value was written down).
+      688 → 687 commits; the tip tree is byte-identical (`43ee8bdf…`). Verified:
+      no removed path in any commit, zero operational-class hits across all
+      history, `nix flake check` green on the rewritten tip. The working
+      repository adopted the rewritten history and the old objects were pruned.
+- [ ] **History rewrite — publication half (operator gate).** The repository is
+      already public (HTTP 200), so `git push --force-with-lease origin main`
+      from the rewritten repository is what removes the values from GitHub's
+      default branch and reachable history. GitHub keeps unreferenced objects
+      for a period regardless, so the leaked values stay compromised; that is
+      what the operational responses below address. Needs the operator's go-ahead
+      because it rewrites published history.
+- [ ] **Operational responses (out of scope).** New address from the provider,
       provider token rotation, host-key regeneration, SSH-port move — actions on
-      live providers and hosts, tracked separately.
+      live providers and hosts, tracked separately. Now the urgent follow-up:
+      the repository has been public with the values exposed.

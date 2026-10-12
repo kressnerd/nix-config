@@ -109,11 +109,13 @@ non-operational.
   `operational-data-separation.feature`; the routing decision is recorded in
   `proposal.md`'s Capability Routing table.
 - **Decides D2**: this change carries the repository and configuration work
-  **and** the history rewrite; the rewrite is an operator-executed task, and
-  the task list ends with confirming the published history records no
-  operational value. Live provider and host responses (new address, token
-  rotation, host-key regeneration, SSH-port move) stay out of scope. Realized
-  as the final tasks in `tasks.md`.
+  **and** the history rewrite; the task list ends with confirming the published
+  history records no operational value. Live provider and host responses (new
+  address, token rotation, host-key regeneration, SSH-port move) stay out of
+  scope. Realized as the final tasks in `tasks.md`. *(Factual correction
+  2026-10-12: the rewrite was recorded as operator-executed; the operator
+  instead instructed the agent to run it, so the local half ran here. The
+  publication half remains an operator gate.)*
 
 ## Verification Binding
 
