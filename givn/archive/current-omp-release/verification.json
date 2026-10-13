@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "current-omp-release",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "7d54525eb11fa9ad135946487ad8784bd575530c",
+  "tested_revision": "7d54525eb11fa9ad135946487ad8784bd575530c",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 19.152534548
+    },
+    "regular": {
+      "status": "passed",
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 85.589376588
+    }
+  },
   "coverage": null,
   "started_at_unix": 1791873655,
-  "finished_at_unix": null
+  "finished_at_unix": 1791873760
 }
