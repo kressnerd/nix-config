@@ -229,21 +229,41 @@ operator warning + rollback are in Task 6.
       The derivation runs the QEMU VM (boot, Home Manager activation, the
       identity-surface script), so the guest boots with the paired releases and
       the declared identity surface is observed on the device.
-- [x] COMMIT: `0f6a6d2` — release note as subject, scenario title in the body.
+- [x] COMMIT: `aebcdd6` — release note as subject, scenario title in the body.
 
 ---
 
 ## Task 5 — Scenario: `A booted device starts its coding agents from a single release` (`@e2e @check:integration-agent-tooling`)
 
-- [ ] RED: remove `@wip`. Add the same node assertion to
-      `tests/integration/agent-tooling-test.nix`. Targeted run → MUST exit
-      non-zero for the same release difference. Paste.
-- [ ] GREEN: the fixture takes the unstable guest package set (already wired by
-      Task 4's change to the aggregator). Re-run the evaluation → exit 0, then
-      build the check: `nix build .#checks.x86_64-linux.integration-agent-tooling`
-      → the VM boots, both agents start. Paste.
-- [ ] REFACTOR: no behaviour change; re-run the build.
-- [ ] COMMIT: record the hash.
+- [x] RED: removed `@wip`. Added the same node assertion to
+      `tests/integration/agent-tooling-test.nix` (the node became a module
+      function). The aggregator's guest-package-set change is one wiring change
+      shared with scenario 4, so RED was proven against the fixture's pairing
+      before it, with the aggregator temporarily passing the release set again:
+      ```
+      $ nix eval --raw '.#checks.x86_64-linux.integration-agent-tooling.drvPath'   # release pkgs + assertion
+      error:
+      Failed assertions:
+      - the test profile's Home Manager release must equal the guest package set's release (change quiet-configuration-evaluation)
+      exit 1
+      ```
+- [x] GREEN: the fixture takes the unstable guest package set through
+      `tests/integration/default.nix` (already wired by scenario 4); the
+      temporary revert was undone.
+      ```
+      $ nix eval --raw '.#checks.x86_64-linux.integration-agent-tooling.drvPath'
+      /nix/store/a5x0vvyc20vh8f3zbc3v8gfrgbb8fk74-vm-test-run-agent-tooling.drv
+      exit 0
+      ```
+- [x] REFACTOR: `nix fmt` on the fixture; the `@e2e` build is the real-interface
+      proof — the VM boots, Home Manager activates, both agents start and report
+      their floors, and the guard lands where the agent discovers hooks:
+      ```
+      $ nix build --no-link '.#checks.x86_64-linux.integration-agent-tooling'
+      building '/nix/store/a5x0vvyc20vh8f3zbc3v8gfrgbb8fk74-vm-test-run-agent-tooling.drv'...
+      exit 0
+      ```
+- [x] COMMIT: `c8bd0a9` — release note as subject, scenario title in the body.
 
 ---
 

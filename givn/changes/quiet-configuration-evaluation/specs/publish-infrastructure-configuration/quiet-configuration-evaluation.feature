@@ -27,7 +27,7 @@ Feature: Quiet configuration evaluation
     Then  it applies the profile without reporting a release-mismatch diagnostic
     And   the declared identity surface is rendered on the device
 
-  @givn.added @wip @e2e @check:integration-agent-tooling
+  @givn.added @e2e @check:integration-agent-tooling
   Scenario: A booted device starts its coding agents from a single release
     Given a device whose home profile is built from the Home Manager release its package set comes from
     When  the device boots and its configuration is applied

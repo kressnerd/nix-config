@@ -34,37 +34,49 @@ in
 pkgs.testers.runNixOSTest {
   name = "agent-tooling";
 
-  nodes.machine = {
-    imports = [ home-manager.nixosModules.home-manager ];
+  nodes.machine =
+    { config, pkgs, ... }:
+    {
+      imports = [ home-manager.nixosModules.home-manager ];
 
-    users.users.test = {
-      isNormalUser = true;
-      password = "testpass";
-    };
+      users.users.test = {
+        isNormalUser = true;
+        password = "testpass";
+      };
 
-    # The device declares its agents and nothing else: no sops secrets, so neither
-    # server's key command can succeed here.
-    home-manager = {
-      useGlobalPkgs = true;
-      useUserPackages = true;
-      extraSpecialArgs = {
-        inherit ompPackage;
-      }
-      // lib.optionalAttrs withOpencode { inherit opencodePackage; };
-      users.test = {
-        imports = [
-          ../../home/dan/features/development/omp.nix
-        ]
-        ++ lib.optional withOpencode ../../home/dan/features/development/opencode.nix;
+      # The device declares its agents and nothing else: no sops secrets, so neither
+      # server's key command can succeed here.
+      home-manager = {
+        useGlobalPkgs = true;
+        useUserPackages = true;
+        extraSpecialArgs = {
+          inherit ompPackage;
+        }
+        // lib.optionalAttrs withOpencode { inherit opencodePackage; };
+        users.test = {
+          imports = [
+            ../../home/dan/features/development/omp.nix
+          ]
+          ++ lib.optional withOpencode ../../home/dan/features/development/opencode.nix;
 
-        home = {
-          username = "test";
-          homeDirectory = "/home/test";
-          stateVersion = "25.11";
+          home = {
+            username = "test";
+            homeDirectory = "/home/test";
+            stateVersion = "25.11";
+          };
         };
       };
+
+      # The Home Manager modules this device loads and the package set they run
+      # against must come from the same release. This asserts the condition behind
+      # Home Manager's release check, without matching its warning text.
+      assertions = [
+        {
+          assertion = config.home-manager.users.test.home.version.release == pkgs.lib.trivial.release;
+          message = "the test profile's Home Manager release must equal the guest package set's release (change quiet-configuration-evaluation)";
+        }
+      ];
     };
-  };
 
   testScript = ''
     import re
