@@ -215,19 +215,25 @@ it is a dangerous area.
 
 - **Apply**: `sudo nixos-rebuild switch --flake .#thiniel` on the laptop (the
   repository's own deploy path; no colmena involvement). The browser relocation
-  is a separate operator step and must run *before* the browser is used with the
-  new configuration:
+  is a separate operator step:
 
   ```sh
-  # on thiniel, as dan, with the browser closed
-  mkdir -p /persist/.config/mozilla
-  cp -a /persist/.mozilla/firefox /persist/.config/mozilla/firefox
-  # after the next activation, open the browser and confirm bookmarks/history/logins,
-  # then: rm -rf /persist/.mozilla
+  # on thiniel, as dan
+  # 1. quit the browser first: switch-to-configuration stops the old persistence
+  #    mount, and Firefox holding ~/.mozilla/firefox makes that stop fail
+  #    (observed 2026-10-13: `Failed to stop home-dan-.mozilla.mount`, exit status 4)
+  sudo nixos-rebuild switch --flake .#thiniel
+  # 2. copy the profile into the persisted new location (no sudo needed):
+  cp -a /persist/home/dan/.mozilla/firefox /persist/home/dan/.config/mozilla/firefox
+  # 3. open the browser and confirm bookmarks/history/logins,
+  #    then remove the old data: rm -rf /persist/home/dan/.mozilla
   ```
 
-  The persistent volume holds the state, so the move is performed there; the
-  copy precedes any deletion, so an interruption leaves the old profile intact.
+  The user-layer persistence sources live under `/persist/home/dan/<path>`, not
+  `/persist/<path>`: the module derives the user's home below the declared
+  persistent storage path, so `/persist/.config` does not exist and `/persist`
+  itself is root-owned. The copy precedes any deletion, so an interruption leaves
+  the old profile intact.
 - **On-host verification**: the profile directory is present at
   `~/.config/mozilla/firefox` with `profiles.ini` and the `*.default-release`
   profile; the browser starts with the previous bookmarks, history and saved
@@ -238,10 +244,10 @@ it is a dangerous area.
   profile rolls back with it (no separate Home-Manager generation step exists on
   this host). Once the data has moved, the configuration rollback alone is not
   enough: the previous generation expects `~/.mozilla/firefox`, so
-  `mv /persist/.config/mozilla/firefox /persist/.mozilla/firefox` (and remove the
-  leftover `/persist/.config/mozilla`) before the reboot that remounts the
-  persistence.
-- **Tested rollback path**: the delete of `/persist/.mozilla` happens only after
+  `mv /persist/home/dan/.config/mozilla/firefox /persist/home/dan/.mozilla/firefox`
+  (and remove the leftover `/persist/home/dan/.config/mozilla`) before the reboot
+  that remounts the persistence.
+- **Tested rollback path**: the delete of `/persist/home/dan/.mozilla` happens only after
   the operator has confirmed the relocated profile *and* exercised the rollback
   once with the old directory still present; until that confirmation the
   pre-change state remains available, which is what closes the data-loss window.

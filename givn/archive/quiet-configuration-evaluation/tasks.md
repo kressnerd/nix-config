@@ -278,21 +278,47 @@ removed only after the relocation *and* the rollback have been confirmed.
 This is the one step the change deliberately leaves to the device owner: the
 configuration and its declared state are complete and asserted without it, and
 applying a new generation plus moving personal data on the daily-driver laptop is
-the owner's action, not a repository change. The procedure:
+the owner's action, not a repository change.
 
-1. Apply the new configuration: `sudo nixos-rebuild switch --flake .#thiniel`.
-2. With the browser closed:
-   `mkdir -p /persist/.config/mozilla` and
-   `cp -a /persist/.mozilla/firefox /persist/.config/mozilla/firefox`.
-3. Open the browser and confirm bookmarks, history and saved logins;
+**Post-archive correction (2026-10-13), from the first execution on `thiniel`.**
+The procedure below replaces the original text, which was wrong in two ways:
+
+- the user-layer persistence sources live under `/persist/home/dan/<path>`, not
+  `/persist/<path>` — the module derives the user's home below the declared
+  persistent storage path, so `/persist/.config` does not exist and `mkdir -p`
+  there fails with `Permission denied` (`/persist` itself is root-owned);
+- the browser must be quit *before* the switch. `switch-to-configuration` stops
+  the old persistence mount, and with Firefox holding files under
+  `~/.mozilla/firefox` it reports `Failed to stop home-dan-.mozilla.mount` and
+  exits `status 4/NOPERMISSION`. No data is lost: the old mount stays active and
+  the data stays at `/persist/home/dan/.mozilla`.
+
+Corrected procedure:
+
+1. Quit the browser (every profile) and any process holding a path under
+   `~/.mozilla`.
+2. Apply the new configuration: `sudo nixos-rebuild switch --flake .#thiniel`
+   (it stops `home-dan-.mozilla.mount` and starts
+   `home-dan-.config-mozilla.mount`).
+3. Copy the profile into the persisted new location (as `dan`, no `sudo`):
+   `cp -a /persist/home/dan/.mozilla/firefox /persist/home/dan/.config/mozilla/firefox`
+   (equivalently `cp -a ~/.mozilla/firefox ~/.config/mozilla/` while the old
+   mount is still active, or `cp -a /persist/home/dan/.mozilla/firefox ~/.config/mozilla/firefox`
+   after it is stopped — both write into the same source directory).
+4. Open the browser and confirm bookmarks, history and saved logins;
    `~/.config/mozilla/firefox` must be the profile in use.
-4. Exercise the rollback once while the old directory still exists:
+5. Exercise the rollback once while the old directory still exists:
    `sudo nixos-rebuild switch --rollback` (the home profile rolls back with the
    system generation), then
-   `mv /persist/.config/mozilla/firefox /persist/.mozilla/firefox` before the
-   reboot that remounts the persistence, and switch forward again.
-5. Only then remove `/persist/.mozilla`.
-6. Record the date and what was observed here.
+   `mv /persist/home/dan/.config/mozilla/firefox /persist/home/dan/.mozilla/firefox`
+   before the reboot that remounts the persistence, and switch forward again.
+6. Only then remove the old data: `rm -rf /persist/home/dan/.mozilla`.
+7. Record the date and what was observed here.
+
+Observed on the first execution (2026-10-13): the switch reached generation 221
+and started `home-dan-.config-mozilla.mount`, then failed stopping the old mount
+because Firefox was running; both mounts were active at that point and the
+browsing data was untouched at `/persist/home/dan/.mozilla/firefox`.
 
 ---
 
