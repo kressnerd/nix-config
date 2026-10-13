@@ -27,6 +27,9 @@
   integration-private-data-separation = import ./private-data-separation-test.nix {
     inherit pkgs;
   };
+  integration-github-fetch-credential = import ./github-fetch-credential-test.nix {
+    inherit pkgs sops-nix;
+  };
   integration-agent-tooling = import ./agent-tooling-test.nix {
     pkgs = unstablePkgs;
     inherit ompPackage opencodePackage;

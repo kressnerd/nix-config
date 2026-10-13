@@ -38,12 +38,12 @@ credentials, because nix-darwin does not manage `nix.conf` there.
 | Secret store and decryption | `sops-nix` (`sops.secrets` + `sops.templates`), from the flake's existing `sops-nix` input | existing pin in `flake.lock` (no version written here) | the repository's only secret mechanism; templates render a file from a decrypted placeholder without exposing the value to evaluation |
 | Where the credential lives at rest | one encrypted entry per build machine: `hosts/thiniel/secrets.yaml`, `hosts/J6G6Y9JK7L/secrets.yaml`, key `github/access-token` | `.sops.yaml` creation rules already map these paths (thiniel → `&dan_linux`, the Mac → `&dan`) | this class of credential is already recorded this way (`context7/api-key`, `kagi/api-key`) |
 | What nix reads | a rendered fragment `access-tokens = github.com=<value>`, mode `0400`, owned by the device owner | `sops.templates` (NixOS: system activation; Darwin: the owner's session) | `access-tokens` is nix's documented mechanism for the `github:` fetcher; the fragment keeps the value out of every evaluation-time file |
-| Reusable surface (Linux) | `modules/nixos/github-fetch-credential` — `mySystem.githubFetchCredential.{enable,user}` (default `false`) | nixpkgs-26.05 module system (no new dependency) | one place declares the key name, the rendered path and the include; the option surface is also what makes the exclusion scenario provable (see Verification Binding). The pair is imported by `hosts/common/global/default.nix`, so **every** NixOS host has the option — required, because the exclusion assertion on `adlerkopf` reads it — while the default `false` means importing it declares nothing; the Mac imports nothing from `hosts/common`. |
+| Reusable surface (Linux) | `modules/nixos/github-fetch-credential` — `mySystem.githubFetchCredential.{enable,user}` (default `false`) | nixpkgs-26.05 module system (no new dependency) | one place declares the key name, the rendered path and the include; the option surface is also what makes the exclusion scenario provable (see Verification Binding). The pair is imported by `hosts/common/global/default.nix`, so **every** NixOS host has the option — required, because the exclusion assertion on `adlerkopf` reads it — while the default `false` means importing it declares nothing. The sops definitions are additionally guarded on the presence of the sops option tree (`lib.optionalAttrs (options ? sops)`), because `nixos-vm-minimal` imports `hosts/common/global` but carries no sops module and a false `mkIf` does not remove a definition whose option does not exist; the Mac imports nothing from `hosts/common`. |
 | How nix learns of it (Linux) | `nix.extraOptions = "!include /run/secrets/rendered/nix-github-access-tokens"` | NixOS `nix.extraOptions` (the generated `/etc/nix/nix.conf`) | reaches root's client and the owner's client from one declaration; `!include` tolerates a missing or unreadable file (verified: exit 0 for both), so a not-yet-rendered credential cannot break a client |
 | How nix learns of it (Darwin) | the owner's user configuration file plus root's, both containing the same include | home-manager `xdg.configFile."nix/nix.conf"` and a nix-darwin activation script | nix-darwin does not manage `nix.conf` on that machine (see "Darwin injection point") |
 | Render layer (Linux) | system-level template rendered by system activation as root | sops-nix NixOS module (`sops.templates`) | the file exists from the first boot, before any login, so root's build works immediately and the booted VM check can reach it; no `linger`/session dependency |
 | Render layer (Darwin) | home-manager-level secret and template (the machine's existing pattern) | sops-nix home-manager module | that machine already renders its `git/*`, `context7` and `kagi` credentials this way; the darwin-level module writes into `/run`, which is not exercised anywhere upstream |
-| Test fixture | a build-time derivation that generates a fresh test key pair and a SOPS file encrypted to it, plus an ordered tmpfiles copy of the key into the guest | `pkgs.sops`, `pkgs.age` (already in the pinned set) | the repository's secret scanners must stay strict: a recorded private key (`AGE-SECRET-KEY-1…`) is refused by the repository's own gitleaks rules, so no key is recorded |
+| Test fixture | a build-time derivation that generates a fresh test key pair and a SOPS file encrypted to it, plus an initrd tmpfiles copy of the key into the guest *before* system activation runs | `pkgs.sops`, `pkgs.age` (already in the pinned set) | the repository's secret scanners must stay strict: a recorded private key (`AGE-SECRET-KEY-1…`) is refused by the repository's own gitleaks rules, so no key is recorded |
 
 Version freshness: this change introduces **no package, kernel, or channel
 choice**. `sops-nix`, `home-manager`, `nixpkgs` and `gitleaks` are the
@@ -190,17 +190,36 @@ release pairing — and it exercises the **Linux** shape, the same one thiniel
 uses:
 
 1. a build-time derivation (`pkgs.runCommand` with `pkgs.age` and `pkgs.sops`)
-   generates a fresh age key pair, encrypts a dummy YAML value to it, and
-   publishes `secrets.yaml` and `keys.txt` **in the store, not in the
-   repository**;
+   generates a fresh age key pair, encrypts a dummy YAML value to it under the
+   nested key the module reads (`github:` → `access-token:`), and publishes
+   `secrets.yaml` and `keys.txt` **in the store, not in the repository**;
 2. the guest declares the credential through the module
    (`mySystem.githubFetchCredential.enable`), sets
    `sops.defaultSopsFile` to the derivation's `secrets.yaml`, and sets
-   `sops.age.keyFile` to a runtime path; an ordered
-   `systemd.tmpfiles.rules` entry copies the key from the derivation into that
-   path before the sops service runs, so system activation succeeds on the first
-   boot without a user session;
-3. `virtualisation.additionalPaths` carries the fixture into the guest's store;
+   `sops.age.keyFile` to a runtime path; a `boot.initrd.systemd.tmpfiles.settings`
+   entry copies the key from the derivation into that path, and
+   `boot.initrd.systemd.storePaths = [ <fixture> ]` puts the copy's source in the
+   initrd store, so the key is in place before system activation renders the
+   fragment on the first boot without a user session:
+   - *why not the obvious shape*: this pin runs system activation from the
+     initrd (`initrd-nixos-activation` chroots and runs `prepare-root` before
+     `initrd-switch-root.service`), so the real system's
+     `systemd-tmpfiles-setup.service` runs **after** `sops-install-secrets` has
+     already failed with `cannot read keyfile`; and sops-nix refuses an age key
+     that points into the store (`pathNotInStore`:
+     `check = x: !lib.path.hasStorePathPrefix (/. + x)`), so `sops.age.keyFile`
+     cannot simply name the fixture. Initrd tmpfiles are applied *before*
+     `initrd-switch-root.target`, i.e. before activation, which is the only layer
+     that is both a tmpfiles rule and early enough;
+   - the guest also needs `nix.settings.experimental-features = [ "nix-command"
+     "flakes" ]`, because the assertions run the guest's `nix config show`;
+   - *the production laptop is unaffected* by this ordering dependency: its age
+     key lives on `/persist`, which `neededForBoot = true` mounts in the initrd
+     before activation (verified on the host: `/persist` is a btrfs subvolume on
+     the LVM root and `sops.age.keyFile = /persist/system/var/lib/sops-nix/key.txt`);
+     only the VM's fixture has to place a key at a runtime path;
+3. `virtualisation.additionalPaths` carries the fixture into the guest's store
+   (with `boot.initrd.systemd.storePaths` carrying it into the initrd's);
 4. the test asserts: the fragment exists at the declared path, mode `0400`,
    owner = the declared account; `nix config show` reports
    `github.com=<fixture value>` for that account **and for root** with nothing
@@ -226,7 +245,9 @@ New:
   `sops.secrets."github/access-token"`; renders
   `sops.templates."nix-github-access-tokens"` (`content =
   "access-tokens = github.com=<placeholder>"`, `owner = cfg.user`, `mode =
-  "0400"`); appends the include to `nix.extraOptions`.
+  "0400"`); appends the include to `nix.extraOptions`. The sops definitions are
+  wrapped in `lib.optionalAttrs (options ? sops)` so the module can be imported
+  on a host that carries no sops module (see `hosts/common/global` below).
 - `tests/integration/github-fetch-credential-test.nix` and its fixture
   derivation.
 - No new overlay, no new package, no new flake input and no option pair for
@@ -238,7 +259,26 @@ Changed:
 
 - `hosts/common/global/default.nix` — imports the new option pair, so every
   NixOS host has `mySystem.githubFetchCredential` (default `false` declares
-  nothing) and the exclusion assertion on `adlerkopf` resolves.
+  nothing) and the exclusion assertion on `adlerkopf` resolves. The wiring is
+  guarded on the presence of the sops option tree (`options ? sops`) because
+  `nixos-vm-minimal` imports `hosts/common/global` but carries no sops module:
+  a false `mkIf` does not remove a definition whose option does not exist, so
+  without the guard that host fails to evaluate. The pair deliberately sits in
+  the shared base rather than `hosts/common/optional/` (the recorded pattern for
+  conditional features): the aggregated `tests/assertions` module — which
+  carries the `adlerkopf` exclusion assertion — is evaluated on every host and
+  reads `mySystem.githubFetchCredential`, so a per-host import would leave that
+  assertion unresolvable; the shared placement is exactly what makes the
+  option-presence guard necessary. The shared base is also where cross-host nix
+  defaults already live (`hosts/common/global/nix.nix`). `docs/ARCHITECTURE.md`
+  is treated as historical for its stale host/feature inventory (chapter 11,
+  R-004/TD-005 records drift about hosts and files that do not exist, not module
+  placement), so its `hosts/common/optional/` placement rule is not consulted
+  here; the arc42 baseline is the corrected account. That `hosts/common/optional/`
+  pattern itself stays in use (thiniel imports two of its modules) — this change
+  deliberately places **one option pair** in the shared base — and chapter 8's
+  "Typed option modules as the host/module contract" is the durable account of
+  option pairs and now lists this one.
 - `hosts/thiniel/default.nix` — opts in (one line; the module arrives through
   the shared global import).
 - `home/dan/J6G6Y9JK7L.nix` — declares the sops secret and template and the
@@ -311,9 +351,15 @@ flowchart LR
   real materialisation is proven by the VM boot on Linux, and the Mac's own
   runtime state is confirmed on the machine (below).
 - **Anticipated obstacles and their fixes**:
-  - the VM needs a decryptable secret without recording a key → build-time
-    fixture derivation + a tmpfiles copy of the key before the sops service
-    (above);
+  - the VM needs a decryptable secret without recording a key and to have the key
+    in place *before* system activation → build-time fixture derivation + an
+    initrd tmpfiles copy (`boot.initrd.systemd.tmpfiles.settings`, with the
+    fixture in `boot.initrd.systemd.storePaths`), because activation runs from
+    the initrd before the system's tmpfiles and sops-nix refuses a store-path
+    `age.keyFile` (above). The production laptop is unaffected: its age key lives
+    at `/persist/system/var/lib/sops-nix/key.txt` and `/persist` is
+    `neededForBoot = true`, i.e. mounted in the initrd before activation (verified
+    live on thiniel);
   - the guest must be able to reach the fixture path → `virtualisation.additionalPaths`;
   - `sops` is human-only → the value is an operator step, listed in the task
     list rather than performed by an agent;

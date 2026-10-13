@@ -81,9 +81,12 @@ and the assertion cannot tell them apart.
 
 Reusable concerns are a pair of files: `options.nix` declares the typed surface
 and `default.nix` renders the behaviour from it. Present pairs:
-`modules/home-manager/{ssh,persistence}`, `modules/nixos/persistence`. Host
-options of the same kind live beside the host (`networking.adlerkopf.*`,
-`networking.cupix001.*`).
+`modules/home-manager/{ssh,persistence}`, `modules/nixos/persistence`,
+`modules/nixos/github-fetch-credential` (imported through the shared base,
+`hosts/common/global`, and guarding its definitions with
+`lib.optionalAttrs (options ? sops)` so a host without the secret mechanism is
+untouched). Host options of the same kind live beside the host
+(`networking.adlerkopf.*`, `networking.cupix001.*`).
 
 The contract exists so a shared module can be imported by hosts that do not
 have the device-specific data, and so that a missing declaration is a

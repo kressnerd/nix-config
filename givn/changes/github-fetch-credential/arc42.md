@@ -33,7 +33,10 @@ Chapters 01, 02, 03, 04 and 07 were re-read and deliberately left untouched.
 - `docs/arc42/06-runtime-view.md` — new scenario "GitHub credential supply to a
   nix client" (sequence diagram, per-platform steps, evidence note).
 - `docs/arc42/08-crosscutting-concepts.md` — new section "GitHub fetch
-  credential", including the per-platform render-layer table.
+  credential", including the per-platform render-layer table; the "Typed option
+  modules as the host/module contract" present-pairs list gains
+  `modules/nixos/github-fetch-credential` (with its shared-base import and
+  `options ? sops` guard).
 - `docs/arc42/09-architecture-decisions.md` — one candidate-assessment row; the
   register, the ADR directory index and the ADR files are unchanged.
 - `docs/arc42/10-quality-requirements.md` — QS-017, plus a clarification that

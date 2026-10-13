@@ -219,7 +219,7 @@ Evidence: RED: `attribute '"nix/nix.conf"' missing` (exit 1). GREEN/REFACTOR:
 
 - [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
       with the scenario title in the body.
-  - hash: `PENDING_HASH_3`
+  - hash: `2ffa755`
 
 Evidence: RED: `attribute 'mySystem' missing` (exit 1, captured before the
 option module was imported). GREEN/REFACTOR:
@@ -230,20 +230,28 @@ option module was imported). GREEN/REFACTOR:
 
 ## Task 4 — E2E setup (before the first `@e2e` scenario)
 
-- [ ] `verify.e2e_command` (`./scripts/givn-verify-e2e.sh`) is set and differs
+- [x] `verify.e2e_command` (`./scripts/givn-verify-e2e.sh`) is set and differs
       from `verify.command` (`./scripts/givn-verify.sh`) — confirmed in
       `givn/commands.yaml`.
-- [ ] Scope is real: in-scope scenarios for this change = 5, of which `@e2e` = 1
-      (strictly smaller). Whole-corpus counts from
-      `python3 scripts/givn-spec-trace.py`: _(paste the summary line)_
-- [ ] Wire the new target: `tests/integration/github-fetch-credential-test.nix`
-      registered in `tests/integration/default.nix` and exposed as
-      `checks.integration-github-fetch-credential` in `flake.nix`.
-- [ ] The Linux/KVM builder boots a VM: build one existing integration check,
-      e.g. `nix build .#checks.x86_64-linux.integration-private-data-separation`
-      (or run `./scripts/givn-verify-e2e.sh`). Paste the result.
+- [x] Scope is real. The delta carries **4** scenarios (not the 5 this task
+      presumed): 3 non-`@e2e` and 1 `@e2e` (strictly smaller). Whole-corpus
+      counts from `python3 scripts/givn-spec-trace.py`:
+      `givn-spec-trace: 29 scenario(s) across 6 feature file(s), 0 finding(s)`
+      (exit 0); `scripts/givn-scenario-count.py` → regular `21`, e2e `8`.
+- [x] Wire the new target: `tests/integration/github-fetch-credential-test.nix`
+      registered in `tests/integration/default.nix`, which the flake's linux
+      checks block merges directly, exposing
+      `checks.integration-github-fetch-credential` (confirmed: `nix flake check`
+      evaluates it, and `nix build …integration-github-fetch-credential` reaches
+      the VM derivation).
+- [x] The Linux/KVM builder boots a VM: the new check boots and passes
+      (`nix build .#checks.x86_64-linux.integration-github-fetch-credential`
+      → exit 0; full run recorded in Scenario 4 below).
 
-Evidence: _(paste)_
+Evidence: `givn/commands.yaml` (`verify.command` vs `verify.e2e_command`);
+spec-trace `29 scenario(s) … 0 finding(s)`; the check builds and boots (Scenario
+4). Scope note: the delta's real scenario count is 4, recorded above rather than
+the task's presumed 5.
 
 ---
 
@@ -252,36 +260,88 @@ Evidence: _(paste)_
 `@e2e @check:integration-github-fetch-credential` — bound target:
 `tests/integration/github-fetch-credential-test.nix`.
 
-- [ ] **RED** — write the test (build-time fixture derivation per `design.md`;
-      guest declares the credential through the module, sets
-      `sops.defaultSopsFile` to the fixture, `sops.age.keyFile` to a runtime
-      path, an ordered `systemd.tmpfiles.rules` copy of the key, and
+- [x] **RED** — wrote the test (build-time fixture derivation; guest declares the
+      credential through the module; `sops.defaultSopsFile` = the fixture;
+      `sops.age.keyFile` = a runtime path; an initrd tmpfiles copy of the key;
       `virtualisation.additionalPaths`) with its assertions: fragment exists at
-      the declared path with mode `0400` and the declared owner; `nix config
-      show` reports `github.com=<fixture value>` for that account and for root;
-      a second, unprivileged account cannot read it; the value appears in no
-      configuration file. Run the targeted command; paste the non-zero output.
+      the declared path with mode `0400` and the declared owner; `nix config show`
+      reports `github.com=<fixture value>` for that account and for root; a
+      second, unprivileged account cannot read it; the value appears in no
+      configuration file. Removed `@wip`. Targeted run:
   - command: `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).integration-github-fetch-credential`
-  - output: _(paste; must exit non-zero for the expected reason)_
+  - output:
+    ```
+    $ nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).integration-github-fetch-credential
+    error: flake 'git+file:///home/dan/dev/PRIVATE/nix-config' does not provide attribute 'packages.x86_64-linux.checks.x86_64-linux.integration-github-fetch-credential', 'legacyPackages.x86_64-linux.checks.x86_64-linux.integration-github-fetch-credential' or 'checks.x86_64-linux.integration-github-fetch-credential'
+    exit 1
+    ```
 
-- [ ] **GREEN** — finish the wiring so the check builds and passes (the module
-      rendering is already implemented in Scenario 1). Re-run the targeted
-      command; paste exit 0.
+- [x] **GREEN** — wiring the check uncovered two factual errors in `design.md`
+      (both corrected in place before this task was completed, and re-review
+      requested from Main):
+      1. the fixture's YAML must nest `github:` → `access-token:`
+         (`module` validation: `the key 'github' cannot be found`);
+      2. the design's `sops.age.keyFile` + `systemd.tmpfiles.rules` mechanism
+         cannot work: this pin runs system activation **from the initrd**
+         (`initrd-nixos-activation-start[…] … sops-install-secrets: cannot read
+         keyfile '/run/github-fetch-credential-test/age-key.txt'`), so the real
+         system's `systemd-tmpfiles-setup.service` is too late, and sops-nix
+         rejects a store-path key (`pathNotInStore`). Replaced with
+         `boot.initrd.systemd.tmpfiles.settings` (initrd tmpfiles run before
+         `initrd-switch-root.target`) plus
+         `boot.initrd.systemd.storePaths = [ fixture ]`; the guest also needed
+         `nix.settings.experimental-features = [ "nix-command" "flakes" ]` for
+         `nix config show`.
+      Re-run:
+    ```
+    $ nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).integration-github-fetch-credential
+    building '/nix/store/23jlsa80xb5i5h4kvfa9hfjjb1kyhzc6-vm-test-run-github-fetch-credential.drv'...
+    exit 0
+    ```
 
-- [ ] **REFACTOR** — re-run the targeted command; paste exit 0.
+- [x] **REFACTOR** — `nix fmt` on the test and the module; `nix build
+      .#checks.x86_64-linux.lint-nixfmt` → exit 0; the targeted VM check above is
+      post-format (exit 0).
 
 - [ ] **COMMIT** — `givn commit -m "test(e2e): <release note>"` with the scenario
-      title in the body.
-  - hash: _(paste)_
+      title in the body (also carries the corrected `design.md`, the module's
+      option-presence guard and this evidence).
+  - hash: `PENDING_HASH_4`
 
-Evidence: _(paste commands and outputs for RED/GREEN/REFACTOR)_
+Evidence: RED: attribute not provided (exit 1). GREEN/REFACTOR: the VM boots and
+the check passes (exit 0). Files: `tests/integration/github-fetch-credential-test.nix`,
+`tests/integration/default.nix`, `flake.nix` (linux checks block, unchanged),
+`modules/nixos/github-fetch-credential/default.nix`,
+`givn/changes/github-fetch-credential/design.md`.
 
 ---
 
 ## Task 5 — Verification (both gates)
 
-- [ ] `./scripts/givn-verify.sh` exits 0 (spec traceability now resolves
+- [x] `./scripts/givn-verify.sh` exits 0 (spec traceability now resolves
       `@check:integration-github-fetch-credential`).
-- [ ] `./scripts/givn-verify-e2e.sh` exits 0 on the Linux/KVM builder.
+- [x] `./scripts/givn-verify-e2e.sh` exits 0 on the Linux/KVM builder.
 
-Evidence: _(paste the two summaries)_
+Evidence:
+```
+$ python3 scripts/givn-spec-trace.py
+givn-spec-trace: 29 scenario(s) across 6 feature file(s), 0 finding(s)   # exit 0
+
+$ ./scripts/givn-verify.sh
+[givn-verify] 1/5 … nix flake check --no-build → all checks passed!
+[givn-verify] 3/5 build non-VM checks (unit + lint)
+[givn-verify] 4/5 host configuration assertions (tests/assertions)
+[givn-verify]   nixosConfiguration.{adlerkopf,cupix001,nixos-vm-minimal,thiniel}
+[givn-verify]   darwinConfiguration.J6G6Y9JK7L
+[givn-verify] 5/5 python test suite (scripts/)
+256 passed in 7.23s
+[givn-verify] OK                                                         # exit 0
+
+$ ./scripts/givn-verify-e2e.sh
+[givn-verify-e2e] system=x86_64-linux
+[givn-verify-e2e] building: integration-adlerkopf integration-agent-tooling
+  integration-github-fetch-credential integration-managed-file-displacement
+  integration-private-data-separation integration-ssh-identity-selection
+  integration-vm-minimal-ssh
+[givn-verify-e2e] OK                                                     # exit 0
+```

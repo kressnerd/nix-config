@@ -25,7 +25,7 @@ Feature: GitHub fetch credential
     Then   the device declares no credential file
     And    the device's nix configuration carries no credential for the GitHub host
 
-  @givn.added @wip @e2e @check:integration-github-fetch-credential
+  @givn.added @e2e @check:integration-github-fetch-credential
   Scenario: A booted device materialises the declared credential and presents it to the GitHub host
     Given  a device whose configuration declares a GitHub fetch credential and whose sessions carry nothing prepared
     When   the device boots
