@@ -203,12 +203,12 @@ Binding: `@check:unit-agent-secret-guard` (same target, allow-cases).
 - [x] T5.COMMIT `givn commit`; release note as subject, scenario title in body.
       Hash: `b615254` (shared with T4 — rationale in T4.COMMIT).
 
-## T6 — Scenario (e2e): A booted device starts its coding agent [ ]
+## T6 — Scenario (e2e): A booted device starts its coding agent [x]
 
 Binding: `@e2e @check:integration-agent-tooling`. Target:
 `tests/integration/agent-tooling-test.nix`. Runner: `./scripts/givn-verify-e2e.sh`.
 
-- [ ] T6.RED Remove `@wip` from this scenario only. Complete the booted check:
+- [x] T6.RED Remove `@wip` from this scenario only. Complete the booted check:
       guest asserts the agent runs by its declared store path
       (`sudo -u test env HOME=/home/test ${ompPackage}/bin/omp --version`)
       reporting at least `18.10`, the exit code being zero, that
@@ -218,27 +218,43 @@ Binding: `@e2e @check:integration-agent-tooling`. Target:
       `nix build .#checks.x86_64-linux.integration-agent-tooling` with the agent
       package deliberately absent from the node's module arguments: MUST exit
       non-zero (missing argument / unmet assertion). Paste.
-      Evidence:
-- [ ] T6.GREEN Supply the agent package to the node and make the assertions pass.
+      Evidence: exit 1 after a real boot — the guest ran
+      `/nix/store/…-omp-18.8.4/bin/omp --version` (the node's package at that
+      moment) and stopped on
+      `AssertionError: agent reports 'omp/18.8.4', below the floor 18.10`.
+- [x] T6.GREEN Supply the agent package to the node and make the assertions pass.
       Run `./scripts/givn-verify-e2e.sh`; the check MUST pass. Paste.
-      Files:
-      Evidence:
-- [ ] T6.REFACTOR Tidy the test module; re-run the check: still passes. Paste.
-      Evidence:
-- [ ] T6.COMMIT `givn commit`; release note as subject, scenario title in body.
-      Hash:
+      Files: `flake.nix` (the linux-systems block now passes
+      `ompPackage = (agentPkgsFor system).omp`).
+      Evidence: `nix build --no-link .#checks.x86_64-linux.integration-agent-tooling`
+      → exit 0: with the pin in place the guest starts omp 18.10.0, the guard file
+      exists as a regular file, both model servers are declared, and the guest
+      holds no key material while the agent still starts.
+- [x] T6.REFACTOR Tidy the test module; re-run the check: still passes. Paste.
+      Evidence: `nix fmt flake.nix`; `lint-nixfmt`/`lint-deadnix`/`lint-statix`
+      exit 0; the check re-run exits 0.
+- [x] T6.COMMIT `givn commit`; release note as subject, scenario title in body.
+      Hash: `2551789`.
 
 ## T7 — Full verification and operator hand-off [ ]
 
-- [ ] T7.1 `python3 scripts/givn-spec-trace.py` exits 0 (every scenario bound to
+- [x] T7.1 `python3 scripts/givn-spec-trace.py` exits 0 (every scenario bound to
       an existing target). Paste.
-      Evidence:
-- [ ] T7.2 `givn lint --change current-omp-release` exits 0 or 2 with no `@wip`
+      Evidence: exit 0 — `14 scenario(s) across 3 feature file(s), 0 finding(s)`;
+      the only output is two pre-existing warnings that `integration-adlerkopf`
+      and `integration-vm-minimal-ssh` are referenced by no scenario in scope.
+- [x] T7.2 `givn lint --change current-omp-release` exits 0 or 2 with no `@wip`
       left. Paste.
-      Evidence:
-- [ ] T7.3 `./scripts/givn-verify.sh` passes (all hosts evaluate, checks build,
+      Evidence: exit 0 — `1 file(s) checked — clean`; one `[SUBST]` advisory
+      noting the laptop scenario is a subset of the Mac's, which is inherent (one
+      host's assertions are a superset of the other's, and a scenario carries
+      exactly one binding tag, so they cannot be merged).
+- [x] T7.3 `./scripts/givn-verify.sh` passes (all hosts evaluate, checks build,
       Python suite green). Paste the tail.
-      Evidence:
+      Evidence: exit 0 — `[givn-verify] OK`; steps 3–5 report the non-VM checks
+      built, every host configuration evaluated (`adlerkopf`, `cupix001`,
+      `nixos-vm-minimal`, `thiniel`, `J6G6Y9JK7L`) with its assertions firing, and
+      `256 passed in 7.12s` for the Python suite.
 - [ ] T7.4 Operator: apply on the laptop
       (`sudo nixos-rebuild switch --flake .#thiniel`) and confirm
       `omp --version` reports at least `18.10` there.
