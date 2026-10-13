@@ -35,6 +35,7 @@ Feature: Current coding agent on a personal device
     When  the device boots and its configuration is applied
     Then  the coding agent starts and reports a version of at least 18.10
     And  the secret-access guard is present as a regular file in the agent's user directory
+
   @host:thiniel
   Scenario: The personal laptop carries a current OpenCode
     Given  the personal laptop thiniel carries the OpenCode coding agent
