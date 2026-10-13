@@ -94,7 +94,7 @@ capability: `quiet-configuration-evaluation`.
       /nix/store/xxax24mkjqx6vivl2zf5j3yh4iml8zxx-nixos-system-thiniel-26.11.20261008.8edc0c7.drv
       exit 0
       ```
-- [x] COMMIT: `a0e0c8e` — release note as subject, scenario title in the body.
+- [x] COMMIT: `8d58126` — release note as subject, scenario title in the body.
 
 ---
 
@@ -104,22 +104,59 @@ capability: `quiet-configuration-evaluation`.
 configuration change is safe to apply (the copy precedes any deletion), and the
 operator warning + rollback are in Task 6.
 
-- [ ] RED: remove `@wip`. Extend `tests/assertions/thiniel-hm-invariants.nix`
+- [x] RED: removed `@wip`. Extended `tests/assertions/thiniel-hm-invariants.nix`
       with the `programs.firefox.configPath` predicate, and
       `tests/assertions/thiniel-impermanence-invariants.nix` with the rendered
-      profile files (XDG path present, `.mozilla/firefox` absent) and the
-      persistence mount assertion on `config.systemd.mounts`. Targeted run
-      (host evaluation) → MUST exit non-zero with those assertions named. Paste.
-- [ ] GREEN: in `home/dan/features/productivity/browser.nix`, state the profile
-      location guarded to Linux and move the persistence entry from `.mozilla`
-      to `.config/mozilla`. Add the guards from the design: the MacBook's
-      platform-default path assertion in `tests/assertions/J6G6Y9JK7L-invariants.nix`
-      and the fleet CLI/alias guards in `tests/assertions/thiniel-hm-invariants.nix`
-      (guards hold before and after — no RED phase of their own, recorded as
-      guards, not scenarios). List files. Re-run → exit 0. Paste.
-- [ ] REFACTOR: `nixfmt`; re-run both host evaluations (`thiniel`,
-      `J6G6Y9JK7L`) → exit 0. Paste.
-- [ ] COMMIT: record the hash.
+      profile files and the persistence declaration (its existing `hmHasDir`
+      helper; the naive `builtins.elem` form is wrong because the elements are
+      attribute sets, and deep-forcing one throws the impermanence module's
+      removed-`method` error). Targeted run:
+      ```
+      $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+      error:
+      Failed assertions:
+      - thiniel: the browser profile must be rendered under /home/dan/.config/mozilla/firefox (profiles.ini)
+      - thiniel: the browser profile must no longer be rendered under ~/.mozilla/firefox
+      - thiniel: .config/mozilla must be in HM persistence so the relocated browser profile survives the root reset
+      - thiniel: .mozilla must not be in HM persistence once the browser profile moved under the XDG config directory
+      - dan profile: thiniel: the browser profile location must be stated by the device, not resolved from the release's superseded default (set programs.firefox.configPath)
+      exit 1
+      ```
+- [x] GREEN: `home/dan/features/productivity/browser.nix` states
+      `programs.firefox.configPath = "${config.xdg.configHome}/mozilla/firefox"`
+      guarded to Linux (`// lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux`)
+      and moves the persistence entry from `.mozilla` to `.config/mozilla`. The
+      guards are added with it: the MacBook's platform-default path in
+      `tests/assertions/J6G6Y9JK7L-invariants.nix`, the fleet CLI and alias
+      guards in `tests/assertions/thiniel-hm-invariants.nix` (guards, no RED
+      phase — they must hold before and after).
+      Files modified: `home/dan/features/productivity/browser.nix`,
+      `tests/assertions/thiniel-hm-invariants.nix`,
+      `tests/assertions/thiniel-impermanence-invariants.nix`,
+      `tests/assertions/J6G6Y9JK7L-invariants.nix`.
+      ```
+      $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+      /nix/store/0vm4d6y540y4m0nzgr9cj1py00b3s86w-nixos-system-thiniel-26.11.20261008.8edc0c7.drv
+      exit 0
+      ```
+      The legacy-path assertion had to be narrowed to `.mozilla/firefox/` after
+      the first GREEN run: `~/.mozilla/native-messaging-hosts` legitimately stays
+      where it is (the release's own migration note says native messaging hosts
+      are not moved), which the `.mozilla/` prefix would have failed on.
+- [x] REFACTOR: formatted all four touched files with `nix fmt`; both affected
+      host evaluations pass:
+      ```
+      $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+      /nix/store/0vm4d6y540y4m0nzgr9cj1py00b3s86w-nixos-system-thiniel-26.11.20261008.8edc0c7.drv
+      $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath
+      /nix/store/jh3if382f1ng92d79y48nhi07kdinjdw-darwin-system-26.11.4cff07d.drv
+      exit 0
+      ```
+      Independent observations: the profile renders under
+      `/home/dan/.config/mozilla/firefox/…`, `.mozilla` keeps only
+      `native-messaging-hosts`, the persistence list carries `.config/mozilla`
+      and no `.mozilla`, and the host evaluation prints zero migration warnings.
+- [x] COMMIT: `6b3f0d5` — release note as subject, scenario title in the body.
 
 ---
 

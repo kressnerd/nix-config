@@ -11,7 +11,7 @@ Feature: Quiet configuration evaluation
     And   the rendered compositor configuration is the conf-format file in use today
     And   no Lua-format compositor configuration is rendered
 
-  @givn.added @wip @host:thiniel
+  @givn.added @host:thiniel
   Scenario: The personal laptop's browser profile lives under its XDG config directory and survives a root reset
     Given the personal laptop's browser profile location was changed by a newer release
     And   its home profile was created before that change

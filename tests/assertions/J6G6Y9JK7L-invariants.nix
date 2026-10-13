@@ -314,5 +314,12 @@
       assertion = config.home.activation ? installOmpSopsGuard;
       message = "J6G6Y9JK7L: the agent's secret-access guard must be declared for installation";
     }
+    {
+      # The shared browser feature states the profile location for Linux only
+      # (change `quiet-configuration-evaluation`); the MacBook keeps the platform
+      # default, so this guard fails if that guard is ever dropped.
+      assertion = config.programs.firefox.configPath == "Library/Application Support/Firefox";
+      message = "J6G6Y9JK7L: the browser profile must stay at the macOS default path, got ${config.programs.firefox.configPath}";
+    }
   ];
 }

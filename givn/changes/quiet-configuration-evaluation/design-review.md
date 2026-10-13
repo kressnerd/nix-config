@@ -106,4 +106,10 @@ adds (its own RED step creates it). That is the finding recorded as V5, not an
 unresolved binding: every scenario has a row in the design's Verification
 Binding table with a target that the change creates and wires.
 
+## Post-review corrections (recorded during implementation)
+
+| Mechanism | Review disposition | Correction and evidence |
+|---|---|---|
+| The persistence assertion | G2 replaced the option-list membership test with the NixOS-level mount targets, on the finding that the option list cannot be read. | While implementing, the repository's own helper in `tests/assertions/thiniel-impermanence-invariants.nix` was found to read the same list safely (`hmHasDir`, `d.directory or ""` per element): the throw comes from *deep-forcing* an element, not from a lazy attribute read. The assertion therefore uses that existing helper — one convention, not two — and the design was updated (Verification Binding, Assertion mechanics). G2's finding stands (the naive `builtins.elem` form and the deep read are both wrong); only the chosen mechanism moved, and the mount-target form stays recorded as the alternative fact. `design.md` was corrected before the scenario was implemented, per the tasks rule. |
+
 DESIGN-REVIEW: PASS

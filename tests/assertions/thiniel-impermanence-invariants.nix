@@ -19,6 +19,13 @@
           builtins.any (
             d: if builtins.isString d then d == path else (d.directory or "") == path
           ) hmPersistDirs;
+
+        # The browser profile the change relocates under the XDG config directory.
+        browserProfileFiles = builtins.attrNames config.home-manager.users.dan.home.file;
+        hasXdgBrowserProfile = builtins.any (
+          n: lib.hasSuffix "/mozilla/firefox/profiles.ini" n
+        ) browserProfileFiles;
+        hasLegacyBrowserProfile = builtins.any (n: lib.hasPrefix ".mozilla/firefox/" n) browserProfileFiles;
       in
       [
         {
@@ -125,6 +132,25 @@
             in
             result.success && result.value;
           message = "thiniel: mySystem.persistence.enable must be true — system persistence base module not loaded or not enabled";
+        }
+        # Browser profile relocation (change quiet-configuration-evaluation):
+        # the profile lives under the XDG config directory and its state is
+        # persisted there, so a root wipe does not lose bookmarks or logins.
+        {
+          assertion = hasXdgBrowserProfile;
+          message = "thiniel: the browser profile must be rendered under ${config.home-manager.users.dan.xdg.configHome}/mozilla/firefox (profiles.ini)";
+        }
+        {
+          assertion = !hasLegacyBrowserProfile;
+          message = "thiniel: the browser profile must no longer be rendered under ~/.mozilla/firefox";
+        }
+        {
+          assertion = hmHasDir ".config/mozilla";
+          message = "thiniel: .config/mozilla must be in HM persistence so the relocated browser profile survives the root reset";
+        }
+        {
+          assertion = !(hmHasDir ".mozilla");
+          message = "thiniel: .mozilla must not be in HM persistence once the browser profile moved under the XDG config directory";
         }
       ];
   };

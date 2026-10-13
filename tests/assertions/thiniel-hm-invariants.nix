@@ -10,6 +10,7 @@
   config,
   options,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -36,6 +37,30 @@ in
           value = "hyprlang";
         } { value = "lua"; });
       message = "thiniel: the compositor configuration format must be stated by the device, not resolved from the release's superseded default (set wayland.windowManager.hyprland.configType)";
+    }
+    {
+      assertion =
+        !(superseded [ "programs" "firefox" "configPath" ] {
+          value = ".mozilla/firefox";
+        } { value = ".config/mozilla/firefox"; });
+      message = "thiniel: the browser profile location must be stated by the device, not resolved from the release's superseded default (set programs.firefox.configPath)";
+    }
+    # Guards for this change's boundary: withdrawing the empty fleet hive must
+    # not take the operator's fleet tooling with it. They hold before and after
+    # the change, so they carry no RED phase of their own.
+    {
+      assertion = lib.elem pkgs.colmena config.home.packages;
+      message = "thiniel: the fleet deployment tool (Colmena) must stay installed although the hive output is withdrawn";
+    }
+    {
+      assertion = builtins.all (a: builtins.hasAttr a config.programs.fish.shellAliases) [
+        "cs"
+        "ct"
+        "cb"
+        "cda"
+        "call"
+      ];
+      message = "thiniel: the fleet deployment aliases (cs/ct/cb/cda/call) must stay declared although the hive output is withdrawn";
     }
   ];
 }

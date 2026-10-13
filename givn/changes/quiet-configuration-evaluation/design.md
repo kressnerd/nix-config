@@ -86,7 +86,7 @@ no version number is written from memory.
 | Scenario title | Binding tag | Bound target (file / check / host) | Targeted run command | Expected RED failure mode |
 |---|---|---|---|---|
 | The personal laptop states its compositor configuration format | `@host:thiniel` | `tests/assertions/thiniel-hm-invariants.nix` (Home-Manager-level, imported by `home/dan/thiniel.nix`), fired by host evaluation | `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` | the new assertion fails: the release reports the compositor format as resolved from its superseded default (`shouldWarn` true for `wayland.windowManager.hyprland.configType`); the format assertion (`"hyprlang"`) and the rendered-filename assertions already hold, so the diagnostic-cause assertion is the RED one |
-| The personal laptop's browser profile lives under its XDG config directory and survives a root reset | `@host:thiniel` | `tests/assertions/thiniel-hm-invariants.nix` for the superseded-default predicate of `programs.firefox.configPath`, and `tests/assertions/thiniel-impermanence-invariants.nix` (NixOS level) for the rendered profile files and the persistence mount | `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` | both new assertion groups fail: the superseded-default predicate reports `shouldWarn` true (verified by probe, 2026-10-13), no file entry under `${config.xdg.configHome}/mozilla/firefox` exists, a file entry under `.mozilla/firefox` does, and `config.systemd.mounts` carries `/home/dan/.mozilla` instead of `/home/dan/.config/mozilla` (both mount targets verified present today) |
+| The personal laptop's browser profile lives under its XDG config directory and survives a root reset | `@host:thiniel` | `tests/assertions/thiniel-hm-invariants.nix` for the superseded-default predicate of `programs.firefox.configPath`, and `tests/assertions/thiniel-impermanence-invariants.nix` (NixOS level, its existing `hmHasDir` helper) for the rendered profile files and the persistence declaration | `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` | both new assertion groups fail: the superseded-default predicate reports `shouldWarn` true (verified by probe, 2026-10-13), no file entry under `${config.xdg.configHome}/mozilla/firefox` exists, a file entry under `.mozilla/firefox` does, and the persistence list declares `.mozilla` instead of `.config/mozilla` |
 | A booted device reproduces its identity surface from a single release | `@e2e @check:integration-ssh-identity-selection` | `tests/integration/ssh-identity-selection-test.nix` (its node assertion), wired by `tests/integration/default.nix` + the flake's linux checks block | `nix build .#checks.x86_64-linux.integration-ssh-identity-selection`, evaluation-level RED: `nix eval .#checks.x86_64-linux.integration-ssh-identity-selection.drvPath` | the fixture's new assertion fails: the test profile's Home Manager release (`26.11`) differs from the guest package set's release (`26.05`) |
 | A booted device starts its coding agents from a single release | `@e2e @check:integration-agent-tooling` | `tests/integration/agent-tooling-test.nix` (its node assertion), same wiring | `nix build .#checks.x86_64-linux.integration-agent-tooling`, evaluation-level RED: `nix eval .#checks.x86_64-linux.integration-agent-tooling.drvPath` | the fixture's new assertion fails for the same release difference |
 | The flake exposes only outputs the checker interprets | `@check:flake-output-contract` | `flake.nix` → `checks.<system>.flake-output-contract` | `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).flake-output-contract` | the new check fails and names `colmenaHive` as an output outside the recognised set (the check exists and fails before the withdrawal — RED is the check itself, not an evaluation error) |
@@ -112,15 +112,17 @@ design review — see `design-review.md`, findings V1–V4):
   (`config.xdg.configFile`): the conf-format compositor file is present and no
   Lua file, the browser profile's `profiles.ini` is present under the XDG path
   and none under `.mozilla`.
-- The persistence half is asserted on the NixOS-level mount list
-  (`config.systemd.mounts`, target names), not on the persistence option value:
-  reading `home.persistence."/persist".directories` from outside throws in this
-  impermanence revision (its `method` option is removed with `apply = throw`),
-  while the mount list is the observable the persistence layer produces and
-  already carries every declared directory today
-  (`["/home/dan/.cache/mozilla","/home/dan/.mozilla"]`). The assertion is
-  therefore: `/home/dan/.config/mozilla` is a mount target and
-  `/home/dan/.mozilla` is not.
+- The persistence half is asserted on the home profile's declared persistence
+  list through the helper `tests/assertions/thiniel-impermanence-invariants.nix`
+  already uses for every persisted path (`hmHasDir`, tolerant of the list's
+  string-or-attribute-set elements): `.config/mozilla` is declared and
+  `.mozilla` is not. The helper reads `.directory` lazily per element, which is
+  what keeps it working — *deep-forcing* the list throws in this impermanence
+  revision (its removed `method` option has `apply = throw`), and the same fact
+  observed one layer out (`config.systemd.mounts` targets) was considered and
+  rejected in favour of the file's existing convention. The mount list today
+  carries `/home/dan/.mozilla` and `/home/dan/.cache/mozilla`, confirming that a
+  declared directory becomes a mount target.
 - The two fixtures assert the pairing directly: the test profile's Home Manager
   release equals the guest package set's release
   (`config.home-manager.users.test.home.version.release == pkgs.lib.trivial.release`),
