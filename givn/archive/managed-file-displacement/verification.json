@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "managed-file-displacement",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "568566160b38ae99a8f414df2829237e7cee19c5",
+  "tested_revision": "568566160b38ae99a8f414df2829237e7cee19c5",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 28.822207033
+    },
+    "regular": {
+      "status": "passed",
+      "total": 18,
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 95.932776192
+    }
+  },
   "coverage": null,
   "started_at_unix": 1791927922,
-  "finished_at_unix": null
+  "finished_at_unix": 1791928047
 }
