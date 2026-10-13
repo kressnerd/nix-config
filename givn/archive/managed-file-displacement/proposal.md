@@ -71,7 +71,16 @@ contracts, not from the score.
 
 | Proposed capability | Route's recommendation | Decision | Rationale (if you deviated from route) |
 |---|---|---|---|
-| `managed-file-displacement` | EXTEND `quiet-configuration-evaluation` (score 13.00, confidence: signal) | NEW in `reproduce-working-environment` | The promise — the owner applies the device's configuration and it completes, with the program's file preserved — refines that use case's own rule that applying the configuration preserves already available working data unless a replacement is authorized. `quiet-configuration-evaluation` lives in the publication contract and promises that an *evaluation* reports nothing to triage; it does not own the device's activation and its refusal to discard a file the device's programs wrote. No existing capability in either contract owns this. |
+| `managed-file-displacement` | EXTEND `quiet-configuration-evaluation` (score 13.00, confidence: signal) | NEW in reproduce-working-environment | The promise — the owner applies the device's configuration and it completes, with the program's file preserved — refines that use case's own rule that applying the configuration preserves already available working data unless a replacement is authorized. `quiet-configuration-evaluation` lives in the publication contract and promises that an *evaluation* reports nothing to triage; it does not own the device's activation and its refusal to discard a file the device's programs wrote. No existing capability in either contract owns this. |
+
+> **Post-archive correction (2026-10-13).** The archived Decision cell read
+> ``NEW in `reproduce-working-environment` `` with backticks around the use-case
+> id. `givn archive` takes the id from that cell verbatim, so the merged
+> capability landed in a directory literally named
+> `` `reproduce-working-environment ``; it was moved to
+> `givn/specs/reproduce-working-environment/managed-file-displacement.feature`
+> and the stray directory removed. The backticks are gone so the cell reads the
+> way the tooling parses it.
 
 ## Out of Scope
 
