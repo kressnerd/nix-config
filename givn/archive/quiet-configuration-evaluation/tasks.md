@@ -327,10 +327,22 @@ the next activation re-rendered it — Firefox then wrote its own `profiles.ini`
 declaring a fresh `*.default` profile, so the browser opened an empty profile
 even though the real profile directories were present. The managed
 `profiles.ini` is declaratively rendered (Profile0 `user`, default; Profile1
-`no-tracking`), so the fix is: quit the browser, re-run the activation
-(`sudo nixos-rebuild switch --flake .#thiniel`), confirm the rendered file
-declares the real profiles, and only then start the browser. Do not hand-edit
-`profiles.ini`: the next activation replaces it.
+`no-tracking`), so the fix is to get the activation to re-link it. Two traps
+found on the way:
+
+- `nixos-rebuild switch` does **not** re-run the Home Manager activation when the
+  generation is unchanged (the user's unit still showed the previous activation
+  timestamp), so the link never happened. The command that does re-run it is
+  `sudo systemctl restart home-manager-dan.service`.
+- Home Manager refuses to overwrite a foreign regular file at a managed path
+  (`Existing file '…/profiles.ini' would be clobbered`, activation exit 1). The
+  file must be moved aside first (`mv profiles.ini profiles.ini.firefox`, then
+  restart the unit). Do not hand-edit or forces-symlink it: the next activation
+  replaces it anyway. The same applies to `user/search.json.mozlz4` and
+  `no-tracking/search.json.mozlz4`, which Firefox rewrites from its runtime state
+  and which then differ from the rendered file — the alternative to moving them
+  aside each time is `home-manager.backupFileExtension` (or `backupCommand`),
+  which makes Home Manager move them automatically instead of failing.
 
 ---
 
