@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "change": "github-fetch-credential",
+  "status": "pending",
+  "candidate_revision": null,
+  "tested_revision": null,
+  "scopes": {},
+  "coverage": null,
+  "started_at_unix": 1791935985,
+  "finished_at_unix": null
+}

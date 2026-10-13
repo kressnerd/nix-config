@@ -1,4 +1,4 @@
-<!-- givn:base-sha256:7b854f6843bc55f28ec5c5f8e37b38848aa1d105afacc59ae636dba2638ef33e -->
+<!-- givn:base-sha256:cbf55c47880fd71596cfc7cdc970b62eafaf61cb866151a5a980d11df758a068 -->
 # Use case: reproduce-working-environment
 
 ## Level
@@ -49,6 +49,8 @@ The Device owner requests reproduction of the specified usual working environmen
 - VPN is application-specific, not a universal base-environment condition. A selected application's connection needs may still cause its supported software/configuration to be present.
 - No personal-data loss window, retention duration or recovery completion deadline is imported from the photo application's delegated 24-hour target.
 - Check actual usable work context; a successful evaluation, launcher, directory creation or green transfer job is not alone work readiness.
+- A device presents only the GitHub fetch credential that device declares, readable by no account other than root and the device owner, and prepared by no session: it reaches nix from a file on the device, never from a world-readable path and never from a process environment variable. A device that declares no such credential presents none, and no device falls back to another device's.
+- The credential is recorded only encrypted, and a device that lost its root filesystem materialises the declared credential again from that record; a missing or unreadable credential leaves the device's fetches unauthenticated, never silently replaced by another account's.
 
 ## Examples
 - The required context includes a configured editor/shell plus a project workspace containing `work-in-progress.txt` with the approved `draft B` content plus permitted access to its intended development resource. The owner can open/use that work and authenticate through the approved identity after reproduction; only then is the requested context ready.
@@ -58,6 +60,7 @@ The Device owner requests reproduction of the specified usual working environmen
 - The selected usual context has no application requiring the family private path. Reproducing it does not impose VPN enrollment. A different selected application's private-path requirement is handled as that application's need.
 - A device's coding agents report versions at their accepted floors while upstream has already cut newer releases; the context is ready, and taking a newer one stays the owner's decision. A device whose agent reports a version below its floor is not ready even though the agent launches and works.
 - The device's browser rewrote the profile registry the configuration manages. The next activation moves that file beside the rendered one and completes, so the owner resumes work without a manual step and can still read what the browser had written.
+- The laptop and the work MacBook materialise the GitHub fetch credential their configurations declare and present it when nix downloads the private source of the configuration — after a reboot, and with nothing exported in the shell. The home server declares none and presents none.
 
 ## Minimal guarantee
 An incomplete context is not reported as work-ready; existing required working data is not silently discarded, and unauthorized data/credential handling or extra identity/resource rights are not granted by the reproduction request.
@@ -72,6 +75,7 @@ The Device owner can resume the specified usual work on the selected device with
 - permitted-identity-selection
 - current-agent-tooling
 - managed-file-displacement
+- github-fetch-credential
 
 ## Interactions
 
@@ -81,6 +85,7 @@ The Device owner can resume the specified usual work on the selected device with
 | current-agent-tooling | a device carries the owner's coding agent | A booted device starts its coding agent |
 | current-agent-tooling | a device carries the owner's OpenCode coding agent | A booted device starts its OpenCode |
 | managed-file-displacement | a device applies its configuration | A booted device activates although a program rewrote a managed file |
+| github-fetch-credential | a device builds the configuration | A booted device materialises the declared credential and presents it to the GitHub host |
 
 ## Includes
 - none
