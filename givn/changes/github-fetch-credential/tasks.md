@@ -303,10 +303,10 @@ the task's presumed 5.
       .#checks.x86_64-linux.lint-nixfmt` → exit 0; the targeted VM check above is
       post-format (exit 0).
 
-- [ ] **COMMIT** — `givn commit -m "test(e2e): <release note>"` with the scenario
+- [x] **COMMIT** — `givn commit -m "test(e2e): <release note>"` with the scenario
       title in the body (also carries the corrected `design.md`, the module's
       option-presence guard and this evidence).
-  - hash: `PENDING_HASH_4`
+  - hash: `380799c`
 
 Evidence: RED: attribute not provided (exit 1). GREEN/REFACTOR: the VM boots and
 the check passes (exit 0). Files: `tests/integration/github-fetch-credential-test.nix`,
