@@ -43,6 +43,7 @@
     ./features/productivity/messaging.nix
     ./features/productivity/mpv.nix
     ./features/productivity/zathura.nix
+    ../../tests/assertions/thiniel-hm-invariants.nix
   ];
 
   # Host-specific overrides

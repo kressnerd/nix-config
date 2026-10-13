@@ -612,6 +612,47 @@
                     find $src -name '*.nix' -not -path '*/result*' -exec nixfmt --check {} +
                     touch $out
                   '';
+
+              # `nix flake check` prints `unknown flake output` for every
+              # top-level output outside its schema and offers no suppression,
+              # so the declared output set has to be one the checker interprets.
+              # The list below is this repository's declared interface; adding a
+              # name to it is the deliberate act that confirms the checker
+              # understands the output.
+              flake-output-contract =
+                let
+                  recognised = [
+                    "checks"
+                    "darwinConfigurations"
+                    "devShells"
+                    "formatter"
+                    "nixosConfigurations"
+                    "overlays"
+                    "packages"
+                    "templates"
+                  ];
+                  declared = builtins.attrNames (self.outputs or self);
+                  unknown = builtins.filter (n: !builtins.elem n recognised) declared;
+                  unknownText = builtins.concatStringsSep "\n" unknown;
+                in
+                pkgs.runCommand "flake-output-contract"
+                  {
+                    inherit unknownText;
+                    passAsFile = [ "unknownText" ];
+                  }
+                  (
+                    if unknown == [ ] then
+                      ''
+                        echo "every declared flake output is one the checker interprets"
+                        touch $out
+                      ''
+                    else
+                      ''
+                        echo "the flake declares outputs the checker does not interpret:"
+                        cat $unknownTextPath
+                        exit 1
+                      ''
+                  );
             }
           ))
           (
