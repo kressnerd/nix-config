@@ -675,6 +675,9 @@
                   # follow, so the release pairing holds. See the change
                   # `quiet-configuration-evaluation`, design D3.
                   unstablePkgs = nixpkgs-unstable.legacyPackages.${system};
+                  # The displacement command the devices declare, so the booted
+                  # check proves their setting rather than a test-local one.
+                  backupCommand = self.nixosConfigurations.thiniel.config.home-manager.backupCommand;
                   # The booted check carries the agent from its own pin, so the
                   # guest proves the version floor the devices assert.
                   ompPackage = (agentPkgsFor system).omp;

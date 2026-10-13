@@ -90,26 +90,44 @@ new capability and rule). Capability: `managed-file-displacement`.
       exit 0
       ```
 - [x] REFACTOR: `nix fmt` on both files; the run above is post-format (exit 0).
-- [x] COMMIT: `PENDING_HASH_2` — release note as subject, scenario title in the body.
+- [x] COMMIT: `9ee7a60` — release note as subject, scenario title in the body.
 
 ---
 
 ## Task 3 — Scenario: `A booted device activates although a program rewrote a managed file` (`@e2e @check:integration-managed-file-displacement`)
 
-- [ ] RED: remove `@wip`. Wire the fixture (setup task) and, for this run only,
-      pass `null` to it from the flake so the guest reproduces the pre-change
-      state (today's declared value). Targeted run:
-      `nix build --no-link .#checks.x86_64-linux.integration-managed-file-displacement`
-      → MUST fail: the guest's `home-manager-test.service` aborts on
-      `Existing file '…/settings.conf' would be clobbered` (no displacement
-      command declared). Paste.
-- [ ] GREEN: pass the declared value again (`self.nixosConfigurations.thiniel…`);
-      with Task 1's helper in place this is the displacement script. Re-run the
-      build → the guest boots, the activation completes, the rendered file is in
-      place, `settings.conf.1` still holds the earlier rewrite and
-      `settings.conf.2` holds the newer one. Paste.
-- [ ] REFACTOR: `nix fmt` on the touched Nix files; re-run the build.
-- [ ] COMMIT: record the hash.
+- [x] RED: removed `@wip`. Wired the fixture and, for this run only, passed
+      `null` from the flake so the guest reproduced the pre-change declaration.
+      Targeted run:
+      ```
+      $ nix build --no-link '.#checks.x86_64-linux.integration-managed-file-displacement'
+      machine: waiting for unit home-manager-test.service
+      !!! RequestedAssertionFailed: unit "home-manager-test.service" reached state "failed"
+      # from the guest log:
+      hm-activate-test[704]: Existing file '/home/test/.config/example/settings.conf' would be clobbered
+      exit 1
+      ```
+      A first RED run failed for the wrong reason — `mkdir: cannot create
+      directory '/home/test/.config/fontconfig': Permission denied` — because the
+      seeding step created `/home/test/.config` as root; the seed now creates the
+      whole path for the test user (`install -d -o test -g users`), which is what
+      the grilling's F5 asked for.
+- [x] GREEN: passed the declared value again
+      (`self.nixosConfigurations.thiniel.config.home-manager.backupCommand`), which
+      is the repository's displacement command. Targeted run:
+      ```
+      $ nix build --no-link '.#checks.x86_64-linux.integration-managed-file-displacement'
+      building '/nix/store/ksnl2gcza9npssynd8pyjjinpxl9f679-vm-test-run-managed-file-displacement.drv'...
+      exit 0
+      ```
+      The guest booted, `home-manager-test.service` succeeded, the test script
+      asserted the rendered link plus both displaced copies: `.1` still holds
+      `written even earlier` (the earlier rewrite untouched) and `.2` holds
+      `written by a program` (the newest rewrite) — the repeat case F1 found.
+      Files: `tests/integration/managed-file-displacement-test.nix` (new),
+      `tests/integration/default.nix`, `flake.nix`.
+- [x] REFACTOR: `nix fmt` on the three files; the build above is post-format (exit 0).
+- [x] COMMIT: `PENDING_HASH_3` — release note as subject, scenario title in the body.
 
 ---
 

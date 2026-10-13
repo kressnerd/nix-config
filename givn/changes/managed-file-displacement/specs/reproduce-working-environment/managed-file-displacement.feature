@@ -2,7 +2,7 @@
 
 Feature: A rewritten managed file is displaced, not fatal
 
-  @givn.added @wip @e2e @check:integration-managed-file-displacement
+  @givn.added @e2e @check:integration-managed-file-displacement
   Scenario: A booted device activates although a program rewrote a managed file
     Given a device whose home profile manages a configuration file
     And   a program on that device rewrote that file after it was rendered

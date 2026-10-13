@@ -4,6 +4,7 @@
 {
   pkgs,
   unstablePkgs,
+  backupCommand,
   home-manager-unstable,
   sops-nix,
   ompPackage,
@@ -29,6 +30,11 @@
   integration-agent-tooling = import ./agent-tooling-test.nix {
     pkgs = unstablePkgs;
     inherit ompPackage opencodePackage;
+    home-manager = home-manager-unstable;
+  };
+  integration-managed-file-displacement = import ./managed-file-displacement-test.nix {
+    pkgs = unstablePkgs;
+    inherit backupCommand;
     home-manager = home-manager-unstable;
   };
 }
