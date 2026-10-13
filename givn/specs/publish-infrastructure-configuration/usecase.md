@@ -1,3 +1,4 @@
+<!-- givn:base-sha256:b4e13a57c91702ddd60b101abef0fc9c944243142b90bc5d55a2bab08ba19f29 -->
 # Use case: publish-infrastructure-configuration
 
 ## Level
@@ -24,7 +25,7 @@ or records a change to it.
 1. Actor Owner/operator supplies a host's operational values from outside the repository; System builds and deploys that host with exactly those values.
 2. Actor Owner/operator records configuration and documentation changes; System keeps the recorded content free of operational values and uses documentation-range placeholders or empty values for the host network defaults.
 3. Actor Owner/operator attempts to record a revision; System refuses any revision that would record an operational value, a per-host private-value file, or an unencrypted secret file.
-4. Actor Owner/operator publishes the repository; System yields a checkout that evaluates and passes its checks without any private value.
+4. Actor Owner/operator publishes the repository; System yields a checkout that evaluates and passes its checks without any private value and reports no diagnostic the operator must triage.
 5. Actor Owner/operator confirms the published history; System records no operational value in it.
 
 ## Extensions
@@ -41,6 +42,7 @@ or records a change to it.
 - A revision that would record an operational value, a per-host private-value file, or an unencrypted secret is refused, both before it leaves the operator's machine and on the repository's continuous integration.
 - A secret is encrypted before it is recorded.
 - Separation is not encryption: operational values are kept out of the public repository, they are not encrypted.
+- A setting whose release default the configuration superseded is stated explicitly at a value the operator chose — a value that relocates a device's data is carried out without discarding it — so an evaluation of the repository reports no migration, release-mismatch or unrecognised-output diagnostic to triage. The flake declares only outputs the checker interprets.
 
 ## Examples
 - The operator deploys the home server with its real LAN address supplied from outside the repository; the repository records `192.0.2.10` as the default. A reader of the repository learns the schema but not the address.
@@ -48,6 +50,7 @@ or records a change to it.
 - The operator stages a document that contains the real LAN address; the guard refuses the revision and names the offending location.
 - The operator's private notes file and per-host value files exist only on the operator's machine and are never recorded.
 - The operator runs the history rewrite and confirms the published history records none of the values; until then the repository is not treated as safe to publish.
+- The operator's flake check prints nothing to triage: the laptop's home profile states the settings whose release defaults were superseded, and its browser profile lives under the XDG config directory.
 
 ## Minimal guarantee
 A repository state that records an operational value, a per-host private-value
@@ -63,12 +66,14 @@ and deploys with the values held outside the repository.
 
 ## Capabilities
 - operational-data-separation
+- quiet-configuration-evaluation
 
 ## Interactions
 
 | Capability | Consumer action | E2E scenario |
 |---|---|---|
 | operational-data-separation | the operator deploys a host with the values supplied from outside the repository | A host booted with values supplied from outside the repository uses those values |
+| quiet-configuration-evaluation | the operator checks or builds the configuration | A booted device reproduces its identity surface from a single release |
 
 ## Includes
 - none
@@ -85,4 +90,3 @@ and deploys with the values held outside the repository.
 ## Diagram
 None — no ideation canvas exists for this goal; it was introduced by the change.
 The change's design record carries the architecture.
-
