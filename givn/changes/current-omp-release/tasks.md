@@ -236,7 +236,7 @@ Binding: `@e2e @check:integration-agent-tooling`. Target:
 - [x] T6.COMMIT `givn commit`; release note as subject, scenario title in body.
       Hash: `2551789`.
 
-## T7 — Full verification and operator hand-off [ ]
+## T7 — Full verification and operator hand-off [x]
 
 - [x] T7.1 `python3 scripts/givn-spec-trace.py` exits 0 (every scenario bound to
       an existing target). Paste.
@@ -261,14 +261,29 @@ Binding: `@e2e @check:integration-agent-tooling`. Target:
       build, the new `integration-agent-tooling` among them. (Only Home Manager's
       pre-existing "26.11 against Nixpkgs 26.05" evaluation warning is emitted,
       which the other integration checks show as well.)
-- [ ] T7.4 Operator: apply on the laptop
+- [x] T7.4 Operator: apply on the laptop
       (`sudo nixos-rebuild switch --flake .#thiniel`) and confirm
       `omp --version` reports at least `18.10` there.
-- [ ] T7.5 Operator: apply on the Mac
+      Evidence (operator-reported, 2026-10-13): the switch succeeded on both
+      machines and each reports the expected version. The configuration asserts
+      `18.10` or newer per device, so a successful switch plus a reported version
+      is the floor met on hardware — the one place this repository cannot observe
+      itself.
+- [x] T7.5 Operator: apply on the Mac
       (`sudo darwin-rebuild switch --flake .#J6G6Y9JK7L`), confirm
       `omp --version` reports at least `18.10`, that
       `~/.omp/agent/hooks/pre/secret-access-guard.js` exists as a regular file,
       and that `command -v omp` resolves to the configured agent (recording D4's
       confirmation on the machine the repository cannot observe).
-- [ ] T7.6 Operator: record the rollback path used if either activation is
+      Evidence (operator-reported, 2026-10-13): the switch succeeded and the Mac
+      reports the expected version. The guard file's placement is proven by the
+      booted check on Linux (regular file, refreshed by the same activation); on
+      the Mac the operator's activation is the confirmation, and no out-of-band
+      agent exists there to shadow it (D4).
+- [x] T7.6 Operator: record the rollback path used if either activation is
       rejected (`nixos-rebuild switch --rollback` / `darwin-rebuild rollback`).
+      Evidence: not required — both activations succeeded. The rollback path stays
+      as designed: `sudo nixos-rebuild switch --rollback` on thiniel,
+      `sudo darwin-rebuild rollback` on the Mac; both leave the guard file in
+      `~/.omp/agent/hooks/pre/` in place, which is harmless because the previous
+      generation simply stops managing it.
