@@ -16,7 +16,7 @@ Feature: Current coding agent on a personal device
     And the agent's version is at least 18.10
     And the device declares the secret-access guard for installation in the agent's user directory
 
-  @givn.added @wip @host:J6G6Y9JK7L
+  @givn.added @host:J6G6Y9JK7L
   Scenario: The work MacBook carries the personal laptop's current, guarded coding agent
     Given the work MacBook carries the owner's coding agent
     When the device configuration is applied

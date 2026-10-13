@@ -32,19 +32,23 @@ use case `reproduce-working-environment`):
 
 ---
 
-## T1 — Setup: wire the targets and prove RED [ ]
+## T1 — Setup: wire the targets and prove RED [x]
 
-- [ ] T1.1 Read the use-case rules above into this task list and keep them in
+- [x] T1.1 Read the use-case rules above into this task list and keep them in
       every scenario task.
-- [ ] T1.2 Confirm the runners differ: paste
+      Evidence: quoted verbatim at the top of this file; each scenario task below
+      carries the two rules it realises (floor; guardrails travel with the agent).
+- [x] T1.2 Confirm the runners differ: paste
       `grep -A2 'verify:' givn/commands.yaml`.
-      Evidence:
-- [ ] T1.3 Confirm the traceability gate's current state: run
+      Evidence: `verify.command = ./scripts/givn-verify.sh`, `verify.e2e_command =
+      ./scripts/givn-verify-e2e.sh` — distinct, as the verify-e2e hook requires.
+- [x] T1.3 Confirm the traceability gate's current state: run
       `python3 scripts/givn-spec-trace.py`; expected exit 1 with exactly the
       three findings (`@check:unit-agent-secret-guard` ×2,
       `@check:integration-agent-tooling`). Paste command + output.
-      Evidence:
-- [ ] T1.4 Wire the guard check: add `tests/unit/agent-secret-guard.mjs` (driver
+      Evidence: exit 1, three `[FAIL]` lines naming exactly those bindings, plus
+      two pre-existing `[warn]` lines for unreferenced integration checks.
+- [x] T1.4 Wire the guard check: add `tests/unit/agent-secret-guard.mjs` (driver
       that imports `.omp/hooks/pre/secret-access-guard.js`, registers the
       `tool_call` handler, and asserts the refusal/allow table recorded in
       `design.md`) and expose `checks.unit-agent-secret-guard` in `flake.nix`
@@ -54,49 +58,69 @@ use case `reproduce-working-environment`):
       `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).unit-agent-secret-guard`,
       confirm non-zero, paste; then restore the correct table and confirm exit 0,
       paste.
-      Evidence (mutated, non-zero):
-      Evidence (restored, zero):
-- [ ] T1.5 Register the booted check: add `tests/integration/agent-tooling-test.nix`
+      Evidence (mutated, non-zero): exit 1 — `FAIL bash {"command":"cat .sops.yaml"}
+      -> passed [expected refusal: MUTATION…]` and `15/17 verdicts as expected`.
+      The same run exposed a wrong case of my own: `grep` over
+      `~/.config/sops-nix/…` is *not* refused, because the guard's declared set is
+      `/run/secrets/*`, a `sops/age/` path and `/var/lib/sops-nix/*`. The case was
+      corrected to a denied shape and the gap recorded as finding F10 in
+      `design-review.md` and as arc42 `R-021`.
+      Evidence (restored, zero): exit 0 — `17/17 verdicts as expected`.
+- [x] T1.5 Register the booted check: add `tests/integration/agent-tooling-test.nix`
       (node with home-manager, the test user, and the agent module), wire it in
       `tests/integration/default.nix`, and thread the agent package from
       `flake.nix`'s linux-systems block. Prove RED: run
       `nix build .#checks.x86_64-linux.integration-agent-tooling`; expected
       non-zero (the agent package does not resolve until T2 lands). Paste.
-      Evidence:
-- [ ] T1.6 Note for the reviewer: the arc42 chapter updates, the glossary terms
+      Evidence: exit 1 after a real boot — the guest ran
+      `/nix/store/…-omp-18.8.4/bin/omp --version` (the package the device declared
+      at that moment) and the script stopped on
+      `AssertionError: agent reports 'omp/18.8.4', below the floor 18.10`. So the
+      RED is behavioural, not an evaluation error: the guest binary is
+      PATH-independent by construction (`${ompPackage}/bin/omp`).
+- [x] T1.6 Note for the reviewer: the arc42 chapter updates, the glossary terms
       and `arc42.md` from the design phase are part of this change and are
       committed with T2.
+      Evidence: they are in revision `270ed64` (T2's commit).
 
-## T2 — Scenario: The personal laptop carries a current, guarded coding agent [ ]
+## T2 — Scenario: The personal laptop carries a current, guarded coding agent [x]
 
 Binding: `@host:thiniel`. Target: `tests/assertions/thiniel-invariants.nix`.
 Targeted command:
 `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath`.
 
-- [ ] T2.RED Remove `@wip` from this scenario only (keep the other four `@wip`).
+- [x] T2.RED Remove `@wip` from this scenario only (keep the other four `@wip`).
       Extend `tests/assertions/thiniel-invariants.nix` with the agent-present
       assertion, the floor assertion
       (`lib.versionAtLeast (lib.getVersion <agent>) "18.10"`) and the
       declared-guard assertion (`config.home.activation ? installOmpSopsGuard`).
       Run the targeted command: MUST exit non-zero, failing on the floor
       assertion (`18.8.4`). Paste command + output.
-      Evidence:
-- [ ] T2.GREEN Implement the minimum change: add the `nixpkgs-agent` input
+      Evidence: exit 1 —
+      `Failed assertions: - thiniel: Oh My Pi (omp) must be at version 18.10 or newer`.
+- [x] T2.GREEN Implement the minimum change: add the `nixpkgs-agent` input
       (`github:NixOS/nixpkgs/master`) to `flake.nix`, build the agent package per
       system, pass it as `ompPackage` through `home-manager.extraSpecialArgs` for
       `thiniel`, and change `home/dan/features/development/omp.nix` to take
       `ompPackage` (keeping `pkgs` for coreutils). Update the module instantiation
       in `tests/unit/hm-dev-modules-test.nix`. Reduced files:
+      `flake.nix` (input, `agentPkgsFor`, thiniel's arg, guard check, booted check
+      arg), `flake.lock` (+17 lines, one new input), `home/dan/features/development/omp.nix`,
+      `tests/unit/hm-dev-modules-test.nix`.
       Run the targeted command: MUST exit 0. Paste.
-      Evidence:
-- [ ] T2.REFACTOR Format and clean (`nix fmt .`, deadnix/statix on the changed
+      Evidence: exit 0, and the configured agent resolves to `18.10.0`
+      (`…home.packages --apply … .version`).
+- [x] T2.REFACTOR Format and clean (`nix fmt .`, deadnix/statix on the changed
       files) without behaviour change; run the targeted command again: MUST still
       exit 0. Paste.
-      Evidence:
-- [ ] T2.COMMIT `givn commit -m "feat(current-agent-tooling): <release note>"`
+      Evidence: `nix fmt flake.nix …` then
+      `nix build --no-link .#checks.x86_64-linux.lint-nixfmt .#checks.x86_64-linux.lint-deadnix .#checks.x86_64-linux.lint-statix`
+      → exit 0; targeted eval still exit 0.
+- [x] T2.COMMIT `givn commit -m "feat(current-agent-tooling): <release note>"`
       with the scenario title in the body; includes the arc42/glossary/`arc42.md`
       updates from the design phase. Record the hash.
-      Hash:
+      Hash: `270ed64` (also carries T1's plumbing: the guard check, its driver and
+      the booted check's registration).
 
 ## T3 — Scenario: The work MacBook carries the personal laptop's current, guarded coding agent [ ]
 

@@ -290,5 +290,29 @@
         ];
       message = "J6G6Y9JK7L: the three manually maintained work-laptop ssh configuration files must remain included, got ${builtins.toJSON config.programs.ssh.includes}";
     }
+    # --- development/omp: the agent, its servers and its guard ---
+    {
+      assertion = builtins.any (p: lib.getName p == "omp") config.home.packages;
+      message = "J6G6Y9JK7L: the coding agent (omp) must be installed — import features/development/omp.nix";
+    }
+    {
+      assertion = builtins.any (
+        p: lib.getName p == "omp" && lib.versionAtLeast (lib.getVersion p) "18.10"
+      ) config.home.packages;
+      message = "J6G6Y9JK7L: the coding agent must be at version 18.10 or newer";
+    }
+    {
+      assertion =
+        let
+          mcpFile = config.home.file.".omp/agent/mcp.json" or null;
+          servers = if mcpFile == null then { } else (builtins.fromJSON mcpFile.text).mcpServers or { };
+        in
+        servers ? context7 && servers ? "kagi-search";
+      message = "J6G6Y9JK7L: the coding agent must declare both shared model servers, as thiniel does";
+    }
+    {
+      assertion = config.home.activation ? installOmpSopsGuard;
+      message = "J6G6Y9JK7L: the agent's secret-access guard must be declared for installation";
+    }
   ];
 }

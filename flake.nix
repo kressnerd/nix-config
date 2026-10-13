@@ -367,6 +367,10 @@
                     inherit nixpkgs-unstable;
                     system = "aarch64-darwin";
                   };
+                  # The agent's package, from its own pin, so both devices carry
+                  # the same agent and the same asserted floor. See the change
+                  # `current-omp-release`, design D2.
+                  ompPackage = (agentPkgsFor "aarch64-darwin").omp;
                 };
                 users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
                 sharedModules = [
