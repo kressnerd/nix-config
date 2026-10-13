@@ -150,7 +150,7 @@ user-level MCP servers, and export the server keys from the decrypted secrets.
 
 | Element | Responsibility |
 |---|---|
-| `opencodePackage` argument | The package from the repository's own overlay (`overlays/opencode`), which pins an upstream prebuilt release per platform by version and checksum; defaults to the host's `pkgs.opencode` and is passed explicitly by the booted check, whose package set carries no overlay. |
+| `opencodePackage` argument | The package from the repository's own overlay (`overlays/opencode`), which pins an upstream prebuilt release per platform by version and checksum. Required, because a Home Manager module argument cannot default to another argument: each host passes its own `pkgs.opencode`, and the booted check passes the overlay's package because its package set carries no overlay. |
 | `home.packages` | `opencode`, plus `bun` and `uv` at runtime (npm plugins and the Python MCP server). |
 | `xdg.configFile."opencode/opencode.json"` | The global config: `context7` (remote) and `kagi-search` (local) servers, the `opencode-plugin-litellm` plugin, and the LiteLLM provider entry. |
 | `programs.fish.shellInit` | Exports `CONTEXT7_API_KEY` / `KAGI_API_KEY` from the decrypted sops-nix secrets when present. |

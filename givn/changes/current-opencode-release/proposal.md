@@ -82,7 +82,7 @@ unchanged.
 
 | Proposed capability | Route's recommendation | Decision | Rationale (if deviated from route) |
 |---|---|---|---|
-| Current coding-agent tooling for OpenCode | EXTEND `current-agent-tooling` (score 12.60, confidence: signal) | `EXTEND current-agent-tooling` | The capability's promise is "a device carries the owner's coding agent at or above the accepted version floor". OpenCode is a second coding agent the same devices carry, and the floor discipline is identical, so it extends that promise rather than opening a new one. The guardrails half of the capability stays scoped to the guarded agent (omp) — see Out of Scope. |
+| `current-agent-tooling` | EXTEND `current-agent-tooling` (score 12.60, confidence: signal) | `EXTEND current-agent-tooling` | The capability's promise is "a device carries the owner's coding agent at or above the accepted version floor". OpenCode is a second coding agent the same devices carry, and the floor discipline is identical, so it extends that promise rather than opening a new one. The guardrails half of the capability stays scoped to the guarded agent (omp) — see Out of Scope. |
 
 ## Out of Scope
 

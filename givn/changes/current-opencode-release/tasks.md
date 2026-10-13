@@ -107,9 +107,12 @@ observation and one GREEN, and the commit carries all three scenario titles.
       re-evaluated every host configuration with its assertions (exit 0).
 - [x] T3.2 `@wip` removed from all three delta scenarios.
       Evidence: the delta feature carries only `@givn.added` and binding tags.
-- [x] T3.3 COMMIT: see the revision recorded below (one commit for T1–T3; the
+- [x] T3.3 COMMIT: one revision for T1–T3, shared by all three scenarios (the
       shared cycle above).
-      Evidence: the revision is recorded in the change's review record.
+      Evidence: 26 files, including the change artifacts and the arc42 updates.
+  - [x] COMMIT: `006a49f` — `feat(current-agent-tooling): Both personal devices run a current OpenCode coding agent from a freshly refreshed package, and each device refuses an OpenCode older than 2.0.28.` (one commit for RED+GREEN+REFACTOR; scenario "The personal laptop carries a current OpenCode").
+  - [x] COMMIT: `006a49f` — `feat(current-agent-tooling): <release note>` (same commit; scenario "The work MacBook carries the personal laptop's current OpenCode" — the pin refresh turns this floor green in the same step, so no separate cycle can go RED).
+  - [x] COMMIT: `006a49f` — `feat(current-agent-tooling): <release note>` (same commit; scenario "A booted device starts its OpenCode" — the same refresh supplies the package the guest runs).
 
 ## T4 — Full verification and operator hand-off [ ]
 

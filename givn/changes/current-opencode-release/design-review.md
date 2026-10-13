@@ -50,7 +50,7 @@ No finding was rejected.
 | Branch | Verdict | Evidence |
 |---|---|---|
 | Scope | Passes | The three delta scenarios cover proposal points 1–5 with nothing extra: two host floors and one booted launch. The Mac's launch is a disclosed limit (no deploy layer), not a silent gap. |
-| Tech choices | Fixed | The overlay/package plumbing is sound but was over-applied (F1). The defaulted `opencodePackage ? pkgs.opencode` keeps the hosts' implicit use working while the booted guest — whose package set has no overlay — receives the package explicitly. |
+| Tech choices | Fixed | The overlay/package plumbing is sound but was over-applied (F1). The package argument is **required**, not defaulted — the post-implementation correction recorded in Phase 3 below. Each host passes its own `pkgs.opencode`; the booted guest, whose package set has no overlay, receives the overlay's package. |
 | Missing scenarios | Passes | No observable behaviour in the proposal lacks a scenario; the "refuses an older OpenCode" property is the floor assertion itself, which scenarios 1 and 2 carry. |
 | Testability | Fixed | Both host scenarios fail today for a named reason (`2.0.22` below the `2.0.28` floor). The booted scenario's RED was at risk of being degenerate (F2) and is now a three-component comparison. |
 | Verification-binding completeness | Passes | Exactly one binding tag per scenario; `@e2e` binds to `@check:integration-agent-tooling`; `verify.command` (`./scripts/givn-verify.sh`) differs from `verify.e2e_command` (`./scripts/givn-verify-e2e.sh`). `scripts/givn-spec-trace.py` resolves all three bindings against existing targets. |
@@ -73,3 +73,32 @@ No finding was rejected.
   `../../tests/assertions`; `home/dan/J6G6Y9JK7L.nix` imports its own invariants
   file.
 - The proposal's binding table and the design's Test Targets table now agree.
+
+## Phase 3 — post-implementation correction (design-review re-run)
+
+- **What changed and why.** `design.md` as reviewed specified a defaulted module
+  argument (`opencodePackage ? pkgs.opencode`) with only the booted check
+  overriding it. Implementation disproved it: the Home Manager module system
+  resolves every formal through `_module.args` and fails with "attribute
+  `opencodePackage` missing" when a formal is absent — reproduced for both
+  `? pkgs.opencode` and `? null`. The argument is therefore **required**: each
+  host passes its own `pkgs.opencode` (through its `{ pkgs, ... }` module
+  arguments), and the booted check passes the overlay's package.
+- **Re-run.** A second fresh-context reviewer re-checked the corrected decision
+  against the tree and independently reproduced the premise with
+  `lib.evalModules` against the pinned nixpkgs
+  (`github:NixOS/nixpkgs/8edc0c72e3a38faf5434e40d1f19431125fe4b30`,
+  `lib/modules.nix:738-749`). It confirmed the code wiring is consistent:
+  `home/dan/features/development/opencode.nix` declares the argument required and
+  installs it with no fallback; both hosts that import the module pass it; the
+  module has no other importer; the unit instantiation passes it; the integration
+  check treats it as optional and the flake gates it by supported platform.
+- **Findings from the re-run, both fixed.** (1) This file's Tech-choices row and
+  this addendum: the row still described the defaulted shape — corrected above.
+  (2) `arc42.md`'s chapter-5 row said "package argument with its default" —
+  corrected to "required package argument"; the durable chapter
+  (`docs/arc42/05-building-block-view.md`) was already corrected.
+- **Arc42 reassessment.** The correction is not structural — no chapter's
+  affected/not-affected verdict changes — so the twelve-row assessment stands
+  with the chapter-5 wording fix above.
+- **Design conformance after the re-run:** CLEAN.
