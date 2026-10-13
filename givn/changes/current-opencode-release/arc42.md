@@ -53,3 +53,7 @@ channel carries.*
 | `docs/arc42/10-quality-requirements.md` | QS-014 generalised to both agents |
 | `docs/arc42/11-risks-and-technical-debt.md` | New risk R-022 |
 | `docs/arc42/12-glossary.md` | "Coding agent", "Agent version floor" and "Model server (MCP server)" name both agents |
+
+## Status
+
+STATUS: DONE

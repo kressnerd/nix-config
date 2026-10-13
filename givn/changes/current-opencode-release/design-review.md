@@ -102,3 +102,5 @@ No finding was rejected.
   affected/not-affected verdict changes — so the twelve-row assessment stands
   with the chapter-5 wording fix above.
 - **Design conformance after the re-run:** CLEAN.
+
+DESIGN-REVIEW: PASS
