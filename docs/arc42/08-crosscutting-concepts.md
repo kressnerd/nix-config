@@ -108,9 +108,11 @@ one of two layers:
 | User (Home Manager) | `myHome.persistence` | `dev`, `Projects`, caches, `.config/sops/age`, opencode/omp state, `.bash_history` | working data, agent state |
 
 Feature modules attach their own persistent paths to the user layer conditionally
-(`lib.mkIf config.myHome.persistence.enable`), e.g. `.ssh`, `.mozilla`,
-containers storage, KeePassXC, maestral. The Mac has no impermanence; absence of
-that model there is not a claim of data loss.
+(`lib.mkIf config.myHome.persistence.enable`), e.g. `.ssh`, `.config/mozilla`
+(the browser profile, moved from `.mozilla` by the change
+`quiet-configuration-evaluation`), containers storage, KeePassXC, maestral. The
+Mac has no impermanence; absence of that model there is not a claim of data
+loss.
 
 Rationale: a root wipe is only safe if persistence is explicit and reviewable. A
 path that nobody declares is intentionally lost, and the loss is visible in the

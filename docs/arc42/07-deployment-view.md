@@ -83,7 +83,7 @@ repository.
 | `nixos-vm-minimal` | Minimal aarch64 VM (test and provisioning template target) | `disko` on `/dev/vda`, LUKS root; `scripts/deploy-vm.sh` |
 | `cupix001` | netcup KVM VPS, intended edge gateway | `disko` on `/dev/vda`; values from the `private` flake input |
 | netcup SCP account firewall | External firewall state for the VPS | `scripts/netcup_firewall.py` run from thiniel inside `nix develop` |
-| Colmena hive | Declared fleet-deployment path | **Empty** — no node is registered |
+| Colmena hive | Fleet-deployment registration path | **Withdrawn** — the change `quiet-configuration-evaluation` removed the empty `colmenaHive` output and the `colmena` input so that `nix flake check` reports no output it cannot interpret; the first provisioned server registers both again, and the CLI plus the aliases stay |
 
 ## Infrastructure level 2
 
@@ -110,6 +110,7 @@ repository.
 | Services | greetd/tuigreet → Hyprland, pipewire, NetworkManager, avahi, openssh, fwupd, gnome-keyring, gvfs, btrfs auto-scrub, auto-cpufreq, podman + one OCI container (`qdrant_roo`) |
 | Secrets | `hosts/thiniel/secrets.yaml`; age key file `/var/lib/sops-nix/key.txt`, exposed to the user session via `mkOutOfStoreSymlink` |
 | Desktop | `stylix` One Light, Hyprland (unstable), waybar, mako, fuzzel, kanshi, hyprlock, hypridle, wlsunset |
+| Browser profile | Firefox profile under `~/.config/mozilla/firefox`, persisted as `.config/mozilla`; moved from `~/.mozilla/firefox` by the change `quiet-configuration-evaluation`, whose configuration states the location explicitly because the release changed the default after this profile's state version |
 | Sleep policy | Suspend/hibernate disabled (`systemd.sleep` all `no`, `logind` lid ignored) because the root key of the OPAL SED is lost on sleep |
 | Coding agent | `omp` from the `nixpkgs-agent` pin (floor `18.10` asserted by `thiniel-invariants`); the two shared model servers declared; secret-access guard installed by activation. OpenCode from the repository's own package (`overlays/opencode`, floor `2.0.28` asserted by `thiniel-invariants`), with its own two MCP servers |
 

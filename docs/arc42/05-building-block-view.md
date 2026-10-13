@@ -8,7 +8,7 @@ and test layers (L3).
 
 ```mermaid
 flowchart TB
-  flake["flake.nix<br/>nixosConfigurations x4<br/>darwinConfigurations x1<br/>inputs.private (path stub)<br/>checks, formatter, devShells,<br/>overlays, templates, colmenaHive"]
+  flake["flake.nix<br/>nixosConfigurations x4<br/>darwinConfigurations x1<br/>inputs.private (path stub)<br/>checks, formatter, devShells,<br/>overlays, templates,<br/>flake-output-contract"]
   stub["private-stub/<br/>public fallback modules<br/>for the private input"]
   lib["lib/helpers.nix<br/>mkPkgsUnstable<br/>mkFirefoxExtensions"]
   common["hosts/common<br/>global base, shared user,<br/>optional NixOS modules"]
@@ -38,7 +38,7 @@ flowchart TB
 
 | Building block | Responsibility |
 |---|---|
-| Flake (`flake.nix`, `flake.lock`) | Declare inputs, all host configurations, dev shells, packages, formatter, checks, overlays, the host template, and the (empty) Colmena hive. The only entry point. |
+| Flake (`flake.nix`, `flake.lock`) | Declare inputs, all host configurations, dev shells, packages, formatter, checks, overlays, the host template, and the flake-output contract check. The only entry point. The Colmena hive is not declared until a server is registered ([chapter 4](04-solution-strategy.md)). |
 | Private-input stub (`private-stub/`) | The public fallback for the `private` flake input: one no-op module per host that asserts the host's declared network values are documentation-range placeholders or empty, so a clean clone and CI evaluate without private access. Owner: [ADR-0001](adr/ADR-0001-private-data-strategy.md). |
 | Helpers (`lib/helpers.nix`) | `mkPkgsUnstable` (unstable package set with `allowUnfree`) and `mkFirefoxExtensions` (categorised addon sets for the Firefox profiles). |
 | Shared NixOS base (`hosts/common/`) | `global/` sets timezone, locale, Nix experimental features, trusted users, `allowUnfree`; `users/dan.nix` is the shared non-root user; `optional/` holds opt-in modules (`networkmanager`, `virtualisation`, and an empty `docker.nix`). |

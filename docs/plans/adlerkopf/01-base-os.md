@@ -276,7 +276,11 @@ No `nixos-hardware` named module for M720q. Consider adding
 
 Copy the `cupix001 = nixpkgs.lib.nixosSystem { … }` block (`flake.nix:179-217`), rename to
 `adlerkopf`, and point `./hosts/adlerkopf` at the new directory.
-Also add an entry to `colmenaHive.nodes` (currently empty at `flake.nix:393-422`).
+Also add an entry to `colmenaHive.nodes`. Note: the `colmena` input and the empty
+`colmenaHive` output were withdrawn by the change `quiet-configuration-evaluation`
+(`nix flake check` reports every top-level output it does not recognise), so this
+step re-adds the `colmena` input and the `colmenaHive` output together with the
+first node.
 
 ## Tests (Red → Green)
 

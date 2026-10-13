@@ -19,7 +19,10 @@
 #### Step 13.1.2: Green — Add cupix001 to colmenaHive
 
 - **File**: `flake.nix`
-- **What to implement**: Add cupix001 node to `colmenaHive`:
+- **What to implement**: Re-register the hive first — the change
+  `quiet-configuration-evaluation` withdrew the `colmena` input and the empty
+  `colmenaHive` output (the checker reports every top-level output it does not
+  recognise) — then add the cupix001 node to `colmenaHive`:
   ```nix
   colmenaHive = colmena.lib.makeHive {
     meta = {

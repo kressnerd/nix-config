@@ -59,7 +59,7 @@ The requirements the current source actually satisfies:
 
 | # | Requirement | Evidence |
 |---|---|---|
-| R1 | Every host configuration evaluates and every declared gate passes in one command. | `nix flake check`; `scripts/givn-verify.sh` (**Verified** — wiring is present; see [chapter 10](10-quality-requirements.md)). |
+| R1 | Every host configuration evaluates and every declared gate passes in one command. | `nix flake check`; `scripts/givn-verify.sh` (**Verified** — wiring is present; see [chapter 10](10-quality-requirements.md)). The evaluation prints no diagnostic to triage: no superseded-default, release-mismatch or unrecognised-output warning (QS-015, asserted by `tests/assertions/thiniel-hm-invariants.nix` and the `flake-output-contract` check). |
 | R2 | A host can only use identity material it declares. | `myHome.ssh` option + SSH feature + VM test `integration-ssh-identity-selection` (**Verified** for thiniel and J6G6Y9JK7L; see [chapter 8](08-crosscutting-concepts.md)). |
 | R3 | Secrets are never stored in plaintext and are decrypted only on the target host. | `sops-nix` + `.sops.yaml` recipients (**Declared/Verified** for evaluation; **Unknown** on live hosts). |
 | R4 | State that must survive a root wipe is declared, not assumed. | `modules/{nixos,home-manager}/persistence` options + per-host persistence lists (**Declared/Verified** at evaluation time). |

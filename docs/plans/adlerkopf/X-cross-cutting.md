@@ -71,7 +71,12 @@ Already included in the impermanence list in Phase 1.
 
 ## Colmena registration
 
-Register `adlerkopf` in the `colmenaHive` block (`flake.nix:393-422` currently empty):
+First re-register the hive: the change `quiet-configuration-evaluation` withdrew
+the `colmena` input and the empty `colmenaHive` output because `nix flake check`
+reports every top-level output it does not recognise. Add both back with this
+first node.
+
+Register `adlerkopf` in the `colmenaHive` block:
 
 ```nix
 colmenaHive = colmena.lib.makeHive {

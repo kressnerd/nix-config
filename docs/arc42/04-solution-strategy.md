@@ -86,7 +86,7 @@ evidence. One choice here — operational-data separation — qualifies as an AD
 | Persistence model | `impermanence` + custom persistence modules | Explicit, reviewable persistence; `modules/*/persistence` |
 | Secure Boot / UKI | `lanzaboote` (adlerkopf) | Verified boot chain on the server; `hosts/adlerkopf/secure-boot.nix` |
 | Remote installation | `nixos-anywhere` (input + `scripts/`) | Install a host from a workstation, not from a console |
-| Fleet deployment | Colmena (input + dev shell) | **Declared, currently unused** — `colmenaHive` has zero nodes |
+| Fleet deployment | Colmena CLI (dev-shell package + host aliases) | **Registered with the first server** — the `colmena` input and the empty `colmenaHive` output were withdrawn by the change `quiet-configuration-evaluation`, because `nix flake check` reports every top-level output outside its schema and the hive had no node to deploy; the CLI and the aliases stay, and the deployment plans re-register both |
 | Git identity isolation | Per-identity SSH keys + SSH-host aliases + `includeIf` | A device presents only the identity it declares; `features/cli/{git,ssh}.nix` |
 | Edge DNS filtering | AdGuard Home (adlerkopf) | **Declared** on one host only; `hosts/adlerkopf/services/adguard.nix` |
 | Edge firewall management | netcup SCP external firewall via Python CLI | The VPS firewall is managed account-side, not on the host; `scripts/netcup_firewall.py` |

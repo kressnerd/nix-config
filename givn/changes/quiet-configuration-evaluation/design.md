@@ -1,0 +1,284 @@
+# Design: quiet-configuration-evaluation
+
+## Scope
+
+This change clears the four evaluation-warning causes of the personal laptop's
+home profile, of the two booted-device checks, and of the flake's declared
+outputs. It states two superseded settings explicitly (one of them with a
+one-time relocation of live browser data), rebuilds two booted-device checks
+from the pin their Home Manager follows, and withdraws the zero-node fleet hive.
+It changes no host's network behaviour, no service, and no secret.
+
+Runner commands are unchanged: `verify.command` = `./scripts/givn-verify.sh`
+(non-`@e2e`), `verify.e2e_command` = `./scripts/givn-verify-e2e.sh` (`@e2e`,
+builds every `integration-*` check). Confirmed in `givn/commands.yaml`.
+
+## Use-Case Traceability
+
+Owning contract: `publish-infrastructure-configuration` (permanent). New
+capability: `quiet-configuration-evaluation`.
+
+| Use-case contract element | Technical decision | Bound verification target |
+|---|---|---|
+| Rule: a setting whose release default the configuration superseded is stated explicitly at a value the operator chose | `wayland.windowManager.hyprland.configType = "hyprlang"` in `home/dan/features/linux/hyprland.nix`; `programs.firefox.configPath = "${config.xdg.configHome}/mozilla/firefox"` in `home/dan/features/productivity/browser.nix` | `@host:thiniel` via `tests/assertions/thiniel-hm-invariants.nix` |
+| Rule: a value that relocates a device's data is carried out without discarding it | the browser profile moves `~/.mozilla/firefox` → `~/.config/mozilla/firefox`; the persistent set moves with it | `@host:thiniel` (declared state) + operator confirmation of the live move (task 4) |
+| Rule: an evaluation reports no migration, release-mismatch or unrecognised-output diagnostic | explicit settings; fixtures rebuilt from the pin their Home Manager follows; fleet hive withdrawn | `@host:thiniel`, `@check:integration-ssh-identity-selection`, `@check:integration-agent-tooling`, `@check:flake-output-contract` |
+| Flow step 4: yields a checkout that evaluates and passes its checks without any private value and reports no diagnostic to triage | the same four targets | `./scripts/givn-verify.sh` (runs `nix flake check --no-build` and every `@host:` assertion) |
+| Success guarantee: every host builds and deploys | no host's behaviour changes except the laptop's browser profile location; the Mac and the stable hosts are untouched | `@host:thiniel`, `@host:J6G6Y9JK7L` (unchanged, still evaluated by the runner) |
+| Minimal guarantee: an incomplete context is not reported as ready / data not silently discarded | the relocation copies before it deletes; the declared state is asserted; the live move is an operator step | `@host:thiniel` + operator confirmation |
+
+Personas: `owner--operator` (confirmed 2026-10-11) is the actor who runs the
+evaluations and owns the browsing data. `family--application-user` has no
+surface here — no hosted application, shared resource, or access path changes.
+This repository's interface is host configuration, not a rendered screen, so the
+Persona record is `owner--operator` as review lens, not a scenario actor.
+
+## Decisions
+
+- **Decides D1 (proposal)**: the personal laptop's browser profile lives at
+  `${config.xdg.configHome}/mozilla/firefox` — the release's current default.
+  Realized in `home/dan/features/productivity/browser.nix` (`configPath` plus
+  the persistence entry move); the live data move is an operator step in
+  `tasks.md`. Rejected: pinning `".mozilla/firefox"` (clears the warning, keeps
+  the superseded layout, defers the same data step).
+- **Decides D2 (proposal)**: the compositor configuration format stays the
+  conf format, stated explicitly as `"hyprlang"` — realized in
+  `home/dan/features/linux/hyprland.nix`. Adopting `"lua"` would rewrite the
+  settings tree into the release's Lua call form and the four assertion files
+  that read its current shape, is unverifiable without a live compositor, and
+  stays out of scope as its own change.
+- **Decides D3 (proposal)**: the two booted-device checks build their guest from
+  `nixpkgs-unstable.legacyPackages.<system>` — the pin `home-manager-unstable`
+  follows — instead of the release set. This is proposal-D3 **option 1**
+  (guest's package set from the pin the loaded Home Manager follows); it keeps
+  `useGlobalPkgs = true` and the release check enabled, mirroring the two
+  devices that carry these features (`thiniel`, `J6G6Y9JK7L`, both unstable).
+  Realized in `flake.nix` (linux checks block), `tests/integration/default.nix`,
+  and the two fixtures. Rejected: option 2 (`useGlobalPkgs = false` — changes
+  the fixture's mode away from the devices' mode) and option 3 (disabling the
+  release check — silences the guard instead of fixing the pairing).
+- **Decides D4 (proposal)**: the `colmenaHive` output and the `colmena` flake
+  input are withdrawn; the Colmena CLI package and the fleet aliases stay; the
+  deployment plans gain the re-registration step. Realized in `flake.nix` plus
+  the documentation updates below.
+
+## Technology Decisions
+
+| Decision | Choice | Channel / source | Why |
+|---|---|---|---|
+| Compositor format pin | `wayland.windowManager.hyprland.configType = "hyprlang"` | Home Manager `home-manager-unstable` (input, release `26.11`) | The option's value must be stated by the profile that predates the `26.05` transition. `"hyprlang"` renders the conf file the desktop reads today; `"lua"` rewrites the settings tree (out of scope, D2). |
+| Browser profile location | `programs.firefox.configPath = "${config.xdg.configHome}/mozilla/firefox"` | Home Manager `home-manager-unstable` | The release's own current value (the warning names it). Absolute path is accepted by `home.file` (`isAbsolutePath` branch of the file type) and forces the wrapper's `appDataDir`, so the browser reads and writes the new directory. |
+| Browser persistence entry | `.mozilla` → `.config/mozilla` in the same feature module | imperative (Home Manager `home.persistence`) | The persistent set must cover the new directory or the browsing state is lost on the next root reset. |
+| Booted-device guest package set | `nixpkgs-unstable.legacyPackages.<system>` for the two Home-Manager-based checks | `nixpkgs-unstable` (input, release `26.11`) | Only this pairing satisfies `home.enableNixpkgsReleaseCheck` while keeping the devices' `useGlobalPkgs = true` mode (D3). |
+| Flake-output contract | a `checks.<system>.flake-output-contract` derivation asserting every declared top-level output is one of the repository's recognised outputs | `nixpkgs` (`nixpkgs-26.05`) | `nix flake check` warns on every top-level output outside its schema and offers no suppression (verified against a minimal flake, 2026-10-13); the contract makes the withdrawal enforced rather than incidental. |
+
+No new overlay, package, or nixpkgs channel is introduced. Every version-bearing
+choice is resolved by the flake's existing `flake.lock` pins
+(`nixpkgs` = `nixos-26.05`, `nixpkgs-unstable` = `nixpkgs-unstable`,
+`home-manager-unstable` = `home-manager` master, `home-manager` = `release-26.05`);
+no version number is written from memory.
+
+## Verification Binding
+
+| Scenario title | Binding tag | Bound target (file / check / host) | Targeted run command | Expected RED failure mode |
+|---|---|---|---|---|
+| The personal laptop states its compositor configuration format | `@host:thiniel` | `tests/assertions/thiniel-hm-invariants.nix` (Home-Manager-level, imported by `home/dan/thiniel.nix`), fired by host evaluation | `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` | the new assertion fails: the release reports the compositor format as resolved from its superseded default (`shouldWarn` true for `wayland.windowManager.hyprland.configType`); the format assertion (`"hyprlang"`) and the rendered-filename assertions already hold, so the diagnostic-cause assertion is the RED one |
+| The personal laptop's browser profile lives under its XDG config directory and survives a root reset | `@host:thiniel` | `tests/assertions/thiniel-hm-invariants.nix` (the same module) | `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` | the new assertions fail: no file entry under `${config.xdg.configHome}/mozilla/firefox`, a file entry under `.mozilla`, and the persistent set still lists `.mozilla` |
+| A booted device reproduces its identity surface from a single release | `@e2e @check:integration-ssh-identity-selection` | `tests/integration/ssh-identity-selection-test.nix` (its node assertion), wired by `tests/integration/default.nix` + the flake's linux checks block | `nix build .#checks.x86_64-linux.integration-ssh-identity-selection`, evaluation-level RED: `nix eval .#checks.x86_64-linux.integration-ssh-identity-selection.drvPath` | the fixture's new assertion fails: the test profile's Home Manager release (`26.11`) differs from the guest package set's release (`26.05`) |
+| A booted device starts its coding agents from a single release | `@e2e @check:integration-agent-tooling` | `tests/integration/agent-tooling-test.nix` (its node assertion), same wiring | `nix build .#checks.x86_64-linux.integration-agent-tooling`, evaluation-level RED: `nix eval .#checks.x86_64-linux.integration-agent-tooling.drvPath` | the fixture's new assertion fails for the same release difference |
+| The flake exposes only outputs the checker interprets | `@check:flake-output-contract` | `flake.nix` → `checks.<system>.flake-output-contract` | `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).flake-output-contract` | the new check fails and names `colmenaHive` as an output outside the recognised set (the check exists and fails before the withdrawal — RED is the check itself, not an evaluation error) |
+
+Assertion mechanics (recorded so implementation cannot weaken them):
+
+- `tests/assertions/thiniel-hm-invariants.nix` is a **Home-Manager-level**
+  module (it needs `options` and `config` of the home profile). The two
+  superseded settings are not asserted by re-implementing the release's rule:
+  the module calls `lib.hm.deprecations.mkStateVersionOptionDefault` in deferred
+  mode with the same `since = "26.05"`, option path and legacy/current values
+  the release uses, and asserts `shouldWarn == false` for each path. That
+  predicate is the release's own condition for emitting the warning, so the
+  assertion cannot drift from the diagnostic it stands for.
+- The rendered-artifact assertions read the profile's file entries
+  (`config.home.file`): the conf-format compositor file is present and no Lua
+  file, the browser profile's `profiles.ini` is present under the XDG path and
+  none under `.mozilla`, and the persistent set lists `.config/mozilla` and not
+  `.mozilla`.
+- The two fixtures assert the pairing directly: the test profile's Home Manager
+  release equals the guest package set's release
+  (`config.home-manager.users.test.home.version.release == pkgs.lib.trivial.release`),
+  which is the condition behind the mismatch diagnostic. No warning-text
+  matching.
+
+## Test Targets Added/Changed
+
+| Target file | Kind | Wired in by | Covers scenarios |
+|---|---|---|---|
+| `tests/assertions/thiniel-hm-invariants.nix` | assertion (Home-Manager level) | imported by `home/dan/thiniel.nix` (mirrors `tests/assertions/J6G6Y9JK7L-invariants.nix`); fires on `@host:thiniel` evaluation | the two `@host:thiniel` scenarios |
+| `flake.nix` → `checks.<system>.flake-output-contract` | contract check (`runCommand` over the flake's output names) | the flake's checks block itself (all three systems, like `private-data-defaults`) | the `@check:flake-output-contract` scenario |
+| `tests/integration/ssh-identity-selection-test.nix` | VM (`pkgs.testers.runNixOSTest`) + node assertion | `tests/integration/default.nix`, flake linux checks block | the ssh fixture scenario |
+| `tests/integration/agent-tooling-test.nix` | VM (`pkgs.testers.runNixOSTest`) + node assertion | same wiring | the agent fixture scenario |
+| `tests/integration/default.nix`, flake linux checks block | wiring change (guest package set per check) | — | both `@e2e` scenarios |
+
+No new unit-test file and no `tests/deploy/` layer is introduced; the `@e2e`
+scope remains the VM checks.
+
+## Architecture Impact
+
+Changed files:
+
+- `home/dan/features/linux/hyprland.nix` — states the compositor configuration
+  format explicitly (`configType = "hyprlang"`) with its rationale comment. No
+  settings change.
+- `home/dan/features/productivity/browser.nix` — states the browser profile
+  location explicitly and moves the persistence entry from `.mozilla` to
+  `.config/mozilla`. Used on `thiniel` and `J6G6Y9JK7L`; only `thiniel` has
+  persistence enabled, and only `thiniel` renders the linux profile path.
+- `home/dan/thiniel.nix` — imports the new Home-Manager-level assertion module.
+- `tests/assertions/thiniel-hm-invariants.nix` — new (Home-Manager level).
+- `flake.nix` — withdraws the `colmenaHive` output and the `colmena` input;
+  passes `nixpkgs-unstable.legacyPackages.<system>` to the two Home-Manager-based
+  integration checks; adds `flake-output-contract` to the checks output.
+- `tests/integration/default.nix` + the two fixtures — guest package set and
+  node assertions as above.
+- `docs/arc42/05-building-block-view.md` (flake box), `docs/arc42/04-solution-strategy.md`
+  (fleet row), `docs/arc42/08-crosscutting-concepts.md` (persistence example),
+  `docs/arc42/12-glossary.md` (already updated with `Superseded default` and the
+  `Colmena hive` row), `docs/plans/adlerkopf/01-base-os.md`,
+  `docs/plans/adlerkopf/X-cross-cutting.md`, `docs/plans/cupix001/13-colmena.md`
+  (re-registration step for the hive and its input), `docs/TESTING.md` if it
+  names the checks.
+
+No `modules/` option surface changes, no host definition changes, no new helper.
+
+```mermaid
+graph LR
+  subgraph host["thiniel (home profile)"]
+    H["hyprland.nix<br/>configType = hyprlang"] --> A1["thiniel-hm-invariants.nix"]
+    B["browser.nix<br/>configPath = XDG/mozilla/firefox<br/>persistence .config/mozilla"] --> A1
+  end
+  A1 --> EV["@host:thiniel<br/>nix eval drvPath"]
+  subgraph flake["flake.nix outputs"]
+    F1["checks.flake-output-contract"] --> C1["nix flake check<br/>no unknown output"]
+  end
+  subgraph fixtures["integration checks (guest: nixpkgs-unstable)"]
+    T1["ssh-identity-selection-test"] --> V1["@e2e boot"]
+    T2["agent-tooling-test"] --> V2["@e2e boot"]
+  end
+```
+
+## Secrets & Safety
+
+- **sops targets**: none. No secret is declared, moved, or re-keyed.
+- **`stateVersion` invariants**: `home.stateVersion` (`25.11`) and every
+  `system.stateVersion` stay unchanged; the superseded defaults are resolved by
+  explicit values, which is the only way compatible with the invariant.
+- **`hardware.nix` untouched**: no hardware file is modified.
+- **Invariants preserved**: `private-data-defaults` and `private-data-hygiene`
+  stay green (no operational value is introduced); the fleet hive withdrawal
+  removes an output, not a package — the Colmena CLI stays installed on the
+  devices that declare it (`Deploy tools` feature).
+- The guard (`scripts/private_data_hygiene.py`) is unaffected; no new file
+  material is recorded.
+
+## Deployment & Rollback
+
+This change touches `home.persistence` (the browser persistence entry moves), so
+it is a dangerous area.
+
+- **Apply**: `sudo nixos-rebuild switch --flake .#thiniel` on the laptop (the
+  repository's own deploy path; no colmena involvement). The browser relocation
+  is a separate operator step and must run *before* the browser is used with the
+  new configuration:
+
+  ```sh
+  # on thiniel, as dan, with the browser closed
+  mkdir -p /persist/.config/mozilla
+  cp -a /persist/.mozilla/firefox /persist/.config/mozilla/firefox
+  # after the next activation, open the browser and confirm bookmarks/history/logins,
+  # then: rm -rf /persist/.mozilla
+  ```
+
+  The persistent volume holds the state, so the move is performed there; the
+  copy precedes any deletion, so an interruption leaves the old profile intact.
+- **On-host verification**: the profile directory is present at
+  `~/.config/mozilla/firefox` with `profiles.ini` and the `*.default-release`
+  profile; the browser starts with the previous bookmarks, history and saved
+  logins; `~/.mozilla` no longer exists; `nix eval` of the host drvPath reports
+  no superseded-default diagnostic and no warning.
+- **Rollback**: `sudo nixos-rebuild switch --rollback` (selection of the
+  previous system generation) plus `home-manager` generation selection, and
+  `mv /persist/.config/mozilla/firefox /persist/.mozilla/firefox` before the
+  reboot that remounts the persistence — the configuration's rollback alone is
+  not enough once the data has moved, because the previous generation expects
+  `~/.mozilla/firefox`.
+- **Tested rollback path**: the revert is exercised by the operator in the task
+  list before the old directory is deleted (the copy-first step keeps the
+  pre-change state available).
+
+## Blast Radius
+
+- **`thiniel`** (personal laptop, impermanent root): the browser profile
+  location and its persistence entry. A bad move can present an empty browser
+  profile; recoverable because the copy precedes deletion, and the old directory
+  is removed only after the operator confirms the profile. The compositor
+  configuration format is unchanged, so the desktop session is unaffected.
+- **`J6G6Y9JK7L`** (work MacBook): the browser feature is shared, but the darwin
+  profile path is the platform default and its persistence is disabled — no
+  observable change; asserted unchanged by the still-green
+  `tests/assertions/J6G6Y9JK7L-invariants.nix`.
+- **Booted-device checks**: their guests move to the unstable package set. A
+  broken unstable pin fails those two checks loudly at evaluation (the release
+  check stays on), never silently.
+- **Fleet deployment**: `colmena apply` against this flake reports a missing
+  hive until the first server registers it again; no node exists today, so no
+  deploy path is broken in practice. The CLI and the aliases remain.
+- No networking, firewall, boot-loader, secret, or service surface changes, so
+  no remote-lockout risk.
+
+## arc42 chapter impact
+
+- `docs/arc42/04-solution-strategy.md` — the fleet-deployment row (Colmena
+  input/output withdrawn, CLI kept).
+- `docs/arc42/05-building-block-view.md` — the flake box's output list
+  (`colmenaHive` removed).
+- `docs/arc42/08-crosscutting-concepts.md` — the persistence example that names
+  `.mozilla`.
+- `docs/arc42/12-glossary.md` — `Superseded default` (new) and `Colmena hive`
+  (withdrawal recorded); both were updated during the proposal step.
+- `docs/plans/adlerkopf/01-base-os.md`, `docs/plans/adlerkopf/X-cross-cutting.md`,
+  `docs/plans/cupix001/13-colmena.md` — the first-server step registers the hive
+  output and the `colmena` input again.
+- `docs/impermanence-migration-plan.md` is a completed migration record and is
+  left unchanged; `docs/arc42/` carries the current declaration.
+
+## Local runnability
+
+- Affected host evaluation: `nix eval --raw
+  .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath` (fires the
+  new assertions), plus `nix flake check --no-build`.
+- Contract check: `nix build .#checks.$(nix eval --impure --raw --expr
+  builtins.currentSystem).flake-output-contract`.
+- VM checks: `nix build .#checks.x86_64-linux.integration-ssh-identity-selection
+  .#checks.x86_64-linux.integration-agent-tooling` (needs KVM; the repository's
+  `@e2e` runner builds all `integration-*` checks), and
+  `nixos-vm-minimal` remains the reference configuration that boots locally.
+- Anticipated obstacles and their fixes:
+  - *Larger guest closure for the two fixture checks* (unstable system closure):
+    the laptop's own store already carries the unstable system, so the build is
+    mostly local; no fix needed beyond the pin.
+  - *The live browser move cannot be exercised from the evaluation*: the
+    scenario asserts the declared state; the data move is an operator step whose
+    confirmation is recorded in `tasks.md` (the pattern the previous changes
+    used for on-host operator actions).
+  - *No compositor session in the verification environment*: the format
+    assertion is evaluation-level (declared format + rendered file), so no
+    session is needed; a session check belongs to the separate Lua-format change
+    (D2).
+
+## Open Technical Questions
+
+None blocking. Two recorded judgement calls rather than open questions: the
+Home-Manager-level assertion file (rather than a NixOS-level one) because the
+explicitness predicate needs the home profile's `options`; and the contract
+check's recognised-output list being the repository's own declared outputs
+(each verified warning-free today) rather than Nix's internal schema list.
