@@ -35,3 +35,20 @@ Feature: Current coding agent on a personal device
     When  the device boots and its configuration is applied
     Then  the coding agent starts and reports a version of at least 18.10
     And  the secret-access guard is present as a regular file in the agent's user directory
+  @host:thiniel
+  Scenario: The personal laptop carries a current OpenCode
+    Given  the personal laptop thiniel carries the OpenCode coding agent
+    When  the device configuration is applied
+    Then  the OpenCode version is at least 2.0.28
+
+  @host:J6G6Y9JK7L
+  Scenario: The work MacBook carries the personal laptop's current OpenCode
+    Given  the work MacBook carries the OpenCode coding agent
+    When  the device configuration is applied
+    Then  the OpenCode version is at least 2.0.28
+
+  @e2e @check:integration-agent-tooling
+  Scenario: A booted device starts its OpenCode
+    Given  a device that carries the OpenCode coding agent
+    When  the device boots and its configuration is applied
+    Then  OpenCode starts and reports a version of at least 2.0.28
