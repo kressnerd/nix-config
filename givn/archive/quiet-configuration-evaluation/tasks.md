@@ -320,6 +320,18 @@ and started `home-dan-.config-mozilla.mount`, then failed stopping the old mount
 because Firefox was running; both mounts were active at that point and the
 browsing data was untouched at `/persist/home/dan/.mozilla/firefox`.
 
+Second observation (2026-10-13, same device): the profile tree was copied into
+the new location while `profiles.ini` was absent from the old tree (the
+activation had already retired that managed file), and Firefox was started before
+the next activation re-rendered it — Firefox then wrote its own `profiles.ini`
+declaring a fresh `*.default` profile, so the browser opened an empty profile
+even though the real profile directories were present. The managed
+`profiles.ini` is declaratively rendered (Profile0 `user`, default; Profile1
+`no-tracking`), so the fix is: quit the browser, re-run the activation
+(`sudo nixos-rebuild switch --flake .#thiniel`), confirm the rendered file
+declares the real profiles, and only then start the browser. Do not hand-edit
+`profiles.ini`: the next activation replaces it.
+
 ---
 
 ## Final verification
