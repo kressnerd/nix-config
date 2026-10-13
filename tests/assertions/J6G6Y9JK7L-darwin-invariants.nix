@@ -2,12 +2,21 @@
 # Darwin-level (nix-darwin system) invariants for J6G6Y9JK7L.
 # The HM-level file tests/assertions/J6G6Y9JK7L-invariants.nix cannot see
 # nix-darwin system options such as `homebrew.*`, hence this second module.
-{ config, ... }:
+{ config, lib, ... }:
 {
   assertions = [
     {
       assertion = config.homebrew.onActivation.cleanup == "zap";
       message = "J6G6Y9JK7L: homebrew.onActivation.cleanup must be \"zap\", got ${config.homebrew.onActivation.cleanup}";
+    }
+    {
+      # A program on the device may rewrite a file the home profile renders.
+      # Without a displacement command Home Manager refuses the foreign file and
+      # aborts the activation; see the change `managed-file-displacement`.
+      assertion =
+        config.home-manager.backupCommand != null
+        && lib.hasInfix "hm-displace-managed-file" (toString config.home-manager.backupCommand);
+      message = "J6G6Y9JK7L: home-manager.backupCommand must be the repository's displacement command, so a rewritten managed file is renamed aside instead of aborting the activation";
     }
     {
       assertion = config.homebrew.onActivation.extraFlags == [ ];

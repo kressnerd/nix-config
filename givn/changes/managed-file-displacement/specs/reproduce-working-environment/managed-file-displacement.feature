@@ -17,7 +17,7 @@ Feature: A rewritten managed file is displaced, not fatal
     When  the device's configuration is evaluated
     Then  the device is configured to move a rewritten managed file aside under the displacement suffix instead of aborting the activation
 
-  @givn.added @wip @host:J6G6Y9JK7L
+  @givn.added @host:J6G6Y9JK7L
   Scenario: The work MacBook displaces a rewritten managed file
     Given the work MacBook's home profile manages configuration files
     When  the device's configuration is evaluated

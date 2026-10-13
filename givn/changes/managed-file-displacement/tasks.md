@@ -66,21 +66,31 @@ new capability and rule). Capability: `managed-file-displacement`.
       before the run above.
 - [x] REFACTOR: `nix fmt` on both files; the targeted run above is post-format
       (exit 0).
-- [x] COMMIT: `PENDING_HASH_1` — release note as subject, scenario title in the body.
+- [x] COMMIT: `ed4a60c` — release note as subject, scenario title in the body.
 
 ---
 
 ## Task 2 — Scenario: `The work MacBook displaces a rewritten managed file` (`@host:J6G6Y9JK7L`)
 
-- [ ] RED: remove `@wip`. Add the same assertion to
+- [x] RED: removed `@wip`. Added the same assertion to
       `tests/assertions/J6G6Y9JK7L-darwin-invariants.nix` (the HM-level file
       cannot see darwin system options). Targeted run:
-      `nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath`
-      → MUST exit non-zero. Paste.
-- [ ] GREEN: set `home-manager.backupCommand` to the same helper in
-      `hosts/J6G6Y9JK7L/default.nix`. Re-run → exit 0. Paste.
-- [ ] REFACTOR: `nix fmt`; re-run → exit 0.
-- [ ] COMMIT: record the hash.
+      ```
+      $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath
+      error:
+      Failed assertions:
+      - J6G6Y9JK7L: home-manager.backupCommand must be the repository's displacement command, so a rewritten managed file is renamed aside instead of aborting the activation
+      exit 1
+      ```
+- [x] GREEN: set `home-manager.backupCommand` to the same helper in
+      `hosts/J6G6Y9JK7L/default.nix`. Re-run:
+      ```
+      $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath
+      /nix/store/spkdk1kbyc6n04aihpb30mvdf5adagq5-darwin-system-26.11.4cff07d.drv
+      exit 0
+      ```
+- [x] REFACTOR: `nix fmt` on both files; the run above is post-format (exit 0).
+- [x] COMMIT: `PENDING_HASH_2` — release note as subject, scenario title in the body.
 
 ---
 

@@ -6,6 +6,14 @@
   ...
 }:
 {
+  # A program on the device can rewrite a file the home profile renders; without
+  # this, Home Manager refuses the foreign file and aborts the whole activation
+  # (`Existing file '…' would be clobbered`). The command renames the rewritten
+  # file beside the rendered one, on every rewrite. See the change
+  # `managed-file-displacement`. The NixOS hosts set the same value through
+  # `hosts/common/global`.
+  home-manager.backupCommand = (import ../../lib/helpers.nix).mkManagedFileDisplacement pkgs;
+
   imports = [ ../../tests/assertions/J6G6Y9JK7L-darwin-invariants.nix ];
 
   # Disable nix-darwin's Nix management (required for Determinate Nix)
