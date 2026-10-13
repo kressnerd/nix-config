@@ -22,5 +22,15 @@
       assertion = config.homebrew.onActivation.extraFlags == [ ];
       message = "J6G6Y9JK7L: homebrew.onActivation.extraFlags must be empty — nix-darwin 26.05 emits --zap --force-cleanup for cleanup = \"zap\" itself";
     }
+    # Scenario: The work MacBook declares the credential it presents to the GitHub host
+    {
+      # nix-darwin does not manage /etc/nix/nix.conf on this machine, so root's
+      # client owns its own user configuration; it must name the same rendered
+      # fragment the owner's configuration includes (root reads it by privilege).
+      assertion =
+        config.system.activationScripts ? "nixGithubAccessTokens"
+        && lib.hasInfix "!include ${config.home-manager.users."daniel.kressner".sops.templates."nix-github-access-tokens".path}" config.system.activationScripts.nixGithubAccessTokens.text;
+      message = "J6G6Y9JK7L: an activation script must write root's nix user configuration with the credential include";
+    }
   ];
 }

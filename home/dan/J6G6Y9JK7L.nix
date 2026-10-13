@@ -57,8 +57,23 @@
       "git/client002/folder" = { };
       "context7/api-key" = { };
       "kagi/api-key" = { };
+      "github/access-token" = { };
+    };
+
+    # The rendered fragment is what this machine's nix clients read the
+    # credential from; the include keeps the value out of every file the
+    # configuration generates, so the owner and root read it by privilege.
+    templates."nix-github-access-tokens" = {
+      content = "access-tokens = github.com=${config.sops.placeholder."github/access-token"}\n";
+      mode = "0400";
     };
   };
+
+  # nix reads the owner's user configuration in every client; root's own
+  # user configuration is written by the host module's activation script.
+  xdg.configFile."nix/nix.conf".text = "!include ${
+    config.sops.templates."nix-github-access-tokens".path
+  }\n";
 
   # Identity material this device holds: its per-purpose personal key and the
   # manually maintained work-laptop ssh_config files it keeps.

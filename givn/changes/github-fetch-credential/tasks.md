@@ -118,7 +118,7 @@ Also confirmed: `nix.extraOptions` exists in this pin —
 
 - [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
       with the scenario title in the body. Record the hash:
-  - hash: `PENDING_HASH_1`
+  - hash: `7e4e302`
 
 Evidence: RED: `attribute 'githubFetchCredential' missing` (exit 1). GREEN:
 `/nix/store/ybv6pd5bp4aw0i8pcyplwjhyky9d0hzr-nixos-system-thiniel-26.11.20261008.8edc0c7.drv`
@@ -136,26 +136,52 @@ Evidence: RED: `attribute 'githubFetchCredential' missing` (exit 1). GREEN:
 (darwin level: the activation script that writes root's user configuration
 exists).
 
-- [ ] **RED** — add both assertions (the declarations do not exist, so the
-      assertions fail by name). Run the targeted command; paste the non-zero
-      output.
+- [x] **RED** — added both assertions (the declarations did not exist, so they
+      failed by name): the home-manager-level file asserts the declared secret,
+      the template's `mode`/`path`, and the owner's `nix/nix.conf` include; the
+      darwin-level file asserts an activation script (`nixGithubAccessTokens`)
+      writes root's user configuration with the same include. Removed `@wip`.
+      Run:
   - command: `nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath`
-  - output: _(paste; must exit non-zero for the expected reason)_
+  - output:
+    ```
+    $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath
+    error: attribute '"nix/nix.conf"' missing
+          at /home/dan/dev/PRIVATE/nix-config/tests/assertions/J6G6Y9JK7L-invariants.nix:339:131:
+             339|       assertion = lib.hasInfix "!include ${config.home.homeDirectory}/.config/sops-nix/secrets/rendered/nix-github-access-tokens" config.xdg.configFile."nix/nix.conf".text;
+                |                                                                                                                                   ^
+    exit 1
+    ```
 
-- [ ] **GREEN** — implement in `home/dan/J6G6Y9JK7L.nix`: the
+- [x] **GREEN** — implemented in `home/dan/J6G6Y9JK7L.nix`: the
       `sops.secrets."github/access-token"` declaration, the
       `sops.templates."nix-github-access-tokens"` (mode `0400`), and the owner's
       `xdg.configFile."nix/nix.conf"` include; in
-      `hosts/J6G6Y9JK7L/default.nix`: the activation script writing
-      `/var/root/.config/nix/nix.conf` with the same include (no secret material).
-      Re-run the targeted command; paste exit 0.
+      `hosts/J6G6Y9JK7L/default.nix`: `system.activationScripts.nixGithubAccessTokens`
+      writing `/var/root/.config/nix/nix.conf` with the same include (no secret
+      material). Files modified: `home/dan/J6G6Y9JK7L.nix`,
+      `hosts/J6G6Y9JK7L/default.nix`. Re-run:
+    ```
+    $ nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath
+    /nix/store/363r2acpblx7x4dc04j71qvpyr2gqxid-darwin-system-26.11.4cff07d.drv
+    exit 0
 
-- [ ] **REFACTOR** — re-run the targeted command; paste exit 0.
+    $ nix eval --impure --raw --expr '…sops.templates."nix-github-access-tokens".path'
+    /Users/daniel.kressner/.config/sops-nix/secrets/rendered/nix-github-access-tokens
+    ```
 
-- [ ] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`.
-  - hash: _(paste)_
+- [x] **REFACTOR** — `nix fmt` on the four touched files; re-run the targeted
+      command → the drvPath above, `exit 0` (post-format).
 
-Evidence: _(paste commands and outputs for RED/GREEN/REFACTOR)_
+- [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
+      with the scenario title in the body.
+  - hash: `PENDING_HASH_2`
+
+Evidence: RED: `attribute '"nix/nix.conf"' missing` (exit 1). GREEN/REFACTOR:
+`/nix/store/363r2acpblx7x4dc04j71qvpyr2gqxid-darwin-system-26.11.4cff07d.drv`
+(exit 0). Files: `home/dan/J6G6Y9JK7L.nix`, `hosts/J6G6Y9JK7L/default.nix`,
+`tests/assertions/J6G6Y9JK7L-invariants.nix`,
+`tests/assertions/J6G6Y9JK7L-darwin-invariants.nix`.
 
 ---
 

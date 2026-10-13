@@ -321,5 +321,27 @@
       assertion = config.programs.firefox.configPath == "Library/Application Support/Firefox";
       message = "J6G6Y9JK7L: the browser profile must stay at the macOS default path, got ${config.programs.firefox.configPath}";
     }
+    # --- github-fetch-credential ---
+    # Scenario: The work MacBook declares the credential it presents to the GitHub host
+    {
+      assertion = config.sops.secrets ? "github/access-token";
+      message = "J6G6Y9JK7L: the GitHub fetch credential must be declared as secret material (github/access-token)";
+    }
+    {
+      assertion =
+        config.sops.templates ? "nix-github-access-tokens"
+        && config.sops.templates."nix-github-access-tokens".mode == "0400"
+        &&
+          config.sops.templates."nix-github-access-tokens".path
+          == "${config.home.homeDirectory}/.config/sops-nix/secrets/rendered/nix-github-access-tokens";
+      message = "J6G6Y9JK7L: the rendered credential fragment must be mode 0400 at the owner's runtime secret path";
+    }
+    {
+      assertion =
+        lib.hasInfix
+          "!include ${config.home.homeDirectory}/.config/sops-nix/secrets/rendered/nix-github-access-tokens"
+          config.xdg.configFile."nix/nix.conf".text;
+      message = "J6G6Y9JK7L: the owner's nix configuration must include the rendered credential fragment";
+    }
   ];
 }

@@ -71,6 +71,17 @@
           echo "✓ Shell already set to fish"
         fi
       '';
+
+      # `sudo darwin-rebuild switch` fetches the private input with root's
+      # client; nix-darwin does not manage /etc/nix/nix.conf here, so root's
+      # user configuration names the same rendered fragment the owner's
+      # configuration includes. No secret material is written here.
+      nixGithubAccessTokens.text = ''
+        mkdir -p /var/root/.config/nix
+        printf '%s\n' '!include ${
+          config.home-manager.users."daniel.kressner".sops.templates."nix-github-access-tokens".path
+        }' > /var/root/.config/nix/nix.conf
+      '';
     };
   };
 

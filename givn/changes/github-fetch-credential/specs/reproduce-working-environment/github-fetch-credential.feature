@@ -10,7 +10,7 @@ Feature: GitHub fetch credential
     And    the declared credential file is readable by the device owner's account and by no other local account
     And    the device's nix configuration reads the credential from that file
 
-  @givn.added @wip @host:J6G6Y9JK7L
+  @givn.added @host:J6G6Y9JK7L
   Scenario: The work MacBook declares the credential it presents to the GitHub host
     Given  the work MacBook develops and builds this configuration from its own checkout
     When   the device's configuration is evaluated
