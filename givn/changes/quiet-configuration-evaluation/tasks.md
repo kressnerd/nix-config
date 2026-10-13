@@ -191,7 +191,7 @@ operator warning + rollback are in Task 6.
 - [x] REFACTOR: `nix fmt flake.nix`; the flake still evaluates for every host
       (`nix flake check --no-build` evaluates all outputs and checks) with the
       lock-diff limited to pruning the removed input's nodes.
-- [x] COMMIT: `bb29d64` — release note as subject, scenario title in the body.
+- [x] COMMIT: `f4e5b16` — release note as subject, scenario title in the body.
 
 ---
 
