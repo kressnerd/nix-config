@@ -104,6 +104,16 @@
         assertion = builtins.elem 53 config.networking.firewall.allowedUDPPorts;
         message = "adlerkopf: port 53/udp must be open for DNS";
       }
+      # --- github-fetch-credential ---
+      # Scenario: A host that does not build this configuration declares no credential
+      {
+        assertion = config.mySystem.githubFetchCredential.enable == false;
+        message = "adlerkopf: no GitHub fetch credential may be declared — the home server is not a development or build machine";
+      }
+      {
+        assertion = !(lib.hasInfix "nix-github-access-tokens" config.nix.extraOptions);
+        message = "adlerkopf: the nix configuration must not include a GitHub fetch credential fragment";
+      }
     ];
   };
 }

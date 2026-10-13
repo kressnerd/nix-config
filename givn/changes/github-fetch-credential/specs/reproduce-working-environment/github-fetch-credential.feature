@@ -18,7 +18,7 @@ Feature: GitHub fetch credential
     And    the declared credential file is readable by the device owner's account and by no other local account
     And    the device's nix configuration reads the credential from that file
 
-  @givn.added @wip @host:adlerkopf
+  @givn.added @host:adlerkopf
   Scenario: A host that does not build this configuration declares no credential
     Given  the home server adlerkopf is not a development or build machine
     When   the device's configuration is evaluated

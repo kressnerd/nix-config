@@ -175,7 +175,7 @@ exists).
 
 - [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
       with the scenario title in the body.
-  - hash: `PENDING_HASH_2`
+  - hash: `9922830`
 
 Evidence: RED: `attribute '"nix/nix.conf"' missing` (exit 1). GREEN/REFACTOR:
 `/nix/store/363r2acpblx7x4dc04j71qvpyr2gqxid-darwin-system-26.11.4cff07d.drv`
@@ -189,25 +189,42 @@ Evidence: RED: `attribute '"nix/nix.conf"' missing` (exit 1). GREEN/REFACTOR:
 
 `@host:adlerkopf` — bound target: `tests/assertions/adlerkopf-invariants.nix`.
 
-- [ ] **RED** — add the assertion (`config.mySystem.githubFetchCredential.enable == false`
-      and no `!include` of the rendered path in `nix.extraOptions`). Run the
-      targeted command; paste the non-zero output (expected: the option does not
-      exist yet, because Task 1's module import is what introduces it — the
-      assertion is wired before that lands).
+- [x] **RED** — added the assertion (`config.mySystem.githubFetchCredential.enable == false`
+      and no `!include` of the rendered path in `nix.extraOptions`) and removed
+      `@wip`. The RED run was captured **before** the module import landed (it is
+      the same run recorded in Task 0), because the option is what the assertion
+      reads:
   - command: `nix eval --raw .#nixosConfigurations.adlerkopf.config.system.build.toplevel.drvPath`
-  - output: _(paste; must exit non-zero for the expected reason)_
+  - output:
+    ```
+    $ nix eval --raw .#nixosConfigurations.adlerkopf.config.system.build.toplevel.drvPath
+    error: attribute 'mySystem' missing
+          at /home/dan/dev/PRIVATE/nix-config/tests/assertions/adlerkopf-invariants.nix:110:21:
+             110|         assertion = config.mySystem.githubFetchCredential.enable == false;
+                |                     ^
+    exit 1
+    ```
 
-- [ ] **GREEN** — the implementation from Scenario 1 must be present (option
-      module imported through `hosts/common/global/default.nix`, default
-      `false`); no adlerkopf change is needed. Re-run the targeted command;
-      paste exit 0.
+- [x] **GREEN** — the implementation from Scenario 1 is present (option module
+      imported through `hosts/common/global/default.nix`, default `false`); no
+      adlerkopf change is needed. Re-run:
+    ```
+    $ nix eval --raw .#nixosConfigurations.adlerkopf.config.system.build.toplevel.drvPath
+    /nix/store/x7ipy8zza4p1i3h5xyjwaflynd8x15b6-nixos-system-adlerkopf-26.05.20261010.6fcc160.drv
+    exit 0
+    ```
 
-- [ ] **REFACTOR** — re-run the targeted command; paste exit 0.
+- [x] **REFACTOR** — `nix fmt` on `tests/assertions/adlerkopf-invariants.nix`;
+      re-run the targeted command → the drvPath above, `exit 0` (post-format).
 
-- [ ] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`.
-  - hash: _(paste)_
+- [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
+      with the scenario title in the body.
+  - hash: `PENDING_HASH_3`
 
-Evidence: _(paste commands and outputs for RED/GREEN/REFACTOR)_
+Evidence: RED: `attribute 'mySystem' missing` (exit 1, captured before the
+option module was imported). GREEN/REFACTOR:
+`/nix/store/x7ipy8zza4p1i3h5xyjwaflynd8x15b6-nixos-system-adlerkopf-26.05.20261010.6fcc160.drv`
+(exit 0). File: `tests/assertions/adlerkopf-invariants.nix`.
 
 ---
 
