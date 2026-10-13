@@ -1,0 +1,207 @@
+# Tasks — current-omp-release
+
+Release note (carried as every commit's message subject):
+**Both personal devices run a current Oh My Pi (omp) coding agent from a freshly
+pinned package set, with the same servers and decryption prohibition, and each
+device refuses an agent older than 18.10.**
+
+Native targets this change adds or extends:
+
+| Target | Kind | Wiring |
+|---|---|---|
+| `checks.unit-agent-secret-guard` | `runCommand` check, all systems | `flake.nix` `checks` (all-systems block) + `tests/unit/agent-secret-guard.mjs` |
+| `checks.integration-agent-tooling` | `runNixOSTest`, Linux | `tests/integration/agent-tooling-test.nix` + `tests/integration/default.nix` + the flake's linux-systems block |
+| `tests/assertions/thiniel-invariants.nix` | assertions | imported by `home/dan/thiniel.nix`, fired by `@host:thiniel` |
+| `tests/assertions/J6G6Y9JK7L-invariants.nix` | assertions | imported by `home/dan/J6G6Y9JK7L.nix`, fired by `@host:J6G6Y9JK7L` |
+
+Use-case constraints that apply to every scenario below (from
+`givn/changes/current-omp-release/specs/reproduce-working-environment/usecase.md`,
+use case `reproduce-working-environment`):
+
+- "The device's coding agent is at or above the accepted version floor, and
+  currency is a floor rather than a schedule: refreshing the agent's source is
+  the owner's deliberate action, not an automatic promise."
+- "A device that carries the coding agent also carries its guardrails: the same
+  secret-access guard is installed, so the same refusals hold wherever the agent
+  runs. A device that carries the agent without the guard is not the accepted
+  context."
+- "Check actual usable work context; a successful evaluation, launcher,
+  directory creation or green transfer job is not alone work readiness." — for
+  this change the agent's *launch on a booted system* is the real-interface
+  evidence, not the declaration alone.
+
+---
+
+## T1 — Setup: wire the targets and prove RED [ ]
+
+- [ ] T1.1 Read the use-case rules above into this task list and keep them in
+      every scenario task.
+- [ ] T1.2 Confirm the runners differ: paste
+      `grep -A2 'verify:' givn/commands.yaml`.
+      Evidence:
+- [ ] T1.3 Confirm the traceability gate's current state: run
+      `python3 scripts/givn-spec-trace.py`; expected exit 1 with exactly the
+      three findings (`@check:unit-agent-secret-guard` ×2,
+      `@check:integration-agent-tooling`). Paste command + output.
+      Evidence:
+- [ ] T1.4 Wire the guard check: add `tests/unit/agent-secret-guard.mjs` (driver
+      that imports `.omp/hooks/pre/secret-access-guard.js`, registers the
+      `tool_call` handler, and asserts the refusal/allow table recorded in
+      `design.md`) and expose `checks.unit-agent-secret-guard` in `flake.nix`
+      (all-systems block, `nativeBuildInputs` = the agent package set's `bun`).
+      **Proof-of-RED by mutation**: invert one expected verdict (expect
+      `cat .sops.yaml` to be refused), run
+      `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).unit-agent-secret-guard`,
+      confirm non-zero, paste; then restore the correct table and confirm exit 0,
+      paste.
+      Evidence (mutated, non-zero):
+      Evidence (restored, zero):
+- [ ] T1.5 Register the booted check: add `tests/integration/agent-tooling-test.nix`
+      (node with home-manager, the test user, and the agent module), wire it in
+      `tests/integration/default.nix`, and thread the agent package from
+      `flake.nix`'s linux-systems block. Prove RED: run
+      `nix build .#checks.x86_64-linux.integration-agent-tooling`; expected
+      non-zero (the agent package does not resolve until T2 lands). Paste.
+      Evidence:
+- [ ] T1.6 Note for the reviewer: the arc42 chapter updates, the glossary terms
+      and `arc42.md` from the design phase are part of this change and are
+      committed with T2.
+
+## T2 — Scenario: The personal laptop carries a current, guarded coding agent [ ]
+
+Binding: `@host:thiniel`. Target: `tests/assertions/thiniel-invariants.nix`.
+Targeted command:
+`nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath`.
+
+- [ ] T2.RED Remove `@wip` from this scenario only (keep the other four `@wip`).
+      Extend `tests/assertions/thiniel-invariants.nix` with the agent-present
+      assertion, the floor assertion
+      (`lib.versionAtLeast (lib.getVersion <agent>) "18.10"`) and the
+      declared-guard assertion (`config.home.activation ? installOmpSopsGuard`).
+      Run the targeted command: MUST exit non-zero, failing on the floor
+      assertion (`18.8.4`). Paste command + output.
+      Evidence:
+- [ ] T2.GREEN Implement the minimum change: add the `nixpkgs-agent` input
+      (`github:NixOS/nixpkgs/master`) to `flake.nix`, build the agent package per
+      system, pass it as `ompPackage` through `home-manager.extraSpecialArgs` for
+      `thiniel`, and change `home/dan/features/development/omp.nix` to take
+      `ompPackage` (keeping `pkgs` for coreutils). Update the module instantiation
+      in `tests/unit/hm-dev-modules-test.nix`. Reduced files:
+      Run the targeted command: MUST exit 0. Paste.
+      Evidence:
+- [ ] T2.REFACTOR Format and clean (`nix fmt .`, deadnix/statix on the changed
+      files) without behaviour change; run the targeted command again: MUST still
+      exit 0. Paste.
+      Evidence:
+- [ ] T2.COMMIT `givn commit -m "feat(current-agent-tooling): <release note>"`
+      with the scenario title in the body; includes the arc42/glossary/`arc42.md`
+      updates from the design phase. Record the hash.
+      Hash:
+
+## T3 — Scenario: The work MacBook carries the personal laptop's current, guarded coding agent [ ]
+
+Binding: `@host:J6G6Y9JK7L`. Target: `tests/assertions/J6G6Y9JK7L-invariants.nix`.
+Targeted command:
+`nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath`.
+
+- [ ] T3.RED Remove `@wip` from this scenario only. Extend
+      `tests/assertions/J6G6Y9JK7L-invariants.nix` with: the agent is in
+      `home.packages`, the floor assertion, both model servers declared in
+      `~/.omp/agent/mcp.json`, and the declared-guard assertion. Run the targeted
+      command: MUST exit non-zero on "the coding agent must be installed". Paste.
+      Evidence:
+- [ ] T3.GREEN Import `./features/development/omp.nix` into
+      `home/dan/J6G6Y9JK7L.nix` and pass `ompPackage` through that host's
+      `home-manager.extraSpecialArgs`. Files:
+      Run the targeted command: MUST exit 0. Paste.
+      Evidence:
+- [ ] T3.REFACTOR Keep the import list ordered as the other categories are;
+      targeted command still exits 0. Paste.
+      Evidence:
+- [ ] T3.COMMIT `givn commit` with the release note as subject and the scenario
+      title in the body. Record the hash.
+      Hash:
+
+## T4 — Scenario: A decryption attempt is refused on a device that carries the guard [ ]
+
+Binding: `@check:unit-agent-secret-guard`. Target: `tests/unit/agent-secret-guard.mjs`
+via `checks.unit-agent-secret-guard`. Targeted command:
+`nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).unit-agent-secret-guard`.
+
+- [ ] T4.RED Remove `@wip` from this scenario only. This scenario is
+      **characterization** (`design.md`, Verification Binding): the hook is
+      unchanged by this change, so the behaviour RED is the mutation — invert the
+      refusal expectation for one case (`sops -d f` expected to pass), run the
+      targeted command, confirm non-zero, paste.
+      Evidence:
+- [ ] T4.GREEN Restore the correct refusal table; run the targeted command: exit
+      0. Files: `tests/unit/agent-secret-guard.mjs` only. Paste.
+      Evidence:
+- [ ] T4.REFACTOR Tidy the driver (case table extracted, no change in verdicts);
+      targeted command still exits 0. Paste.
+      Evidence:
+- [ ] T4.COMMIT `givn commit`; release note as subject, scenario title in body.
+      Hash:
+
+## T5 — Scenario: Ordinary repository work passes the guard [ ]
+
+Binding: `@check:unit-agent-secret-guard` (same target, allow-cases).
+
+- [ ] T5.RED Remove `@wip` from this scenario only. Mutation RED: expect the
+      allow-case `cat .sops.yaml` to be refused; run the targeted command,
+      confirm non-zero, paste.
+      Evidence:
+- [ ] T5.GREEN Restore the correct allow-cases; targeted command exits 0. Paste.
+      Evidence:
+- [ ] T5.REFACTOR Clean up; still exits 0. Paste.
+      Evidence:
+- [ ] T5.COMMIT `givn commit`; release note as subject, scenario title in body.
+      Hash:
+
+## T6 — Scenario (e2e): A booted device starts its coding agent [ ]
+
+Binding: `@e2e @check:integration-agent-tooling`. Target:
+`tests/integration/agent-tooling-test.nix`. Runner: `./scripts/givn-verify-e2e.sh`.
+
+- [ ] T6.RED Remove `@wip` from this scenario only. Complete the booted check:
+      guest asserts the agent runs by its declared store path
+      (`sudo -u test env HOME=/home/test ${ompPackage}/bin/omp --version`)
+      reporting at least `18.10`, the exit code being zero, that
+      `~/.omp/agent/hooks/pre/secret-access-guard.js` is a regular file and not a
+      symlink, and that no key material exists under the user's
+      `~/.config/sops-nix/secrets/`. Run
+      `nix build .#checks.x86_64-linux.integration-agent-tooling` with the agent
+      package deliberately absent from the node's module arguments: MUST exit
+      non-zero (missing argument / unmet assertion). Paste.
+      Evidence:
+- [ ] T6.GREEN Supply the agent package to the node and make the assertions pass.
+      Run `./scripts/givn-verify-e2e.sh`; the check MUST pass. Paste.
+      Files:
+      Evidence:
+- [ ] T6.REFACTOR Tidy the test module; re-run the check: still passes. Paste.
+      Evidence:
+- [ ] T6.COMMIT `givn commit`; release note as subject, scenario title in body.
+      Hash:
+
+## T7 — Full verification and operator hand-off [ ]
+
+- [ ] T7.1 `python3 scripts/givn-spec-trace.py` exits 0 (every scenario bound to
+      an existing target). Paste.
+      Evidence:
+- [ ] T7.2 `givn lint --change current-omp-release` exits 0 or 2 with no `@wip`
+      left. Paste.
+      Evidence:
+- [ ] T7.3 `./scripts/givn-verify.sh` passes (all hosts evaluate, checks build,
+      Python suite green). Paste the tail.
+      Evidence:
+- [ ] T7.4 Operator: apply on the laptop
+      (`sudo nixos-rebuild switch --flake .#thiniel`) and confirm
+      `omp --version` reports at least `18.10` there.
+- [ ] T7.5 Operator: apply on the Mac
+      (`sudo darwin-rebuild switch --flake .#J6G6Y9JK7L`), confirm
+      `omp --version` reports at least `18.10`, that
+      `~/.omp/agent/hooks/pre/secret-access-guard.js` exists as a regular file,
+      and that `command -v omp` resolves to the configured agent (recording D4's
+      confirmation on the machine the repository cannot observe).
+- [ ] T7.6 Operator: record the rollback path used if either activation is
+      rejected (`nixos-rebuild switch --rollback` / `darwin-rebuild rollback`).

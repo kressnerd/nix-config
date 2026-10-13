@@ -16,6 +16,14 @@
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # The coding agent's own pin. `nixpkgs-unstable` trails the agent's upstream
+    # releases by days (18.8.4 on that branch against 18.10.0 on master, checked
+    # 2026-10-13), and each device that carries the agent asserts a minimum
+    # version, so the agent takes its package from a pin refreshed deliberately.
+    # No other package uses this input; rationale and rejected alternatives are
+    # in the change `current-omp-release`, design D1/D2.
+    nixpkgs-agent.url = "github:NixOS/nixpkgs/master";
+
     home-manager-unstable = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
@@ -129,6 +137,16 @@
     }@inputs:
     let
       inherit (self) outputs;
+
+      # The agent's package set, instantiated from its own pin. It is not part of
+      # the repository's stable/unstable channel split: it exists for exactly one
+      # package, whose version floor is asserted per device (`tests/assertions`).
+      agentPkgsFor =
+        system:
+        import inputs.nixpkgs-agent {
+          inherit system;
+          config.allowUnfree = true;
+        };
     in
     {
       overlays.default = import ./overlays;
@@ -215,6 +233,11 @@
                     inherit nixpkgs-unstable;
                     system = "x86_64-linux";
                   };
+                  # The agent's package comes from its own pin (`nixpkgs-agent`),
+                  # not from the unstable set the rest of the userland follows:
+                  # that branch carries 18.8.4 against the pin's 18.10.0 (checked
+                  # 2026-10-13). See the change `current-omp-release`, design D2.
+                  ompPackage = (agentPkgsFor "x86_64-linux").omp;
                 };
                 users.dan = import ./home/dan/thiniel.nix;
                 sharedModules = [
@@ -523,6 +546,29 @@
                     touch $out
                   '';
 
+              # The agent's secret-access guard must refuse decryption work and
+              # leave ordinary repository work alone. The hook is a plugin the
+              # agent loads at run time; this driver supplies the runtime
+              # stand-in and asserts the verdict for each recorded tool call, so
+              # the contract is checked without a model, a session or a network.
+              unit-agent-secret-guard =
+                let
+                  agentPkgs = agentPkgsFor system;
+                in
+                pkgs.runCommand "unit-agent-secret-guard"
+                  {
+                    nativeBuildInputs = [ agentPkgs.bun ];
+                    driver = ./tests/unit/agent-secret-guard.mjs;
+                    hook = ./.omp/hooks/pre/secret-access-guard.js;
+                  }
+                  ''
+                    # the agent's runtime wants a writable home; the sandbox has
+                    # no real one for the build user
+                    export HOME="$TMPDIR"
+                    bun "$driver" "$hook"
+                    touch $out
+                  '';
+
               lint-deadnix =
                 pkgs.runCommand "lint-deadnix"
                   {
@@ -564,6 +610,14 @@
                 pkgs = nixpkgs.legacyPackages.${system};
                 integrationTests = import ./tests/integration/default.nix {
                   inherit pkgs sops-nix home-manager-unstable;
+                  # Temporary during this implementation: the booted check takes
+                  # the agent from the repository's unstable set until its own
+                  # GREEN step switches it to the agent's pin (tasks T6).
+                  ompPackage =
+                    ((import ./lib/helpers.nix).mkPkgsUnstable {
+                      inherit nixpkgs-unstable;
+                      inherit system;
+                    }).omp;
                 };
               in
               integrationTests

@@ -36,7 +36,7 @@ the ideation topic are never presented as implemented architecture.
   skeleton with no services; the family-application requirements are
   requirements, not capabilities.
 - The repository has no recorded live deployment: host configuration is
-  **declared** and verified by evaluation-time assertions plus four QEMU VM
+  **declared** and verified by evaluation-time assertions plus five QEMU VM
   checks. Live behaviour of a deployed host is **Unknown** here.
 
 ## ADR storage

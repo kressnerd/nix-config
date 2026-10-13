@@ -65,7 +65,9 @@ let
   # ── omp.nix ──────────────────────────────────────────────────────────────────
   ompModule = import ../../home/dan/features/development/omp.nix {
     inherit pkgs lib;
-    pkgs-unstable = pkgs;
+    # The module takes the agent's package from its own pin; this test only reads
+    # the rendered MCP declaration, so a stand-in package is enough.
+    ompPackage = pkgs.writeText "omp-stand-in" "";
   };
   ompMcpConfig = builtins.fromJSON ompModule.home.file.".omp/agent/mcp.json".text;
 in

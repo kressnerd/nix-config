@@ -34,10 +34,14 @@ sequenceDiagram
    `checks` output provides `unit-helpers` (a `runCommand` that fails unless all
    `lib.debug.runTests` cases pass), the three lint derivations,
    `private-data-defaults` (the declared host network defaults are placeholders
-   or empty) and `private-data-hygiene` (the guard over the recorded tree plus
-   its built-in reject fixtures).
-3. For Linux systems the four `integration-*` checks are added; they are not
-   built by `nix flake check` in the non-e2e scope.
+   or empty), `private-data-hygiene` (the guard over the recorded tree plus its
+   built-in reject fixtures) and `unit-agent-secret-guard` (the agent's guard
+   hook driven with synthetic tool calls).
+3. For Linux systems the five `integration-*` checks are added
+   (`integration-vm-minimal-ssh`, `integration-adlerkopf`,
+   `integration-ssh-identity-selection`, `integration-private-data-separation`,
+   `integration-agent-tooling`); they are not built by `nix flake check` in the
+   non-e2e scope.
 4. Every host configuration is evaluated, firing the imported assertion modules.
 
 **Notes / verified behaviour:** the wiring is present and is the repository's
@@ -222,6 +226,47 @@ decryption was observed. `.sops.yaml` gives `adlerkopf` and `cupix001` the
 file to the user session through `features/cli/sops-age-key.nix`
 (`mkOutOfStoreSymlink`), which makes describing it as "inaccessible to the user"
 wrong for that host.
+
+## Scenario: A coding-agent tool call meets the secret-access guard
+
+**Trigger:** the coding agent asks to run a tool (`read`, `grep`, `bash`,
+`eval`).
+
+```mermaid
+sequenceDiagram
+  participant A as "coding agent session"
+  participant H as "~/.omp/agent/hooks/pre/secret-access-guard.js"
+  participant T as "requested tool"
+
+  A->>H: tool_call event (toolName + input)
+  alt input names decrypted material or a decryption command
+    H-->>A: block, reason = "sops material is protected by repository policy"
+  else ordinary read or command
+    H-->>A: no verdict
+    A->>T: the call proceeds
+  end
+```
+
+**Steps:**
+
+1. `home/dan/features/development/omp.nix` installs the guard as a regular file
+   in the agent's user directory during activation; the file also exists in the
+   repository as the project hook `.omp/hooks/pre/secret-access-guard.js`.
+2. The agent loads the hook and calls it for every tool call, in every approval
+   mode — a block is unconditional, including under "yolo".
+3. The guard refuses a read of `/run/secrets/*`, a `sops/age/` path or
+   `/var/lib/sops-nix/`, and refuses `sops`, `age -d`/`--decrypt` and
+   `ssh-to-age` in command position, including through a launcher
+   (`bash -c`, `env`, a subprocess array, `Bun.$`).
+
+**Notes / verified behaviour:** the verdict table is proven by the
+`unit-agent-secret-guard` check, which loads the tracked hook and drives it with
+synthetic tool calls (refusals and allow-cases); placement and the agent's real
+start are observed by the `integration-agent-tooling` check in a booted VM. What
+is **not** proven here is a refusal inside a live agent session — a session needs
+a model provider, so no target exercises that path. The guard is the
+machine-enforced half of the rule that agents never decrypt secret material
+([chapter 8](08-crosscutting-concepts.md), QS-004).
 
 ## Scenario: DNS resolution through AdGuard Home (declared, not proven)
 

@@ -6,9 +6,11 @@ the implemented architecture.
 
 | Term | Definition |
 |---|---|
+| Agent version floor | The declared minimum version of the coding agent that a device's configuration asserts at evaluation time (today `18.10` on `thiniel` and `J6G6Y9JK7L`). A floor, not a schedule: taking a newer agent is a deliberate owner action (refreshing the agent's source pin), so the floor fails a regression rather than tracking upstream releases. |
 | Assertion (`config.assertions`) | An evaluation-time check declared by a module (`tests/assertions/*-invariants.nix`). The host configuration fails to evaluate if it does not hold. |
 | Binding tag | The single `@check:<name>`, `@host:<name>`, or `@deploy:<name>` tag a scenario carries to name the native target that proves it (`docs/GIVN-VERIFICATION.md`). |
-| Check (flake `checks`) | A derivation exposed by the flake: `unit-helpers`, `lint-deadnix`, `lint-statix`, `lint-nixfmt`, `private-data-defaults`, `private-data-hygiene` on all systems; `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` on Linux. `private-data-defaults`, `private-data-hygiene` and `integration-private-data-separation` are added by the change `private-data-remediation`. |
+| Check (flake `checks`) | A derivation exposed by the flake: `unit-helpers`, `lint-deadnix`, `lint-statix`, `lint-nixfmt`, `private-data-defaults`, `private-data-hygiene`, `unit-agent-secret-guard` on all systems; `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation`, `integration-agent-tooling` on Linux. `private-data-defaults`, `private-data-hygiene` and `integration-private-data-separation` are added by the change `private-data-remediation`; `unit-agent-secret-guard` and `integration-agent-tooling` by the change `current-omp-release`. |
+| Coding agent | A tool installed on a personal device that performs code and shell work on the device owner's behalf under that device's configuration. Not an application: an application serves the operator's task through its own interface and data, while a coding agent acts with the operator's device permissions — which is why a device constrains it (`Secret-access guard`). On `thiniel` and `J6G6Y9JK7L` the coding agent is Oh My Pi (omp). |
 | Colmena hive | The `colmenaHive` flake output intended for coordinated fleet deployment. Currently declared with **zero** nodes. |
 | Connection entry | The SSH client configuration entry (host block) a device renders for one identity, naming that identity's file. |
 | Declared | Evidence label: the Nix source states it and it is rendered into a configuration. It is not proof of live behaviour. |
@@ -26,6 +28,7 @@ the implemented architecture.
 | Impermanence | The model in which a stateful host's root filesystem is reset on every boot and only explicitly declared paths survive. |
 | Intended | Evidence label: an accepted requirement or confirmed decision that is **not** implemented in the working tree. |
 | `mkPkgsUnstable` | Helper in `lib/helpers.nix` that builds the unstable package set (`pkgs-unstable`) injected into host configurations. |
+| Model server (MCP server) | An external service the coding agent consults over the Model Context Protocol: `context7` (documentation lookup, HTTP) and `kagi-search` (web search, stdio). Declared per device in `~/.omp/agent/mcp.json`; each server's key is read from the device's secret store at connect time through the agent's `!command` indirection, so a missing key drops that entry instead of failing the agent. |
 | `myHome.*` | The reusable Home Manager option namespace declared under `modules/home-manager/*` and filled by a host profile (`myHome.ssh`, `myHome.persistence`). |
 | `mySystem.*` | The reusable NixOS option namespace declared under `modules/nixos/*` and filled by a host module (`mySystem.persistence`). |
 | `@e2e` | Tag marking a scenario that must bind to a real boot (VM) or a host confirmed on hardware, never to a plain unit/lint check. |
@@ -38,6 +41,7 @@ the implemented architecture.
 | Private source | The local private flake (`~/dev/PRIVATE/nix-private`) that supplies a host's real values through the overridable `private` input. |
 | Private workspace | The workspace directory whose Git operations use the device's personal identity, selected by the host's include rule. |
 | RED/GREEN/REFACTOR | The mandatory per-change loop: the bound target must be observed failing before the configuration change and passing after it. |
+| Secret-access guard | The coding agent's pre-execution hook (`.omp/hooks/pre/secret-access-guard.js`) that refuses decryption commands (`sops`, `age -d`/`--decrypt`, `ssh-to-age`) and reads of decrypted material (`/run/secrets/*`, a `sops/age/` path, `/var/lib/sops-nix/`) in every approval mode. Installed on a device as a regular file in the agent's user directory. Distinct from `Guard`, which is the repository's rule over recorded content. |
 | SOPS / age | The secret scheme: SOPS-encrypted YAML files whose recipients are age keys, mapped per host file in `.sops.yaml`. |
 | Stub (private-input stub) | `private-stub/flake.nix`: the public default for the `private` input. It supplies no values and asserts the host network defaults are documentation-range placeholders, so a clean clone evaluates without private access. |
 | stylix | The theming module supplying the system-wide palette (One Light) with per-target opt-in. |

@@ -131,13 +131,26 @@ conditional includes per identity, and one `~/.config/git/<identity>` profile
 per declared identity, each pinning `core.sshCommand` to the device's declared
 identity file with `IdentitiesOnly=yes`.
 
+### `home/dan/features/development/omp.nix`
+
+**Responsibility:** install the coding agent on a device that carries it, declare
+the two shared model servers, and install the secret-access guard.
+
+| Element | Responsibility |
+|---|---|
+| `ompPackage` argument | The agent package from the dedicated `nixpkgs-agent` pin; the module takes the package, not a package set. |
+| `home.file.".omp/agent/mcp.json"` | Declares `context7` (HTTP) and `kagi-search` (stdio); each key is read at connect time through the agent's `!command` indirection, so no key material enters the store. |
+| `home.activation.installOmpSopsGuard` | Installs `.omp/hooks/pre/secret-access-guard.js` as a regular file under `$HOME/.omp/agent/hooks/pre` (the agent's ambient hook discovery skips symlinks). |
+| Imported by | `home/dan/thiniel.nix`, `home/dan/J6G6Y9JK7L.nix`. |
+
 ### `tests/` (present verification layers)
 
 | Building block | Responsibility |
 |---|---|
 | `tests/unit/default.nix` + 12 files | Aggregate `lib.debug.runTests` cases into check `unit-helpers` (all systems). |
+| `tests/unit/agent-secret-guard.mjs` | Driver that loads `.omp/hooks/pre/secret-access-guard.js` and asserts its verdicts; run by check `unit-agent-secret-guard` under bun (all systems). |
 | `tests/assertions/` | 17 `*-invariants.nix` modules adding `config.assertions`, aggregated by `tests/assertions/default.nix`; imported by thiniel, cupix001, adlerkopf and nixos-vm-minimal, while the Darwin host and Mac profile import their own two files. |
-| `tests/integration/default.nix` + 4 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. |
+| `tests/integration/default.nix` + 5 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation`, `integration-agent-tooling` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. |
 
 `tests/deploy/` (pytest-testinfra) is documented in `CLAUDE.md` and
 `docs/GIVN-VERIFICATION.md` but does not exist; the `@deploy:` binding tag

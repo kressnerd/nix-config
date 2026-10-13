@@ -27,6 +27,16 @@
           message = "thiniel: Oh My Pi (omp) must be installed via Home Manager";
         }
         {
+          assertion = builtins.any (
+            p: lib.getName p == "omp" && lib.versionAtLeast (lib.getVersion p) "18.10"
+          ) config.home-manager.users.dan.home.packages;
+          message = "thiniel: Oh My Pi (omp) must be at version 18.10 or newer";
+        }
+        {
+          assertion = config.home-manager.users.dan.home.activation ? installOmpSopsGuard;
+          message = "thiniel: the agent's secret-access guard must be declared for installation";
+        }
+        {
           assertion = config.networking.networkmanager.enable;
           message = "thiniel: networking.networkmanager must be enabled (desktop host)";
         }

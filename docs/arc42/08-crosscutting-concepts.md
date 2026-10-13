@@ -148,6 +148,13 @@ still evaluates as a coherent set.
 Consequence: a host can end up mixing a stable system with unstable userland
 packages by design; this is a declared choice, not drift.
 
+A third source exists for exactly one tool: the coding agent takes its package
+from the `nixpkgs-agent` input (`ompPackage` in `extraSpecialArgs`), because the
+`nixpkgs-unstable` branch trails the agent's upstream releases by days. The
+input is not a channel a host follows; it owns one package, and each device that
+carries the agent asserts a version floor at evaluation time. Refreshing it is a
+deliberate `nix flake update nixpkgs-agent`.
+
 ## Platform conditionals
 
 A single module serves both platforms where the difference is small, using
@@ -172,6 +179,14 @@ profile) and by the `checks` derivations. Two patterns recur:
 - **Fail-closed configuration** — a missing secret, key file, or declaration
   removes an entry rather than adding a fallback. SSH identity selection and the
   work-identity gates are the canonical examples.
+- **Refusal at the tool boundary** — the coding agent's pre-execution guard
+  refuses decryption commands and reads of decrypted material in the paths it
+  declares protected (`/run/secrets/*`, a `sops/age/` path, `/var/lib/sops-nix/*`)
+  in every approval mode (`.omp/hooks/pre/secret-access-guard.js`, installed by
+  `features/development/omp.nix`); the `unit-agent-secret-guard` check drives the
+  guard's verdict table, and QS-004 records the rule. The guard's coverage is a
+  glob set, not every decrypted path on a device — `chapter 11` R-021 records the
+  user-side sops-nix directory that falls outside it.
 
 ## Testability and the specification workflow
 
@@ -184,8 +199,12 @@ the human policy is `docs/GIVN-VERIFICATION.md`; the graph and hooks are
 
 The three present layers are unit (`lib.debug.runTests` → `unit-helpers`),
 evaluation-time assertions (host `config.assertions`), and QEMU integration
-(`pkgs.testers.runNixOSTest`). The documented `tests/deploy/` layer does not
-exist, so `@deploy:` bindings are unresolvable today.
+(`pkgs.testers.runNixOSTest`). A fourth kind of check exists for an artifact with
+its own interface rather than an option: `unit-agent-secret-guard` runs the
+agent's guard hook under bun and asserts its verdicts, which is the only way to
+prove a tool-boundary refusal without a model-backed session. The documented
+`tests/deploy/` layer does not exist, so `@deploy:` bindings are unresolvable
+today.
 
 ## Theming and desktop configuration
 

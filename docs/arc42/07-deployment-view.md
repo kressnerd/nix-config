@@ -111,6 +111,7 @@ repository.
 | Secrets | `hosts/thiniel/secrets.yaml`; age key file `/var/lib/sops-nix/key.txt`, exposed to the user session via `mkOutOfStoreSymlink` |
 | Desktop | `stylix` One Light, Hyprland (unstable), waybar, mako, fuzzel, kanshi, hyprlock, hypridle, wlsunset |
 | Sleep policy | Suspend/hibernate disabled (`systemd.sleep` all `no`, `logind` lid ignored) because the root key of the OPAL SED is lost on sleep |
+| Coding agent | `omp` from the `nixpkgs-agent` pin (floor `18.10` asserted by `thiniel-invariants`); the two shared model servers declared; secret-access guard installed by activation |
 
 ### `cupix001` (netcup VPS)
 
@@ -135,3 +136,4 @@ repository.
 | Desktop | `aerospace` tiling window manager, macOS defaults via `targets.darwin.defaults`, `stylix` One Light |
 | User | `daniel.kressner`; login shell set to fish by an activation script |
 | Secrets | `hosts/J6G6Y9JK7L/secrets.yaml` (14 declared keys); age key file under `~/Library/Application Support/sops/age/` |
+| Coding agent | `omp` from the `nixpkgs-agent` pin (floor `18.10` asserted by `J6G6Y9JK7L-invariants`); the same two model servers and the same secret-access guard as `thiniel` |

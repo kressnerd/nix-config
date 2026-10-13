@@ -1,7 +1,7 @@
 {
   pkgs,
   lib,
-  pkgs-unstable,
+  ompPackage,
   ...
 }:
 let
@@ -41,12 +41,13 @@ let
 in
 {
   # omp (Oh My Pi) — terminal-based coding agent with multi-model support.
-  # Only available in nixpkgs-unstable (absent from stable 26.05), so it is
-  # pulled from pkgs-unstable. Config, auth and sessions live under ~/.omp;
-  # that directory is persisted via impermanence (see
-  # modules/home-manager/persistence/default.nix).
+  # The package comes from the agent's own nixpkgs pin (`nixpkgs-agent` in
+  # flake.nix), not from the shared unstable set: that branch trails the agent's
+  # upstream releases by days, and each device asserts a minimum version. Config,
+  # auth and sessions live under ~/.omp; on thiniel that directory is persisted
+  # via impermanence (see modules/home-manager/persistence/default.nix).
   home = {
-    packages = [ pkgs-unstable.omp ];
+    packages = [ ompPackage ];
 
     # `~/.omp/agent/mcp.json` is omp's primary user-level MCP config. It stays a
     # read-only store symlink on purpose: `/mcp add|enable|disable` then fails

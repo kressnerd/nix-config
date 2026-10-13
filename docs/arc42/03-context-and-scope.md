@@ -56,7 +56,7 @@ strength of evidence for each.
 ```mermaid
 flowchart TB
   flake["flake.nix / flake.lock"]
-  nixpkgs["nixpkgs, nixpkgs-unstable,<br/>nixpkgs-darwin"]
+  nixpkgs["nixpkgs, nixpkgs-unstable,<br/>nixpkgs-darwin, nixpkgs-agent"]
   addons["home-manager, stylix, sops-nix,<br/>impermanence, disko, lanzaboote,<br/>nix-homebrew, colmena, nur,<br/>nixos-anywhere, givn, mcp-nixos"]
   eval["Nix evaluation<br/>nixosConfigurations / darwinConfigurations"]
   deploy["Activation<br/>nixos-rebuild / darwin-rebuild"]
@@ -77,7 +77,8 @@ flowchart TB
 
 | Interface | Technology / Protocol | Direction | Status |
 |---|---|---|---|
-| Flake inputs (`nixpkgs` 26.05, `nixpkgs-unstable`, `home-manager`, `stylix`, `sops-nix`, `impermanence`, `disko`, `lanzaboote`, `nix-homebrew`, `colmena`, `nur`, `nixos-anywhere`, `givn`, `mcp-nixos`, `mac-app-util`, Homebrew taps) | Nix flakes, immutable pinned revisions (`flake.lock`) | In | Declared |
+| Flake inputs (`nixpkgs` 26.05, `nixpkgs-unstable`, `nixpkgs-agent`, `home-manager`, `stylix`, `sops-nix`, `impermanence`, `disko`, `lanzaboote`, `nix-homebrew`, `colmena`, `nur`, `nixos-anywhere`, `givn`, `mcp-nixos`, `mac-app-util`, Homebrew taps) | Nix flakes, immutable pinned revisions (`flake.lock`) | In | Declared |
+| Model servers (`context7`, `kagi-search`) | HTTP MCP endpoint and a stdio MCP command; the key is read from the host's sops material at connect time | Out (agent → service) | Declared on `thiniel` and `J6G6Y9JK7L`; a key-less device still starts the agent (observed by `integration-agent-tooling`); an actual server connection is not exercised |
 | Git remote access from devices | SSH with an explicit per-identity key (`github-personal`, `github-company`, `github-client001`, `bitbucket-client002`) | Out | Verified in a VM (`integration-ssh-identity-selection`) |
 | Secret material | SOPS YAML encrypted to age recipients; age key from a host SSH key (adlerkopf, cupix001) or a key file (thiniel, macOS) | In at activation | Declared; live decryption not audited |
 | Host administration | OpenSSH, key-only, password/login-shell disabled (adlerkopf, nixos-vm-minimal, thiniel) | In | Declared; VM-tested for `nixos-vm-minimal` and `adlerkopf` |

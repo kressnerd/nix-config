@@ -16,7 +16,7 @@ evidence. One choice here — operational-data separation — qualifies as an AD
    Unstable packages are consumed through `pkgs-unstable` (`lib/helpers.nix`)
    rather than by moving a host wholesale; the Darwin host additionally has its
    own `nixpkgs-darwin` input. This keeps the default package set on stable
-   while allowing specific tools (hyprland, claude-code, omp, vscode.fhs) to
+   while allowing specific tools (hyprland, claude-code, vscode.fhs) to
    follow unstable.
 3. **Layered composition.** `hosts/common` (shared NixOS base) → host options
    (`networking.<host>.*`, `mySystem.persistence`, `adlerkopf.vmMode`) → the
@@ -56,6 +56,13 @@ evidence. One choice here — operational-data separation — qualifies as an AD
    value, a per-host private-value file, or an unencrypted secret. Owner:
    [ADR-0001](adr/ADR-0001-private-data-strategy.md); the concept is in
    [chapter 8](08-crosscutting-concepts.md).
+10. **A dedicated pin for the fast-moving coding agent.** `omp` is taken from
+   its own `nixpkgs-agent` input rather than from `pkgs-unstable`, whose branch
+   trails upstream releases by days, and the feature module receives the package
+   (not a package set). Every device that carries the agent asserts a minimum
+   version, so drift is visible at evaluation time. Rationale and the rejected
+   alternatives (rebasing the shared input, upstream's own flake, upstream's
+   prebuilt binaries): `givn/changes/current-omp-release/design.md` (D1, D2).
 
 ## Technology choices
 

@@ -5,6 +5,7 @@
   pkgs,
   home-manager-unstable,
   sops-nix,
+  ompPackage,
   ...
 }:
 {
@@ -16,5 +17,9 @@
   };
   integration-private-data-separation = import ./private-data-separation-test.nix {
     inherit pkgs;
+  };
+  integration-agent-tooling = import ./agent-tooling-test.nix {
+    inherit pkgs ompPackage;
+    home-manager = home-manager-unstable;
   };
 }
