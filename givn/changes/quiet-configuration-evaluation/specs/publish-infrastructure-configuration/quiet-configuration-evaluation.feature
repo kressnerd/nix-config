@@ -34,7 +34,7 @@ Feature: Quiet configuration evaluation
     Then  it applies the profile without reporting a release-mismatch diagnostic
     And   both coding agents start
 
-  @givn.added @wip @check:flake-output-contract
+  @givn.added @check:flake-output-contract
   Scenario: The flake exposes only outputs the checker interprets
     Given the repository's flake
     When  its declared outputs are inspected

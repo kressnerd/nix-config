@@ -102,11 +102,6 @@
       inputs.disko.follows = "disko";
     };
 
-    colmena = {
-      url = "github:zhaofengli/colmena";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     givn = {
       url = "github:kressnerd/givn";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
@@ -130,7 +125,6 @@
       nur,
       disko,
       lanzaboote,
-      colmena,
       stylix-unstable,
       mcp-nixos,
       ...
@@ -685,35 +679,12 @@
             )
           );
 
-      colmenaHive = colmena.lib.makeHive {
-        meta = {
-          # Default nixpkgs for x86_64-linux nodes.
-          # For aarch64-linux nodes, override per node:
-          #   nodeNixpkgs.<hostname> = import nixpkgs { system = "aarch64-linux"; ... };
-          nixpkgs = import nixpkgs {
-            system = "x86_64-linux";
-            overlays = [
-              nur.overlays.default
-              (import ./overlays)
-            ];
-            config.allowUnfree = true;
-          };
-          specialArgs = {
-            inherit inputs outputs; # outputs is self-referential (same pattern as nixosConfigurations)
-          };
-          # Per-node specialArgs for arch-specific pkgs-unstable:
-          # nodeSpecialArgs.<hostname> = { pkgs-unstable = ...; };
-        };
-        # Nodes are added here after initial provisioning via nixos-anywhere.
-        # Example:
-        # my-server = {
-        #   imports = [ ./hosts/my-server ];
-        #   deployment = {
-        #     targetHost = "my-server.example.com";
-        #     targetUser = "dan";
-        #     tags = [ "server" ];
-        #   };
-        # };
-      };
+      # The fleet hive (`colmenaHive`) and its `colmena` input are deliberately
+      # not declared: `nix flake check` reports `unknown flake output` for every
+      # top-level output outside its schema, and the hive had no node to deploy.
+      # The first server provisioned for fleet deployment registers both again —
+      # see docs/plans/adlerkopf/X-cross-cutting.md and
+      # docs/plans/cupix001/13-colmena.md. The `colmena` CLI itself stays
+      # installed by home/dan/features/cli/deploy-tools.nix.
     };
 }

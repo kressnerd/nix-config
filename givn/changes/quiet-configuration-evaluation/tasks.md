@@ -156,20 +156,42 @@ operator warning + rollback are in Task 6.
       `/home/dan/.config/mozilla/firefox/…`, `.mozilla` keeps only
       `native-messaging-hosts`, the persistence list carries `.config/mozilla`
       and no `.mozilla`, and the host evaluation prints zero migration warnings.
-- [x] COMMIT: `6b3f0d5` — release note as subject, scenario title in the body.
+- [x] COMMIT: `5d147b8` — release note as subject, scenario title in the body.
 
 ---
 
 ## Task 3 — Scenario: `The flake exposes only outputs the checker interprets` (`@check:flake-output-contract`)
 
-- [ ] RED: remove `@wip`. The check already exists (setup task) and fails today.
-      Re-run the targeted command and paste the non-zero output.
-- [ ] GREEN: withdraw the `colmenaHive` output and the `colmena` input from
-      `flake.nix`; keep the Colmena CLI package and the aliases; the deployment
-      plans already carry the re-registration step. Re-run → exit 0. Paste.
-- [ ] REFACTOR: confirm the flake still exposes every other output
-      (`nix flake show`/`nix flake check --no-build` → no unknown-output warning).
-- [ ] COMMIT: record the hash.
+- [x] RED: removed `@wip`. The target already exists (setup task) and failed
+      against the tree that still declared the hive — that run is the RED
+      evidence:
+      ```
+      $ nix build --no-link '.#checks.x86_64-linux.flake-output-contract'
+      error: Cannot build '/nix/store/z7ga7i988c213f441a9p475v7l40nbax-flake-output-contract.drv'.
+             Last 2 log lines:
+             > the flake declares outputs the checker does not interpret:
+             > colmenaHive
+      exit 1
+      ```
+- [x] GREEN: withdrew the `colmenaHive` output and the `colmena` input from
+      `flake.nix` (and the input from the outputs arguments), replaced by a
+      comment pointing at the deployment plans' re-registration step; the
+      Colmena CLI package and the aliases stay (guarded in scenario 2);
+      `nix flake lock` pruned the orphaned lock nodes without bumping any input.
+      Files modified: `flake.nix`, `flake.lock`.
+      ```
+      $ nix build --no-link '.#checks.x86_64-linux.flake-output-contract'
+      building '/nix/store/mx227lylz1qsnlzvgmiwahb74xhnk4f1-flake-output-contract.drv'...
+      exit 0
+
+      $ nix flake check --no-build --no-write-lock-file
+      (no 'unknown flake output' line; only the two booted-device mismatch
+       warnings, scenarios 4 and 5, and the informational omitted-systems note)
+      ```
+- [x] REFACTOR: `nix fmt flake.nix`; the flake still evaluates for every host
+      (`nix flake check --no-build` evaluates all outputs and checks) with the
+      lock-diff limited to pruning the removed input's nodes.
+- [x] COMMIT: `bb29d64` — release note as subject, scenario title in the body.
 
 ---
 
