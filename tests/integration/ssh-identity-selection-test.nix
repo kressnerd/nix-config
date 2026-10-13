@@ -12,40 +12,52 @@
 pkgs.testers.runNixOSTest {
   name = "ssh-identity-selection";
 
-  nodes.machine = {
-    imports = [ home-manager.nixosModules.home-manager ];
+  nodes.machine =
+    { config, pkgs, ... }:
+    {
+      imports = [ home-manager.nixosModules.home-manager ];
 
-    users.users.test = {
-      isNormalUser = true;
-      password = "testpass";
-    };
+      users.users.test = {
+        isNormalUser = true;
+        password = "testpass";
+      };
 
-    # The device declares the identity it holds. It declares no work identity
-    # secret material, so no work connection entry may be rendered.
-    home-manager = {
-      useGlobalPkgs = true;
-      useUserPackages = true;
-      sharedModules = [
-        sops-nix.homeManagerModules.sops
-        ../../modules/home-manager/ssh/options.nix
-        ../../modules/home-manager/persistence/options.nix
-      ];
-      users.test = {
-        imports = [ ../../home/dan/features/cli/ssh.nix ];
+      # The device declares the identity it holds. It declares no work identity
+      # secret material, so no work connection entry may be rendered.
+      home-manager = {
+        useGlobalPkgs = true;
+        useUserPackages = true;
+        sharedModules = [
+          sops-nix.homeManagerModules.sops
+          ../../modules/home-manager/ssh/options.nix
+          ../../modules/home-manager/persistence/options.nix
+        ];
+        users.test = {
+          imports = [ ../../home/dan/features/cli/ssh.nix ];
 
-        home = {
-          username = "test";
-          homeDirectory = "/home/test";
-          stateVersion = "25.11";
-        };
+          home = {
+            username = "test";
+            homeDirectory = "/home/test";
+            stateVersion = "25.11";
+          };
 
-        myHome.ssh = {
-          personalIdentityFile = "~/.ssh/id_ed25519";
-          includedConfigs = [ ];
+          myHome.ssh = {
+            personalIdentityFile = "~/.ssh/id_ed25519";
+            includedConfigs = [ ];
+          };
         };
       };
+
+      # The Home Manager modules this device loads and the package set they run
+      # against must come from the same release. This asserts the condition behind
+      # Home Manager's release check, without matching its warning text.
+      assertions = [
+        {
+          assertion = config.home-manager.users.test.home.version.release == pkgs.lib.trivial.release;
+          message = "the test profile's Home Manager release must equal the guest package set's release (change quiet-configuration-evaluation)";
+        }
+      ];
     };
-  };
 
   testScript = ''
     machine.start()

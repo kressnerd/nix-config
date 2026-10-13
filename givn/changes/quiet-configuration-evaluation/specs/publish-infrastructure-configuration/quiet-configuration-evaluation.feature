@@ -20,7 +20,7 @@ Feature: Quiet configuration evaluation
     And   no superseded-default diagnostic is reported for the profile
     And   `~/.config/mozilla/firefox` is a persistence mount, so the browsing state survives the root-filesystem reset
 
-  @givn.added @wip @e2e @check:integration-ssh-identity-selection
+  @givn.added @e2e @check:integration-ssh-identity-selection
   Scenario: A booted device reproduces its identity surface from a single release
     Given a device whose home profile is built from the Home Manager release its package set comes from
     When  the device boots and its configuration is applied

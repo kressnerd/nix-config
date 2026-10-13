@@ -670,6 +670,11 @@
                     home-manager-unstable
                     opencodePackage
                     ;
+                  # The two checks that load the devices' Home Manager modules
+                  # take their guest package set from the pin those modules
+                  # follow, so the release pairing holds. See the change
+                  # `quiet-configuration-evaluation`, design D3.
+                  unstablePkgs = nixpkgs-unstable.legacyPackages.${system};
                   # The booted check carries the agent from its own pin, so the
                   # guest proves the version floor the devices assert.
                   ompPackage = (agentPkgsFor system).omp;

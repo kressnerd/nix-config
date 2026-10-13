@@ -3,6 +3,7 @@
 # Each test is a pkgs.testers.runNixOSTest derivation (Linux-only)
 {
   pkgs,
+  unstablePkgs,
   home-manager-unstable,
   sops-nix,
   ompPackage,
@@ -12,15 +13,22 @@
 {
   integration-vm-minimal-ssh = import ./nixos-vm-minimal-test.nix { inherit pkgs; };
   integration-adlerkopf = import ./adlerkopf-test.nix { inherit pkgs; };
+  # These two checks load the devices' Home Manager modules, so their guest
+  # package set comes from the same pin those modules follow (nixpkgs-unstable):
+  # Home Manager refuses a release pairing it does not match, and the pairing is
+  # what the two devices themselves run. See the change
+  # `quiet-configuration-evaluation`, design D3.
   integration-ssh-identity-selection = import ./ssh-identity-selection-test.nix {
-    inherit pkgs sops-nix;
+    pkgs = unstablePkgs;
+    inherit sops-nix;
     home-manager = home-manager-unstable;
   };
   integration-private-data-separation = import ./private-data-separation-test.nix {
     inherit pkgs;
   };
   integration-agent-tooling = import ./agent-tooling-test.nix {
-    inherit pkgs ompPackage opencodePackage;
+    pkgs = unstablePkgs;
+    inherit ompPackage opencodePackage;
     home-manager = home-manager-unstable;
   };
 }

@@ -197,18 +197,39 @@ operator warning + rollback are in Task 6.
 
 ## Task 4 — Scenario: `A booted device reproduces its identity surface from a single release` (`@e2e @check:integration-ssh-identity-selection`)
 
-- [ ] RED: remove `@wip`. Add the node assertion
-      (`config.home-manager.users.test.home.version.release == pkgs.lib.trivial.release`)
-      to `tests/integration/ssh-identity-selection-test.nix`. Targeted run
-      (evaluation of the check) → MUST exit non-zero: the profile's Home Manager
-      release is 26.11 while the guest package set is 26.05. Paste.
-- [ ] GREEN: pass `nixpkgs-unstable.legacyPackages.<system>` for this check
-      through `tests/integration/default.nix` and the flake's linux checks
-      block. Re-run → exit 0. Then build the check itself (`@e2e`):
-      `nix build .#checks.x86_64-linux.integration-ssh-identity-selection` →
-      the VM boots and the identity surface is observed. Paste both.
-- [ ] REFACTOR: no behaviour change; re-run the build.
-- [ ] COMMIT: record the hash.
+- [x] RED: removed `@wip`. Added the node assertion to
+      `tests/integration/ssh-identity-selection-test.nix` (the node became a
+      module function to read `config`/`pkgs`). Targeted run:
+      ```
+      $ nix eval --raw '.#checks.x86_64-linux.integration-ssh-identity-selection.drvPath'
+      error:
+      Failed assertions:
+      - the test profile's Home Manager release must equal the guest package set's release (change quiet-configuration-evaluation)
+      exit 1
+      ```
+- [x] GREEN: `tests/integration/default.nix` takes `unstablePkgs` and gives it
+      to the two checks that load the devices' Home Manager modules;
+      `flake.nix` passes `nixpkgs-unstable.legacyPackages.<system>`. The
+      aggregator change covers both Home-Manager-based checks; scenario 5 adds
+      the second fixture's own assertion.
+      Files modified: `tests/integration/default.nix`, `flake.nix`,
+      `tests/integration/ssh-identity-selection-test.nix`.
+      ```
+      $ nix eval --raw '.#checks.x86_64-linux.integration-ssh-identity-selection.drvPath'
+      /nix/store/sx6849f2pncr9vnc3a60567a56f4rbgf-vm-test-run-ssh-identity-selection.drv
+      exit 0
+      ```
+- [x] REFACTOR: `nix fmt` on the touched Nix files; the `@e2e` build itself is
+      the real-interface proof:
+      ```
+      $ nix build --no-link '.#checks.x86_64-linux.integration-ssh-identity-selection'
+      building '/nix/store/sx6849f2pncr9vnc3a60567a56f4rbgf-vm-test-run-ssh-identity-selection.drv'...
+      exit 0
+      ```
+      The derivation runs the QEMU VM (boot, Home Manager activation, the
+      identity-surface script), so the guest boots with the paired releases and
+      the declared identity surface is observed on the device.
+- [x] COMMIT: `0f6a6d2` — release note as subject, scenario title in the body.
 
 ---
 
