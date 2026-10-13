@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "current-opencode-release",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "10335f19bdfe59b3af5af44af1927c7b111a9730",
+  "tested_revision": "10335f19bdfe59b3af5af44af1927c7b111a9730",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 18.572778768
+    },
+    "regular": {
+      "status": "passed",
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 81.447197795
+    }
+  },
   "coverage": null,
   "started_at_unix": 1791889590,
-  "finished_at_unix": null
+  "finished_at_unix": 1791889690
 }
