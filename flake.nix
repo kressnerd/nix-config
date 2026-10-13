@@ -223,7 +223,7 @@
             { myHome.persistence.enable = true; }
             stylix-unstable.nixosModules.stylix
             home-manager-unstable.nixosModules.home-manager
-            {
+            ({ pkgs, ... }: {
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
@@ -238,6 +238,10 @@
                   # that branch carries 18.8.4 against the pin's 18.10.0 (checked
                   # 2026-10-13). See the change `current-omp-release`, design D2.
                   ompPackage = (agentPkgsFor "x86_64-linux").omp;
+                  # OpenCode's package comes from this host's own package set, which
+                  # applies the repository's overlay (`overlays/opencode`). See the
+                  # change `current-opencode-release`.
+                  opencodePackage = pkgs.opencode;
                 };
                 users.dan = import ./home/dan/thiniel.nix;
                 sharedModules = [
@@ -246,7 +250,7 @@
                   ./modules/home-manager/ssh/options.nix
                 ];
               };
-            }
+            })
           ];
         };
         cupix001 = nixpkgs.lib.nixosSystem {
@@ -357,7 +361,7 @@
             ./hosts/J6G6Y9JK7L
             stylix-unstable.darwinModules.stylix
             home-manager-unstable.darwinModules.home-manager
-            {
+            ({ pkgs, ... }: {
               home-manager = {
                 useGlobalPkgs = true;
                 useUserPackages = true;
@@ -371,6 +375,9 @@
                   # the same agent and the same asserted floor. See the change
                   # `current-omp-release`, design D2.
                   ompPackage = (agentPkgsFor "aarch64-darwin").omp;
+                  # OpenCode's package, from this host's own package set (the
+                  # repository's overlay). See the change `current-opencode-release`.
+                  opencodePackage = pkgs.opencode;
                 };
                 users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
                 sharedModules = [
@@ -380,7 +387,7 @@
                   ./modules/home-manager/ssh/options.nix
                 ];
               };
-            }
+            })
           ];
         };
       };
@@ -612,8 +619,22 @@
               system:
               let
                 pkgs = nixpkgs.legacyPackages.${system};
+                # The repository's own OpenCode package (overlays/opencode), for
+                # the booted check. The overlay ships prebuilt binaries for
+                # x86_64-linux and aarch64-darwin only, so the package is passed
+                # only where the overlay supports the system; on aarch64-linux the
+                # check runs without the OpenCode half. See the change
+                # `current-opencode-release`.
+                opencodePkgs = (import ./overlays/opencode) pkgs pkgs;
+                opencodePackage =
+                  if builtins.elem system opencodePkgs.opencode.meta.platforms then opencodePkgs.opencode else null;
                 integrationTests = import ./tests/integration/default.nix {
-                  inherit pkgs sops-nix home-manager-unstable;
+                  inherit
+                    pkgs
+                    sops-nix
+                    home-manager-unstable
+                    opencodePackage
+                    ;
                   # The booted check carries the agent from its own pin, so the
                   # guest proves the version floor the devices assert.
                   ompPackage = (agentPkgsFor system).omp;

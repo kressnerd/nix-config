@@ -211,9 +211,9 @@
     }
     {
       assertion = builtins.any (
-        p: lib.getName p == "opencode" && lib.versionAtLeast (lib.getVersion p) "2"
+        p: lib.getName p == "opencode" && lib.versionAtLeast (lib.getVersion p) "2.0.28"
       ) config.home.packages;
-      message = "opencode: OpenCode 2.x (>= 2) must be installed";
+      message = "opencode: OpenCode must be at version 2.0.28 or newer";
     }
     # --- development/givn ---
     {

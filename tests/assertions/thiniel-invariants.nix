@@ -18,9 +18,9 @@
       [
         {
           assertion = builtins.any (
-            p: lib.getName p == "opencode" && lib.versionAtLeast (lib.getVersion p) "2"
+            p: lib.getName p == "opencode" && lib.versionAtLeast (lib.getVersion p) "2.0.28"
           ) config.home-manager.users.dan.home.packages;
-          message = "thiniel: OpenCode 2.x (>= 2) must be installed";
+          message = "thiniel: OpenCode must be at version 2.0.28 or newer";
         }
         {
           assertion = hmHasPkg "omp";

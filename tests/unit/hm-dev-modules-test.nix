@@ -57,7 +57,12 @@ let
 
   # RED: home/dan/features/development/opencode.nix does not exist yet →
   # import fails at eval time → nix build .#checks.*.unit-helpers FAILS as expected.
-  opencodeModule = import ../../home/dan/features/development/opencode.nix { inherit pkgs; };
+  opencodeModule = import ../../home/dan/features/development/opencode.nix {
+    inherit pkgs;
+    # The module takes its package; this test only reads the rendered package
+    # names and the config file, so the package set's own opencode is enough.
+    opencodePackage = pkgs.opencode;
+  };
   opencodePkgNames = builtins.map (p: p.pname or p.name or "") (getHomePackages opencodeModule);
   opencodeConfigFiles = getXdgConfigFiles opencodeModule;
   opencodeJsonConfig = builtins.fromJSON opencodeConfigFiles."opencode/opencode.json".text;

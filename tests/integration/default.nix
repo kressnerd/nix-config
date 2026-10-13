@@ -6,6 +6,7 @@
   home-manager-unstable,
   sops-nix,
   ompPackage,
+  opencodePackage ? null,
   ...
 }:
 {
@@ -19,7 +20,7 @@
     inherit pkgs;
   };
   integration-agent-tooling = import ./agent-tooling-test.nix {
-    inherit pkgs ompPackage;
+    inherit pkgs ompPackage opencodePackage;
     home-manager = home-manager-unstable;
   };
 }

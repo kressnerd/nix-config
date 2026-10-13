@@ -1,8 +1,12 @@
 # tests/integration/agent-tooling-test.nix
-# Integration test: a booted device carries the coding agent at or above the
-# accepted version floor, installs its secret-access guard where the agent
-# discovers hooks, and starts the agent while holding none of its servers' key
-# material.
+# Integration test: a booted device carries its coding agents at or above their
+# accepted version floors, installs the guarded agent's secret-access guard where
+# the agent discovers hooks, and starts each agent while holding none of its
+# servers' key material.
+#
+# The repository's own OpenCode package is passed only where the overlay supports
+# the system (x86_64-linux, aarch64-darwin); where it is absent the check proves
+# the guarded agent's half alone.
 #
 # Run: nix build .#checks.<linux-system>.integration-agent-tooling
 # Interactive: nix build .#checks.<linux-system>.integration-agent-tooling.driverInteractive && result/bin/nixos-test-driver
@@ -10,16 +14,22 @@
   pkgs,
   home-manager,
   ompPackage,
+  opencodePackage ? null,
   ...
 }:
 let
-  # The agent is a Home Manager package of the test user, so the test driver
-  # (root, system PATH) cannot resolve it by name. The store path of the package
-  # the device declares is PATH-independent and proves the declared package
-  # runs. Asserting that a login shell resolves `omp` would test Home Manager's
-  # shell integration rather than the agent.
+  inherit (pkgs) lib;
+
+  # The agents are Home Manager packages of the test user, so the test driver
+  # (root, system PATH) cannot resolve them by name. The store path of the package
+  # the device declares is PATH-independent and proves the declared package runs.
+  # Asserting that a login shell resolves them would test Home Manager's shell
+  # integration rather than the agents.
   agentBin = "${ompPackage}/bin/omp";
   floor = "18.10";
+
+  withOpencode = opencodePackage != null;
+  opencodeBin = if withOpencode then "${opencodePackage}/bin/opencode" else "";
 in
 pkgs.testers.runNixOSTest {
   name = "agent-tooling";
@@ -32,14 +42,20 @@ pkgs.testers.runNixOSTest {
       password = "testpass";
     };
 
-    # The device declares its agent and nothing else: no sops secrets, so neither
+    # The device declares its agents and nothing else: no sops secrets, so neither
     # server's key command can succeed here.
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;
-      extraSpecialArgs = { inherit ompPackage; };
+      extraSpecialArgs = {
+        inherit ompPackage;
+      }
+      // lib.optionalAttrs withOpencode { inherit opencodePackage; };
       users.test = {
-        imports = [ ../../home/dan/features/development/omp.nix ];
+        imports = [
+          ../../home/dan/features/development/omp.nix
+        ]
+        ++ lib.optional withOpencode ../../home/dan/features/development/opencode.nix;
 
         home = {
           username = "test";
@@ -57,7 +73,7 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("home-manager-test.service")
 
-    # The agent the device declares starts and reports its version.
+    # The guarded agent the device declares starts and reports its version.
     reported = machine.succeed("sudo -u test env HOME=/home/test ${agentBin} --version").strip()
     match = re.search(r"(\d+)\.(\d+)", reported)
     assert match, f"no version in {reported!r}"
@@ -76,5 +92,15 @@ pkgs.testers.runNixOSTest {
     assert "context7" in declared and "kagi-search" in declared, declared
     machine.fail("test -e /home/test/.config/sops-nix/secrets/context7/api-key")
     machine.fail("test -e /home/test/.config/sops-nix/secrets/kagi/api-key")
+  ''
+  + lib.optionalString withOpencode ''
+    # The second coding agent the device carries starts and reports its version.
+    # Three components, because 2.0.22 and 2.0.28 share major and minor: a
+    # two-component comparison would pass a build below the floor.
+    opencode_version = machine.succeed("sudo -u test env HOME=/home/test ${opencodeBin} --version").strip()
+    opencode_match = re.search(r"(\d+)\.(\d+)\.(\d+)", opencode_version)
+    assert opencode_match, f"no version in {opencode_version!r}"
+    opencode_triple = tuple(int(part) for part in opencode_match.groups())
+    assert opencode_triple >= (2, 0, 28), f"OpenCode reports {opencode_version!r}, below the floor 2.0.28"
   '';
 }

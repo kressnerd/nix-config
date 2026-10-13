@@ -155,6 +155,14 @@ input is not a channel a host follows; it owns one package, and each device that
 carries the agent asserts a version floor at evaluation time. Refreshing it is a
 deliberate `nix flake update nixpkgs-agent`.
 
+A fourth source is not a channel at all: OpenCode's 2.x line is distributed only
+as prebuilt per-platform binaries and is not in nixpkgs (which carries 1.x), so
+the repository packages it itself (`overlays/opencode`), pinning a version and a
+checksum per platform. A refresh is a deliberate version-and-checksum edit, and
+each device that carries it asserts the same floor. Failure mode: nothing in the
+repository signals that a newer release exists, so currency depends on the
+operator noticing (chapter 11 R-022).
+
 ## Platform conditionals
 
 A single module serves both platforms where the difference is small, using

@@ -34,6 +34,7 @@ qualitative.
 
 | ID | Item | Impact | Plan to address |
 |---|---|---|---|
+| R-022 | The OpenCode package is hand-pinned by version and two platform checksums, and nothing in the repository signals that a newer upstream release exists, so the devices can fall behind without any failing check | Medium | Low | The floor assertions turn a *regression* into a failed evaluation, but they cannot see a newer release; refreshing stays a deliberate owner action (chapter 8, [chapter 10](10-quality-requirements.md) QS-014), and `overlays/README.md` records the bump procedure. |
 | TD-001 | The three work identity key file names remain literals inside `home/dan/features/cli/ssh.nix`, gated by declared secret material rather than declared per host the way the personal identity is | A second work device would render the MacBook's key paths and fail closed | Parameterize the work identity key paths in `myHome.ssh` when a second host needs them |
 | TD-002 | `hosts/cupix001/options.nix` declares thirteen `networking.cupix001.*` options that no module consumes | Dead declarations: they look like configuration but control nothing | Add the networking module that reads them, or remove the option set |
 | TD-003 | `modules/nixos/persistence` is imported by `cupix001` with the enable flag unset | The persistence block never applies although disko mounts `/persist` | Set `mySystem.persistence.enable = true` when cupix001 becomes a real host |

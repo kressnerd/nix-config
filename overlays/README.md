@@ -7,6 +7,8 @@ This directory contains modular Nix overlays that extend or customize packages i
 ```
 overlays/
 ├── default.nix              # Main overlay aggregator
+├── opencode/                 # OpenCode 2.x package (prebuilt npm binary)
+│   └── default.nix
 └── vscode-extensions/        # VSCode extension overlays
     ├── default.nix          # VSCode extensions overlay
     └── roo-cline.nix        # Roo Cline extension package
@@ -80,6 +82,28 @@ programs.vscode = {
   };
 };
 ```
+
+## OpenCode Overlay
+
+The [`opencode`](./opencode/default.nix) overlay packages the OpenCode 2.x line,
+which nixpkgs does not carry (that channel ships 1.x). The package is upstream's
+prebuilt per-platform npm archive, pinned by version and one sha512 per platform
+(`aarch64-darwin`, `x86_64-linux`).
+
+**Refreshing it is a deliberate, manual bump** — there is no lock entry to
+update:
+
+1. Set `version` to the new release (`@opencode/cli` on the npm registry; the
+   platform archives `@opencode/cli-linux-x64` and `@opencode/cli-darwin-arm64`
+   carry the same number).
+2. Set each platform `hash` to `lib.fakeHash` temporarily, build the package
+   (`nix build .#packages.x86_64-linux.opencode` and the Darwin equivalent on the
+   Mac), and copy the correct hash out of the error message.
+3. Build both platforms again with the real hashes.
+
+Each device that carries OpenCode asserts a version floor
+(`tests/assertions/*-invariants.nix`); raise that floor with the version so a
+regression fails evaluation.
 
 ## Local Development
 

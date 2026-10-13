@@ -3,15 +3,15 @@
 # binaries via npm (@opencode/cli-<os>-<arch>). Bump version + both hashes to update.
 final: _prev:
 let
-  version = "2.0.22";
+  version = "2.0.28";
   platforms = {
     aarch64-darwin = {
       slug = "darwin-arm64";
-      hash = "sha512-NNg1VCCTWSfLlNKpRb4RA6IE7H67ZBLBYmfIWjP3CxR9NPtdROQFCL8lpPf+Tz2Qje4Bb27sQOLWanYyNT/9dQ==";
+      hash = "sha512-HYFeBK8drYVq9b9DlQ51pBLCaL+GNyih1ysTQfmekW7YhAJngPYDM7xMgCINXopRVMGTw7EmbJPrMm+9V0G7Yg==";
     };
     x86_64-linux = {
       slug = "linux-x64";
-      hash = "sha512-DlV1qgEDDnVqpTWMPqv7tCHCcXodzZBFaMcxjsiYdY6E5gHH2Q68JfasVksyQ1nu6m1887WQKGhOsepE+oKyYw==";
+      hash = "sha512-HdgQ2c9FrER88w3Alm/UGdzU55lCc0FXxSm+VNMXUz+Yyv03uLc0Z+PxSnEBysmYNKcFvcnxdT7e0xGPoytrNg==";
     };
   };
   platform = platforms.${final.stdenv.hostPlatform.system} or null;

@@ -143,6 +143,19 @@ the two shared model servers, and install the secret-access guard.
 | `home.activation.installOmpSopsGuard` | Installs `.omp/hooks/pre/secret-access-guard.js` as a regular file under `$HOME/.omp/agent/hooks/pre` (the agent's ambient hook discovery skips symlinks). |
 | Imported by | `home/dan/thiniel.nix`, `home/dan/J6G6Y9JK7L.nix`. |
 
+### `home/dan/features/development/opencode.nix`
+
+**Responsibility:** install OpenCode on a device that carries it, declare its
+user-level MCP servers, and export the server keys from the decrypted secrets.
+
+| Element | Responsibility |
+|---|---|
+| `opencodePackage` argument | The package from the repository's own overlay (`overlays/opencode`), which pins an upstream prebuilt release per platform by version and checksum; defaults to the host's `pkgs.opencode` and is passed explicitly by the booted check, whose package set carries no overlay. |
+| `home.packages` | `opencode`, plus `bun` and `uv` at runtime (npm plugins and the Python MCP server). |
+| `xdg.configFile."opencode/opencode.json"` | The global config: `context7` (remote) and `kagi-search` (local) servers, the `opencode-plugin-litellm` plugin, and the LiteLLM provider entry. |
+| `programs.fish.shellInit` | Exports `CONTEXT7_API_KEY` / `KAGI_API_KEY` from the decrypted sops-nix secrets when present. |
+| Imported by | `home/dan/thiniel.nix`, `home/dan/J6G6Y9JK7L.nix`. |
+
 ### `tests/` (present verification layers)
 
 | Building block | Responsibility |

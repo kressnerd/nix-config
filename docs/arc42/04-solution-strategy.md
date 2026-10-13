@@ -63,6 +63,14 @@ evidence. One choice here — operational-data separation — qualifies as an AD
    version, so drift is visible at evaluation time. Rationale and the rejected
    alternatives (rebasing the shared input, upstream's own flake, upstream's
    prebuilt binaries): `givn/changes/current-omp-release/design.md` (D1, D2).
+11. **A repository-owned package for the second coding agent.** OpenCode's 2.x
+   line is not in nixpkgs (that channel carries 1.x), so it is packaged here
+   from upstream's prebuilt per-platform npm archive, pinned by version and
+   checksum (`overlays/opencode`). Every device that carries it asserts the
+   same version floor, and refreshing the pin is a deliberate owner action.
+   Rationale and the rejected alternative (upstream's own Nix packaging, which
+   builds from source with no advertised cache):
+   `givn/changes/current-opencode-release/design.md` (D1).
 
 ## Technology choices
 

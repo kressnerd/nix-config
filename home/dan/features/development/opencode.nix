@@ -1,12 +1,18 @@
-{ pkgs, ... }:
+{ pkgs, opencodePackage, ... }:
 {
   # opencode: 2.x prebuilt npm binary, packaged in overlays/opencode.
   # bun: required at runtime so OpenCode can install npm plugins (litellm).
   # uv: required at runtime for uvx to run Python-based MCP servers (kagi-search).
   # opencode-plugin-litellm autodetects a LiteLLM proxy on localhost:4000/8000/8080;
   # otherwise set LITELLM_BASE_URL / LITELLM_API_KEY.
+  #
+  # The package comes from the repository's own overlay (`overlays/opencode`),
+  # which every host applies; each consumer passes it explicitly (the hosts pass
+  # their own `pkgs.opencode`, the booted VM check passes the overlay's package
+  # because its guest package set carries no overlay). A Home Manager module
+  # argument cannot default to another argument, so the package is required.
   home.packages = [
-    pkgs.opencode
+    opencodePackage
     pkgs.bun
     pkgs.uv
   ];
