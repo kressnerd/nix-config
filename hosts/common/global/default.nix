@@ -3,7 +3,10 @@ let
   helpers = import ../../../lib/helpers.nix;
 in
 {
-  imports = [ ./nix.nix ];
+  imports = [
+    ./nix.nix
+    ../../../modules/nixos/github-fetch-credential
+  ];
 
   # A program on the device can rewrite a file the home profile renders; without
   # this, Home Manager refuses the foreign file and aborts the whole activation

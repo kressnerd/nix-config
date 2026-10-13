@@ -161,6 +161,11 @@
 
   mySystem.persistence.enable = true;
 
+  # The laptop develops and builds this configuration from its own checkout, so
+  # it presents the GitHub fetch credential it declares; system activation
+  # renders it before any login, so root's build works from the first boot.
+  mySystem.githubFetchCredential.enable = true;
+
   # Impermanence system directories (service-specific; base paths are in modules/nixos/persistence)
   environment.persistence."/persist/system" = {
     directories = [

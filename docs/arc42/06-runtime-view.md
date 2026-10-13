@@ -227,6 +227,59 @@ file to the user session through `features/cli/sops-age-key.nix`
 (`mkOutOfStoreSymlink`), which makes describing it as "inaccessible to the user"
 wrong for that host.
 
+## Scenario: GitHub credential supply to a nix client
+
+**Trigger:** a nix invocation on a build machine fetches from the GitHub host.
+
+```mermaid
+sequenceDiagram
+  participant Act as "activation (root)"
+  participant Sops as "sops-nix"
+  participant File as "rendered fragment (0400, owner = device owner)"
+  participant Conf as "machine nix configuration"
+  participant Cli as "nix client (owner or root)"
+  participant GH as "github.com"
+
+  Act->>Sops: declared sops.secrets + sops.templates
+  Sops->>File: write access-tokens = github.com=<value>
+  Cli->>Conf: read system config and user config
+  Conf->>File: !include
+  File-->>Cli: access-tokens for github.com
+  Cli->>GH: authenticated fetch of the private flake input
+```
+
+**Steps:**
+
+1. The machine opts in and the value sits encrypted in the machine's own
+   `secrets.yaml` under `github/access-token`.
+2. Activation decrypts and renders the one-line fragment; the value never enters
+   a store path or the generated `nix.conf`. On thiniel the fragment is written
+   by **system** activation as root to
+   `/run/secrets/rendered/nix-github-access-tokens` (the sops-nix installer
+   creates `/run/secrets.d/<generation>` and its secret directories mode `0751`,
+   so an account that owns a `0400` file inside can traverse to it and no other
+   account can read it). On the work MacBook the home-manager module renders it
+   to `~/.config/sops-nix/secrets/rendered/nix-github-access-tokens` when the
+   owner's session starts — the machine's existing pattern for `git/*`,
+   `context7` and `kagi`.
+3. The machine's configuration learns of the file through `!include`: on thiniel
+   the generated system `nix.conf` (`nix.extraOptions`), on the Mac the owner's
+   user configuration (home-manager) and root's
+   `/var/root/.config/nix/nix.conf` (an activation script), because nix-darwin
+   does not manage `nix.conf` there.
+4. The owner's client and root's client both read the fragment; a client that
+   cannot read it is unaffected — `!include` tolerates a missing or unreadable
+   file, so an account that does not hold the credential keeps working
+   unauthenticated instead of failing.
+
+**Notes:** evidence is the change `github-fetch-credential`; the
+`integration-github-fetch-credential` check boots a machine with the Linux shape
+(system-level rendering, no session), asserts the fragment's owner and mode, both
+clients' `nix config show` output, and that a second local account cannot read
+it. The MacBook's render timing is confirmed on the machine because that host
+cannot be booted from a Linux builder ([chapter 11](11-risks-and-technical-debt.md)
+R-029).
+
 ## Scenario: A coding-agent tool call meets the secret-access guard
 
 **Trigger:** the coding agent asks to run a tool (`read`, `grep`, `bash`,

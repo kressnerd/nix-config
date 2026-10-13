@@ -53,13 +53,16 @@ flowchart LR
 | QS-014 | Reproducible working environment | A coding agent on a device falls behind its upstream source. | The agents on every device that carries them are at or above their accepted version floors (`omp` `18.10`; OpenCode `2.0.28`, both checked 2026-10-13), asserted at evaluation time and observed on a booted VM. | Met for `thiniel` and `J6G6Y9JK7L` (host assertions + `integration-agent-tooling`, which carries both agents). The floors are deliberate minima refreshed by the owner, not a tracking schedule; the newest upstream release is deliberately not chased (design D1). |
 | QS-015 | Reproducibility / declarativeness | The operator runs a flake check or builds a host. | The evaluation prints no diagnostic to triage: the personal laptop's two superseded defaults are stated explicitly, both booted-device checks pair their Home Manager with a package set from the same release, and every declared flake output is one the checker interprets. | **Met** — `tests/assertions/thiniel-hm-invariants.nix` (the release's own superseded-default predicate) and the `flake-output-contract` check; each fixture asserts its own pairing. The compositor keeps the release's superseded conf format deliberately ([chapter 11](11-risks-and-technical-debt.md) TD-015). |
 | QS-016 | Reproducible working environment | A program on a device rewrites a file the home profile manages. | The device's configuration still applies: on every rewrite the activation completes and the rewritten file is kept beside the rendered one as `<name>.<n>`. | **Met** — `integration-managed-file-displacement` (a boot with a seeded rewrite, including a second conflict on the same path, asserts the rendered link and both displaced copies), plus the host assertions that every device declares the displacement command (R-025 records the displaced loud signal). |
+| QS-017 | Secret security / access security | A nix client on a machine that develops or builds this configuration fetches the private flake input, with nothing prepared in the environment. | With no `NIX_CONFIG` and no exported token, `nix config show` reports the credential for `github.com` for the device owner's account and for root; the rendered file is mode `0400` and a second local account cannot read it; the value appears in neither a store path nor `/etc/nix/nix.conf`. | **Declared and booted** — `integration-github-fetch-credential` (a booted machine materialises the declared credential, asserts both clients read it, and asserts a second account's read fails); the MacBook's root-side file is confirmed on the machine. Asserted at evaluation time for `thiniel`, `J6G6Y9JK7L` and the exclusion on `adlerkopf`. |
 
 ## What is deliberately not claimed
 
 - No scenario asserts uptime, latency, or throughput: there is no running
   service in the repository to measure.
-- No scenario asserts that a secret decrypts on a live host: live decryption is
-  a human-only operation and was not audited.
+- No scenario asserts that a *host's* secret decrypts on a live host: live
+  decryption is a human-only operation and was not audited. The booted
+  credential check decrypts a fixture its own derivation generates (key pair and
+  ciphertext), never a host's credential and never any recorded key.
 - The recovery scenarios (QS-012, QS-013) are the two confirmed requirements
   from ideation that the current architecture cannot yet satisfy. They are listed
   as quality requirements — not as met criteria — so the baseline does not imply

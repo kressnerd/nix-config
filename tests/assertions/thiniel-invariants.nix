@@ -170,6 +170,29 @@
           assertion = config.home-manager.users.dan.programs.ssh.includes == [ ];
           message = "thiniel: no manually maintained work-laptop ssh configuration file may be included, got ${builtins.toJSON config.home-manager.users.dan.programs.ssh.includes}";
         }
+        # --- github-fetch-credential ---
+        # Scenario: The laptop declares the credential it presents to the GitHub host
+        {
+          assertion = config.mySystem.githubFetchCredential.enable;
+          message = "thiniel: mySystem.githubFetchCredential.enable must be true — the laptop is a development and build machine";
+        }
+        {
+          assertion = config.sops.secrets ? "github/access-token";
+          message = "thiniel: the GitHub fetch credential must be declared as secret material (github/access-token)";
+        }
+        {
+          assertion =
+            config.sops.templates."nix-github-access-tokens".owner == "dan"
+            && config.sops.templates."nix-github-access-tokens".mode == "0400"
+            &&
+              config.sops.templates."nix-github-access-tokens".path
+              == "/run/secrets/rendered/nix-github-access-tokens";
+          message = "thiniel: the rendered credential fragment must be owned by dan with mode 0400 at /run/secrets/rendered/nix-github-access-tokens";
+        }
+        {
+          assertion = lib.hasInfix "!include /run/secrets/rendered/nix-github-access-tokens" config.nix.extraOptions;
+          message = "thiniel: the nix configuration must include the rendered credential fragment";
+        }
       ];
   };
 }

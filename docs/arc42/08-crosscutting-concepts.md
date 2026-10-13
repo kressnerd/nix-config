@@ -153,6 +153,51 @@ Two facts worth noting: `.sops.yaml` currently assigns adlerkopf and cupix001
 the **same** recipient value, and thiniel's key file is exposed to the user
 session via `mkOutOfStoreSymlink`. Neither was audited on a live host.
 
+## GitHub fetch credential
+
+A device that develops or builds this configuration presents a *GitHub fetch
+credential* to nix, so the private input of the flake is fetched authenticated
+— also on a machine whose store no longer holds that revision, and also when
+the command runs as root.
+
+Shape: the machine declares the credential as secret material
+(`github/access-token` in its own `secrets.yaml`), and sops-nix renders a
+one-line configuration fragment (`access-tokens = github.com=<value>`) at mode
+`0400` owned by the device owner. The value is never a configuration literal: it
+reaches neither a store path, nor the generated `nix.conf`, nor a process
+environment variable — the three places a credential would otherwise leak to
+every local account or to the store.
+
+Render layer and include, per platform:
+
+| Machine | Who renders the fragment | Where it lands | How nix learns of it |
+|---|---|---|---|
+| thiniel (NixOS) | **system** activation as root, before any login | `/run/secrets/rendered/nix-github-access-tokens` | the generated system `nix.conf` (`nix.extraOptions`) |
+| work MacBook (nix-darwin) | the owner's home-manager session (the machine's existing pattern for `git/*`, `context7`, `kagi`) | `~/.config/sops-nix/secrets/rendered/nix-github-access-tokens` | the owner's user configuration (home-manager) and root's `/var/root/.config/nix/nix.conf` (an activation script), because nix-darwin does not manage `nix.conf` there (`nix.enable = false`; Determinate Nix owns it) |
+
+Reach and custody: both accounts that run nix on the machine read the fragment —
+the owner's clients and root's (`sudo nixos-rebuild`, `sudo darwin-rebuild`), the
+reach the owner selected. The file is owned by the device owner with mode `0400`
+and root reads it by privilege; no group on either machine contains only the
+owner (thiniel's deliberate second account shares `users` and `wheel`; macOS
+shares `staff`), so a root-owned file readable by the owner alone cannot be
+expressed on both platforms. Ownership does not need to be root for the owner to
+read it: the sops-nix installer creates the secret directories mode `0751`, so
+an account that owns a file inside them can traverse to it, and `0400` keeps
+every other account out.
+
+A device that does not develop or build the configuration declares none of it,
+and `!include` tolerates a missing or unreadable file, so an account without the
+credential keeps running nix unauthenticated rather than failing.
+
+Evidence: declared by `modules/nixos/github-fetch-credential` and the Mac's own
+declarations, and asserted by the host assertion modules; verified by the booted
+check `integration-github-fetch-credential`, which also asserts that a second
+local account cannot read the fragment. The MacBook's render timing and its
+root-side configuration are confirmed on the machine
+([chapter 11](11-risks-and-technical-debt.md) R-028, R-029). See the change
+`github-fetch-credential`.
+
 ## Dual-channel package strategy
 
 The default package set is stable (`nixpkgs` → `nixos-26.05`). Two escape
