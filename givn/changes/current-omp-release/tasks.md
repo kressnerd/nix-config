@@ -255,6 +255,12 @@ Binding: `@e2e @check:integration-agent-tooling`. Target:
       built, every host configuration evaluated (`adlerkopf`, `cupix001`,
       `nixos-vm-minimal`, `thiniel`, `J6G6Y9JK7L`) with its assertions firing, and
       `256 passed in 7.12s` for the Python suite.
+- [x] T7.3b The e2e scope (`./scripts/givn-verify-e2e.sh`) builds every
+      `integration-*` check for this system. Paste the tail.
+      Evidence: exit 0 — `[givn-verify-e2e] OK`; all five integration checks
+      build, the new `integration-agent-tooling` among them. (Only Home Manager's
+      pre-existing "26.11 against Nixpkgs 26.05" evaluation warning is emitted,
+      which the other integration checks show as well.)
 - [ ] T7.4 Operator: apply on the laptop
       (`sudo nixos-rebuild switch --flake .#thiniel`) and confirm
       `omp --version` reports at least `18.10` there.
