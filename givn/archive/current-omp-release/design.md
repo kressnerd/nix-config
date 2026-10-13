@@ -231,9 +231,12 @@ persistence list or `system.stateVersion` value; `hardware.nix` is untouched.
   `read` of, for example, the decrypted `context7/api-key` is not refused. This
   was found by the guard check itself (a case that named that path and passed);
   the case was corrected to the guard's declared set instead of pinning the gap
-  as expected behaviour. Extending the guard is new behaviour and out of scope
-  for this change; the finding is recorded in `design-review.md` for the operator
-  to decide on a follow-up.
+  as expected behaviour. **Decision (operator, 2026-10-13): accepted as designed,
+  no guard change.** The keys must stay at that path, and the agent does not
+  receive key material in normal use — the MCP declaration's `!command`
+  indirection is resolved by the MCP plugin, not by the agent's tools — so the
+  residual risk is a deliberate `read` by a session, left to the process rule in
+  `CLAUDE.md`.
 - **The guard driver's synthetic events drift from the agent's real event shape.**
   The driver mirrors the hook's own dispatch (`toolName` in
   `read|grep|bash|eval`, `input.path`/`input.command`/`input.code`); the booted

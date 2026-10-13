@@ -13,7 +13,8 @@
 // (`/run/secrets/*`, an age key under a `sops/age/` path, `/var/lib/sops-nix/*`)
 // or a decryption command, and no verdict for ordinary repository work. Paths
 // outside that declared set — including the user-side sops-nix secret directory
-// — are not refused; see the change's design-review record.
+// — are not refused; that property is accepted rather than closed, and is
+// recorded as R-021 in docs/arc42/11-risks-and-technical-debt.md.
 
 import { pathToFileURL } from "node:url";
 

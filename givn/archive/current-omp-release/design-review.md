@@ -122,18 +122,23 @@ artifacts say, not what the plan is.
   this repository's `context7` and `kagi` keys are decrypted (the agent module's
   `!cat $HOME/.config/sops-nix/secrets/…` reads them there).
 - Impact: the machine-enforced half of the rule "agents never read decrypted
-  secret material" does not cover the paths this repository's own tooling reads.
-  Pre-existing and unchanged by this change — the change installs the same hook,
-  so the same coverage applies on the second device.
-- Disposition: **not fixed here.** Extending the guard's globs is new behaviour
-  and would need its own scenario and target; the change's proposal does not
-  cover it. Actions taken instead: the driver's case table was corrected to the
-  guard's declared set (never pinning the gap as expected behaviour), the
-  scenario's `When` now names the surfaces the guard actually covers, the design
-  records the gap as a risk, and the durable docs carry it as `R-021` in
-  `docs/arc42/11-risks-and-technical-debt.md`. **Owner: the operator** — decide
-  whether to open a follow-up change that extends the guard to the user-side
-  secret directory (and to any other decrypted location a device holds).
+  secret material" does not cover that path, so a *direct* read of it by the
+  agent's tools is not refused. It does not mean the agent handles the key in
+  normal MCP use: the `!command` indirection is resolved by the MCP plugin, not
+  by the agent's tools. Pre-existing and unchanged by this change — the change
+  installs the same hook, so the same coverage applies on the second device.
+- Disposition: **closed — accepted as designed (operator decision, 2026-10-13).**
+  The keys must stay where sops-nix places them, and the agent does not receive
+  key material in normal use: the MCP declaration's `!command` indirection is
+  resolved by the MCP plugin on the client side of the connection, not by the
+  agent's tools, so the model never sees the value. The residual property — a
+  session that deliberately asks the agent to read that path is not blocked by
+  the guard — is accepted by the operator and left to the process rule in
+  `CLAUDE.md`. No follow-up change follows. Actions already taken stand: the
+  driver's case table matches the guard's declared set (the gap is never pinned
+  as expected behaviour), the scenario names the surfaces the guard actually
+  covers, and the durable docs carry the accepted property as `R-021` in
+  `docs/arc42/11-risks-and-technical-debt.md`.
 
 ### F11 — The two characterization scenarios share one revision
 
