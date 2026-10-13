@@ -106,4 +106,45 @@ Mac's runtime behaviour is not deferred but out of reach — this repository has
 running agent is confirmed at activation. `TD-014` records the same limit for a
 live agent session.
 
+## Addendum — findings raised during implementation (2026-10-13)
+
+The design-review sign-off above stands; these two items were found while
+implementing the tasks and are recorded here because both change what the
+artifacts say, not what the plan is.
+
+### F10 — The guard's coverage is a glob set, and this repository's own decrypted keys sit outside it
+
+- Evidence: the guard check's first run failed on a case of mine that expected a
+  refusal for `grep` over `~/.config/sops-nix/kagi/api-key`. The hook refused only
+  the paths in its declared set — `/run/secrets/*`, a `sops/age/` path,
+  `/var/lib/sops-nix/*` — so a `read` of that path returns no verdict. sops-nix
+  places *user-side* secrets under `~/.config/sops-nix/secrets/`, which is where
+  this repository's `context7` and `kagi` keys are decrypted (the agent module's
+  `!cat $HOME/.config/sops-nix/secrets/…` reads them there).
+- Impact: the machine-enforced half of the rule "agents never read decrypted
+  secret material" does not cover the paths this repository's own tooling reads.
+  Pre-existing and unchanged by this change — the change installs the same hook,
+  so the same coverage applies on the second device.
+- Disposition: **not fixed here.** Extending the guard's globs is new behaviour
+  and would need its own scenario and target; the change's proposal does not
+  cover it. Actions taken instead: the driver's case table was corrected to the
+  guard's declared set (never pinning the gap as expected behaviour), the
+  scenario's `When` now names the surfaces the guard actually covers, the design
+  records the gap as a risk, and the durable docs carry it as `R-021` in
+  `docs/arc42/11-risks-and-technical-debt.md`. **Owner: the operator** — decide
+  whether to open a follow-up change that extends the guard to the user-side
+  secret directory (and to any other decrypted location a device holds).
+
+### F11 — The two characterization scenarios share one revision
+
+- The two `@check:unit-agent-secret-guard` scenarios are characterization: the
+  hook is unchanged, and their deliverable — the verdict check and its driver —
+  landed with the verification plumbing in revision `270ed64` (their T1 setup),
+  which also removed the need for two spec-only revisions.
+- Disposition: accepted and recorded in `tasks.md` (T4.COMMIT / T5.COMMIT). The
+  givn rule "a commit touching only the spec skeleton means the task is not done"
+  is what that merge avoids; each scenario still has its own mutation RED, its own
+  GREEN and its own evidence recorded.
+
 DESIGN-REVIEW: PASS
+

@@ -614,14 +614,9 @@
                 pkgs = nixpkgs.legacyPackages.${system};
                 integrationTests = import ./tests/integration/default.nix {
                   inherit pkgs sops-nix home-manager-unstable;
-                  # Temporary during this implementation: the booted check takes
-                  # the agent from the repository's unstable set until its own
-                  # GREEN step switches it to the agent's pin (tasks T6).
-                  ompPackage =
-                    ((import ./lib/helpers.nix).mkPkgsUnstable {
-                      inherit nixpkgs-unstable;
-                      inherit system;
-                    }).omp;
+                  # The booted check carries the agent from its own pin, so the
+                  # guest proves the version floor the devices assert.
+                  ompPackage = (agentPkgsFor system).omp;
                 };
               in
               integrationTests

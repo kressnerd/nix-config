@@ -122,65 +122,86 @@ Targeted command:
       Hash: `270ed64` (also carries T1's plumbing: the guard check, its driver and
       the booted check's registration).
 
-## T3 — Scenario: The work MacBook carries the personal laptop's current, guarded coding agent [ ]
+## T3 — Scenario: The work MacBook carries the personal laptop's current, guarded coding agent [x]
 
 Binding: `@host:J6G6Y9JK7L`. Target: `tests/assertions/J6G6Y9JK7L-invariants.nix`.
 Targeted command:
 `nix eval --raw .#darwinConfigurations.J6G6Y9JK7L.config.system.build.toplevel.drvPath`.
 
-- [ ] T3.RED Remove `@wip` from this scenario only. Extend
+- [x] T3.RED Remove `@wip` from this scenario only. Extend
       `tests/assertions/J6G6Y9JK7L-invariants.nix` with: the agent is in
       `home.packages`, the floor assertion, both model servers declared in
       `~/.omp/agent/mcp.json`, and the declared-guard assertion. Run the targeted
       command: MUST exit non-zero on "the coding agent must be installed". Paste.
-      Evidence:
-- [ ] T3.GREEN Import `./features/development/omp.nix` into
+      Evidence: exit 1 with all four named assertions:
+      `the coding agent (omp) must be installed — import features/development/omp.nix`,
+      `must be at version 18.10 or newer`, `must declare both shared model servers`,
+      `the agent's secret-access guard must be declared for installation`.
+      The server assertion reads `config.home.file…` defensively (`or null`), so the
+      RED is a named assertion rather than a missing-attribute abort.
+- [x] T3.GREEN Import `./features/development/omp.nix` into
       `home/dan/J6G6Y9JK7L.nix` and pass `ompPackage` through that host's
-      `home-manager.extraSpecialArgs`. Files:
+      `home-manager.extraSpecialArgs`. Files: `flake.nix` (aarch64-darwin
+      `ompPackage` from the pin), `home/dan/J6G6Y9JK7L.nix` (import before
+      `opencode.nix`).
       Run the targeted command: MUST exit 0. Paste.
-      Evidence:
-- [ ] T3.REFACTOR Keep the import list ordered as the other categories are;
+      Evidence: exit 0 (`darwin-system-26.11.…drv` evaluates); the invariants'
+      floor assertion is part of that evaluation.
+- [x] T3.REFACTOR Keep the import list ordered as the other categories are;
       targeted command still exits 0. Paste.
-      Evidence:
-- [ ] T3.COMMIT `givn commit` with the release note as subject and the scenario
+      Evidence: `nix fmt` on the three files; `lint-nixfmt`/`lint-deadnix`/
+      `lint-statix` exit 0; targeted eval exit 0.
+- [x] T3.COMMIT `givn commit` with the release note as subject and the scenario
       title in the body. Record the hash.
-      Hash:
+      Hash: `dfb3b42`.
 
-## T4 — Scenario: A decryption attempt is refused on a device that carries the guard [ ]
+## T4 — Scenario: A decryption attempt is refused on a device that carries the guard [x]
 
 Binding: `@check:unit-agent-secret-guard`. Target: `tests/unit/agent-secret-guard.mjs`
 via `checks.unit-agent-secret-guard`. Targeted command:
 `nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).unit-agent-secret-guard`.
 
-- [ ] T4.RED Remove `@wip` from this scenario only. This scenario is
+- [x] T4.RED Remove `@wip` from this scenario only. This scenario is
       **characterization** (`design.md`, Verification Binding): the hook is
       unchanged by this change, so the behaviour RED is the mutation — invert the
       refusal expectation for one case (`sops -d f` expected to pass), run the
       targeted command, confirm non-zero, paste.
-      Evidence:
-- [ ] T4.GREEN Restore the correct refusal table; run the targeted command: exit
+      Evidence: exit 1 —
+      `FAIL bash {"command":"sops -d hosts/thiniel/secrets.yaml"} -> refused
+      (sops material is protected by repository policy) [expected no verdict]`,
+      `16/17 verdicts as expected`. The hook refused while the mutated table
+      expected no verdict, which is what makes the check able to fail.
+- [x] T4.GREEN Restore the correct refusal table; run the targeted command: exit
       0. Files: `tests/unit/agent-secret-guard.mjs` only. Paste.
-      Evidence:
-- [ ] T4.REFACTOR Tidy the driver (case table extracted, no change in verdicts);
+      Evidence: exit 0 — `17/17 verdicts as expected`.
+- [x] T4.REFACTOR Tidy the driver (case table extracted, no change in verdicts);
       targeted command still exits 0. Paste.
-      Evidence:
-- [ ] T4.COMMIT `givn commit`; release note as subject, scenario title in body.
-      Hash:
+      Evidence: the case table was already a flat literal table with one comment
+      per group; `lint-nixfmt`/`lint-deadnix`/`lint-statix` exit 0 and the check
+      still exits 0 — no further restructuring was needed.
+- [x] T4.COMMIT `givn commit`; release note as subject, scenario title in body.
+      Hash: `b615254` — **merged with T5** (see T5.COMMIT): these two are
+      characterization scenarios whose deliverable (the verdict check and its
+      driver) landed with T1's plumbing in `270ed64`, so separate revisions would
+      each have touched only the spec file. The merge is recorded here, in the T5
+      entry and in `design-review.md`'s addendum.
 
-## T5 — Scenario: Ordinary repository work passes the guard [ ]
+## T5 — Scenario: Ordinary repository work passes the guard [x]
 
 Binding: `@check:unit-agent-secret-guard` (same target, allow-cases).
 
-- [ ] T5.RED Remove `@wip` from this scenario only. Mutation RED: expect the
+- [x] T5.RED Remove `@wip` from this scenario only. Mutation RED: expect the
       allow-case `cat .sops.yaml` to be refused; run the targeted command,
       confirm non-zero, paste.
-      Evidence:
-- [ ] T5.GREEN Restore the correct allow-cases; targeted command exits 0. Paste.
-      Evidence:
-- [ ] T5.REFACTOR Clean up; still exits 0. Paste.
-      Evidence:
-- [ ] T5.COMMIT `givn commit`; release note as subject, scenario title in body.
-      Hash:
+      Evidence: exit 1 —
+      `FAIL bash {"command":"cat .sops.yaml"} -> passed [expected refusal:
+      MUTATION: deliberately inverted expectation]`, `16/17 verdicts as expected`.
+- [x] T5.GREEN Restore the correct allow-cases; targeted command exits 0. Paste.
+      Evidence: exit 0 — `17/17 verdicts as expected`.
+- [x] T5.REFACTOR Clean up; still exits 0. Paste.
+      Evidence: `lint-nixfmt` exit 0; check exit 0.
+- [x] T5.COMMIT `givn commit`; release note as subject, scenario title in body.
+      Hash: `b615254` (shared with T4 — rationale in T4.COMMIT).
 
 ## T6 — Scenario (e2e): A booted device starts its coding agent [ ]
 

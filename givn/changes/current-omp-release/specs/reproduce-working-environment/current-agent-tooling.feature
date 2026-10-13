@@ -37,7 +37,7 @@ Feature: Current coding agent on a personal device
     When a session submits an ordinary repository read or an ordinary command
     Then the guard does not refuse the call
 
-  @givn.added @wip @e2e @check:integration-agent-tooling
+  @givn.added @e2e @check:integration-agent-tooling
   Scenario: A booted device starts its coding agent
     Given a device that carries the owner's coding agent and none of its servers' key material
     When the device boots and its configuration is applied
