@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "quiet-configuration-evaluation",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "6cfe7c1ba429f08c7ad92467f97313076120c64a",
+  "tested_revision": "6cfe7c1ba429f08c7ad92467f97313076120c64a",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 23.57715771
+    },
+    "regular": {
+      "status": "passed",
+      "total": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 90.302228942
+    }
+  },
   "coverage": null,
   "started_at_unix": 1791898976,
-  "finished_at_unix": null
+  "finished_at_unix": 1791899090
 }
