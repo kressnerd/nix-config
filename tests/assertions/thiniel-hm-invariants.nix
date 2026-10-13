@@ -6,7 +6,12 @@
 # inside the Home Manager evaluation — so `home/dan/thiniel.nix` imports it,
 # mirroring `tests/assertions/J6G6Y9JK7L-invariants.nix`. It is deliberately not
 # aggregated into the NixOS-level `tests/assertions/default.nix`.
-{ config, options, lib, ... }:
+{
+  config,
+  options,
+  lib,
+  ...
+}:
 let
   # A release resolves a setting whose default it superseded through this
   # helper and emits its migration warning exactly when the option is left at
@@ -26,9 +31,10 @@ in
 {
   assertions = [
     {
-      assertion = !(superseded [ "wayland" "windowManager" "hyprland" "configType" ] {
-        value = "hyprlang";
-      } { value = "lua"; });
+      assertion =
+        !(superseded [ "wayland" "windowManager" "hyprland" "configType" ] {
+          value = "hyprlang";
+        } { value = "lua"; });
       message = "thiniel: the compositor configuration format must be stated by the device, not resolved from the release's superseded default (set wayland.windowManager.hyprland.configType)";
     }
   ];

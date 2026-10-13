@@ -88,6 +88,15 @@ lib.mkMerge [
       package = pkgs-unstable.hyprland;
       systemd.enable = true;
 
+      # Home Manager 26.05 changed the default from "hyprlang" to "lua", but keeps
+      # the legacy default while home.stateVersion < 26.05 and then reports a
+      # migration warning. The state version is fixed at install time, so the
+      # device states the format it uses: the conf-based configuration below is
+      # the one this profile's settings are written for, and moving to the Lua
+      # call form is a desktop change of its own (change
+      # `quiet-configuration-evaluation`, design D2).
+      configType = "hyprlang";
+
       settings = {
         env = [
           "AQ_NO_MODIFIERS,1"

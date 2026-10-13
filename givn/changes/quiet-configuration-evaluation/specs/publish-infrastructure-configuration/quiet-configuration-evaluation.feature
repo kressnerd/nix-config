@@ -2,7 +2,7 @@
 
 Feature: Quiet configuration evaluation
 
-  @givn.added @wip @host:thiniel
+  @givn.added @host:thiniel
   Scenario: The personal laptop states its compositor configuration format
     Given the personal laptop's compositor configuration format was changed by a newer release
     And   its home profile was created before that change

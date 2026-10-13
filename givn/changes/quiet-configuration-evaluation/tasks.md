@@ -63,19 +63,38 @@ capability: `quiet-configuration-evaluation`.
 
 ## Task 1 — Scenario: `The personal laptop states its compositor configuration format` (`@host:thiniel`)
 
-- [ ] RED: remove `@wip` from this scenario only. Create
+- [x] RED: removed `@wip` from this scenario only. Created
       `tests/assertions/thiniel-hm-invariants.nix` with the superseded-default
       predicate for `wayland.windowManager.hyprland.configType` (via
       `lib.hm.deprecations.mkStateVersionOptionDefault` in deferred mode) and
-      import it in `home/dan/thiniel.nix`. Targeted run:
-      `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath`
-      → MUST exit non-zero with the compositor assertion named. Paste.
-- [ ] GREEN: state `wayland.windowManager.hyprland.configType = "hyprlang"` in
-      `home/dan/features/linux/hyprland.nix` with its rationale comment. List
-      files created/modified. Re-run the targeted command → exit 0. Paste.
-- [ ] REFACTOR: no behaviour change; `nixfmt` the touched files; re-run → exit 0.
-- [ ] COMMIT: `givn commit`, release note as subject, scenario title in the body.
-      Record the hash.
+      imported it in `home/dan/thiniel.nix`. Targeted run:
+      ```
+      $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+      error:
+      Failed assertions:
+      - dan profile: thiniel: the compositor configuration format must be stated by the device, not resolved from the release's superseded default (set wayland.windowManager.hyprland.configType)
+      exit 1
+      ```
+- [x] GREEN: stated `wayland.windowManager.hyprland.configType = "hyprlang"` in
+      `home/dan/features/linux/hyprland.nix` with its rationale comment.
+      Files created/modified: `tests/assertions/thiniel-hm-invariants.nix` (new),
+      `home/dan/thiniel.nix` (import), `home/dan/features/linux/hyprland.nix`.
+      ```
+      $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+      /nix/store/xxax24mkjqx6vivl2zf5j3yh4iml8zxx-nixos-system-thiniel-26.11.20261008.8edc0c7.drv
+      exit 0
+      ```
+      The compositor's migration warning is gone from that output; only the
+      browser-profile warning remains (scenario 2).
+- [x] REFACTOR: no behaviour change; the touched Nix files were formatted with
+      the repository's `nix fmt` (nixfmt) and the targeted run re-executed:
+      ```
+      $ nix fmt flake.nix home/dan/thiniel.nix home/dan/features/linux/hyprland.nix tests/assertions/thiniel-hm-invariants.nix
+      $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
+      /nix/store/xxax24mkjqx6vivl2zf5j3yh4iml8zxx-nixos-system-thiniel-26.11.20261008.8edc0c7.drv
+      exit 0
+      ```
+- [x] COMMIT: `a0e0c8e` — release note as subject, scenario title in the body.
 
 ---
 
