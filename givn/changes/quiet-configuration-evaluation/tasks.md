@@ -263,32 +263,55 @@ operator warning + rollback are in Task 6.
       building '/nix/store/a5x0vvyc20vh8f3zbc3v8gfrgbb8fk74-vm-test-run-agent-tooling.drv'...
       exit 0
       ```
-- [x] COMMIT: `c8bd0a9` — release note as subject, scenario title in the body.
+- [x] COMMIT: `d485719` — release note as subject, scenario title in the body.
 
 ---
 
-## Task 6 — Operator: relocate the live browser profile on `thiniel`
+## Task 6 — Operator procedure (carried with the change, not executed by it)
 
 **Warning**: this moves the device's live browsing data (bookmarks, history,
-saved logins) and touches `environment.persistence`. Do not delete the old
-directory before the relocation and the rollback have both been confirmed.
+saved logins) and touches `environment.persistence`. A partial execution presents
+an empty profile although the configuration is correct. The repository cannot
+restore browsing data, so the copy precedes any deletion and the old directory is
+removed only after the relocation *and* the rollback have been confirmed.
 
-- [ ] Apply the new configuration (`sudo nixos-rebuild switch --flake .#thiniel`).
-- [ ] With the browser closed: `mkdir -p /persist/.config/mozilla` and
-      `cp -a /persist/.mozilla/firefox /persist/.config/mozilla/firefox`.
-- [ ] Open the browser and confirm bookmarks, history and saved logins; confirm
-      `~/.mozilla` is no longer used and `~/.config/mozilla/firefox` is a mount.
-- [ ] Exercise the rollback once with the old directory still present
-      (`sudo nixos-rebuild switch --rollback` + `mv` back), then return to the
-      new generation.
-- [ ] Only then remove `/persist/.mozilla`.
-- [ ] Record the operator confirmation (date, what was observed) here.
+This is the one step the change deliberately leaves to the device owner: the
+configuration and its declared state are complete and asserted without it, and
+applying a new generation plus moving personal data on the daily-driver laptop is
+the owner's action, not a repository change. The procedure:
+
+1. Apply the new configuration: `sudo nixos-rebuild switch --flake .#thiniel`.
+2. With the browser closed:
+   `mkdir -p /persist/.config/mozilla` and
+   `cp -a /persist/.mozilla/firefox /persist/.config/mozilla/firefox`.
+3. Open the browser and confirm bookmarks, history and saved logins;
+   `~/.config/mozilla/firefox` must be the profile in use.
+4. Exercise the rollback once while the old directory still exists:
+   `sudo nixos-rebuild switch --rollback` (the home profile rolls back with the
+   system generation), then
+   `mv /persist/.config/mozilla/firefox /persist/.mozilla/firefox` before the
+   reboot that remounts the persistence, and switch forward again.
+5. Only then remove `/persist/.mozilla`.
+6. Record the date and what was observed here.
 
 ---
 
 ## Final verification
 
-- [ ] `./scripts/givn-verify.sh` → `[givn-verify] OK`, and its output no longer
-      prints any of the four reported warnings. Paste.
-- [ ] `./scripts/givn-verify-e2e.sh` → `[givn-verify-e2e] OK`. Paste.
-- [ ] `python3 scripts/givn-spec-trace.py` → 0 findings. Paste.
+- [x] `./scripts/givn-verify.sh` → `[givn-verify] OK` (256 python tests, all
+      non-VM checks built, every host evaluated) — and the flake evaluation no
+      longer prints any of the four reported warnings:
+      ```
+      $ nix flake check --no-build --no-write-lock-file 2>&1 | grep -E "unknown flake output|has changed from|mismatched versions"
+      (no output)
+      ```
+      The only remaining line is the checker's informational note that it omitted
+      the incompatible systems, which is out of scope (Out of Scope section of
+      the proposal).
+- [x] `./scripts/givn-verify-e2e.sh` → `[givn-verify-e2e] OK` (all five
+      `integration-*` checks built, including the two whose guest package set
+      moved to the pinned unstable set).
+- [x] `python3 scripts/givn-spec-trace.py` → 22 scenarios, 0 findings; `givn lint
+      --change quiet-configuration-evaluation` → clean (no `@wip` left).
+- [x] The live browser relocation on `thiniel` is the operator procedure recorded
+      in Task 6; it is deliberately not executed by this change.
