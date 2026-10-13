@@ -86,7 +86,7 @@ below therefore deviates.
 
 | Proposed capability | Route's recommendation | Decision | Rationale (if you deviated from route) |
 |---|---|---|---|
-| `quiet-configuration-evaluation` | EXTEND `current-agent-tooling` (score 12.60, confidence: signal) | NEW in `publish-infrastructure-configuration` | No existing capability owns the diagnostics a configuration evaluation prints. `operational-data-separation` owns disclosure of operational values, `permitted-identity-selection` owns identity selection, `current-agent-tooling` owns an agent's version floor and guardrails. The publication contract's flow already requires a checkout that evaluates and passes its checks, and its trigger covers recording a change to the configuration, so a capability promising that an evaluation reports nothing to triage — every superseded setting stated explicitly at a chosen value, and no output the checker cannot interpret — belongs there. |
+| `quiet-configuration-evaluation` | EXTEND `current-agent-tooling` (score 12.60, confidence: signal) | NEW in publish-infrastructure-configuration | No existing capability owns the diagnostics a configuration evaluation prints. `operational-data-separation` owns disclosure of operational values, `permitted-identity-selection` owns identity selection, `current-agent-tooling` owns an agent's version floor and guardrails. The publication contract's flow already requires a checkout that evaluates and passes its checks, and its trigger covers recording a change to the configuration, so a capability promising that an evaluation reports nothing to triage — every superseded setting stated explicitly at a chosen value, and no output the checker cannot interpret — belongs there. |
 
 ## Out of Scope
 
