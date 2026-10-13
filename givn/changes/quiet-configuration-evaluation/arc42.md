@@ -7,10 +7,10 @@ a checked result, not an omission.
 |---|---|---|---|
 | 1 | 01 introduction-and-goals | **Yes** | Requirement R1 now carries the quiet-evaluation half: an evaluation prints no superseded-default, release-mismatch or unrecognised-output diagnostic (QS-015). No goal, priority or stakeholder changes. |
 | 2 | 02 architecture-constraints | **Yes** | One constraint row added: a setting whose release default a profile superseded is stated explicitly at a value the operator chose, because the immutable state version forbids adopting release defaults by raising it. |
-| 3 | 03 context-and-scope | No | No new external interface: the change removes a flake output and moves a browser profile directory inside one device. No input, provider, or consumer boundary changes. |
+| 3 | 03 context-and-scope | **Yes** | The chapter enumerates the flake inputs and described Colmena as a declared-but-unused path; the withdrawn `colmena` input and hive made the input list, the diagram and the fleet row stale, so all three were updated. No new external interface appears. |
 | 4 | 04 solution-strategy | **Yes** | The fleet-deployment row changes: the `colmena` input and the empty `colmenaHive` output are withdrawn and re-registered with the first server; the CLI and the aliases stay. |
-| 5 | 05 building-block-view | **Yes** | The flake building block and its diagram no longer list `colmenaHive`; the flake-output contract check is named instead. |
-| 6 | 06 runtime-view | No | No runtime flow changes: the changed settings are evaluation/activation-time values, no service, port, unit, or boot step changes, and the booted checks keep their flow shape (boot → activation → observe). |
+| 5 | 05 building-block-view | **Yes** | The flake building block and its diagram no longer list `colmenaHive`; the flake-output contract check is named instead, the assertion-module count is corrected, and the two Home-Manager-based integration checks record their guest pin. |
+| 6 | 06 runtime-view | **Yes** | The fleet-deployment scenario's note claimed the hive is declared with no nodes; it now records the withdrawal and the re-registration condition. No runtime flow changes: the changed settings are evaluation/activation-time values, no service, port, unit, or boot step changes, and the booted checks keep their flow shape (boot → activation → observe). |
 | 7 | 07 deployment-view | **Yes** | The Colmena hive row records the withdrawal and the re-registration condition; `thiniel` gains a Browser profile property row (`~/.config/mozilla/firefox`, persisted as `.config/mozilla`). |
 | 8 | 08 crosscutting-concepts | **Yes** | The persistence concept's example list now names `.config/mozilla` instead of `.mozilla` for the browser profile. |
 | 9 | 09 architecture-decisions | **Yes** | One candidate assessed and routed: NOT_QUALIFIED → canonical artifact [chapter 2](02-architecture-constraints.md) plus the change design. The register still holds exactly one ADR; no ADR file was created. |
@@ -58,8 +58,10 @@ single-change reversibility, so it fails the gate and stays in the change design
 |---|---|
 | `docs/arc42/01-introduction-and-goals.md` | R1 evidence extended with the quiet-evaluation requirement (QS-015) |
 | `docs/arc42/02-architecture-constraints.md` | New constraint row: superseded defaults are stated explicitly |
+| `docs/arc42/03-context-and-scope.md` | Input list, diagram and fleet row (the `colmena` input withdrawn) |
 | `docs/arc42/04-solution-strategy.md` | Fleet-deployment row rewritten (hive withdrawn, CLI kept) |
-| `docs/arc42/05-building-block-view.md` | Flake diagram entry and building-block row |
+| `docs/arc42/05-building-block-view.md` | Flake diagram entry and building-block row; assertion-module count; the two Home-Manager-based checks' guest pin |
+| `docs/arc42/06-runtime-view.md` | Fleet-deployment note (withdrawal, re-registration condition) |
 | `docs/arc42/07-deployment-view.md` | Colmena hive row; `thiniel` Browser profile row |
 | `docs/arc42/08-crosscutting-concepts.md` | Persistence example: `.mozilla` → `.config/mozilla` |
 | `docs/arc42/09-architecture-decisions.md` | New NOT_QUALIFIED candidate row |

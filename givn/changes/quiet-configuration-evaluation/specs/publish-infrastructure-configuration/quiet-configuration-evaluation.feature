@@ -18,7 +18,7 @@ Feature: Quiet configuration evaluation
     When  the personal laptop's configuration is evaluated
     Then  the browser profile is rendered under `~/.config/mozilla/firefox` and none is rendered under `~/.mozilla/firefox`
     And   no superseded-default diagnostic is reported for the profile
-    And   the device's persistent set covers the profile directory, so the browsing state survives the root-filesystem reset
+    And   `~/.config/mozilla/firefox` is a persistence mount, so the browsing state survives the root-filesystem reset
 
   @givn.added @wip @e2e @check:integration-ssh-identity-selection
   Scenario: A booted device reproduces its identity surface from a single release

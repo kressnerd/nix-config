@@ -302,5 +302,6 @@ previous generation in systemd-boot.
 one-time bootstrap problem (the remote Nix daemon does not trust `dan` until
 `trusted-users` is active) and the TPM2/Secure Boot chicken-and-egg when
 `secure-boot.nix` is enabled before keys exist. No such deployment is recorded
-in the working tree; Colmena is an alternative declared in the flake but the
-hive has no nodes.
+in the working tree; Colmena remains an intended alternative, but the change
+`quiet-configuration-evaluation` withdrew its empty hive output and its input, so
+nothing registers a node until the first server is provisioned.
