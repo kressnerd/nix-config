@@ -90,10 +90,11 @@ Targeted command:
 `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath`.
 
 - [x] T2.RED Remove `@wip` from this scenario only (keep the other four `@wip`).
-      Extend `tests/assertions/thiniel-invariants.nix` with the agent-present
-      assertion, the floor assertion
+      Extend `tests/assertions/thiniel-invariants.nix` with the floor assertion
       (`lib.versionAtLeast (lib.getVersion <agent>) "18.10"`) and the
-      declared-guard assertion (`config.home.activation ? installOmpSopsGuard`).
+      declared-guard assertion (`config.home.activation ? installOmpSopsGuard`);
+      the agent-present assertion (`hmHasPkg "omp"`) already existed before this
+      change.
       Run the targeted command: MUST exit non-zero, failing on the floor
       assertion (`18.8.4`). Paste command + output.
       Evidence: exit 1 —
@@ -116,11 +117,7 @@ Targeted command:
       Evidence: `nix fmt flake.nix …` then
       `nix build --no-link .#checks.x86_64-linux.lint-nixfmt .#checks.x86_64-linux.lint-deadnix .#checks.x86_64-linux.lint-statix`
       → exit 0; targeted eval still exit 0.
-- [x] T2.COMMIT `givn commit -m "feat(current-agent-tooling): <release note>"`
-      with the scenario title in the body; includes the arc42/glossary/`arc42.md`
-      updates from the design phase. Record the hash.
-      Hash: `270ed64` (also carries T1's plumbing: the guard check, its driver and
-      the booted check's registration).
+  - [x] COMMIT: `270ed64` — `feat(current-agent-tooling): <release note>` (one commit for RED+GREEN+REFACTOR; also carries T1's plumbing: the guard check and its driver, the booted check's registration, and the arc42/glossary updates from the design phase).
 
 ## T3 — Scenario: The work MacBook carries the personal laptop's current, guarded coding agent [x]
 
@@ -151,9 +148,7 @@ Targeted command:
       targeted command still exits 0. Paste.
       Evidence: `nix fmt` on the three files; `lint-nixfmt`/`lint-deadnix`/
       `lint-statix` exit 0; targeted eval exit 0.
-- [x] T3.COMMIT `givn commit` with the release note as subject and the scenario
-      title in the body. Record the hash.
-      Hash: `dfb3b42`.
+  - [x] COMMIT: `dfb3b42` — `feat(current-agent-tooling): <release note>` (one commit for RED+GREEN+REFACTOR).
 
 ## T4 — Scenario: A decryption attempt is refused on a device that carries the guard [x]
 
@@ -179,12 +174,7 @@ via `checks.unit-agent-secret-guard`. Targeted command:
       Evidence: the case table was already a flat literal table with one comment
       per group; `lint-nixfmt`/`lint-deadnix`/`lint-statix` exit 0 and the check
       still exits 0 — no further restructuring was needed.
-- [x] T4.COMMIT `givn commit`; release note as subject, scenario title in body.
-      Hash: `b615254` — **merged with T5** (see T5.COMMIT): these two are
-      characterization scenarios whose deliverable (the verdict check and its
-      driver) landed with T1's plumbing in `270ed64`, so separate revisions would
-      each have touched only the spec file. The merge is recorded here, in the T5
-      entry and in `design-review.md`'s addendum.
+  - [x] COMMIT: `b615254` — `feat(current-agent-tooling): <release note>` (shared with T5; these two are characterization scenarios whose deliverable — the verdict check and its driver — landed with T1's plumbing in `270ed64`, so separate revisions would each have touched only the specifier. The merge is recorded here, in the T5 entry and in `design-review.md` F11.)
 
 ## T5 — Scenario: Ordinary repository work passes the guard [x]
 
@@ -200,8 +190,7 @@ Binding: `@check:unit-agent-secret-guard` (same target, allow-cases).
       Evidence: exit 0 — `17/17 verdicts as expected`.
 - [x] T5.REFACTOR Clean up; still exits 0. Paste.
       Evidence: `lint-nixfmt` exit 0; check exit 0.
-- [x] T5.COMMIT `givn commit`; release note as subject, scenario title in body.
-      Hash: `b615254` (shared with T4 — rationale in T4.COMMIT).
+  - [x] COMMIT: `b615254` — `feat(current-agent-tooling): <release note>` (shared with T4; rationale in the T4 entry).
 
 ## T6 — Scenario (e2e): A booted device starts its coding agent [x]
 
@@ -233,8 +222,7 @@ Binding: `@e2e @check:integration-agent-tooling`. Target:
 - [x] T6.REFACTOR Tidy the test module; re-run the check: still passes. Paste.
       Evidence: `nix fmt flake.nix`; `lint-nixfmt`/`lint-deadnix`/`lint-statix`
       exit 0; the check re-run exits 0.
-- [x] T6.COMMIT `givn commit`; release note as subject, scenario title in body.
-      Hash: `2551789`.
+  - [x] COMMIT: `2551789` — `feat(current-agent-tooling): <release note>` (one commit for RED+GREEN+REFACTOR).
 
 ## T7 — Full verification and operator hand-off [x]
 

@@ -51,7 +51,7 @@ graph LR
 | File | Change |
 |---|---|
 | `flake.nix` | New input `nixpkgs-agent`; per-system agent package; `ompPackage` in `home-manager.extraSpecialArgs` for `thiniel` and `J6G6Y9JK7L` (the consumer is a Home Manager user module, so the system `specialArgs` would not reach it); `checks.unit-agent-secret-guard` (all systems); agent package threaded into the integration aggregator |
-| `home/dan/features/development/omp.nix` | Takes `ompPackage` instead of `pkgs-unstable`; keeps `pkgs` for coreutils; MCP declaration and guard activation unchanged |
+| `home/dan/features/development/omp.nix` | Takes `ompPackage` instead of `pkgs-unstable`; keeps `pkgs` for coreutils; the `Model server (MCP server)` declaration and the guard activation are unchanged |
 | `home/dan/J6G6Y9JK7L.nix` | Imports the agent feature module (new on the Mac) |
 | `tests/assertions/thiniel-invariants.nix` | Agent present, version floor, and declared guard installation |
 | `tests/assertions/J6G6Y9JK7L-invariants.nix` | Agent installed, version floor, declared servers, declared guard installation |
