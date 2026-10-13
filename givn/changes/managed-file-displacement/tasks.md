@@ -22,18 +22,25 @@ new capability and rule). Capability: `managed-file-displacement`.
 
 ## Setup task (do first)
 
-- [ ] **Wire the new targets.** (a) `tests/integration/managed-file-displacement-test.nix`
+- [x] **Wire the new targets.** (a) `tests/integration/managed-file-displacement-test.nix`
       is registered in `tests/integration/default.nix` and the flake's linux
       checks block passes the *declared* value
-      (`self.nixosConfigurations.thiniel.config.home-manager.backupFileExtension`),
-      so the boot proves the device's setting. (b) The two host assertions go into
-      the existing system-level modules (`tests/assertions/common-global-invariants.nix`,
-      `tests/assertions/J6G6Y9JK7L-darwin-invariants.nix`), so no aggregator entry
-      is needed. Evidence: `python3 scripts/givn-spec-trace.py` → 0 findings (paste).
-- [ ] **Proof-of-RED.** The two host assertions fail against the current tree
-      (`backupFileExtension` is `null`), and the booted check fails for the
-      clobber reason while the declared value is `null`. Paste the non-zero runs.
-- [ ] **Confirm the runners differ** (`givn/commands.yaml`).
+      (`self.nixosConfigurations.thiniel.config.home-manager.backupCommand`), so
+      the boot proves the device's setting (done in Task 3's RED). (b) The two
+      host assertions went into the existing system-level modules
+      (`tests/assertions/common-global-invariants.nix` in Task 1,
+      `tests/assertions/J6G6Y9JK7L-darwin-invariants.nix` in Task 2), so no
+      aggregator entry was needed. Evidence:
+      ```
+      $ python3 scripts/givn-spec-trace.py
+      givn-spec-trace: 25 scenario(s) across 5 feature file(s), 0 finding(s)
+      exit 0
+      ```
+- [x] **Proof-of-RED.** Recorded per scenario below: the two host assertions
+      failed with their own messages, and the booted check failed with the guest's
+      `Existing file '/home/test/.config/example/settings.conf' would be clobbered`.
+- [x] **Confirm the runners differ**: `verify.command` = `./scripts/givn-verify.sh`
+      vs `verify.e2e_command` = `./scripts/givn-verify-e2e.sh` (`givn/commands.yaml`) — confirmed.
 
 ---
 
@@ -127,26 +134,34 @@ new capability and rule). Capability: `managed-file-displacement`.
       Files: `tests/integration/managed-file-displacement-test.nix` (new),
       `tests/integration/default.nix`, `flake.nix`.
 - [x] REFACTOR: `nix fmt` on the three files; the build above is post-format (exit 0).
-- [x] COMMIT: `PENDING_HASH_3` — release note as subject, scenario title in the body.
+- [x] COMMIT: `bf77831` — release note as subject, scenario title in the body.
 
 ---
 
-## Operator step (applies the setting to the device)
+## Operator step (applies the setting to the device; not executed by this change)
 
-This is the same step that failed twice on 2026-10-13; it now applies cleanly and
-each earlier failure's file is already parked.
+Applying the setting to a live device is the owner's action, not a repository
+change: the declared state and the behaviour are proven by the booted check, and
+this step only puts it on `thiniel`. It is the same step that failed twice on
+2026-10-13; it now applies cleanly, and the files that made it fail are already
+parked beside their rendered versions.
 
-- [ ] `sudo nixos-rebuild switch --flake .#thiniel` on the laptop (Firefox may
-      stay open this time: nothing needs to be freed, the activation moves any
-      conflicting file aside).
-- [ ] Confirm the activation completes and `home-manager-dan.service` shows the
-      new activation timestamp.
-- [ ] Record the date and what was observed.
-
----
+1. `sudo nixos-rebuild switch --flake .#thiniel` on the laptop (the browser may
+   stay open: nothing needs to be freed, and any conflicting managed file is
+   renamed aside rather than aborting).
+2. Confirm the activation completes and `home-manager-dan.service` reports a new
+   activation timestamp.
+3. The next time the browser rewrites a managed file, the switch completes and a
+   `<name>.<n>` copy sits beside the rendered file — record that observation here.
 
 ## Final verification
 
-- [ ] `./scripts/givn-verify.sh` → `[givn-verify] OK`, no new warning in its output.
-- [ ] `./scripts/givn-verify-e2e.sh` → `[givn-verify-e2e] OK` (includes the new check).
-- [ ] `python3 scripts/givn-spec-trace.py` → 0 findings; `givn lint --change managed-file-displacement` → clean.
+- [x] `./scripts/givn-verify.sh` → `[givn-verify] OK` (256 python tests, all
+      non-VM checks built, every host evaluated; the flake evaluation still prints
+      no warning to triage).
+- [x] `./scripts/givn-verify-e2e.sh` → `[givn-verify-e2e] OK` (all six
+      `integration-*` checks built, including the new one).
+- [x] `python3 scripts/givn-spec-trace.py` → 25 scenarios, 0 findings;
+      `givn lint --change managed-file-displacement` → no `@wip` left (one shape
+      advisory on the two host scenarios, which cannot be merged without dropping
+      a binding).

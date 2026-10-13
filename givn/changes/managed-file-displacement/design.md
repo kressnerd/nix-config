@@ -37,9 +37,9 @@ actors stay interaction roles (`a device`, `the personal laptop`).
   `hosts/J6G6Y9JK7L/default.nix` (the MacBook) as
   `home-manager.backupCommand`. Rejected: the backup extension alone (Home
   Manager aborts on a second conflict on the same path — verified in
-  `modules/files/check-link-targets.sh:39-40`), the extension with
+  `modules/files/check-link-targets.sh:29-30` in the `home-manager-unstable` revision), the extension with
   `overwriteBackup` (Home Manager deletes the previous displaced copy before
-  moving the new one — `modules/files.nix:204-207`), and `trash-cli` (moves the
+  moving the new one — `modules/files.nix:356-359` in the same revision), and `trash-cli` (moves the
   file out of the tree and adds a package for a rename).
 - **Decides D2 (proposal)**: the configuration moves the file; no manual step.
   The operator loses the loud abort and the displaced copies accumulate, which is
@@ -51,7 +51,7 @@ actors stay interaction roles (`a device`, `the personal laptop`).
 
 | Decision | Choice | Channel / source | Why |
 |---|---|---|---|
-| Displacement mechanism | `home-manager.backupCommand` set to a `writeShellScript` that renames the conflicting file to the first free `<name>.<n>` | Home Manager's system-level module option (`nixosModules` / `darwinModules`); the command runs in the activation | Home Manager runs the command with the conflicting path as its **final argument** (`modules/files.nix:198-200`), so the behaviour is entirely ours: every rewrite is displaced, nothing is deleted, and no second-conflict case exists. The extension alone cannot do this (see Decisions). |
+| Displacement mechanism | `home-manager.backupCommand` set to a `writeShellScript` that renames the conflicting file to the first free `<name>.<n>` | Home Manager's system-level module option (`nixosModules` / `darwinModules`); the command runs in the activation | Home Manager runs the command with the conflicting path as its **final argument** (`modules/files.nix:353-355` in the `home-manager-unstable` revision the devices run), so the behaviour is entirely ours: every rewrite is displaced, nothing is deleted, and no second-conflict case exists. The extension alone cannot do this (see Decisions). |
 | Where the script lives | `lib/helpers.nix`: `mkManagedFileDisplacement = pkgs: pkgs.writeShellScript "hm-displace-managed-file" ''…''` | this repository | One definition, two call sites (`hosts/common/global`, `hosts/J6G6Y9JK7L`), following the existing `mkPkgsUnstable` / `mkFirefoxExtensions` pattern instead of two drifting copies. |
 | Where the value is declared | `hosts/common/global/default.nix` (adlerkopf, cupix001, nixos-vm-minimal, thiniel) plus `hosts/J6G6Y9JK7L/default.nix` (the MacBook, which does not import the NixOS shared module) | this repository | One value everywhere, two sites instead of five per-host copies. `hosts/common/global` is NixOS-only, so the darwin host states it itself. |
 | Name of a displaced file | `<name>.<n>`, first free number | this repository | Says what happened (the file was displaced) without colliding with anything else, and needs no timestamp dependency — the operator chose the numbered rename (proposal D1). |
@@ -192,7 +192,6 @@ and harm nothing.
 
 ## arc42 chapter impact
 
-- `01-introduction-and-goals.md` — R1's evidence (the appliable configuration) and the quality-scenario pointer.
 - `02-architecture-constraints.md` — the activation rule for a rewritten managed file.
 - `05-building-block-view.md` — the helper, the two declaration sites, the sixth integration check.
 - `06-runtime-view.md` — the "repository validation" list of integration checks.
