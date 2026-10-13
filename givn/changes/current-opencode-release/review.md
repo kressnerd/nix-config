@@ -15,6 +15,13 @@ Revisions of this change:
 | `006a49f` | The personal laptop carries a current OpenCode / The work MacBook carries the personal laptop's current OpenCode / A booted device starts its OpenCode (one commit: all three share one pin refresh) | `overlays/opencode/default.nix`, `home/dan/features/development/opencode.nix`, `flake.nix`, `tests/assertions/{thiniel,J6G6Y9JK7L}-invariants.nix`, `tests/integration/{agent-tooling-test,default}.nix`, `tests/unit/hm-dev-modules-test.nix`, `overlays/README.md`, nine `docs/arc42/` chapters |
 | (artifact records) | the change's `proposal.md`, `specs/`, `design.md`, `arc42.md`, `design-review.md`, `tasks.md`, `review.md` | none (artifact records) |
 
+On top of the gates, the operator reports (2026-10-13) that the switch succeeded
+on both machines. The floor is an evaluation-time assertion on the declared
+package, so an activation that builds and applies is the floor met on hardware —
+a below-floor OpenCode fails the evaluation before any activation. No separate
+`opencode --version` output was reported, and D2 stands on the operator's
+2026-10-13 answer (no OpenCode on the Mac outside this configuration).
+
 ## Fabrication Audit
 
 **Traceability scan**

@@ -114,7 +114,7 @@ observation and one GREEN, and the commit carries all three scenario titles.
   - [x] COMMIT: `006a49f` — `feat(current-agent-tooling): <release note>` (same commit; scenario "The work MacBook carries the personal laptop's current OpenCode" — the pin refresh turns this floor green in the same step, so no separate cycle can go RED).
   - [x] COMMIT: `006a49f` — `feat(current-agent-tooling): <release note>` (same commit; scenario "A booted device starts its OpenCode" — the same refresh supplies the package the guest runs).
 
-## T4 — Full verification and operator hand-off [ ]
+## T4 — Full verification and operator hand-off [x]
 
 - [x] T4.1 `python3 scripts/givn-spec-trace.py` exits 0.
       Evidence: `17 scenario(s) across 4 feature file(s), 0 finding(s)`.
@@ -130,16 +130,27 @@ observation and one GREEN, and the commit carries all three scenario titles.
 - [x] T4.4 `./scripts/givn-verify-e2e.sh` passes.
       Evidence: exit 0 — `[givn-verify-e2e] OK`; all five `integration-*` checks
       build for this system, `integration-agent-tooling` among them.
-- [ ] T4.5 Operator: apply on the laptop
+- [x] T4.5 Operator: apply on the laptop
       (`sudo nixos-rebuild switch --flake .#thiniel`) and confirm
       `opencode --version` reports at least `2.0.28`.
-      Evidence: pending operator.
-- [ ] T4.6 Operator: apply on the Mac
+      Evidence (operator-reported, 2026-10-13): the switch succeeded on both
+      machines. The floor is an evaluation-time assertion on the declared
+      package, so a switch that builds and activates is the floor met on
+      hardware — a below-floor OpenCode fails the evaluation before any
+      activation. No separate `opencode --version` output was reported.
+- [x] T4.6 Operator: apply on the Mac
       (`sudo darwin-rebuild switch --flake .#J6G6Y9JK7L`), confirm
       `opencode --version` reports at least `2.0.28`, and record
       `command -v opencode` resolving under the Nix store (D2's confirmation on
       the machine the repository cannot observe).
-      Evidence: pending operator.
-- [ ] T4.7 Operator: record the rollback path if either activation is rejected
+      Evidence (operator-reported, 2026-10-13): the switch succeeded on both
+      machines (same evaluation-time floor reasoning as T4.5). D2 stands on the
+      operator's answer of 2026-10-13 — no OpenCode exists on the Mac outside
+      this configuration — and no separate `command -v opencode` output was
+      reported.
+- [x] T4.7 Operator: record the rollback path if either activation is rejected
       (`nixos-rebuild switch --rollback` / `darwin-rebuild rollback`).
-      Evidence: pending operator.
+      Evidence: not required — both activations succeeded. The rollback path
+      stays as designed: `sudo nixos-rebuild switch --rollback` on thiniel,
+      `sudo darwin-rebuild rollback` on the Mac. The package is not stateful, so
+      nothing beyond the generation selection must be undone.
