@@ -1,3 +1,4 @@
+<!-- givn:base-sha256:4d5b3d5c748b974ea046c3f22c8dc5e59afad32e72a74edbd25a7fd8fdeb0a90 -->
 # Use case: reproduce-working-environment
 
 ## Level
@@ -42,6 +43,8 @@ The Device owner requests reproduction of the specified usual working environmen
 - Declarative configuration cannot recreate unavailable uncommitted work, application state, or a lost private credential by referring to a path.
 - Preserve owner-authorized scope; no arbitrary home-directory/credential cloning, extra resource rights, or employer/client-data authority follows from a profile reference.
 - Device/platform differences may be intentional; reproducing the selected usual context is not forcing Linux/macOS to be identical.
+- The device's coding agent is at or above the accepted version floor, and currency is a floor rather than a schedule: refreshing the agent's source is the owner's deliberate action, not an automatic promise.
+- A device that carries the coding agent also carries its guardrails: the same secret-access guard is installed, so the same refusals hold wherever the agent runs. A device that carries the agent without the guard is not the accepted context.
 - VPN is application-specific, not a universal base-environment condition. A selected application's connection needs may still cause its supported software/configuration to be present.
 - No personal-data loss window, retention duration or recovery completion deadline is imported from the photo application's delegated 24-hour target.
 - Check actual usable work context; a successful evaluation, launcher, directory creation or green transfer job is not alone work readiness.
@@ -52,6 +55,7 @@ The Device owner requests reproduction of the specified usual working environmen
 - A source declaration refers to an age-key file but no permitted bootstrap material makes it usable. The workflow cannot reconstruct the private credential from that reference and reports the missing input.
 - A platform-bound identity is re-established through its supported owner/provider procedure rather than exported blindly. The required authorized resource becomes usable without a new permission grant.
 - The selected usual context has no application requiring the family private path. Reproducing it does not impose VPN enrollment. A different selected application's private-path requirement is handled as that application's need.
+- The device's coding agent reports a version at the accepted floor while upstream has already cut newer releases; the context is ready, and taking a newer one stays the owner's decision. A device whose agent reports a version below the floor is not ready even though the agent launches and works.
 
 ## Minimal guarantee
 An incomplete context is not reported as work-ready; existing required working data is not silently discarded, and unauthorized data/credential handling or extra identity/resource rights are not granted by the reproduction request.
@@ -64,12 +68,14 @@ The Device owner can resume the specified usual work on the selected device with
 
 ## Capabilities
 - permitted-identity-selection
+- current-agent-tooling
 
 ## Interactions
 
 | Capability | Consumer action | E2E scenario |
 |---|---|---|
 | permitted-identity-selection | a device opens a connection to a private repository | A booted device reaches private repositories with the identity it declares |
+| current-agent-tooling | a device carries the owner's coding agent | A booted device starts its coding agent |
 
 ## Includes
 - none
