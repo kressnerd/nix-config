@@ -1,3 +1,4 @@
+<!-- givn:base-sha256:b4e13a57c91702ddd60b101abef0fc9c944243142b90bc5d55a2bab08ba19f29 -->
 # Use case: publish-infrastructure-configuration
 
 ## Level
