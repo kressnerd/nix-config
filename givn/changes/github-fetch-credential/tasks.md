@@ -116,9 +116,7 @@ Also confirmed: `nix.extraOptions` exists in this pin —
   - command: `nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath`
   - output: the drvPath above, `exit 0` (post-format).
 
-- [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
-      with the scenario title in the body. Record the hash:
-  - hash: `7e4e302`
+- [x] COMMIT: `7e4e302` — release note as subject (`feat(github-fetch-credential): …`), scenario title in the body.
 
 Evidence: RED: `attribute 'githubFetchCredential' missing` (exit 1). GREEN:
 `/nix/store/ybv6pd5bp4aw0i8pcyplwjhyky9d0hzr-nixos-system-thiniel-26.11.20261008.8edc0c7.drv`
@@ -173,9 +171,7 @@ exists).
 - [x] **REFACTOR** — `nix fmt` on the four touched files; re-run the targeted
       command → the drvPath above, `exit 0` (post-format).
 
-- [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
-      with the scenario title in the body.
-  - hash: `9922830`
+- [x] COMMIT: `9922830` — release note as subject (`feat(github-fetch-credential): …`), scenario title in the body.
 
 Evidence: RED: `attribute '"nix/nix.conf"' missing` (exit 1). GREEN/REFACTOR:
 `/nix/store/363r2acpblx7x4dc04j71qvpyr2gqxid-darwin-system-26.11.4cff07d.drv`
@@ -217,9 +213,7 @@ Evidence: RED: `attribute '"nix/nix.conf"' missing` (exit 1). GREEN/REFACTOR:
 - [x] **REFACTOR** — `nix fmt` on `tests/assertions/adlerkopf-invariants.nix`;
       re-run the targeted command → the drvPath above, `exit 0` (post-format).
 
-- [x] **COMMIT** — `givn commit -m "feat(github-fetch-credential): <release note>"`
-      with the scenario title in the body.
-  - hash: `2ffa755`
+- [x] COMMIT: `2ffa755` — release note as subject (`feat(github-fetch-credential): …`), scenario title in the body.
 
 Evidence: RED: `attribute 'mySystem' missing` (exit 1, captured before the
 option module was imported). GREEN/REFACTOR:
@@ -303,10 +297,7 @@ the task's presumed 5.
       .#checks.x86_64-linux.lint-nixfmt` → exit 0; the targeted VM check above is
       post-format (exit 0).
 
-- [x] **COMMIT** — `givn commit -m "test(e2e): <release note>"` with the scenario
-      title in the body (also carries the corrected `design.md`, the module's
-      option-presence guard and this evidence).
-  - hash: `380799c`
+- [x] COMMIT: `380799c` — release note as subject (`test(e2e): …`), scenario title in the body; also carries the corrected `design.md`, the module's option-presence guard and this evidence.
 
 Evidence: RED: attribute not provided (exit 1). GREEN/REFACTOR: the VM boots and
 the check passes (exit 0). Files: `tests/integration/github-fetch-credential-test.nix`,
