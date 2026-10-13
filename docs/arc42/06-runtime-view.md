@@ -37,11 +37,11 @@ sequenceDiagram
    or empty), `private-data-hygiene` (the guard over the recorded tree plus its
    built-in reject fixtures) and `unit-agent-secret-guard` (the agent's guard
    hook driven with synthetic tool calls).
-3. For Linux systems the five `integration-*` checks are added
+3. For Linux systems the six `integration-*` checks are added
    (`integration-vm-minimal-ssh`, `integration-adlerkopf`,
    `integration-ssh-identity-selection`, `integration-private-data-separation`,
-   `integration-agent-tooling`); they are not built by `nix flake check` in the
-   non-e2e scope.
+   `integration-agent-tooling`, `integration-managed-file-displacement`); they are
+   not built by `nix flake check` in the non-e2e scope.
 4. Every host configuration is evaluated, firing the imported assertion modules.
 
 **Notes / verified behaviour:** the wiring is present and is the repository's

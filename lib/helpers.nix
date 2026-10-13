@@ -9,6 +9,26 @@
       config.allowUnfree = true;
     };
 
+  # A program on a device may rewrite a file the home profile renders (the
+  # browser rewrites its profile registry and search state). Home Manager refuses
+  # to replace a foreign file and aborts the activation, so this is wired as
+  # `home-manager.backupCommand`: Home Manager runs it with the conflicting path
+  # as its final argument, and it renames the file to the first free
+  # `<name>.<n>` beside the rendered one — every rewrite displaced, nothing
+  # deleted. See the change `managed-file-displacement`.
+  mkManagedFileDisplacement =
+    pkgs:
+    pkgs.writeShellScript "hm-displace-managed-file" ''
+      set -euo pipefail
+
+      target="$1"
+      n=1
+      while [ -e "$target.$n" ]; do
+        n=$((n + 1))
+      done
+      mv -- "$target" "$target.$n"
+    '';
+
   mkFirefoxExtensions =
     { addons }:
     {

@@ -118,6 +118,22 @@ Rationale: a root wipe is only safe if persistence is explicit and reviewable. A
 path that nobody declares is intentionally lost, and the loss is visible in the
 diff rather than discovered after a reboot.
 
+## Managed files and their displacement
+
+A *managed file* is a file the home profile renders into the user's home (a
+`home.file` entry, or one of the files a program module renders such as the
+browser's profile registry). Home Manager links it to the store and owns that
+target.
+
+A program the file configures may write the target itself. The configuration
+answers that with Home Manager's `backupCommand`, set to
+`mkManagedFileDisplacement`: on activation, a target that exists as a different
+regular file is renamed to the first free `<name>.<n>` beside it and then
+replaced by the rendered file. Nothing is deleted, the activation completes on
+every rewrite, and the operator finds the program's version next to the rendered
+one. The command is declared on every device that runs Home Manager, so the
+behaviour does not differ per host.
+
 ## Secret material and key binding
 
 Secrets live in per-host SOPS-encrypted YAML files. `.sops.yaml` maps each

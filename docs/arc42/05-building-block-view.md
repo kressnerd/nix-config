@@ -10,7 +10,7 @@ and test layers (L3).
 flowchart TB
   flake["flake.nix<br/>nixosConfigurations x4<br/>darwinConfigurations x1<br/>inputs.private (path stub)<br/>checks, formatter, devShells,<br/>overlays, templates,<br/>flake-output-contract"]
   stub["private-stub/<br/>public fallback modules<br/>for the private input"]
-  lib["lib/helpers.nix<br/>mkPkgsUnstable<br/>mkFirefoxExtensions"]
+  lib["lib/helpers.nix<br/>mkPkgsUnstable<br/>mkFirefoxExtensions<br/>mkManagedFileDisplacement"]
   common["hosts/common<br/>global base, shared user,<br/>optional NixOS modules"]
   hostmods["hosts/&lt;host&gt;<br/>system modules: hardware,<br/>disko, networking, services,<br/>boot, impermanence, options"]
   hmprof["home/dan/&lt;host&gt;.nix<br/>user profile: imports,<br/>sops.secrets, myHome.*,<br/>aliases"]
@@ -40,7 +40,7 @@ flowchart TB
 |---|---|
 | Flake (`flake.nix`, `flake.lock`) | Declare inputs, all host configurations, dev shells, packages, formatter, checks, overlays, the host template, and the flake-output contract check. The only entry point. The Colmena hive is not declared until a server is registered ([chapter 4](04-solution-strategy.md)). |
 | Private-input stub (`private-stub/`) | The public fallback for the `private` flake input: one no-op module per host that asserts the host's declared network values are documentation-range placeholders or empty, so a clean clone and CI evaluate without private access. Owner: [ADR-0001](adr/ADR-0001-private-data-strategy.md). |
-| Helpers (`lib/helpers.nix`) | `mkPkgsUnstable` (unstable package set with `allowUnfree`) and `mkFirefoxExtensions` (categorised addon sets for the Firefox profiles). |
+| Helpers (`lib/helpers.nix`) | `mkPkgsUnstable` (unstable package set with `allowUnfree`), `mkFirefoxExtensions` (categorised addon sets for the Firefox profiles) and `mkManagedFileDisplacement` (the command that renames a conflicting managed file beside the rendered one, used as Home Manager's `backupCommand`). |
 | Shared NixOS base (`hosts/common/`) | `global/` sets timezone, locale, Nix experimental features, trusted users, `allowUnfree`; `users/dan.nix` is the shared non-root user; `optional/` holds opt-in modules (`networkmanager`, `virtualisation`, and an empty `docker.nix`). |
 | Host system modules (`hosts/<host>/`) | Per-machine NixOS or nix-darwin declarations: hardware, disk layout, networking, boot/loader, services, persistence lists, typed host options. |
 | User profiles (`home/dan/<host>.nix`) | The Home Manager surface of one host: the feature import list, declared `sops.secrets`, `myHome.*` declarations, shell aliases, and in the Darwin case `targets.darwin` app-linking settings. |
@@ -163,7 +163,7 @@ user-level MCP servers, and export the server keys from the decrypted secrets.
 | `tests/unit/default.nix` + 12 files | Aggregate `lib.debug.runTests` cases into check `unit-helpers` (all systems). |
 | `tests/unit/agent-secret-guard.mjs` | Driver that loads `.omp/hooks/pre/secret-access-guard.js` and asserts its verdicts; run by check `unit-agent-secret-guard` under bun (all systems). |
 | `tests/assertions/` | 20 `*-invariants.nix` modules: 17 NixOS-level modules adding `config.assertions`, aggregated by `tests/assertions/default.nix` and imported by thiniel, cupix001, adlerkopf and nixos-vm-minimal; plus three Home-Manager-level modules imported by the profile they constrain — `thiniel-hm-invariants.nix` (added by the change `quiet-configuration-evaluation`) and the Mac's own two. |
-| `tests/integration/default.nix` + 5 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation`, `integration-agent-tooling` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. The two checks that load Home Manager modules (`integration-ssh-identity-selection`, `integration-agent-tooling`) build their guest from the `nixpkgs-unstable` pin those modules follow, so the release check holds — see the change `quiet-configuration-evaluation`. |
+| `tests/integration/default.nix` + 6 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation`, `integration-agent-tooling`, `integration-managed-file-displacement` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. The three checks that load Home Manager modules (`integration-ssh-identity-selection`, `integration-agent-tooling`, `integration-managed-file-displacement`) build their guest from the `nixpkgs-unstable` pin those modules follow, so the release check holds — see the changes `quiet-configuration-evaluation` and `managed-file-displacement`. |
 
 `tests/deploy/` (pytest-testinfra) is documented in `CLAUDE.md` and
 `docs/GIVN-VERIFICATION.md` but does not exist; the `@deploy:` binding tag
