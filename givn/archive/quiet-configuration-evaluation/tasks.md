@@ -320,6 +320,20 @@ and started `home-dan-.config-mozilla.mount`, then failed stopping the old mount
 because Firefox was running; both mounts were active at that point and the
 browsing data was untouched at `/persist/home/dan/.mozilla/firefox`.
 
+Leftovers on the device after the relocation (2026-10-13, optional tidy — recorded
+so the advice is not only in a conversation): two browser-written search files were
+parked while the managed `profiles.ini` was making the activation abort, and they can
+be deleted at leisure —
+
+```sh
+rm ~/.config/mozilla/firefox/user/search.json.mozlz4.firefox-generated \
+   ~/.config/mozilla/firefox/no-tracking/search.json.mozlz4.firefox-generated
+```
+
+Nothing reads them (the activation re-rendered `search.json.mozlz4` from the
+configuration), and `~/.mozilla` is an empty directory on the ephemeral root now
+that its mount is stopped, so it disappears at the next reboot.
+
 Second observation (2026-10-13, same device): the profile tree was copied into
 the new location while `profiles.ini` was absent from the old tree (the
 activation had already retired that managed file), and Firefox was started before
