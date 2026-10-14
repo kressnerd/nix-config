@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "github-fetch-credential",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "00f304f11ab8895b41733587f80ff9fe2cefc90e",
+  "tested_revision": "00f304f11ab8895b41733587f80ff9fe2cefc90e",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 38.008246297
+    },
+    "regular": {
+      "status": "passed",
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 120.388129256
+    }
+  },
   "coverage": null,
   "started_at_unix": 1791935985,
-  "finished_at_unix": null
+  "finished_at_unix": 1791936144
 }
