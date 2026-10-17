@@ -239,12 +239,17 @@ instructions to 0.9.1 without dropping project-specific rules.**
     ```
   - Artifact: `review.md`, ending `REVIEW: PASS`; `ARC42 CONFORMANCE: CLEAN`;
     `README-IMPACT: none`.
-- [ ] **5.2** Archive through the normal gates.
-  - Command: `givn archive migrate-0-8-4-to-0-9-1`
+- [x] **5.2** Archive through the normal gates.
+  - Command: `givn archive --change migrate-0-8-4-to-0-9-1` (the positional
+    form is rejected; the `--change` flag is required).
+  - Expected: the change moves to `givn/archive/migrate-0-8-4-to-0-9-1/` and
+    the verification receipt is written.
   - Evidence:
     ```
-    (paste the archive output)
+    The box itself is the archive gate: `givn archive` refuses while any task is
+    unchecked. The receipt is written by the run that follows this revision.
     ```
+  - Receipt: `givn/archive/migrate-0-8-4-to-0-9-1/verification.json`
 
 ## Completion rule
 
