@@ -9,7 +9,6 @@ let
     ++ exts.convenience
     ++ exts.productivity
     ++ (with addons; [
-      terms-of-service-didnt-read
       link-cleaner
       kagi-search
     ]);
