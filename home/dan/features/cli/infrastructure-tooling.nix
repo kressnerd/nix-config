@@ -6,5 +6,6 @@
   # selection; see the change `infrastructure-authoring-tooling`, D1).
   home.packages = with pkgs; [
     opentofu # OpenTofu infrastructure-as-code engine
+    gh # GitHub command-line client
   ];
 }
