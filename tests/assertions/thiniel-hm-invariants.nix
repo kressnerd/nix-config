@@ -28,9 +28,27 @@ let
       deferWarningToConfig = true;
       inherit legacy current;
     }).shouldWarn;
+
+  hmPkgNames = builtins.map (p: p.pname or p.name or "") config.home.packages;
 in
 {
   assertions = [
+    {
+      assertion = builtins.any (n: lib.strings.hasInfix "rustc" n) hmPkgNames;
+      message = "thiniel: the Rust compiler (rustc) must be installed for the Rust build toolchain";
+    }
+    {
+      assertion = builtins.any (n: lib.strings.hasInfix "cargo" n) hmPkgNames;
+      message = "thiniel: Cargo must be installed for the Rust build toolchain";
+    }
+    {
+      assertion = builtins.any (n: lib.strings.hasInfix "gcc" n) hmPkgNames;
+      message = "thiniel: a C linker (gcc) must be installed so a Rust build can link its program";
+    }
+    {
+      assertion = builtins.any (n: lib.strings.hasInfix "pkg-config" n) hmPkgNames;
+      message = "thiniel: pkg-config must be installed so Rust crates can discover system libraries";
+    }
     {
       assertion =
         !(superseded [ "wayland" "windowManager" "hyprland" "configType" ] {

@@ -16,7 +16,7 @@ flowchart TB
   hmprof["home/dan/&lt;host&gt;.nix<br/>user profile: imports,<br/>sops.secrets, myHome.*,<br/>aliases"]
   hmglobal["home/dan/global/default.nix<br/>Home Manager base"]
   optmods["modules/*/&lt;concern&gt;/<br/>options.nix + default.nix"]
-  feats["home/dan/features/&lt;category&gt;/<br/>59 feature modules"]
+  feats["home/dan/features/&lt;category&gt;/<br/>60 feature modules"]
   scripts["scripts/<br/>netcup firewall CLI,<br/>scp_client, private-data guard,<br/>verify scripts"]
   infra["infra/<br/>firewall policy JSON,<br/>OpenAPI spec, .http files"]
   tests["tests/<br/>unit, assertions, integration"]
@@ -46,7 +46,7 @@ flowchart TB
 | User profiles (`home/dan/<host>.nix`) | The Home Manager surface of one host: the feature import list, declared `sops.secrets`, `myHome.*` declarations, shell aliases, and in the Darwin case `targets.darwin` app-linking settings. |
 | Home Manager base (`home/dan/global/default.nix`) | `home.stateVersion`, htop, Home Manager self-management. |
 | Option modules (`modules/<kind>/<concern>/`) | Reusable option + default pairs. Present concerns: `home-manager/ssh`, `home-manager/persistence`, `nixos/persistence`. |
-| Feature modules (`home/dan/features/**`) | 59 modules rendering one concern each from host declarations, platform conditionals, and declared secrets. |
+| Feature modules (`home/dan/features/**`) | 60 modules rendering one concern each from host declarations, platform conditionals, and declared secrets. |
 | Tests (`tests/`) | Three present layers (`unit`, `assertions`, `integration`); the documented `deploy` layer does not exist. |
 | Support tooling (`scripts/`, `infra/`) | Python CLI and generated OpenAPI client for the netcup SCP firewall, the private-data guard `private_data_hygiene.py`, firewall policy definitions, `.http` request collections, VM build/deploy scripts, and the givn verification scripts. |
 | Specification workflow (`givn/`) | Active change artifacts, promoted personas, the ideation topic, givn config/commands and hooks. |
@@ -57,7 +57,7 @@ flowchart TB
 |---|---|---|---|
 | `adlerkopf` | x86_64-linux | Home server / edge node | `hosts/adlerkopf` + `disko` + `lanzaboote` + Home Manager with only the global profile. |
 | `cupix001` | x86_64-linux | netcup VPS (edge gateway role) | `hosts/cupix001` + `disko` + Home Manager with only the global profile. In the working tree it is a skeleton: no services, no networking, no persistence enabled. |
-| `thiniel` | x86_64-linux | Owner's Linux laptop (ThinkPad X270) | `hosts/thiniel` + `nixos-hardware` X270 + `stylix` + Home Manager with the largest feature set (41 imports). |
+| `thiniel` | x86_64-linux | Owner's Linux laptop (ThinkPad X270) | `hosts/thiniel` + `nixos-hardware` X270 + `stylix` + Home Manager with the largest feature set (42 imports). |
 | `nixos-vm-minimal` | aarch64-linux | Minimal test/provisioning VM | `hosts/nixos-vm-minimal` + `disko`; its own standalone Home Manager profile (no feature imports). |
 | `J6G6Y9JK7L` | aarch64-darwin | Owner's work macOS workstation | `hosts/J6G6Y9JK7L` + `mac-app-util` + `nix-homebrew` + `stylix` + Home Manager with 28 feature imports. |
 
@@ -93,7 +93,7 @@ The Darwin host does not import `hosts/common` at all.
 | Category | Modules | Notes |
 |---|---|---|
 | `cli/` (14) | ansible, cloud-tools, deploy-tools, fish, git, kitty, shell-utils, sops, sops-age-key, ssh, starship, vim, yazi, zsh | `git` and `ssh` render identity surfaces from `myHome.ssh` and sops secret presence. |
-| `development/` (16) | claude-code, containers (+5 submodules), fnm, formatters, givn, go, jdk, nodejs, omp, opencode, python-tools | `containers.nix` is an orchestrator over 5 submodules. |
+| `development/` (17) | claude-code, containers (+5 submodules), fnm, formatters, givn, go, jdk, nodejs, omp, opencode, python-tools, rust | `containers.nix` is an orchestrator over 5 submodules. `rust` installs the default Rust build toolchain and persists the Cargo home. |
 | `linux/` (11) | fonts, fuzzel, gnome-keyring, gtk-qt, hypridle, hyprland, hyprlock, kanshi, mako, waybar, wlsunset | Imported only by thiniel. |
 | `macos/` (2) | aerospace, defaults | Imported only by the Darwin host. |
 | `productivity/` (16) | browser, emacs, emacs-doom, firefox-company, firefox-personal, keepassxc, libreoffice, mac-tools, maestral, messaging, mpv, owncloud, sweethome3d, vscode, vscode-fhs, zathura | Several guard their persistence block with `lib.mkIf config.myHome.persistence.enable`. |
@@ -105,7 +105,7 @@ Two modules are **not** reachable from any host profile: `features/productivity/
 | Profile | Feature imports | `sops.secrets` | `myHome` declarations |
 |---|---|---|---|
 | `home/dan/J6G6Y9JK7L.nix` | 28 | 15 (`git/{personal,company,client001,client002}/{name,email,folder}`, `context7/api-key`, `kagi/api-key`, `github/access-token`) | `myHome.ssh` (personal key + 3 included configs); this profile declares the GitHub fetch credential (`sops.secrets` + `sops.templates` — the render layer is home-manager on this machine, which has no nix-darwin sops module) and its `nix/nix.conf` include; the host module adds only the activation script that writes root's user configuration |
-| `home/dan/thiniel.nix` | 41 | 5 (`git/personal/*`, `context7/api-key`, `kagi/api-key`) | `myHome.ssh.personalIdentityFile`; `myHome.persistence.enable = true`; the system side opts in through `mySystem.githubFetchCredential` in `hosts/thiniel/default.nix` (the credential's `secrets.yaml` entry is a host-level declaration, like adlerkopf's AdGuard secret) |
+| `home/dan/thiniel.nix` | 42 | 5 (`git/personal/*`, `context7/api-key`, `kagi/api-key`) | `myHome.ssh.personalIdentityFile`; `myHome.persistence.enable = true`; the system side opts in through `mySystem.githubFetchCredential` in `hosts/thiniel/default.nix` (the credential's `secrets.yaml` entry is a host-level declaration, like adlerkopf's AdGuard secret) |
 | `home/dan/adlerkopf.nix` | 1 (global only) | none | none |
 | `home/dan/cupix001.nix` | 1 (global only) | none | none |
 | `home/dan/nixos-vm-minimal.nix` | 0 (standalone) | none | none |
@@ -157,6 +157,17 @@ user-level MCP servers, and export the server keys from the decrypted secrets.
 | `programs.fish.shellInit` | Exports `CONTEXT7_API_KEY` / `KAGI_API_KEY` from the decrypted sops-nix secrets when present. |
 | Imported by | `home/dan/thiniel.nix`, `home/dan/J6G6Y9JK7L.nix`. |
 
+### `home/dan/features/development/rust.nix`
+
+**Responsibility:** install the device's default Rust build toolchain and keep
+the Cargo home across boots.
+
+| Element | Responsibility |
+|---|---|
+| `home.packages` | `cargo`, `rustc`, `clippy`, `gcc` and `pkg-config` from the host's package set: the compiler and package manager, the lint driver, and the C linker and pkg-config a Rust build needs. |
+| `home.persistence.${config.myHome.persistence.root}.directories` | Adds `.cargo` behind `lib.optionalAttrs config.myHome.persistence.enable`, so the registry cache and Cargo-installed binaries survive the root wipe. `rustfmt` stays in `formatters.nix` rather than being declared twice. |
+| Imported by | `home/dan/thiniel.nix` only. |
+
 ### `tests/` (present verification layers)
 
 | Building block | Responsibility |
@@ -164,7 +175,7 @@ user-level MCP servers, and export the server keys from the decrypted secrets.
 | `tests/unit/default.nix` + 12 files | Aggregate `lib.debug.runTests` cases into check `unit-helpers` (all systems). |
 | `tests/unit/agent-secret-guard.mjs` | Driver that loads `.omp/hooks/pre/secret-access-guard.js` and asserts its verdicts; run by check `unit-agent-secret-guard` under bun (all systems). |
 | `tests/assertions/` | 20 `*-invariants.nix` modules: 17 NixOS-level modules adding `config.assertions`, aggregated by `tests/assertions/default.nix` and imported by thiniel, cupix001, adlerkopf and nixos-vm-minimal; plus three Home-Manager-level modules imported by the profile they constrain — `thiniel-hm-invariants.nix` (added by the change `quiet-configuration-evaluation`) and the Mac's own two. |
-| `tests/integration/default.nix` + 7 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation`, `integration-agent-tooling`, `integration-managed-file-displacement`, `integration-github-fetch-credential` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. The three checks that load Home Manager modules (`integration-ssh-identity-selection`, `integration-agent-tooling`, `integration-managed-file-displacement`) build their guest from the `nixpkgs-unstable` pin those modules follow, so the release check holds — see the changes `quiet-configuration-evaluation` and `managed-file-displacement`. `integration-github-fetch-credential` exercises the system-level shape instead, loads no Home Manager module, and uses the host package set; it builds its own SOPS fixture in a derivation inside the test file (a fresh test key pair and a dummy value encrypted to it), so no key material is recorded in the repository. |
+| `tests/integration/default.nix` + 8 files | `pkgs.testers.runNixOSTest` derivations exposed as checks `integration-vm-minimal-ssh`, `integration-adlerkopf`, `integration-ssh-identity-selection`, `integration-private-data-separation`, `integration-agent-tooling`, `integration-managed-file-displacement`, `integration-github-fetch-credential`, `integration-rust-toolchain` (Linux only). Each test boots a purpose-built synthetic machine that declares the services under test; they do **not** import the host configurations. The four checks that load Home Manager modules (`integration-ssh-identity-selection`, `integration-agent-tooling`, `integration-managed-file-displacement`, `integration-rust-toolchain`) build their guest from the `nixpkgs-unstable` pin those modules follow, so the release check holds — see the changes `quiet-configuration-evaluation`, `managed-file-displacement` and `rust-build-toolchain`. `integration-github-fetch-credential` exercises the system-level shape instead, loads no Home Manager module, and uses the host package set; it builds its own SOPS fixture in a derivation inside the test file (a fresh test key pair and a dummy value encrypted to it), so no key material is recorded in the repository. |
 
 `tests/deploy/` (pytest-testinfra) is documented in `CLAUDE.md` and
 `docs/GIVN-VERIFICATION.md` but does not exist; the `@deploy:` binding tag

@@ -40,4 +40,8 @@
     inherit backupCommand;
     home-manager = home-manager-unstable;
   };
+  integration-rust-toolchain = import ./rust-toolchain-test.nix {
+    pkgs = unstablePkgs;
+    home-manager = home-manager-unstable;
+  };
 }

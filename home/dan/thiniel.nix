@@ -21,6 +21,7 @@
     ./features/development/go.nix
     ./features/development/nodejs.nix
     ./features/development/python-tools.nix
+    ./features/development/rust.nix
     ./features/linux/fonts.nix
     ./features/linux/gnome-keyring.nix
     ./features/linux/fuzzel.nix
