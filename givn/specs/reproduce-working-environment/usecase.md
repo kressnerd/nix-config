@@ -1,4 +1,4 @@
-<!-- givn:base-sha256:2ffa4aa9996cb161f39ecb9317ca57c5c804a9bc04570b7ac8a2e05de5f97aaa -->
+<!-- givn:base-sha256:25fbf37bc8aa75946f0fc459134c0c5172e6356021297279b8cbc8a6b88fd667 -->
 # Use case: reproduce-working-environment
 
 ## Level
@@ -52,6 +52,7 @@ The Device owner requests reproduction of the specified usual working environmen
 - A device that builds Rust projects provides one default toolchain — compiler, Cargo, a C linker and pkg-config — and declares the Cargo home persistent, so it survives boots. A lint driver belongs to the same toolchain and is exercised by the booted build scenario. The toolchain is the device's, not a project-specific pin; a project that requires another compiler version is not served by this rule.
 - A device presents only the GitHub fetch credential that device declares, readable by no account other than root and the device owner, and prepared by no session: it reaches nix from a file on the device, never from a world-readable path and never from a process environment variable. A device that declares no such credential presents none, and no device falls back to another device's.
 - The credential is recorded only encrypted, and a device that lost its root filesystem materialises the declared credential again from that record; a missing or unreadable credential leaves the device's fetches unauthenticated, never silently replaced by another account's.
+- A device that authors infrastructure provides an OpenTofu engine and a GitHub command-line client, each invocable by the owner's ordinary account. Presence of the tools creates no authentication session, credential, or git credential-helper registration; authentication remains the owner's deliberate action.
 
 ## Examples
 - The required context includes a configured editor/shell plus a project workspace containing `work-in-progress.txt` with the approved `draft B` content plus permitted access to its intended development resource. The owner can open/use that work and authenticate through the approved identity after reproduction; only then is the requested context ready.
@@ -78,6 +79,7 @@ The Device owner can resume the specified usual work on the selected device with
 - rust-build-toolchain
 - managed-file-displacement
 - github-fetch-credential
+- infrastructure-authoring-tooling
 
 ## Interactions
 
@@ -89,6 +91,7 @@ The Device owner can resume the specified usual work on the selected device with
 | rust-build-toolchain | a device builds a Rust project | A booted device builds and runs a Rust project |
 | managed-file-displacement | a device applies its configuration | A booted device activates although a program rewrote a managed file |
 | github-fetch-credential | a device builds the configuration | A booted device materialises the declared credential and presents it to the GitHub host |
+| infrastructure-authoring-tooling | a device authors infrastructure and repository work | A booted device runs its infrastructure and GitHub client tools |
 
 ## Includes
 - none
