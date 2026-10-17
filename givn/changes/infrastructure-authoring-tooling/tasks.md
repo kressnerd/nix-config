@@ -52,7 +52,7 @@ no secret is read or written.
       ```
       /nix/store/q0lp0ngbnlv0z3i5fgfn2wgsvfdifxiy-nixos-system-thiniel-26.11.20261016.f20cd90.drv
       ```
-- [x] **COMMIT** — `2966631`
+- [x] COMMIT: `2966631`
 
 ## Scenario 2 — The personal laptop provides a GitHub command-line client
 
@@ -77,7 +77,7 @@ no secret is read or written.
       ```
       /nix/store/4jz04wjg735avaprl3qz8j4ik443zfd4-nixos-system-thiniel-26.11.20261016.f20cd90.drv
       ```
-- [x] **COMMIT** — `f784a92`
+- [x] COMMIT: `f784a92`
 
 ## Scenario 3 — A booted device runs its infrastructure and GitHub client tools
 
@@ -101,4 +101,4 @@ no secret is read or written.
       ```
 - [x] **REFACTOR** — no refactor needed; the test imports the same module the
       host imports. Re-run the targeted command → exit 0 (same output).
-- [x] **COMMIT** — `003403c`
+- [x] COMMIT: `003403c`
