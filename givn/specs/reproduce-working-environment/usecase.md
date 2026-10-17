@@ -1,4 +1,4 @@
-<!-- givn:base-sha256:cbf55c47880fd71596cfc7cdc970b62eafaf61cb866151a5a980d11df758a068 -->
+<!-- givn:base-sha256:2ffa4aa9996cb161f39ecb9317ca57c5c804a9bc04570b7ac8a2e05de5f97aaa -->
 # Use case: reproduce-working-environment
 
 ## Level
@@ -49,6 +49,7 @@ The Device owner requests reproduction of the specified usual working environmen
 - VPN is application-specific, not a universal base-environment condition. A selected application's connection needs may still cause its supported software/configuration to be present.
 - No personal-data loss window, retention duration or recovery completion deadline is imported from the photo application's delegated 24-hour target.
 - Check actual usable work context; a successful evaluation, launcher, directory creation or green transfer job is not alone work readiness.
+- A device that builds Rust projects provides one default toolchain — compiler, Cargo, a C linker and pkg-config — and declares the Cargo home persistent, so it survives boots. A lint driver belongs to the same toolchain and is exercised by the booted build scenario. The toolchain is the device's, not a project-specific pin; a project that requires another compiler version is not served by this rule.
 - A device presents only the GitHub fetch credential that device declares, readable by no account other than root and the device owner, and prepared by no session: it reaches nix from a file on the device, never from a world-readable path and never from a process environment variable. A device that declares no such credential presents none, and no device falls back to another device's.
 - The credential is recorded only encrypted, and a device that lost its root filesystem materialises the declared credential again from that record; a missing or unreadable credential leaves the device's fetches unauthenticated, never silently replaced by another account's.
 
@@ -74,6 +75,7 @@ The Device owner can resume the specified usual work on the selected device with
 ## Capabilities
 - permitted-identity-selection
 - current-agent-tooling
+- rust-build-toolchain
 - managed-file-displacement
 - github-fetch-credential
 
@@ -84,6 +86,7 @@ The Device owner can resume the specified usual work on the selected device with
 | permitted-identity-selection | a device opens a connection to a private repository | A booted device reaches private repositories with the identity it declares |
 | current-agent-tooling | a device carries the owner's coding agent | A booted device starts its coding agent |
 | current-agent-tooling | a device carries the owner's OpenCode coding agent | A booted device starts its OpenCode |
+| rust-build-toolchain | a device builds a Rust project | A booted device builds and runs a Rust project |
 | managed-file-displacement | a device applies its configuration | A booted device activates although a program rewrote a managed file |
 | github-fetch-credential | a device builds the configuration | A booted device materialises the declared credential and presents it to the GitHub host |
 
@@ -99,6 +102,7 @@ The Device owner can resume the specified usual work on the selected device with
 - Setting an additional personal-data failure/loss-window protection commitment — not yet selected; this contract does not silently promise a new universal backup guarantee.
 - Granting new account/data authority, copying every credential, or migrating unrelated working contexts — not authorized by this goal.
 - A second agent's guardrails (OpenCode's) — not claimed by this contract; the guardrails rule covers the agent with a user-level secret-access guard.
+- Project-specific Rust toolchain pins, a `rustup`-managed toolchain, Rust language servers and Rust tooling on devices other than `thiniel` — the contract covers the device's one default build toolchain only.
 
 ## Diagram
 See the rendered usual-work reproduction canvas, permitted identity/source
