@@ -11,6 +11,8 @@ infra/http/http-client.private.env.json
 # Local rotation checklist: names operational values, never commit.
 ROTATION-TODO.md
 
+docs/plans/private-data-remediation-plan.md
+
 # givn:begin:rules
 .opencode/skills/givn-*/
 .agents/skills/givn-*/
@@ -26,4 +28,3 @@ ROTATION-TODO.md
 .omp/hooks/pre/givn-attribution.js
 .githooks/commit-msg
 # givn:end:rules
-docs/plans/private-data-remediation-plan.md
