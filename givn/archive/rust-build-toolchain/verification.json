@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "rust-build-toolchain",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "58e35ba7e7d62c7d257ad23e6a9fa5384369440e",
+  "tested_revision": "58e35ba7e7d62c7d257ad23e6a9fa5384369440e",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 29.709247936
+    },
+    "regular": {
+      "status": "passed",
+      "total": 23,
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 99.6652856
+    }
+  },
   "coverage": null,
   "started_at_unix": 1792244266,
-  "finished_at_unix": null
+  "finished_at_unix": 1792244395
 }
