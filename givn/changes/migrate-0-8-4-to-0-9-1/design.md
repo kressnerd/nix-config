@@ -180,3 +180,146 @@ corpus repairs.
 ## Completion boundary
 
 This generated design does not contain `DESIGN-REVIEW: PASS`, `REVIEW: PASS`, or implementation evidence. The project LLM must derive tasks and complete the normal Givn gates after the ordered bundle phases are understood, including any follow-up changes a bundle names.
+
+---
+
+## Project hardening — design-review 2026-10-17
+
+This section records the project-specific decisions the generated bundle leaves
+to the project LLM, plus the corrections the design-review grilling produced.
+It supersedes the bundle text where they disagree.
+
+### Preflight corrections
+
+- The change id is `migrate-0-8-4-to-0-9-1` (kebab-case). The dotted form
+  `migrate-0.8.4-to-0.9.1` in the bundle preflight is a display title; the CLI
+  rejects it (`change id must be kebab-case`).
+- `9207d06^` tracks **zero** generated skill/command files. `rules: local-only`
+  (givn/config.yaml) and `.gitignore` keep them out of git, so the pre-upgrade
+  generated content is not recoverable from history.
+- The AGENTS.md `givn-project` block is machine-owned, **unchanged by this
+  upgrade** (`git diff 9207d06^ HEAD -- AGENTS.md` is empty). It carries only
+  generic Givn text, no project rule.
+- `migration.yaml`'s bundle label `0.8.0 -> 0.9.0` names the applied migration
+  route; the installed contract is `0.8.4 -> 0.9.1` (`source_version` /
+  `target_version` in the same file).
+- Phase 1 step 3 correction: compare every old statement against **both** the
+  served instruction (`givn instructions <id>`) and the tracked project-owned
+  replacement (`givn/artifacts/<id>/instructions.md` or
+  `givn/skills/<name>/SKILL.md.tmpl`). Text present in either place is not
+  displaced; only text absent from both is. The templates are preserved by
+  definition and must not be duplicated into `extensions:`.
+- Phase 1 adds a scan of the **current** untracked generated files (the four
+  target directories), so a stale or restored local copy cannot hide a
+  displaced rule.
+
+### Inventory (Phase 1 result)
+
+Operator confirmation (2026-10-17): no hand edits to generated skill/command
+files or the managed AGENTS.md block existed under 0.8.4.
+
+Checked file list:
+
+- Pre-upgrade revision `9207d06^` — `git ls-tree -r --name-only 9207d06^`
+  filtered to `skills/givn-*/SKILL.md` and `commands/(givn|grill)-*.md`:
+  0 files.
+- `AGENTS.md` `givn-project` block — no diff across the upgrade; no
+  project-specific statement.
+- Current installed files — 15 skills × 4 targets (`.opencode`, `.agents`,
+  `.claude`, `.omp`), 15 commands in each command-owning target
+  (`.opencode`, `.omp`); `givn skills sync` is idempotent (empty diff).
+- Tracked replacements — `givn/artifacts/{proposal,specs,design,design-review,tasks,review}/instructions.md`
+  and 10 `givn/skills/*/SKILL.md.tmpl` files; unchanged across the upgrade
+  (`git diff 9207d06^ HEAD -- givn/skills givn/artifacts` is empty).
+
+Displaced statements: **none found**.
+
+| Old file | Displaced statement | Classification | Target instruction id |
+|---|---|---|---|
+| — | none found | — | — |
+
+No `extensions:` entry is added; `givn/config.yaml` is unchanged by this
+change.
+
+### Installed-file criterion
+
+The bundle's "installed files carry only trigger and direction" cannot apply to
+files backed by a tracked project-owned replacement: those files deliberately
+carry the project's rules. The criterion is therefore scoped:
+
+- Files **without** a replacement — 5 built-in skills (`givn-ideation`,
+  `givn-explore`, `givn-reverse-engineer`, `givn-domain-modeling`,
+  `givn-dev-principles`) and all 15 commands per command-owning target — carry
+  trigger, direction, and no rule copy.
+- Files **with** a replacement — the 10 template-backed skills — must equal the
+  `givn skills sync` render (idempotent) and must carry no extension text.
+- No generated file in any target carries `## Project extension`.
+
+This preserves the proposal's out-of-scope rule: replacements stay
+byte-for-byte; migrating them into `extensions:` is not this change.
+
+### Exact evidence commands
+
+```sh
+# 1. Nothing displaced was tracked before the upgrade.
+git ls-tree -r --name-only 9207d06^ \
+  | grep -E '(skills/givn-[^/]+/SKILL\.md|commands/(givn|grill)-[^/]+\.md)$'
+# expected: no output
+
+# 2. The managed AGENTS.md block was not refreshed.
+git diff 9207d06^ HEAD -- AGENTS.md
+# expected: no output
+
+# 3. Replacement-backed skills equal a fresh sync render (all four targets).
+cp -a .opencode /tmp/oc.before && givn skills sync && diff -qr /tmp/oc.before .opencode
+# expected: no output
+
+# 4. No extension text leaked into a generated file.
+grep -RIl 'Project extension' .opencode .agents .claude .omp givn/skills
+# expected: no output
+
+# 5. The repository suite stays green.
+./scripts/givn-verify.sh
+
+# 6. Traceability stays clean.
+python3 scripts/givn-spec-trace.py
+```
+
+`givn/commands.yaml` resolves: `verify.command` is `./scripts/givn-verify.sh`
+and `verify.e2e_command` is `./scripts/givn-verify-e2e.sh`; they are distinct
+and executable.
+
+### Verification binding and task evidence
+
+This change has no product specification (`.givn-skip` = `specs`). No scenario
+exists, so no binding tag is required and no `@check:` target is added. Tasks
+are a maintenance checklist whose evidence is the exact command and its
+observed output for each step above. The regression gate remains the existing
+`verify.command` suite; the durable guard for future upgrades is the
+`extensions:` mechanism itself.
+
+### Architecture impact, blast radius, rollback
+
+- No product module, host profile, option, flake input, secret, firewall rule,
+  persistence path, or boot setting changes.
+- Blast radius is developer tooling only: generated files under the four target
+  directories (gitignored, local-only), the change directory, and the arc42
+  marker. `givn/config.yaml` is unchanged.
+- No dangerous area is touched (`boot.loader`, `networking`,
+  `fileSystems`/disko, `environment.persistence`/impermanence, kernel, secret
+  wiring), so deployment and rollback are N/A. Had an extension been recorded,
+  rollback would be: remove the `extensions:` entry and run `givn skills sync`;
+  no host deployment is involved.
+- Persona / use case: `none` — developer tooling change with no user-visible
+  system surface; no use-case ID applies.
+
+### Recorded observations
+
+- A future displaced rule routed to `archive`, `characterize`, `steps`, or
+  `implement` would need an entry-point check: the installed skill templates for
+  those steps do not all load their served instruction (the slash commands do).
+  An extension there would be served by `givn instructions <id>` but not
+  necessarily read by an agent following the installed skill. No rule was
+  displaced now, so this is recorded for the next migration, not acted on.
+- Release note for the change's revisions: "Migrate the project's Givn
+  instructions to 0.9.1 without dropping project-specific rules."
