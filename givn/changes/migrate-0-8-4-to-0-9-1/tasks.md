@@ -204,7 +204,7 @@ instructions to 0.9.1 without dropping project-specific rules.**
     givn-spec-trace: 29 scenario(s) across 6 feature file(s), 0 finding(s)
     [trace_exit=0]
     ```
-- [ ] **4.3** Commit the maintenance change with the release note as subject.
+- [x] **4.3** Commit the maintenance change with the release note as subject.
   - Command:
     ```sh
     givn commit -m "chore(givn): Migrate the project's Givn instructions to 0.9.1 without dropping project-specific rules."
@@ -213,8 +213,13 @@ instructions to 0.9.1 without dropping project-specific rules.**
     review, arc42 marker, tasks); record the hash.
   - Evidence:
     ```
-    (paste the commit output and the revision hash)
+    $ givn commit -m "chore(givn): Migrate the project's Givn instructions to 0.9.1 without dropping project-specific rules."
+    [14:41:20] committed revision on the Git backend
+    [commit_exit=0]
+    $ git log -1 --format='%H %s'
+    971670a9eef5449d63dc85af6261eaa95ce3302b chore(givn): Migrate the project's Givn instructions to 0.9.1 without dropping project-specific rules.
     ```
+  - Revision: `971670a9eef5449d63dc85af6261eaa95ce3302b`
 
 ## Task 5 — Close the gates
 
