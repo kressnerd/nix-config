@@ -37,6 +37,10 @@
           message = "thiniel: the agent's secret-access guard must be declared for installation";
         }
         {
+          assertion = hmHasPkg "opentofu";
+          message = "thiniel: the OpenTofu engine (opentofu) must be installed for infrastructure authoring";
+        }
+        {
           assertion = config.networking.networkmanager.enable;
           message = "thiniel: networking.networkmanager must be enabled (desktop host)";
         }

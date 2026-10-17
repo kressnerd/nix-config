@@ -44,4 +44,8 @@
     pkgs = unstablePkgs;
     home-manager = home-manager-unstable;
   };
+  integration-infrastructure-tooling = import ./infrastructure-tooling-test.nix {
+    pkgs = unstablePkgs;
+    home-manager = home-manager-unstable;
+  };
 }

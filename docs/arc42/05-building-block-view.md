@@ -92,7 +92,7 @@ The Darwin host does not import `hosts/common` at all.
 
 | Category | Modules | Notes |
 |---|---|---|
-| `cli/` (14) | ansible, cloud-tools, deploy-tools, fish, git, kitty, shell-utils, sops, sops-age-key, ssh, starship, vim, yazi, zsh | `git` and `ssh` render identity surfaces from `myHome.ssh` and sops secret presence. |
+| `cli/` (15) | ansible, cloud-tools, deploy-tools, fish, git, infrastructure-tooling, kitty, shell-utils, sops, sops-age-key, ssh, starship, vim, yazi, zsh | `git` and `ssh` render identity surfaces from `myHome.ssh` and sops secret presence. `infrastructure-tooling` installs the OpenTofu engine and the GitHub CLI on thiniel without registering the GitHub client as a git credential helper. |
 | `development/` (17) | claude-code, containers (+5 submodules), fnm, formatters, givn, go, jdk, nodejs, omp, opencode, python-tools, rust | `containers.nix` is an orchestrator over 5 submodules. `rust` installs the default Rust build toolchain and persists the Cargo home. |
 | `linux/` (11) | fonts, fuzzel, gnome-keyring, gtk-qt, hypridle, hyprland, hyprlock, kanshi, mako, waybar, wlsunset | Imported only by thiniel. |
 | `macos/` (2) | aerospace, defaults | Imported only by the Darwin host. |
@@ -105,7 +105,7 @@ Two modules are **not** reachable from any host profile: `features/productivity/
 | Profile | Feature imports | `sops.secrets` | `myHome` declarations |
 |---|---|---|---|
 | `home/dan/J6G6Y9JK7L.nix` | 28 | 15 (`git/{personal,company,client001,client002}/{name,email,folder}`, `context7/api-key`, `kagi/api-key`, `github/access-token`) | `myHome.ssh` (personal key + 3 included configs); this profile declares the GitHub fetch credential (`sops.secrets` + `sops.templates` — the render layer is home-manager on this machine, which has no nix-darwin sops module) and its `nix/nix.conf` include; the host module adds only the activation script that writes root's user configuration |
-| `home/dan/thiniel.nix` | 42 | 5 (`git/personal/*`, `context7/api-key`, `kagi/api-key`) | `myHome.ssh.personalIdentityFile`; `myHome.persistence.enable = true`; the system side opts in through `mySystem.githubFetchCredential` in `hosts/thiniel/default.nix` (the credential's `secrets.yaml` entry is a host-level declaration, like adlerkopf's AdGuard secret) |
+| `home/dan/thiniel.nix` | 43 | 5 (`git/personal/*`, `context7/api-key`, `kagi/api-key`) | `myHome.ssh.personalIdentityFile`; `myHome.persistence.enable = true`; the system side opts in through `mySystem.githubFetchCredential` in `hosts/thiniel/default.nix` (the credential's `secrets.yaml` entry is a host-level declaration, like adlerkopf's AdGuard secret) |
 | `home/dan/adlerkopf.nix` | 1 (global only) | none | none |
 | `home/dan/cupix001.nix` | 1 (global only) | none | none |
 | `home/dan/nixos-vm-minimal.nix` | 0 (standalone) | none | none |

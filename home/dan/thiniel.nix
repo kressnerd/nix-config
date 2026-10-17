@@ -6,6 +6,7 @@
     ./features/cli/sops-age-key.nix
     ./features/cli/fish.nix
     ./features/cli/git.nix
+    ./features/cli/infrastructure-tooling.nix
     ./features/cli/kitty.nix
     ./features/cli/shell-utils.nix
     ./features/cli/ssh.nix
