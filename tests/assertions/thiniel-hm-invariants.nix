@@ -50,6 +50,12 @@ in
       message = "thiniel: pkg-config must be installed so Rust crates can discover system libraries";
     }
     {
+      assertion = builtins.any (
+        d: (if builtins.isString d then d else d.directory or "") == ".cargo"
+      ) config.home.persistence."/persist".directories;
+      message = "thiniel: .cargo must be persisted so the Cargo home survives the root wipe";
+    }
+    {
       assertion =
         !(superseded [ "wayland" "windowManager" "hyprland" "configType" ] {
           value = "hyprlang";

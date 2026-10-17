@@ -8,7 +8,7 @@ Feature: Rust build toolchain on the personal laptop
     Then  the device provides the Rust compiler and Cargo
     And   the device provides a C linker and pkg-config that a Rust build needs
 
-  @givn.added @wip @host:thiniel
+  @givn.added @host:thiniel
   Scenario: The personal laptop keeps the Cargo home across boots
     Given the personal laptop thiniel is the selected device
     When  the device configuration is applied
