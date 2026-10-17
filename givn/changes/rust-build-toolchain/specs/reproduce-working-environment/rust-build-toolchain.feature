@@ -14,7 +14,7 @@ Feature: Rust build toolchain on the personal laptop
     When  the device configuration is applied
     Then  the device declares the Cargo home as persistent
 
-  @givn.added @wip @e2e @check:integration-rust-toolchain
+  @givn.added @e2e @check:integration-rust-toolchain
   Scenario: A booted device builds and runs a Rust project
     Given a device that declares the Rust build toolchain
     When  the device boots and a new Rust project is built
