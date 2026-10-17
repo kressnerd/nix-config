@@ -41,9 +41,7 @@
           message = "thiniel: the OpenTofu engine (opentofu) must be installed for infrastructure authoring";
         }
         {
-          assertion =
-            hmHasPkg "gh"
-            && !(config.home-manager.users.dan.programs.git.settings ? credential);
+          assertion = hmHasPkg "gh" && !(config.home-manager.users.dan.programs.git.settings ? credential);
           message = "thiniel: the GitHub CLI (gh) must be installed without registering a git credential helper for GitHub hosts";
         }
         {
