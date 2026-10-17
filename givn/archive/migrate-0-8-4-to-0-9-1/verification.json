@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "migrate-0-8-4-to-0-9-1",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "a7e107fd2ade7bb915cac7fcde51fddf867b60ba",
+  "tested_revision": "a7e107fd2ade7bb915cac7fcde51fddf867b60ba",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 29.147480705
+    },
+    "regular": {
+      "status": "passed",
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 94.70922101
+    }
+  },
   "coverage": null,
   "started_at_unix": 1792241297,
-  "finished_at_unix": null
+  "finished_at_unix": 1792241421
 }
