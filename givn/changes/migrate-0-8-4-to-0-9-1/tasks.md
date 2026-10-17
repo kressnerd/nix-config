@@ -223,13 +223,22 @@ instructions to 0.9.1 without dropping project-specific rules.**
 
 ## Task 5 — Close the gates
 
-- [ ] **5.1** Complete the review artifact and its hooks.
+- [x] **5.1** Complete the review artifact and its hooks.
   - Command: `givn status --change migrate-0-8-4-to-0-9-1`, then the review
     step; `givn check review` must pass.
   - Evidence:
     ```
-    (paste the review check output)
+    $ givn check review --change migrate-0-8-4-to-0-9-1
+    [givn-verify] OK
+      ✓ verify
+      hook: verify-e2e
+      Running: ./scripts/givn-verify-e2e.sh
+    [givn-verify-e2e] OK
+      ✓ verify-e2e
+    [check_exit=0]
     ```
+  - Artifact: `review.md`, ending `REVIEW: PASS`; `ARC42 CONFORMANCE: CLEAN`;
+    `README-IMPACT: none`.
 - [ ] **5.2** Archive through the normal gates.
   - Command: `givn archive migrate-0-8-4-to-0-9-1`
   - Evidence:
