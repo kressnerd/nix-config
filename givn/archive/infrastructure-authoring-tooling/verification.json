@@ -1,11 +1,28 @@
 {
   "schema": 1,
   "change": "infrastructure-authoring-tooling",
-  "status": "pending",
-  "candidate_revision": null,
-  "tested_revision": null,
-  "scopes": {},
+  "status": "proven",
+  "candidate_revision": "6ab33d4f1676634e2d5467af38f79ca6fe9031e9",
+  "tested_revision": "6ab33d4f1676634e2d5467af38f79ca6fe9031e9",
+  "scopes": {
+    "e2e": {
+      "status": "passed",
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 37.234099696
+    },
+    "regular": {
+      "status": "passed",
+      "total": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 103.00144869
+    }
+  },
   "coverage": null,
   "started_at_unix": 1792257490,
-  "finished_at_unix": null
+  "finished_at_unix": 1792257630
 }
