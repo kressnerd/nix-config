@@ -52,6 +52,10 @@ pkgs.testers.runNixOSTest {
       defaultSopsFile = "${fixture}/secrets.yaml";
       defaultSopsFormat = "yaml";
       age.keyFile = "/run/github-fetch-credential-test/age-key.txt";
+      # The sops file is a derivation output. A pure evaluation
+      # (`nix flake check --no-build`) has not realized it, so sops-nix's
+      # eval-time pathExists check cannot run; the VM test build realizes it.
+      validateSopsFiles = false;
     };
 
     # The age key reaches the guest at a runtime path. This boot runs the system
