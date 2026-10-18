@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval-and-lint:
+    name: Evaluate and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # gitleaks reads history; the scan is only meaningful with it.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cachix/install-nix-action@v31
+      - name: Evaluate all outputs
+        run: nix flake check --no-build --print-build-logs
+      - name: Build non-integration checks
+        run: |
+          set -euo pipefail
+          nix eval --json '.#checks.x86_64-linux' --apply builtins.attrNames \
+            | jq -r '.[] | select(startswith("integration-") | not)' \
+            | while read -r c; do
+                echo "::group::$c"
+                nix build --print-build-logs ".#checks.x86_64-linux.$c"
+                echo "::endgroup::"
+              done
+      - name: Secret scan
+        run: nix run --inputs-from . nixpkgs#gitleaks -- detect --no-banner --redact
+      - name: Workflow lint
+        run: |
+          nix run --inputs-from . nixpkgs#actionlint
+          nix run --inputs-from . nixpkgs#zizmor -- --pedantic .github/workflows
+      - name: License and copyright metadata
+        run: nix run --inputs-from . nixpkgs#reuse -- lint
