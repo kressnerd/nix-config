@@ -27,9 +27,12 @@ Can accomplish the intended application task, with assistance when needed, witho
 
 ## Running record
 
-### 2026-10-11 — Confirmed general application-user core
+- 2026-10-11 — Confirmed general application-user core
 
 Source: the infrastructure-growth topic's family-responsibility and application-user confirmation (Q9/Q10), followed by the user's general-persona revision (Q14). The user confirmed application-use-only responsibility and adopted the profile, then rejected album/channel-specific narrowing. The stable core remains a review lens, not implemented permissions. Complete topic-local history remains at givn/ideation/infrastructure-growth/personas/family--application-user.md; draft review findings are not global defaults.
+- 2026-10-17 — Homelab-fleet access boundary
+
+Source: the homelab-fleet topic's confirmed Frame and Q2. Host provisioning, edge publication and host recovery are host-level outcomes; they do not grant application resources, widen access or claim application availability. The application-user lens keeps the hosted application as the authority over its own grants. Cross-LAN access to `adlerhorst` is slow and Tailscale-dependent; no family member gains an infrastructure-administration role or a second resolver in the trio LAN. This is a review stance, not a new permission or implementation authorization.
 
 ## Topic stances
 
@@ -44,3 +47,7 @@ The same application-user lens covers family members and selected outside recipi
 ### 2026-10-11 — Disclosed photo recovery-point risk
 
 The assistant selected a 24-hour photo recovery-point planning target under the user's delegation, not a numerical tolerance supplied by every application user or recipient. A restored point may omit newer uploads, edits or metadata; that absent recent state must not be presented as recovered. No all-application/personal-device loss allowance, fast-restore promise, data-source product or extra permission is inferred.
+
+### 2026-10-17 — Homelab-fleet access boundary
+
+The fleet topic's confirmed Frame keeps host-level outcomes separate from application outcomes. A published edge route is transport, not a grant; host recovery is not application recovery; provisioning a host does not make an application available. The same application-user lens covers family members and selected outside recipients within their actual grants. Cross-LAN access to `adlerhorst` is slow and Tailscale-dependent. No infrastructure-administration role, second resolver or wider application permission follows.

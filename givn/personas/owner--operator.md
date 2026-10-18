@@ -25,9 +25,12 @@ Can make intended configuration changes and establish whether the resulting beha
 
 ## Running record
 
-### 2026-10-11 — Confirmed core from growing personal infrastructure
+- 2026-10-11 — Confirmed core from growing personal infrastructure
 
 Source: the infrastructure-growth topic's operator-profile confirmation (Q8), where the user said "Adopt this profile". This is a review lens, not implemented permissions or authority to copy unrelated data. The complete topic-local history remains at givn/ideation/infrastructure-growth/personas/owner--operator.md; draft review findings and earlier superseded pending-question statements are not made project-wide defaults by this record.
+- 2026-10-17 — Homelab-fleet host boundary
+
+Source: the homelab-fleet topic's confirmed Frame, Q1 and Q4/Q5. `adlerkopf` remains a separate fourth host serving the `adlerhorst` LAN (local applications and DNS), reachable only through Tailscale over a slow internet connection. The trio (`pronix`, `tinix001`, `cupix001`) serves its own LAN and the public edge. Host recovery restores a host's role and persistent system state; application-state recovery and application access remain separate. This is a review stance, not a change to the stable core or an implementation authorization.
 
 ## Topic stances
 
@@ -46,3 +49,7 @@ The user delegated a sensible choice for photo-data recovery. The assistant sele
 ### 2026-10-11 — State-inclusive usual working environment
 
 The user explicitly requires a usable usual personal working environment including required files/application state and permitted identities. Software/settings-only completion is rejected. Use approved sources and supported retrieval/restoration or identity re-establishment; missing material means not ready, not fabricated data or blanket credential cloning. VPN remains an application requirement rather than a universal base-device gate. No personal-data loss window or new source product is chosen.
+
+### 2026-10-17 — Homelab-fleet host boundary
+
+The fleet topic's confirmed Frame places `adlerkopf` in the separate `adlerhorst` LAN, reachable only through Tailscale over a slow internet connection, and the trio (`pronix`, `tinix001`, `cupix001`) in its own LAN with the public edge. The owner lens reviews host provisioning, unattended boot, storage redundancy, edge publication, updates, host recovery and health as host-level outcomes. It does not merge application availability, application-state recovery or personal-device readiness into those claims. No deployment, secret operation or change is authorized by this stance.
