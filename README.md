@@ -289,6 +289,16 @@ Future additions:
 - Multi-host coordination
 - Container orchestration
 
+## License
+
+`SPDX-License-Identifier: MPL-2.0`
+
+This repository is licensed under the Mozilla Public License 2.0. MPL-2.0 is
+file-level copyleft: modified MPL-covered files must remain under MPL-2.0, while
+the code can be combined with differently licensed files. Reusable modules under
+`modules/` carry SPDX headers; files that cannot carry a header are covered by
+`REUSE.toml`. See `LICENSE` for the full text.
+
 ## References
 
 - [Nix Reference Manual](https://nixos.org/manual/nix/stable/)

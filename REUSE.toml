@@ -1,0 +1,13 @@
+version = 1
+
+SPDX-PackageName = "nix-config"
+SPDX-PackageSupplier = "Daniel Kressner"
+SPDX-PackageDownloadLocation = "https://github.com/kressnerd/nix-config"
+
+# Files that cannot or should not carry a header (lock files, workflows, docs,
+# host configuration, generated data). Reusable modules carry SPDX headers.
+[[annotations]]
+path = ["**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Daniel Kressner"
+SPDX-License-Identifier = "MPL-2.0"
