@@ -102,8 +102,12 @@
       inputs.disko.follows = "disko";
     };
 
+    # The givn tool is a private flake. The public default is the in-tree stub,
+    # so a clean clone and CI evaluate without access to it; a deploy overrides
+    # the input and the overlay is applied only when the override provides one:
+    #   --override-input givn github:kressnerd/givn
     givn = {
-      url = "github:kressnerd/givn";
+      url = "path:./givn-stub";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
@@ -198,20 +202,22 @@
           system = "x86_64-linux";
           specialArgs = {
             inherit inputs outputs;
+            # The public stub has no overlay; modules gate givn-only invariants on this.
+            givnAvailable = inputs.givn ? overlays;
             pkgs-unstable = (import ./lib/helpers.nix).mkPkgsUnstable {
               inherit nixpkgs-unstable;
               system = "x86_64-linux";
             };
           };
           modules = [
-            {
+            ({ lib, ... }: {
               nixpkgs.overlays = [
                 nur.overlays.default
-                inputs.givn.overlays.default
-                (import ./overlays)
-              ];
+              ]
+              ++ lib.optional (inputs.givn ? overlays) inputs.givn.overlays.default
+              ++ [ (import ./overlays) ];
               nixpkgs.config.allowUnfree = true;
-            }
+            })
             ./hosts/thiniel
             ./modules/home-manager/persistence/options.nix
             { myHome.persistence.enable = true; }
@@ -236,6 +242,8 @@
                   # applies the repository's overlay (`overlays/opencode`). See the
                   # change `current-opencode-release`.
                   opencodePackage = pkgs.opencode;
+                  # The public stub has no overlay, so the package is absent.
+                  givnAvailable = inputs.givn ? overlays;
                 };
                 users.dan = import ./home/dan/thiniel.nix;
                 sharedModules = [
@@ -342,14 +350,14 @@
             };
           };
           modules = [
-            {
+            ({ lib, ... }: {
               nixpkgs.overlays = [
                 nur.overlays.default
-                inputs.givn.overlays.default
-                (import ./overlays)
-              ];
+              ]
+              ++ lib.optional (inputs.givn ? overlays) inputs.givn.overlays.default
+              ++ [ (import ./overlays) ];
               nixpkgs.config.allowUnfree = true;
-            }
+            })
             mac-app-util.darwinModules.default
             nix-homebrew.darwinModules.nix-homebrew
             ./hosts/J6G6Y9JK7L
@@ -372,6 +380,8 @@
                   # OpenCode's package, from this host's own package set (the
                   # repository's overlay). See the change `current-opencode-release`.
                   opencodePackage = pkgs.opencode;
+                  # The public stub has no overlay, so the package is absent.
+                  givnAvailable = inputs.givn ? overlays;
                 };
                 users."daniel.kressner" = import ./home/dan/J6G6Y9JK7L.nix;
                 sharedModules = [

@@ -516,18 +516,14 @@
         ]
       },
       "locked": {
-        "lastModified": 1792249097,
-        "narHash": "sha256-HblV5j61GIQXUpr+/rsEHO46CMrOt/OA+xa5VPh6GTc=",
-        "owner": "kressnerd",
-        "repo": "givn",
-        "rev": "af36726e24efb22a16b7d03a4c3f4532fd4ef1d4",
-        "type": "github"
+        "path": "./givn-stub",
+        "type": "path"
       },
       "original": {
-        "owner": "kressnerd",
-        "repo": "givn",
-        "type": "github"
-      }
+        "path": "./givn-stub",
+        "type": "path"
+      },
+      "parent": []
     },
     "gnome-shell": {
       "flake": false,
