@@ -1,0 +1,7 @@
+# The private-key blocks in docs/DECLARATIVE-SSH-KEY-MANAGEMENT.md were
+# generated for the documentation example and were removed from the file. The
+# commit that introduced them remains in the public history, so a full-history
+# scan needs an explicit exception; the scope is that one commit, not the path.
+[allowlist]
+description = "Generated documentation example keys, not credentials"
+commits = ["780bdec9d76bcd67f282d96fd2331a82dcf4b30e"]

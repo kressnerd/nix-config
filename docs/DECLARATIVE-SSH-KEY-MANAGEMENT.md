@@ -135,17 +135,10 @@ in {
 
 Use SOPS (Secrets OPerationS) with age encryption for encrypted key management:
 
-```nix
+```yaml
 # secrets.yaml (encrypted with SOPS)
-initrd_ssh_rsa_key: |
-  -----BEGIN OPENSSH PRIVATE KEY-----
-  [encrypted content]
-  -----END OPENSSH PRIVATE KEY-----
-
-initrd_ssh_ed25519_key: |
-  -----BEGIN OPENSSH PRIVATE KEY-----
-  [encrypted content]
-  -----END OPENSSH PRIVATE KEY-----
+initrd_ssh_rsa_key: ENC[AES256_GCM,data:...,type:str]
+initrd_ssh_ed25519_key: ENC[AES256_GCM,data:...,type:str]
 ```
 
 ```nix
