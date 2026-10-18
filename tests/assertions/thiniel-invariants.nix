@@ -5,6 +5,7 @@
   config,
   pkgs,
   lib,
+  givnAvailable,
   ...
 }:
 {
@@ -141,8 +142,8 @@
           message = "thiniel: programs.mtr must be enabled for network path diagnostics (traceroute with SUID wrapper)";
         }
         {
-          assertion = hmHasPkg "givn";
-          message = "thiniel: givn must be installed via Home Manager";
+          assertion = !givnAvailable || hmHasPkg "givn";
+          message = "thiniel: givn must be installed via Home Manager when the private givn input is supplied";
         }
         {
           assertion = builtins.elem "$HOME/.cargo/bin" config.home-manager.users.dan.home.sessionPath;

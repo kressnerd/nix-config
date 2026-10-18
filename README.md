@@ -90,6 +90,17 @@ The per-host `rebuild` alias runs a preflight that refuses to deploy when the
 override supplied no values. See
 [docs/arc42/adr/ADR-0001-private-data-strategy.md](docs/arc42/adr/ADR-0001-private-data-strategy.md).
 
+Hosts that install the private `givn` tool (`thiniel`, `J6G6Y9JK7L`) must also
+override the `givn` input; without it the public stub supplies no overlay and
+the host builds without `givn`:
+
+```bash
+sudo nixos-rebuild switch --flake .#<hostname> \
+  --override-input givn github:kressnerd/givn
+```
+
+Their `rebuild` aliases (`nrs`/`nrt`/`nrb`, `drs`) carry the override.
+
 **NixOS VM (using nixos-anywhere):**
 
 See [docs/NIXOS-ANYWHERE-SETUP.md](docs/NIXOS-ANYWHERE-SETUP.md) and [docs/VM-SETUP.md](docs/VM-SETUP.md) for VM deployment.
@@ -183,6 +194,22 @@ Adding a host that has private values therefore touches both sides:
 
 `nix flake check` and CI always evaluate with the stub, so no private access is
 needed to build or review the repository.
+
+### Host Setup — hosts with the private givn tool
+
+The `givn` tool lives in the private flake `github:kressnerd/givn`. The public
+flake's `givn` input defaults to the in-tree `givn-stub/`, which has no
+`overlays` output and no package, so evaluation without the override applies no
+givn overlay and installs no `givn`. Supply the real input on a deploy:
+
+```bash
+sudo nixos-rebuild switch --flake .#<hostname> \
+  --override-input givn github:kressnerd/givn
+```
+
+Host invariants check for `givn` only when the real input is supplied; there is
+no fake package in the public stub. See `flake.nix` and
+`home/dan/features/development/givn.nix`.
 
 ## Documentation
 

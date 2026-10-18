@@ -70,9 +70,9 @@
 
   # Host-specific shell aliases
   programs.fish.shellAliases = {
-    nrs = "sudo nixos-rebuild switch --flake ~/Projects/nix-config";
-    nrt = "sudo nixos-rebuild test --flake ~/Projects/nix-config";
-    nrb = "sudo nixos-rebuild boot --flake ~/Projects/nix-config";
+    nrs = "sudo nixos-rebuild switch --flake ~/Projects/nix-config --override-input givn github:kressnerd/givn";
+    nrt = "sudo nixos-rebuild test --flake ~/Projects/nix-config --override-input givn github:kressnerd/givn";
+    nrb = "sudo nixos-rebuild boot --flake ~/Projects/nix-config --override-input givn github:kressnerd/givn";
     # Colmena fleet deployment
     cs = "colmena apply --on";
     ct = "colmena apply --goal test --on";
