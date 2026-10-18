@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Daniel Kressner
+#
+# SPDX-License-Identifier: MPL-2.0
+
 { config, lib, ... }:
 let
   cfg = config.mySystem.persistence;

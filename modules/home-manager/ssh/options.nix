@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Daniel Kressner
+#
+# SPDX-License-Identifier: MPL-2.0
+
 { lib, ... }:
 let
   inherit (lib) mkOption types;

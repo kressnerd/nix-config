@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Daniel Kressner
+#
+# SPDX-License-Identifier: MPL-2.0
+
 # The GitHub fetch credential of a machine that develops and builds this
 # configuration: the value is recorded only encrypted (`github/access-token` in
 # the machine's own `secrets.yaml`); system activation renders it, owned by the
