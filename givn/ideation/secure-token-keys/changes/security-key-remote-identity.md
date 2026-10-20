@@ -41,6 +41,16 @@ Status: ready
   4. **Remove the file key; external recovery only.** Gain: strongest key hygiene. Cost: external account/provider recovery; not fully testable.
 - Chosen: **Keep the file key; defer the stolen-device guarantee** (Q6/Q7). The first stage proves token enrollment, token-preferred daily use, and the backup credential. It does **not** claim that a stolen device or copied home directory yields no usable identity. Per-use verification and WebAuthn remain later stages. Rejected: passphrase-protected file key for the weaker claim; moving it off-device because the owner declined offline media; removing it because the owner chose the local fallback.
 
+### Handle residency
+
+- Context: a FIDO SSH credential combines an on-disk key handle with a non-exportable device key in the token. The handle can live only in the handle file (non-resident) or also in the token (resident, `-O resident`). Resident keys are typically PIN-protected and recoverable with `ssh-keygen -K`. The owner's threat is theft of the token alone; token and laptop are not stolen together, and portability to foreign machines is not needed.
+- Options:
+  1. **Non-resident, without `verify-required`.** Handle only in the handle file; each token gets its own key and handle file; daily use is touch-only. Gain: a stolen token alone lacks the handle; no PIN friction; no resident slots; avoids the Solo 2's reported resident/`verify-required` problems. Cost: losing the handle file makes that token unusable; token plus handle file is protected by touch only; encrypted handle-file backup is required.
+  2. **Non-resident, with `verify-required`.** Handle only in the file; every signature requires PIN plus touch. Gain: stronger if token and handle file are both stolen. Cost: daily PIN prompts; the Solo 2's `verify-required` reportedly failed in 2022 (current status not checked); a one-time PIN unlock plus touch is not documented.
+  3. **Resident.** Handle stored in the token; `ssh-keygen -K` recovers it. Gain: portability; handle-file loss recoverable. Cost: typically PIN-protected; the Swissbit PIN is 4–8 characters and a reset deletes all FIDO2 credentials; a stolen token is more usable to a thief; portability is not needed.
+- Chosen: **Non-resident, without `verify-required`, with two tokens** (Q8). Each token has its own handle file; both are backed up encrypted. A stolen token alone cannot authenticate; token plus handle file is protected by touch only. The file-backed personal identity remains, so the stage does not claim stolen-laptop resistance. Rejected: `verify-required` because the Solo 2's reported verification failure and daily PIN friction are not justified for the chosen threat; resident because portability is not needed and a stolen token is more usable.
+- Verification: `ssh-keygen -K` with either token returns no keys; login with token plus touch succeeds; login without touch fails; using the token on a machine without its handle file fails; the backup token authenticates independently; restoring access with the backup in under 15 minutes.
+
 ### Use-case cut and seed boundary
 
 - Context: the reviewed first stage has two actor outcomes: authenticating to a remote host, and revoking a lost security key's public identity. Enrollment/authorization/retention are setup and fallback preconditions.
@@ -49,7 +59,7 @@ Status: ready
   2. **Two leaves, two seeds with authentication first.** Gain: smaller first change. Cost: an intermediate state where a lost key cannot be revoked, making a confirmed first-stage rule untrue.
   3. **One combined "safe access" leaf.** Gain: one goal. Cost: the success guarantee joins authentication and revocation, violating the one-outcome rule.
   4. **Enrollment as a third leaf.** Gain: explicit setup goal. Cost: enrollment alone delivers no usable access; it is a subfunction.
-- Chosen: **Two leaves, one seed** (`authenticate-to-remote-host`, `recover-lost-security-key`). The seed guarantee is token-held remote identity on `thiniel` with daily/backup/fallback and lost-key revocation. Rejected: two seeds because the intermediate state violates the lost-key rule; one combined leaf because of the joint success outcome; enrollment as a leaf because it is not value-ready.
+- Chosen: **Two leaves, one seed** (`authenticate-to-remote-host`, `recover-lost-security-key`). The seed guarantee is token-held remote identity on `thiniel` with non-resident handle files, daily/backup/fallback, and lost-key revocation. Daily token use is touch-only; a stolen token alone cannot authenticate without its handle file. Rejected: two seeds because the intermediate state violates the lost-key rule; one combined leaf because of the joint success outcome; enrollment as a leaf because it is not value-ready.
 
 ### Terms and persona
 
@@ -68,14 +78,24 @@ Status: ready
   3. **Owner supplies the authoritative list.** Gain: matches intent. Cost: the list must be maintained.
 - Resolution: open; settle in proposal/design before claiming the recovery outcome is complete.
 
-### Which Swissbit iShield model and capabilities?
+### Which Swissbit iShield model, key type, and capabilities?
 
-- Blocks: resident-key capacity; later PIV/TOTP/HMAC-secret stages; the exact `fido2-token` probe commands.
-- Context: the user stated "Swissbit iShield Key" without a model. The model label or `fido2-token -L -I` establishes FIDO2/PIV/TOTP/HMAC-secret support. The SSH first stage can use key-handle files if resident slots are limited.
+- Blocks: whether the first stage uses `ed25519-sk` or `ecdsa-sk`; later PIV/TOTP/HMAC-secret stages; the exact `fido2-token` probe commands.
+- Context: the user stated "Swissbit iShield Key" without a model. The model label or `fido2-token -L -I` establishes FIDO2/PIV/TOTP/HMAC-secret support. Q8 uses non-resident handles, so resident-key capacity is not relevant to the first stage. The Swissbit manual does not establish Ed25519 support; the SSH guide names `ed25519-sk` with `ecdsa-sk` as fallback.
 - Options:
   1. **Read the model from the device label.** Gain: no tooling needed. Cost: may not reveal firmware capabilities.
   2. **Probe with `fido2-token` after the udev setup.** Gain: capability evidence. Cost: requires the temporary package/udev setup.
 - Resolution: open; not blocking the SSH first stage, but needed before later stages.
+
+### Do client and servers support FIDO SSH keys?
+
+- Blocks: whether the first stage can use `ed25519-sk`/`ecdsa-sk` at all; the native verification target.
+- Context: the decision record assumes OpenSSH ≥ 8.2 with FIDO support on the client and every affected server. This is **not verified**. A server with an older OpenSSH will reject the key type.
+- Options:
+  1. **Check `ssh -V` on `thiniel` and each remote.** Gain: direct evidence. Cost: one check per remote.
+  2. **Use `ecdsa-sk` everywhere.** Gain: the wider fallback named by the SoloKeys guide. Cost: less preferred key type; still requires FIDO support.
+  3. **Defer the check to implementation.** Gain: no work now. Cost: the stage may fail at the first login.
+- Resolution: open; verify before claiming the seed implemented.
 
 ### Which udev/package support does the Solo 2 need?
 
@@ -99,7 +119,7 @@ Status: ready
 ### What native target proves token authentication?
 
 - Blocks: the future Gherkin scenarios' `@check:`/`@host:`/`@deploy:` binding and the RED/GREEN evidence.
-- Context: `integration-ssh-identity-selection` proves file-key identity resolution in a booted VM; it does not prove a token-held authentication. A real security key cannot simply be attached to a QEMU VM.
+- Context: `integration-ssh-identity-selection` proves file-key identity resolution in a booted VM; it does not prove a token-held authentication. A real security key cannot simply be attached to a QEMU VM. The non-resident decision adds two checks that must be exercised: `ssh-keygen -K` with either token returns no keys, and a token without its handle file does not authenticate.
 - Options:
   1. **Host-level exercise on `thiniel` with the real token.** Gain: actual hardware proof. Cost: not a repeatable VM check; requires the owner present.
   2. **Virtual FIDO2 authenticator in a VM.** Gain: repeatable. Cost: may not exercise the real Swissbit/Solo 2 firmware or udev path.

@@ -1,6 +1,6 @@
 # Use Case Definition: secure token keys
 
-Status: elaborated drafts 2026-10-17 — the first-stage cut with the use-case review's correctness findings applied; both leaves have contracts in `use-cases/`. The Use Case Elaboration phase review is pending. The user has not confirmed this cut as a Handoff record. It selects no implementation or release order.
+Status: Handoff complete 2026-10-17 — the first-stage cut with the use-case review's correctness findings applied; both leaves have reviewed contracts in `use-cases/`. The user confirmed the cut and the one ready seed; Q8 added the non-resident handle policy after Handoff. It selects no implementation or release order.
 
 This cut follows the confirmed Frame (remote identity on `thiniel`, Swissbit daily, Solo 2 backup, file-backed personal identity retained, no theft-resistance claim) and the confirmed terms. It covers the first stage only; the later staged surfaces are not cut into use cases here.
 
@@ -31,6 +31,7 @@ These are stage rules, not additional use cases. They keep the credential-agnost
 - **Token-preferred daily use.** When the daily security key is present and usable, the device uses it for the personal identity's remote connections. The file-backed personal identity is used only when the token is unavailable or the owner explicitly selects the fallback. The device never substitutes one credential for another silently.
 - **Enrollment and authorization are separate.** A recognized or enrolled security key grants no access until its public identity is authorized at the remote. Authorization alone, without the matching credential, cannot authenticate.
 - **The file-backed personal identity is a fallback, not theft resistance.** It remains on `thiniel` in this stage; the stage does not claim that a stolen device or copied home directory yields no usable SSH identity.
+- **The handle is non-resident.** Each token has its own handle file on the device; no `-O resident`, no `verify-required`. The handle file is required to use the token. `ssh-keygen -K` with either token must return no keys. A stolen token alone cannot authenticate without its handle file; token plus handle file is protected by touch only. Both handle files are backed up encrypted.
 - **A lost key is revoked at every remote that authorized it.** The owner does not select a convenient subset. The authoritative remote inventory is an elaboration input, but the outcome quantifies over all of it.
 - **A failed revocation is not success.** If a remote does not confirm removal, the lost public identity is still treated as authorized there.
 - **Both keys lost while the device remains.** The file-backed personal identity can authenticate, and each lost public identity must be revoked. Loss of both keys and the device is outside this stage.
@@ -39,7 +40,7 @@ These are stage rules, not additional use cases. They keep the credential-agnost
 
 | Element | Treatment | Reason |
 |---|---|---|
-| Recognize a security key and enroll the daily and backup credentials | `-` setup subfunction of authentication | Enrollment and recording the key handle create no usable access by themselves; the remote must still authorize the public identity, and the value appears only when a connection authenticates. |
+| Recognize a security key and enroll the daily and backup credentials | `-` setup subfunction of authentication | Enrollment and recording the non-resident handle file create no usable access by themselves; the remote must still authorize the public identity, and the value appears only when a connection authenticates. |
 | Authorize the public identity at each remote host | `-` setup subfunction of authentication | A remote grant is a precondition of the authentication outcome; it is not a separate actor goal in this stage. It is modeled as an event partner, not a leaf. |
 | Security key not recognized, or public identity authorization rejected | `-` setup failure | These are setup failures, not authentication outcomes; the owner cannot authenticate with that credential until setup succeeds. |
 | Retain the file-backed personal identity | `-` fallback precondition of authentication | The owner chose a fallback rather than removing the file key. It is a configuration constraint, not a goal. |
@@ -61,7 +62,8 @@ These assessments apply the confirmed review lenses; they are not interviews, sa
 ## Open inputs and exclusions
 
 - The authoritative first-stage remote inventory is an operating input: GitHub personal and the servers that already authorize the `thiniel` personal identity are named, but the list is not audited here. The recovery outcome quantifies over that inventory; it is not an owner-selected subset.
-- The Swissbit model and resident-key capacity are not needed for the use-case contract; they affect the design's choice between resident credentials and key-handle files.
+- Q8 settles the handle as non-resident; resident-key capacity is not relevant to the first stage. The Swissbit model is still needed for later PIV/TOTP stages.
+- Whether the Swissbit supports `ed25519-sk` (fallback `ecdsa-sk`) and whether client and servers run OpenSSH ≥ 8.2 with FIDO support are unverified design inputs.
 - The exact udev rules and whether the Solo 2 needs `solo2-cli` in addition to `libfido2` are design inputs.
 - The exact mechanism for token-preferred selection is a design decision; the stage rule requires the preference and forbids silent substitution, not a particular selection technique.
 - A real security key cannot simply be attached to a QEMU VM. The future change must bind verification to a meaningful target (hardware, a virtual authenticator, or a host-level exercise) and must not claim a booted-VM proof that the target cannot supply.
@@ -70,7 +72,7 @@ These assessments apply the confirmed review lenses; they are not interviews, sa
 
 ## Native verification constraints for later specifications
 
-The repository binds scenarios to native `@check:`, `@host:`, or `@deploy:` targets, with exactly one resolving binding per scenario (`docs/GIVN-VERIFICATION.md`). No Gherkin runner is added. The existing `integration-ssh-identity-selection` check proves file-based identity resolution in a booted VM; it does not prove a token-held authentication. A future token check must exercise the actual key path and must disclose its platform limit. Evaluation, path membership, a key-handle file's presence, or a mock authenticator echo is not authentication proof.
+The repository binds scenarios to native `@check:`, `@host:`, or `@deploy:` targets, with exactly one resolving binding per scenario (`docs/GIVN-VERIFICATION.md`). No Gherkin runner is added. The existing `integration-ssh-identity-selection` check proves file-based identity resolution in a booted VM; it does not prove a token-held authentication. A future token check must exercise the actual key path and must disclose its platform limit. Evaluation, path membership, a key-handle file's presence, or a mock authenticator echo is not authentication proof. The non-resident decision adds a verifiable invariant: `ssh-keygen -K` with either token returns no keys, and using a token on a machine without its handle file fails.
 
 ## Use Case Definition phase review — 2026-10-17
 
@@ -78,4 +80,4 @@ A fresh-context reviewer returned "pass with findings" and no blocker. Applied: 
 
 ## Next action
 
-Handoff: ask which confirmed terms to promote to the durable glossary, then confirm the use-case-to-permanent mapping, persona choice, and one ready change seed. No persona is proposed; the owner/operator persona is the review lens. No change seed exists yet.
+Handoff complete: the terms are promoted, the mapping and persona choice are recorded, and the ready seed is `security-key-remote-identity`. No givn change has been started. The owner/operator persona remains the review lens; no new persona is proposed.

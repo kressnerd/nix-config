@@ -14,7 +14,7 @@ The Device owner observes that a security key is lost.
 
 ## Preconditions
 - The lost key's public identity is known from the identity declaration and its enrolled credential.
-- A remaining credential can authenticate to each affected remote: the other security key, or the retained file-backed personal identity.
+- A remaining credential can authenticate to each affected remote: the other security key with its own non-resident handle file, or the retained file-backed personal identity.
 - The Device owner is authorized to change the remote authorizations.
 - Each affected remote is reachable.
 - If both security keys are lost, the file-backed personal identity is present and authorized.
@@ -36,7 +36,8 @@ The Device owner observes that a security key is lost.
 ## Rules
 - Revocation is performed at every remote that authorized the lost public identity. The owner does not select a convenient subset; the authoritative remote inventory is an elaboration input, but the outcome quantifies over all of it.
 - A revocation is successful only when the remote confirms it. A failed, refused, unreachable, or unverified revocation is not success.
-- The lost security key's public identity is the object; the lost key's key handle and credential record grant no access without the key. Local record cleanup is not part of this goal.
+- The lost security key's public identity is the object; the lost key's handle file and credential record grant no access without the key, and the handle is non-resident. Local record cleanup is not part of this goal.
+- A lost or unreadable handle file while the token remains is not a lost key. It makes that credential unusable and is handled by using the other credential or re-enrolling; it is not a reason to revoke a public identity at the remote.
 - The remaining credential is used through `authenticate-to-remote-host`; this case grants no new access and does not remove the remaining credential.
 - The case does not recover a lost device, both security keys and the device together, an account, or a provider console session; no third token or offline recovery key is selected.
 - A lost backup key is handled symmetrically with a lost daily key: the daily key remains usable, and the lost backup's public identity is revoked at every remote that authorized it.
@@ -76,7 +77,8 @@ Every remote that authorized the lost security key's public identity no longer a
 - Account/provider recovery, a third token, or an offline recovery key — not selected.
 - Device privilege authentication, WebAuthn, SOPS age, and disk unlock — later staged surfaces.
 - The work Mac (`J6G6Y9JK7L`) and work identities — not in the first stage.
-- Local deletion of the lost key's key handle or credential record — not required by this goal.
+- Local deletion of the lost key's handle file or credential record — not required by this goal.
+- Recovering from a lost or unreadable handle file while the token remains — handled by the other credential or re-enrollment, not by this revocation goal.
 - Any claim of theft resistance while the file-backed personal identity remains on `thiniel`.
 
 ## Diagram

@@ -19,6 +19,7 @@ The first stage deliberately proves the token path before taking on lockout risk
 | The overall threat model is staged; the first stage does not claim theft resistance | Q5, revised by Q7 |
 | The existing file key stays on `thiniel` as the fallback | Q6 |
 | The stolen-device guarantee moves to a later stage that removes the file key | Q7 |
+| The SSH handle is non-resident; no `verify-required`; two tokens, each with its own handle file | Q8 |
 
 The full options, gains, costs, examples, and rejected alternatives are in the [question ledger](../../givn/ideation/secure-token-keys/questions.md).
 
@@ -38,11 +39,13 @@ flowchart TD
 
 The daily key is preferred when present. A fallback or backup is an explicit selection; the device never substitutes one credential for another silently. A rejected or revoked public identity is not retried with a different credential.
 
+The first stage uses **non-resident** handles. The token holds the device key; the handle exists only in the handle file on `thiniel`. Each token has its own handle file, and both are backed up encrypted. There is no `-O resident` and no `-O verify-required`; daily use is touch-only. A stolen token alone cannot authenticate without its handle file. A stolen token plus its handle file is protected by touch only. Because the file-backed personal identity remains, the stage still does not claim stolen-laptop resistance.
+
 ## How a credential becomes usable
 
 Two acts are separate:
 
-1. **Enrollment** creates a personal-identity credential on a specific security key and records its key handle in the identity declaration. The private key never leaves the key.
+1. **Enrollment** creates a personal-identity credential on a specific security key and records its non-resident handle file in the identity declaration. The private key never leaves the key; the handle file is required to use it. `ssh-keygen -K` with either token must return no keys.
 2. **Remote authorization** grants that credential's public identity at a remote host. Enrollment alone grants no access.
 
 The daily and backup keys are separate enrollments and separate remote authorizations. The backup is not a copy. The file-backed personal identity is retained as the first-stage fallback; it is not theft resistance.
@@ -59,6 +62,8 @@ Losing a key is not the same as leaving it at home. The owner:
 4. asks each remote to confirm that the lost public identity is no longer authorized.
 
 A failed, refused, unreachable, or unverified revocation is not success. The lost public identity remains treated as authorized until the remote confirms removal. Losing both security keys while `thiniel` remains is covered by the file-backed personal identity; losing both keys and the device is outside this stage.
+
+A lost or unreadable handle file while the token remains is **not** a lost key. It makes that token's credential unusable; use the other token or re-enroll. It is not a reason to revoke a public identity at the remote.
 
 ## The two use cases
 
@@ -80,7 +85,7 @@ All eleven confirmed terms are in the durable [glossary](../arc42/12-glossary.md
 | Backup security key | The separately stored Solo 2, registered as its own credential. |
 | Enrollment | Creating a credential on a key and recording its key handle in the identity declaration. |
 | Token-held personal identity | A personal identity whose private key is held by a security key. |
-| Key handle | The on-disk reference to a token-held credential; not a private key. |
+| Key handle | The on-disk reference to a token-held credential; here it is non-resident and exists only in the handle file, not in the token. |
 | Enrolled credential | One key's token-held identity, represented by its public identity and key handle. |
 | File-backed personal identity | The retained private-key-file identity used as the first-stage fallback. |
 | Remote authorization | The grant at a remote host that admits a public identity. |
@@ -102,7 +107,8 @@ The detailed definitions, contrasts, anti-terms, first uses, and collision check
 ## Open inputs for the proposal
 
 - The authoritative list of remotes that authorize the `thiniel` personal identity: GitHub personal, `adlerkopf`, and possibly `cupix001` and the VMs.
-- The Swissbit model and its FIDO2/PIV/TOTP/HMAC-secret capabilities.
+- The Swissbit model and its FIDO2/PIV/TOTP/HMAC-secret capabilities; whether it supports `ed25519-sk` or must fall back to `ecdsa-sk`.
+- Whether `thiniel` and every affected server run OpenSSH ≥ 8.2 with FIDO support. This is not verified.
 - Whether the Solo 2 needs `solo2-cli` in addition to `libfido2`, and which udev rules it needs.
 - The mechanism that makes the token preferred while keeping the file key out of the way when the token is present.
 - The native target that proves a token-held authentication; a file-key VM check is not that proof.
@@ -111,14 +117,34 @@ The detailed definitions, contrasts, anti-terms, first uses, and collision check
 
 One ready seed, [security-key-remote-identity](../../givn/ideation/secure-token-keys/changes/security-key-remote-identity.md), covers both use cases. Its guarantee:
 
-> On `thiniel`, the personal identity authenticates to the personal GitHub account and the servers that trust it with the daily Swissbit security key, the separately stored Solo 2 backup, or the retained file-backed personal identity; the daily key is preferred and no credential is substituted silently. When a key is lost, the owner continues with the remaining credential and revokes the lost public identity at every remote that authorized it.
+> On `thiniel`, the personal identity authenticates to the personal GitHub account and the servers that trust it with the daily Swissbit security key, the separately stored Solo 2 backup, or the retained file-backed personal identity; the handles are non-resident, the daily key is preferred, daily token use is touch-only, and no credential is substituted silently. A stolen token alone cannot authenticate without its handle file. When a key is lost, the owner continues with the remaining credential and revokes the lost public identity at every remote that authorized it.
 
 One seed, not two: shipping authentication alone would leave the lost-key revocation rule untrue, and recovery alone cannot reach the remotes. The seed has no dependency on another seed. It is input to `/givn-propose`; it is not a proposal or a started change.
 
+## Acceptance checks and risks
+
+The first stage is not done until these are exercised, not merely configured:
+
+- Login with the token inserted and a touch succeeds.
+- Login without a touch fails.
+- Using the token on a machine without its handle file fails.
+- `ssh-keygen -K` with either token returns no keys.
+- The backup token authenticates independently of the daily token.
+- Restoring access with the backup token takes under 15 minutes.
+- 0 keys are readable with `ssh-keygen -K`.
+
+Risks:
+
+- Losing a handle file makes that token unusable even when the token is present. The other token and the encrypted handle-file backup are the mitigation.
+- If an attacker obtains both the token and its handle file, touch is the only barrier. `verify-required` would add a PIN where the token supports it reliably, but the first stage does not use it.
+- Malware on the laptop can request signatures while the token is inserted; the touch limits this to actions the owner confirms. This is not source-backed.
+- Non-resident handles are not portable to a machine that lacks the handle file. The owner confirmed portability is not needed.
+
 ## Evidence and limits
 
-- No security key was enrolled; no token-held key authenticated; no remote authorization was revoked.
-- The ten event-storming canvases were rendered with Mermaid CLI 12 and Chromium 155 and inspected for syntax and layout. That is diagram proof, not authentication proof.
+- No security key was enrolled; no token-held key authenticated; no remote authorization was revoked; no `ssh-keygen -K` check was run.
+- The OpenSSH ≥ 8.2 with FIDO support assumption and the Swissbit Ed25519 support are **not verified**.
+- The ten event-storming canvases were rendered with Mermaid CLI 12 and Chromium 155 and inspected for syntax and layout; the enrollment and daily-authentication canvases were re-rendered after Q8. That is diagram proof, not authentication proof.
 - The existing `integration-ssh-identity-selection` check proves file-key identity resolution in a booted VM. It does not prove a token-held authentication. A future change must bind each scenario to a target that can actually prove it and disclose the platform limit.
 
 ## Source records
@@ -132,3 +158,4 @@ The [session](../../givn/ideation/secure-token-keys/session.md), [Frame](../../g
 - **Term promotion:** all eleven confirmed terms were promoted to the durable glossary on 2026-10-17.
 - **Seed:** one ready seed, `security-key-remote-identity`; it starts no change.
 - **Publication:** this document and the seed are the Handoff outputs.
+- **Post-Handoff decision:** Q8 (non-resident handles, no `verify-required`, two tokens) was added after the first Handoff and applied to the Frame, event storming, contracts, seed, and this document.

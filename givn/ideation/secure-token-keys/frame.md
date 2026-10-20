@@ -17,6 +17,7 @@ On 2026-10-17 the owner stated: "I want to use secure token key hardware." The o
 | Q5 — threat model | **All of the above, staged.** Overall: stolen device/copied data, malicious local process/unattended session, and remote account/credential compromise. The first stage does **not** claim any of these as delivered (revised by Q7). |
 | Q6 — recovery | **Keep the file key on `thiniel` as a fallback.** `~/.ssh/id_ed25519` stays authorized and on disk. |
 | Q7 — conflict resolution | **Keep the file key; defer the stolen-device guarantee.** The first stage delivers token enrollment and token-preferred daily use with the file key as fallback. The stolen-device/copied-data guarantee moves to a later stage that removes the file key after a recovery mechanism exists. |
+| Q8 — handle residency | **Non-resident, without `verify-required`, with two tokens.** Each token gets its own non-resident handle file; daily use is touch-only. A stolen token alone cannot authenticate without its handle file. Token plus handle file is protected by touch only. The handle files are backed up encrypted. |
 
 ## Research protocol
 
@@ -72,8 +73,9 @@ The Swissbit iShield Key and Solo 2 back the owner's authentication across the o
 | Identity | The personal identity used for private repositories and the servers that already trust it. |
 | Daily token | Swissbit iShield Key. |
 | Backup token | Solo 2, stored separately, registered as a separate credential. |
+| Handle residency | **Non-resident.** The handle exists only in the handle file on `thiniel`; the token holds the device key. No `-O resident`, no `verify-required`. Each token has its own handle file; both are backed up encrypted. |
 | Existing file key | `~/.ssh/id_ed25519` stays authorized and on disk as the fallback. |
-| Threat claim | The stage proves token enrollment, token-preferred daily use, and the backup credential. It does **not** claim that a stolen device or copied home directory yields no usable identity. |
+| Threat claim | The stage proves token enrollment, token-preferred daily use, the backup credential, and that a stolen token alone cannot authenticate without its handle file. It does **not** claim protection when token and handle file are both stolen beyond touch, and it does **not** claim that a stolen device or copied home directory yields no usable identity. |
 | Out of scope | The work Mac (`J6G6Y9JK7L`), work identities, PAM/login, WebAuthn, SOPS age, and disk unlock. |
 
 ## Staged scope (Q1)
@@ -87,13 +89,13 @@ All four surfaces are in scope. They are independent guarantees and are not merg
 | Web-account authentication | Browser-account enrollment uses the token as a WebAuthn authenticator. | Account-side enrollment; repository supplies device recognition only. | Later. |
 | Secret/disk unlock | SOPS age material or a LUKS volume is unlocked with the token. | LUKS hosts only; `thiniel` uses OPAL SED and is excluded from FIDO2 disk unlock. Age requires a compatible plugin and a recovery key. | Later. |
 
-The stolen-device/copied-data guarantee, per-use verification for the malicious-local-process threat, and WebAuthn for remote-account compromise are later stages. Every stage must leave the owner able to recover when a token is lost, forgotten, or broken.
+The stolen-device/copied-data guarantee, stronger per-use verification for the malicious-local-process threat, and WebAuthn for remote-account compromise are later stages. The first stage deliberately uses touch only, without `verify-required` (Q8); a later stage may revisit per-use verification where the token supports it reliably. Every stage must leave the owner able to recover when a token is lost, forgotten, or broken.
 
 ## Stakeholder inventory
 
 | Party | Evidence | Interests | Confirmation |
 |---|---|---|---|
-| Owner/operator | Holds both tokens and requests their use. | Stronger and more portable authentication for their own devices and identities; no lockout; a working fallback. | Confirmed as a stakeholder by the existing `owner--operator` persona; the token-specific interests are recorded in Q1–Q7. |
+| Owner/operator | Holds both tokens and requests their use. | Stronger and more portable authentication for their own devices and identities; no lockout; a working fallback. | Confirmed as a stakeholder by the existing `owner--operator` persona; the token-specific interests are recorded in Q1–Q8. |
 | Family application users | Confirmed stakeholder for hosted applications. | Unaffected unless a later token stage changes application access. | No token-related interest established; do not invent one. |
 | Devices | `thiniel` is the first-stage client; `J6G6Y9JK7L`, `adlerkopf`, `cupix001`, and `nixos-vm-minimal` are later or remote surfaces. | Must accept the chosen token surface on the platform where it is declared. | `thiniel` selected by Q3; other devices are not in the first stage. |
 
@@ -110,7 +112,10 @@ Not authorized: configuration edits, deployment, givn change creation, permanent
 - FIDO2 is a standard protocol; both stated devices are FIDO2/CTAP2.1-capable per the supplied research. The Swissbit's exact model and its PIV/TOTP/HMAC-secret support are unconfirmed and are not needed for the SSH first stage.
 - `libfido2` supplies generic udev rules; Solo 2 additionally needs `solo2-cli` for firmware and its non-FIDO2 USB modes. Normal FIDO2 use may work with `libfido2` alone; the design must verify which udev rules the Solo 2 needs.
 - PAM U2F applies to Linux PAM services only. macOS login/sudo is not covered by `pam_u2f`.
-- `ed25519-sk` keys are device-bound; the on-disk artifact is a key handle, not the private key. Backup requires a second registered credential unless the token supports exporting/duplicating (it does not).
+- `ed25519-sk` keys are device-bound; the on-disk artifact is a non-resident key handle, not the private key. The handle file is required to use the token. Backup requires a second registered credential and that token's own handle file; the token does not export or duplicate its key. Q8 selects non-resident handles without `verify-required`.
+- Client and server need OpenSSH ≥ 8.2 with FIDO support (`ed25519-sk`/`ecdsa-sk`). This is **not verified** in the repository or on the servers.
+- Whether the Swissbit supports `ed25519-sk` is not established by its manual; test it and fall back to `ecdsa-sk` if needed. The Solo 2 guide names `ed25519-sk` with `ecdsa-sk` as fallback.
+- A lost handle file makes that token's credential unusable even if the token is present. Both handle files must be backed up encrypted; the backup token is the recovery path.
 - SOPS age currently depends on file or SSH-host-key material. Token-backed age requires a compatible plugin and a recovery path; `age-plugin-yubikey` is PIV-only and no PIV token is declared.
 - `thiniel` uses OPAL SED encryption, not LUKS; `systemd-cryptenroll` FIDO2 unlock applies only to LUKS devices.
 - A required PAM factor on login is a lockout risk if the backup token is not registered first.
@@ -118,12 +123,14 @@ Not authorized: configuration edits, deployment, givn change creation, permanent
 
 ## Open inputs
 
-- Swissbit model and FIDO2/PIV/TOTP/HMAC-secret capability inventory — not Frame-blocking for the SSH first stage; needed before later stages and for resident-key capacity.
+- Swissbit model and FIDO2/PIV/TOTP/HMAC-secret capability inventory — not Frame-blocking for the SSH first stage; needed before later stages. Resident-key capacity is not relevant to the first stage because Q8 selects non-resident handles.
+- Whether the Swissbit supports `ed25519-sk`; fall back to `ecdsa-sk` if not.
+- Whether the client and every affected server run OpenSSH ≥ 8.2 with FIDO support; not verified.
 - The later recovery mechanism that permits removing the file key and delivering the stolen-device guarantee.
-- Per-use verification (PIN/`verify-required`) and WebAuthn stage scoping.
-- The exact udev/Solo 2 package needs, and whether the first stage uses resident keys or key-handle files.
+- Stronger per-use verification and WebAuthn stage scoping; the first stage does not use `verify-required`.
+- The exact udev/Solo 2 package needs.
 - The work Mac's OpenSSH/agent compatibility for a later remote-identity stage.
 
 ## Gaps and next action
 
-The Frame is ready for confirmation. After confirmation, proceed to Event Storming for the first stage and record terms; no event storming, use case, persona, term, or change seed exists yet.
+The Frame was confirmed on 2026-10-17. Q8, added after the Handoff, settles non-resident handle files without `verify-required`; the event storming, use-case contracts, seed, and published topic are updated to match. No givn change has been started. The ready seed remains input to `/givn-propose`.

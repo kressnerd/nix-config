@@ -183,3 +183,85 @@
 ## Q5 revision note
 
 Q7 revised Q5's first-stage claim: the first stage no longer proves the stolen-device/copied-data property. It proves token enrollment, token-preferred daily use, and the file-key fallback. The stolen-device property remains part of the overall threat model and is deferred to a later stage that removes the file key after a recovery mechanism exists. Per-use verification and WebAuthn remain later stages.
+
+## Q8 — Should the SSH key handle be resident or non-resident?
+
+- Status: closed 2026-10-17 (user)
+- Blocks: the first-stage enrollment mechanism, handle-file backup, PIN/`verify-required`, and the exact theft claim the stage may make.
+- Context: Q2/Q3 made remote identity on `thiniel` the first stage, with the Swissbit daily and the Solo 2 as backup. A FIDO SSH credential combines an on-disk key handle with a non-exportable device key in the token. The handle can live only in the handle file (non-resident) or also in the token (resident, `ssh-keygen -O resident`). Resident keys are typically PIN-protected and recoverable with `ssh-keygen -K`; non-resident handles are not recoverable from the token. The owner supplied a decision record with sources; its assumptions about OpenSSH version and Swissbit Ed25519 support are **not verified**.
+- Question: should the first stage create non-resident or resident key handles, and should it require `verify-required`?
+- Options:
+  1. **Non-resident, without `verify-required`.** The handle exists only in the handle file on `thiniel`; the token holds the device key. Create with `ssh-keygen -t ed25519-sk` (fallback `ecdsa-sk`), no `-O resident`, no `-O verify-required`. One key per token; both handle files backed up encrypted. Daily use is touch-only.
+     In practice: `ssh-keygen -K` with either token returns no keys; a stolen token alone cannot authenticate without the handle file; `git push` and server logins need the token and a touch.
+     Gain: protects against token theft alone without a PIN; no resident-key slots; avoids the Solo 2's reported resident/`verify-required` problems; matches the owner's no-portability requirement.
+     Cost: losing the handle file makes that token unusable; token plus handle-file theft reduces to touch; encrypted handle-file backup is an operational requirement; no use on a machine without the handle file.
+  2. **Non-resident, with `verify-required`.** The handle stays only in the file, and each signature requires a PIN plus touch.
+     In practice: an attacker with token and handle file still needs the PIN; the agent must ask for verification on every signature.
+     Gain: stronger protection if token and handle file are both stolen; no resident-key slots.
+     Cost: daily PIN prompts; the Solo 2's `verify-required` reportedly failed in 2022 because of an open issue (current status not checked); the PIN becomes another recovery secret; a one-time PIN unlock followed by touch is not documented.
+  3. **Resident.** The handle is stored in the token (typically with a PIN); `ssh-keygen -K` can recover it on a new machine.
+     In practice: a stolen token carries the handle and is more usable to a thief; a new machine can recover the key with `ssh-keygen -K`.
+     Gain: portability and recovery from handle-file loss.
+     Cost: resident keys typically require a PIN; the Swissbit PIN is 4–8 characters and a reset deletes all FIDO2 credentials; the Solo 2's resident keys reportedly needed a firmware update and reset; a stolen token is more usable to a thief; portability is not needed here.
+- Resolution: **Non-resident, without `verify-required`, with two tokens (primary and backup).** Each token gets its own key and handle file; both handle files are backed up encrypted. The stage protects against theft of the token alone because the thief lacks the handle file. It does **not** protect against theft of token plus handle file beyond touch, and it does **not** claim stolen-laptop resistance because the file-backed personal identity remains on `thiniel`. Rejected: non-resident with `verify-required` because the Solo 2's reported verification failure and the daily PIN friction are not justified for the chosen threat; resident because its portability is not needed, it typically requires a PIN, and a stolen token is more usable to a thief.
+
+### Q8 assumptions
+
+- The threat is theft of the token alone; token and laptop are not stolen together (user-confirmed).
+- Portability to foreign machines is not needed (user-confirmed).
+- Touch is sufficient for daily use; the PIN is only for setup and management (user-confirmed).
+- Client and server have OpenSSH ≥ 8.2 with FIDO support (`ed25519-sk`/`ecdsa-sk`) — **not verified**.
+- The Swissbit model supports the chosen key type. Ed25519 support is not proven by the manual; test it and fall back to `ecdsa-sk` if needed.
+
+### Q8 rationale
+
+- A FIDO SSH credential is the handle file plus a non-exportable device key in the token; both are combined at authentication (`ssh-keygen(1)`).
+- A resident handle is additionally stored in the token. `ssh-keygen(1)` warns that a stolen token is then easier for an attacker to use.
+- A non-resident handle is absent from a stolen token; the thief lacks the handle file. This covers the chosen token-theft threat without a PIN. The conclusion is derived from the man page; no source states it directly.
+- Resident keys typically require a PIN; the portability advantage does not apply here.
+
+### Q8 alternatives
+
+| Criterion | Non-resident, no `verify-required` (chosen) | Non-resident, `verify-required` | Resident |
+|---|---|---|---|
+| Protection when only the token is stolen | High: handle file absent | High: handle file and PIN absent | Lower: handle is in the token |
+| Protection when token and handle file are stolen | Touch only | PIN plus touch | Touch plus PIN, if enabled |
+| Use on a new machine | Copy the handle file | Copy the handle file | `ssh-keygen -K` |
+| Handle-file loss | Key unusable; backup token needed | Key unusable; backup token needed | Recoverable from the token |
+| PIN requirement | None for daily use | Every signature | Typically at creation/use |
+
+### Q8 token-specific findings
+
+- **Solo 2:** the [SoloKeys SSH guide](https://github.com/solokeys/solo2/blob/main/examples/SSH.md) names `ed25519-sk` and `ecdsa-sk` as fallback. A [SoloKeys discussion](https://github.com/solokeys/solo2/discussions/108) reports that resident keys worked only after a firmware update and reset, and that `verify-required` failed because of an open issue (2022; current status not checked).
+- **Swissbit iShield Key 2:** the [manual](https://www.swissbit.com/data/iShield_Key2/UserManual_iShield-Key2-Series_EN.pdf) states FIDO 2.1 and resident keys with 300 slots; the PIN is 4–8 characters, and a reset deletes all FIDO2 credentials. Ed25519 support is not established by the manual and must be tested; `ecdsa-sk` is the fallback.
+- **PIN in the agent:** a one-time PIN unlock followed by touch is not documented. With `verify-required`, the agent must request verification for every signature ([Superuser](https://superuser.com/questions/1804740/yubikey-ssh-authentication-fails-with-signing-failed-for-ecdsa-sk)). Without it, touch suffices.
+
+### Q8 implementation and verification
+
+Create one key per token; the second token is the backup:
+
+```bash
+ssh-keygen -t ed25519-sk -C "user@laptop-token1" -f ~/.ssh/id_ed25519_sk_token1
+# Fallback if the token rejects Ed25519:
+ssh-keygen -t ecdsa-sk -C "user@laptop-token1" -f ~/.ssh/id_ecdsa_sk_token1
+```
+
+Add both public keys to the remote authorizations. Back up the handle files encrypted. Tests:
+
+- Login with the token inserted and a touch succeeds.
+- Login without a touch fails; the server rejects `no-touch-required` signatures by default (`ssh-keygen(1)`).
+- Using the token on a machine without the handle file fails.
+- `ssh-keygen -K` with the token returns no keys, confirming nothing is resident.
+- The backup token authenticates independently of the primary token.
+
+Risks:
+
+- Losing the handle file makes that key unusable; the second token and the encrypted backup are the mitigation.
+- If an attacker obtains both token and handle file, touch is the only barrier; `verify-required` would add a PIN where the token supports it reliably.
+- Malware on the laptop can request signatures while the token is inserted; the touch limits this to actions the owner confirms. This is not source-backed.
+
+Success metrics:
+
+- 0 keys readable with `ssh-keygen -K`.
+- 100% of the tests above pass.
+- Restoring access with the backup token in under 15 minutes.

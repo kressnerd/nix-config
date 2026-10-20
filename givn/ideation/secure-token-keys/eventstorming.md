@@ -1,6 +1,6 @@
 # Event Storming: secure token keys
 
-Status: draft 2026-10-17 — models the confirmed first stage only (remote identity on `thiniel`, Swissbit daily, Solo 2 backup, file key fallback). The fresh-context phase review's correctness findings are applied; the user's term check is pending. Later token surfaces are not modeled here.
+Status: reviewed 2026-10-17 — models the confirmed first stage only (remote identity on `thiniel`, Swissbit daily, Solo 2 backup, file key fallback). The fresh-context phase review's correctness findings are applied; the terms are confirmed and promoted; Q8's non-resident handle policy is applied. Later token surfaces are not modeled here.
 
 ## Scope and evidence
 
@@ -16,13 +16,23 @@ The permanent glossary declares no repository-owned aggregate. This slice introd
 
 Node IDs are canvas-local and prefixed by their canvas letter (`a`, `b`, …). Cross-reference a node by its label, not by its ID.
 
+## First-stage handle policy (Q8)
+
+The handle is **non-resident**. Each security key gets its own key and handle file; the token holds the device key, and the handle file exists only on the device. There is no `-O resident` and no `-O verify-required`. Daily use is touch-only.
+
+- A stolen token alone cannot authenticate without its handle file.
+- A stolen token plus its handle file is protected by touch only.
+- A lost or unreadable handle file makes that token's credential unusable even when the token is present; the other token and the encrypted handle-file backup are the recovery path.
+- `ssh-keygen -K` with either token must return no keys; that is the residency check.
+- The first stage does not claim stolen-laptop resistance; the file-backed personal identity remains on `thiniel`.
+
 ## Event partners
 
 | Past-tense event | Actor and command | Target and kind | Reacting policy | Actor's read model |
 |---|---|---|---|---|
 | Security key not recognized by the device | Owner: present security key | Personal device and security key — external device/system | Only an addressable FIDO2 security key is usable; an unrecognized key is neither enrolled nor authorized | Recognized security keys |
 | Security key recognized by the device | Owner: present security key | Personal device and security key — external device/system | Recognition does not enroll or authorize anything | Recognized security keys |
-| Token-held personal identity enrolled | Owner: enroll personal identity on the daily security key | Daily security key — external device; identity declaration — configuration record | The private key never leaves the key; the device keeps only a key handle; the declaration records the daily credential and preference | Enrolled credentials and public identities |
+| Token-held personal identity enrolled | Owner: enroll personal identity on the daily security key | Daily security key — external device; identity declaration — configuration record | The private key never leaves the key; the device keeps a non-resident handle file; no `verify-required`; the declaration records the daily credential and preference | Enrolled credentials and public identities |
 | Daily public identity authorized at the remote | Owner: authorize the daily public identity | Remote host — external system | Enrollment grants no access; the remote may accept or reject the authorization | Remote authorization status |
 | Public identity authorization rejected at the remote | Owner: authorize the daily or backup public identity | Remote host — external system | A remote may refuse the authorization; the local enrollment remains, but no access is granted | Remote authorization status |
 | Backup security key enrolled | Owner: enroll personal identity on the backup security key | Backup security key — external device; identity declaration — configuration record | The backup is a separate credential, never a copy; the declaration records the backup credential and fallback order | Enrolled credentials and public identities |
@@ -61,7 +71,7 @@ flowchart TD
   aP2["Command: enroll personal identity on the daily key"]
   aP4["Command: enroll personal identity on the backup key"]
   aP1A{"Policy: only an addressable FIDO2 security key is usable"}
-  aP1B{"Policy: the private key never leaves the key; the device keeps only a key handle"}
+  aP1B{"Policy: the private key never leaves the key; the device keeps a non-resident handle file; no verify-required"}
   aP1C{"Policy: the identity declaration records daily, backup and fallback order"}
 
   aO --> aP1 --> aDEV
@@ -140,7 +150,7 @@ flowchart TD
   dR1["Read model: authentication result and credential used"]
   dR3["Read model: remote authorization status"]
   dP1{"Policy: daily key preferred when present"}
-  dP2{"Policy: user presence required for token-held authentication"}
+  dP2{"Policy: non-resident handle file present; touch only; no verify-required"}
 
   dO --> dC1 --> dDEV
   dP1 --> dDEV
@@ -308,7 +318,8 @@ For a daily token-held connection to have authenticated, the owner must have pre
 
 ## Open inputs and exclusions
 
-- The Swissbit model and its FIDO2/PIV/TOTP/HMAC-secret capabilities are not needed for this stage's event chain; they are needed before later stages. Resident-key capacity may affect whether the first stage uses resident credentials or key-handle files.
+- Q8 settles the first stage on non-resident handle files without `verify-required`; resident-key capacity is not relevant to this stage. The Swissbit model and its FIDO2/PIV/TOTP/HMAC-secret capabilities are still needed before later stages.
+- Whether the Swissbit supports `ed25519-sk` (fallback `ecdsa-sk`) and whether client and servers run OpenSSH ≥ 8.2 with FIDO support remain unverified design inputs.
 - The exact udev rules and whether the Solo 2 needs `solo2-cli` in addition to `libfido2` are design inputs, not events.
 - The first stage does not include PAM/login, WebAuthn, SOPS age, disk unlock, the work Mac, or work identities.
 - The first stage does not claim that a stolen device or copied home directory yields no usable SSH identity. The file-backed identity remains on `thiniel`.
@@ -317,7 +328,7 @@ For a daily token-held connection to have authenticated, the owner must have pre
 
 ## Rendering verification — 2026-10-17
 
-All ten Mermaid sources were rendered with Mermaid CLI 12.0.0 and Chromium 155.0.8059.79 from nixpkgs (`nix shell nixpkgs#mermaid-cli -c mmdc -i <source>.mmd -o <output>.png`). Each render completed without a syntax error, and the PNGs were inspected: every node-kind label is visible, the actor/command/external-system/configuration-record/event/policy/read-model shapes are distinguishable, and no edge label is obscured. The canvases were split from three dense diagrams into ten focused ones after the first render showed overlapping labels. The event-partner table and the canvases cover the same events, commands, and read models; policy rows that are slice-wide invariants are recorded in the table and are not all duplicated as nodes. Node IDs are canvas-local, as stated above. This is syntax and layout proof only, not a security-key enrollment or authentication run. Temporary render files live under `/tmp/secure-token-keys-canvas` and are not part of the repository.
+All ten Mermaid sources were rendered with Mermaid CLI 12.0.0 and Chromium 155.0.8059.79 from nixpkgs (`nix shell nixpkgs#mermaid-cli -c mmdc -i <source>.mmd -o <output>.png`). Each render completed without a syntax error, and the PNGs were inspected: every node-kind label is visible, the actor/command/external-system/configuration-record/event/policy/read-model shapes are distinguishable, and no edge label is obscured. The canvases were split from three dense diagrams into ten focused ones after the first render showed overlapping labels. The event-partner table and the canvases cover the same events, commands, and read models; policy rows that are slice-wide invariants are recorded in the table and are not all duplicated as nodes. Node IDs are canvas-local, as stated above. This is syntax and layout proof only, not a security-key enrollment or authentication run. After Q8, the enrollment and daily-authentication canvases were re-rendered and inspected; their non-resident-handle and touch-only policy labels are visible. Temporary render files were outside the repository and removed.
 
 ## Event Storming phase review — 2026-10-17
 
@@ -325,4 +336,4 @@ A fresh-context reviewer returned "pass with findings" and no blocker. Applied: 
 
 ## Next action
 
-Proceed to Handoff after the term-promotion and seed confirmation. No persona or change seed exists yet.
+Handoff is complete. The ready seed `security-key-remote-identity` carries this event chain and the Q8 non-resident handle policy. No givn change has been started.
