@@ -46,6 +46,7 @@ flowchart TB
 | User profiles (`home/dan/<host>.nix`) | The Home Manager surface of one host: the feature import list, declared `sops.secrets`, `myHome.*` declarations, shell aliases, and in the Darwin case `targets.darwin` app-linking settings. |
 | Home Manager base (`home/dan/global/default.nix`) | `home.stateVersion`, htop, Home Manager self-management. |
 | Option modules (`modules/<kind>/<concern>/`) | Reusable option + default pairs. Present concerns: `home-manager/ssh`, `home-manager/persistence`, `nixos/persistence`. |
+| Security-key helpers (`lib/security-key.nix`) | Pure identity-declaration and credential-selection helpers used by the SSH feature and the unit check; no private material. |
 | Feature modules (`home/dan/features/**`) | 60 modules rendering one concern each from host declarations, platform conditionals, and declared secrets. |
 | Tests (`tests/`) | Three present layers (`unit`, `assertions`, `integration`); the documented `deploy` layer does not exist. |
 | Support tooling (`scripts/`, `infra/`) | Python CLI and generated OpenAPI client for the netcup SCP firewall, the private-data guard `private_data_hygiene.py`, firewall policy definitions, `.http` request collections, VM build/deploy scripts, and the givn verification scripts. |
@@ -85,7 +86,7 @@ The Darwin host does not import `hosts/common` at all.
 |---|---|---|
 | `nixos/persistence` | `mySystem.persistence.{enable,root}` | When enabled, binds `/etc/nixos`, `/var/log`, `/var/lib/nixos`, `/var/lib/systemd/coredump` and the files `/etc/machine-id`, `/var/lib/sops-nix/key.txt` from `root` (default `/persist/system`). |
 | `home-manager/persistence` | `myHome.persistence.{enable,root}` | When enabled, persists user directories (`dev`, `Projects`, caches, `.config/sops/age`, `.config/netcup-scp`, opencode/omp state) and `.bash_history` from `root` (default `/persist`). |
-| `home-manager/ssh` | `myHome.ssh.{personalIdentityFile,includedConfigs}` | No default behaviour; `personalIdentityFile` has no default, so a host that reaches private repositories must state its key. |
+| `home-manager/ssh` | `myHome.ssh.{personalIdentityFile,tokenIdentityFiles,includedConfigs}` | `personalIdentityFile` has no default and remains the file-backed identity; `tokenIdentityFiles` defaults to `[]` and, when declared, is the ordered daily/backup token list for normal entries. A host with no token list keeps its file identity. |
 | `nixos/github-fetch-credential` | `mySystem.githubFetchCredential.{enable,user}` | Default off. When enabled, declares the `github/access-token` secret, renders `access-tokens = github.com=<value>` (mode `0400`, owner = the named account) through **system** activation, and appends its include to the generated `nix.conf`, so root's and the owner's nix clients both read it without a login. The work MacBook declares the same pieces in its host module and home profile instead, because nix-darwin does not manage `nix.conf` on that machine ([chapter 8](08-crosscutting-concepts.md)). |
 
 ### `home/dan/features/**` (feature modules by category)
@@ -120,7 +121,8 @@ identity declaration and the secret material the device holds.
 | Element | Responsibility |
 |---|---|
 | `programs.ssh.enableDefaultConfig = false` | No Home Manager default host block; the file is fully declarative. |
-| `"github-personal"` block | Always rendered; `IdentityFile` from `myHome.ssh.personalIdentityFile`. |
+| `"github-personal"` block | Always rendered; `IdentityFile` names `tokenIdentityFiles` when declared (daily first, backup second), otherwise `personalIdentityFile`; `IdentitiesOnly=yes`. |
+| `ssh-file-fallback` / `git-file-fallback` | Named wrappers that present `myHome.ssh.personalIdentityFile`; normal entries do not offer the file key when a token list is declared. |
 | `"github-company"`, `"github-client001"`, `"bitbucket-client002"` blocks | Rendered only where `config.sops.secrets ? "git/<identity>/name"`; key paths are literals in this module. |
 | `programs.ssh.includes` | = `myHome.ssh.includedConfigs`, rendered before the managed entries. |
 | `"*"` block | `AddKeysToAgent = yes`; on Darwin additionally `UseKeychain`, `IgnoreUnknown = UseKeychain`, `IdentitiesOnly = true`. |
@@ -179,4 +181,5 @@ the Cargo home across boots.
 
 `tests/deploy/` (pytest-testinfra) is documented in `CLAUDE.md` and
 `docs/GIVN-VERIFICATION.md` but does not exist; the `@deploy:` binding tag
-therefore has no resolvable target today.
+therefore has no resolvable target. The security-key change uses VM checks and
+manual acceptance gates instead.

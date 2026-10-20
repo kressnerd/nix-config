@@ -1,6 +1,6 @@
 # Change seed: security-key-remote-identity
 
-Status: ready
+Status: proposed by security-key-remote-identity
 
 - Use-case IDs: authenticate-to-remote-host, recover-lost-security-key
 - Topic: secure-token-keys
@@ -76,7 +76,7 @@ Status: ready
   1. **Audit GitHub and every declared server/VPS.** Gain: complete revocation set. Cost: auditing external/private authorization state.
   2. **Audit GitHub and `adlerkopf` only.** Gain: smaller scope. Cost: an unauthorized remote may be missed.
   3. **Owner supplies the authoritative list.** Gain: matches intent. Cost: the list must be maintained.
-- Resolution: open; settle in proposal/design before claiming the recovery outcome is complete.
+- Resolution: answered 2026-10-20 (user) — one key from `thiniel` represents the user; every declared host that accepts the user's SSH key is in the authorization and revocation set, plus the personal GitHub account. The work Mac and work identities remain out of scope. The design enumerates the declared hosts; any host outside the repository must be checked before it is claimed.
 
 ### Which Swissbit iShield model, key type, and capabilities?
 
@@ -85,7 +85,7 @@ Status: ready
 - Options:
   1. **Read the model from the device label.** Gain: no tooling needed. Cost: may not reveal firmware capabilities.
   2. **Probe with `fido2-token` after the udev setup.** Gain: capability evidence. Cost: requires the temporary package/udev setup.
-- Resolution: open; not blocking the SSH first stage, but needed before later stages.
+- Resolution: answered 2026-10-20 (user research) — the iShield Key 2 family shares the same FIDO2 functions; the base iShield Key 2 FIDO2 is sufficient, and Pro/MIFARE/FIPS extras are not used. The manual does not state signature algorithms. Try `ed25519-sk` first and fall back to `ecdsa-sk` on `invalid format` or `feature not supported`; the actual token test decides. Neither type is post-quantum-safe; OpenSSH's PQ-hybrid key exchange protects session confidentiality, and non-resident keys can be replaced later.
 
 ### Do client and servers support FIDO SSH keys?
 
@@ -95,7 +95,7 @@ Status: ready
   1. **Check `ssh -V` on `thiniel` and each remote.** Gain: direct evidence. Cost: one check per remote.
   2. **Use `ecdsa-sk` everywhere.** Gain: the wider fallback named by the SoloKeys guide. Cost: less preferred key type; still requires FIDO support.
   3. **Defer the check to implementation.** Gain: no work now. Cost: the stage may fail at the first login.
-- Resolution: open; verify before claiming the seed implemented.
+- Resolution: answered 2026-10-20 — all declared NixOS hosts evaluate to OpenSSH `10.5p1` (`thiniel`, `adlerkopf`, `cupix001`, `nixos-vm-minimal`); the local client reports `OpenSSH_10.5p1`. OpenSSH has supported FIDO `-sk` keys since 8.2. GitHub supports FIDO SSH authentication keys. Apple's `ssh` lacks FIDO support, but the work Mac is out of scope. Any host outside the repository still needs a `ssh -V` check. The actual token login is the native-target test.
 
 ### Which udev/package support does the Solo 2 need?
 
@@ -104,7 +104,7 @@ Status: ready
 - Options:
   1. **`libfido2` only.** Gain: smaller package set. Cost: Solo 2 firmware/bootloader modes may be inaccessible.
   2. **`libfido2` plus `solo2-cli`.** Gain: full Solo 2 modes and updates. Cost: an extra package and its udev rules.
-- Resolution: open; settle by testing the actual Solo 2 on the target.
+- Resolution: answered 2026-10-20 (SoloKeys SSH/FIDO documentation and Swissbit manual) — normal FIDO2 SSH needs `libfido2` for udev/access; the SoloKeys guide says standard `-sk` keys need no special firmware, and the FIDO guide says `libfido2` tools work alongside `solo2`. `solo2-cli` is for device/firmware management, not credential create/assert. Swissbit's iKM/iKMcli is a vendor management tool. The first stage uses `libfido2` at runtime; firmware/management tools are one-off, not host dependencies.
 
 ### How does the device prefer the token over the retained file key?
 
@@ -114,17 +114,27 @@ Status: ready
   1. **Configure the token identity first and keep the file key out of the agent.** Gain: token used when present; explicit fallback. Cost: fallback needs an explicit selection.
   2. **Keep both identities available and rely on SSH order.** Gain: simple. Cost: order can be bypassed; silent fallback risk.
   3. **Use a wrapper that requires an explicit fallback choice.** Gain: strongest no-silent-substitution guarantee. Cost: extra tooling.
-- Resolution: open; the use-case contract requires the behavior, not the mechanism.
+- Resolution: answered 2026-10-20 (user) — normal `ssh`/`git` connections use the daily token, then the backup token when the daily is absent or rejected; the retained file key is available only through a named fallback command/alias. Automatic file-key fallback and SSH-order selection are rejected because they can silently use the file key.
+
+### How are the handle files backed up encrypted?
+
+- Blocks: the second recovery path when a handle file is lost; the operating procedure.
+- Context: losing a handle file makes that token unusable even when the token is present. The other token is the immediate recovery path; the encrypted backup is the second. The user has not selected a medium or procedure.
+- Options:
+  1. **Encrypted archive on offline media.** Gain: independent of the device. Cost: media and passphrase management.
+  2. **Encrypted copy in the private flake or a password manager.** Gain: convenient. Cost: the backup is reachable from a device that may be compromised.
+  3. **No separate backup; rely on the second token.** Gain: less material. Cost: losing both handle files blocks both tokens.
+- Resolution: answered 2026-10-20 (user) — an encrypted backup and a restore drill are a completion gate. The operator records the medium, the restored handle file, and a successful backup-token authentication under 15 minutes in `backup-drill.md`; archive waits for it.
 
 ### What native target proves token authentication?
 
-- Blocks: the future Gherkin scenarios' `@check:`/`@host:`/`@deploy:` binding and the RED/GREEN evidence.
-- Context: `integration-ssh-identity-selection` proves file-key identity resolution in a booted VM; it does not prove a token-held authentication. A real security key cannot simply be attached to a QEMU VM. The non-resident decision adds two checks that must be exercised: `ssh-keygen -K` with either token returns no keys, and a token without its handle file does not authenticate.
+- Blocks: the Gherkin scenarios' `@check:`/`@host:` binding and the RED/GREEN evidence.
+- Context: `integration-ssh-identity-selection` proves file-key identity resolution in a booted VM; it does not prove a token-held authentication. The repeatable proof is a VM with a virtual FIDO2 authenticator (fidorium, P-256, TPM, `/dev/uhid`); the real token and backup restore are manual gates. The non-resident decision adds two checks that must be exercised: `ssh-keygen -K` with either token returns no keys, and a token without its handle file does not authenticate.
 - Options:
   1. **Host-level exercise on `thiniel` with the real token.** Gain: actual hardware proof. Cost: not a repeatable VM check; requires the owner present.
   2. **Virtual FIDO2 authenticator in a VM.** Gain: repeatable. Cost: may not exercise the real Swissbit/Solo 2 firmware or udev path.
   3. **Both: VM for configuration/udev, host for real token.** Gain: strongest coverage. Cost: two targets and two evidence classes.
-- Resolution: open; the proposal must bind each scenario to a target that can actually prove it and must disclose the platform limit.
+- Resolution: answered 2026-10-20 (user/design) — the repeatable e2e binds to `@check:integration-security-key-authentication` and `@check:integration-security-key-revocation` (VM virtual authenticator). The real-token, backup-token, and backup-restore checks are manual gates recorded in `backup-drill.md` and `revocation-drill.md`; archive waits for them.
 
 ### What later recovery mechanism permits removing the file key?
 

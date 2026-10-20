@@ -1,6 +1,6 @@
 # Security-key remote identity
 
-Status: ideation handoff complete 2026-10-17. This record starts no givn change, edits no configuration, and performs no enrollment, authentication, revocation, or secret operation. It describes confirmed planning decisions and a ready change seed.
+Status: ideation handoff complete 2026-10-17; the seed is now proposed by the active change `security-key-remote-identity`. This record edits no configuration and performs no enrollment, authentication, revocation, or secret operation. It describes confirmed planning decisions and the change seed. D1–D5 were answered in the proposal on 2026-10-20; D6–D8 remain open.
 
 ## Purpose
 
@@ -29,15 +29,15 @@ The full options, gains, costs, examples, and rejected alternatives are in the [
 flowchart TD
   O["Owner opens a connection"] --> P{"Is the daily Swissbit present?"}
   P -->|yes| D["Owner touches the Swissbit; remote checks the daily public identity"]
-  P -->|no| Q{"Owner selects the backup or the fallback"}
-  Q -->|backup| B["Owner touches the Solo 2; remote checks the backup public identity"]
-  Q -->|fallback| F["Device presents the file-backed personal identity"]
+  P -->|no| Q{"Is the backup Solo 2 available?"}
+  Q -->|yes| B["Device uses the Solo 2; owner touches it; remote checks the backup public identity"]
+  Q -->|no| F["Owner uses the named fallback; device presents the file-backed personal identity"]
   D --> S["Remote accepts; authenticated session"]
   B --> S
   F --> S
 ```
 
-The daily key is preferred when present. A fallback or backup is an explicit selection; the device never substitutes one credential for another silently. A rejected or revoked public identity is not retried with a different credential.
+The daily key is preferred when present. When it is absent, the backup Solo 2 is used automatically. The file-backed identity is used only through the named fallback; the device never substitutes it for a token silently. A rejected daily credential may be followed by the backup, but the file-backed identity is never automatic.
 
 The first stage uses **non-resident** handles. The token holds the device key; the handle exists only in the handle file on `thiniel`. Each token has its own handle file, and both are backed up encrypted. There is no `-O resident` and no `-O verify-required`; daily use is touch-only. A stolen token alone cannot authenticate without its handle file. A stolen token plus its handle file is protected by touch only. Because the file-backed personal identity remains, the stage still does not claim stolen-laptop resistance.
 
@@ -106,16 +106,18 @@ The detailed definitions, contrasts, anti-terms, first uses, and collision check
 
 ## Open inputs for the proposal
 
-- The authoritative list of remotes that authorize the `thiniel` personal identity: GitHub personal, `adlerkopf`, and possibly `cupix001` and the VMs.
-- The Swissbit model and its FIDO2/PIV/TOTP/HMAC-secret capabilities; whether it supports `ed25519-sk` or must fall back to `ecdsa-sk`.
-- Whether `thiniel` and every affected server run OpenSSH ≥ 8.2 with FIDO support. This is not verified.
-- Whether the Solo 2 needs `solo2-cli` in addition to `libfido2`, and which udev rules it needs.
-- The mechanism that makes the token preferred while keeping the file key out of the way when the token is present.
-- The native target that proves a token-held authentication; a file-key VM check is not that proof.
+- **Answered (D1):** one key from `thiniel` represents the user; every declared host that accepts the user's SSH key and the personal GitHub account are in the authorization and revocation set. The work Mac and work identities remain out of scope.
+- **Answered (D2):** the iShield Key 2 family shares the same FIDO2 functions; the base iShield Key 2 FIDO2 is sufficient. Try `ed25519-sk` first and fall back to `ecdsa-sk` on `invalid format` or `feature not supported`. Neither is post-quantum-safe; OpenSSH's PQ-hybrid key exchange protects session confidentiality, and non-resident keys can be replaced later.
+- **Answered (D3):** the declared NixOS hosts and the local client use OpenSSH `10.5p1`, which supports FIDO `-sk` keys; GitHub supports FIDO SSH authentication keys. Apple's `ssh` lacks FIDO support, but the work Mac is out of scope.
+- **Answered (D4):** `libfido2` is the runtime dependency for FIDO2/udev; `solo2-cli` and Swissbit's iKM/iKMcli are one-off firmware/management tools, not host dependencies.
+- **Answered (D5):** normal `ssh`/`git` connections are token-only; the retained file key is available through a named fallback command/alias. Automatic fallback and SSH-order selection are rejected because they can silently use the file key.
+- **Open (D6):** the native target that proves token-held authentication, including `ssh-keygen -K` returning no keys and a token without its handle file failing. Test needed.
+- **Open (D7):** the later recovery mechanism that permits removing the file key. Out of scope for this change.
+- **Open (D8):** the encrypted handle-file backup medium and procedure. Required, not yet selected.
 
 ## Change seed
 
-One ready seed, [security-key-remote-identity](../../givn/ideation/secure-token-keys/changes/security-key-remote-identity.md), covers both use cases. Its guarantee:
+One seed, [security-key-remote-identity](../../givn/ideation/secure-token-keys/changes/security-key-remote-identity.md), covers both use cases and is now `Status: proposed by security-key-remote-identity`. Its guarantee:
 
 > On `thiniel`, the personal identity authenticates to the personal GitHub account and the servers that trust it with the daily Swissbit security key, the separately stored Solo 2 backup, or the retained file-backed personal identity; the handles are non-resident, the daily key is preferred, daily token use is touch-only, and no credential is substituted silently. A stolen token alone cannot authenticate without its handle file. When a key is lost, the owner continues with the remaining credential and revokes the lost public identity at every remote that authorized it.
 
@@ -143,7 +145,7 @@ Risks:
 ## Evidence and limits
 
 - No security key was enrolled; no token-held key authenticated; no remote authorization was revoked; no `ssh-keygen -K` check was run.
-- The OpenSSH ≥ 8.2 with FIDO support assumption and the Swissbit Ed25519 support are **not verified**.
+- The declared hosts and local client use OpenSSH `10.5p1`; the Swissbit Ed25519 support remains **not verified** and is tested by the first key creation, with `ecdsa-sk` as fallback.
 - The ten event-storming canvases were rendered with Mermaid CLI 12 and Chromium 155 and inspected for syntax and layout; the enrollment and daily-authentication canvases were re-rendered after Q8. That is diagram proof, not authentication proof.
 - The existing `integration-ssh-identity-selection` check proves file-key identity resolution in a booted VM. It does not prove a token-held authentication. A future change must bind each scenario to a target that can actually prove it and disclose the platform limit.
 

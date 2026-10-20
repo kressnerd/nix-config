@@ -80,6 +80,7 @@ flowchart TB
 | Flake inputs (`nixpkgs` 26.05, `nixpkgs-unstable`, `nixpkgs-agent`, `home-manager`, `stylix`, `sops-nix`, `impermanence`, `disko`, `lanzaboote`, `nix-homebrew`, `nur`, `nixos-anywhere`, `givn`, `mcp-nixos`, `mac-app-util`, Homebrew taps) | Nix flakes, immutable pinned revisions (`flake.lock`) | In | Declared |
 | Model servers (`context7`, `kagi-search`) | HTTP MCP endpoint and a stdio MCP command; the key is read from the host's sops material at connect time | Out (agent → service) | Declared on `thiniel` and `J6G6Y9JK7L`; a key-less device still starts the agent (observed by `integration-agent-tooling`); an actual server connection is not exercised |
 | Git remote access from devices | SSH with an explicit per-identity key (`github-personal`, `github-company`, `github-client001`, `bitbucket-client002`) | Out | Verified in a VM (`integration-ssh-identity-selection`) |
+| Security-key SSH authentication from `thiniel` | FIDO2 security key with non-resident handle files; token-only normal connections; named file-key fallback | Out (device → GitHub/declared hosts) | Declared; the VM e2e is planned, and the real-token/backup gates are operator-run |
 | Secret material | SOPS YAML encrypted to age recipients; age key from a host SSH key (adlerkopf, cupix001) or a key file (thiniel, macOS) | In at activation | Declared; live decryption not audited |
 | Host administration | OpenSSH, key-only, password/login-shell disabled (adlerkopf, nixos-vm-minimal, thiniel) | In | Declared; VM-tested for `nixos-vm-minimal` and `adlerkopf` |
 | Fleet deployment | `nixos-rebuild --target-host` / `darwin-rebuild`; the Colmena CLI is installed but no hive is declared | Out | Declared; no deployment recorded in the working tree. The `colmena` input and the empty `colmenaHive` output were withdrawn by the change `quiet-configuration-evaluation` so that `nix flake check` reports no output it cannot interpret; the first server registers both again |
@@ -87,6 +88,8 @@ flowchart TB
 | DNS resolution | AdGuard Home with DNS-over-HTTPS upstreams | Out | Declared; not verified on hardware |
 | givn specification workflow | `.feature` files bound to native targets; `givn commit` attribution | Local | Verified (hooks + `scripts/givn-spec-trace.py` are wired) |
 | Nix MCP server (`.mcp.json`) | `nix run .#mcp-nixos` | Local | Declared |
+
+The first stage adds a security-key path for the personal identity on `thiniel`; the file-backed identity remains a named fallback. The context gains no new external partner, and the work MacBook and work identities remain unchanged. The repeatable proof is a VM with a virtual FIDO2 authenticator; the physical token and backup restore are operator-run gates.
 
 ### Scope boundaries
 

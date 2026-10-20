@@ -7,8 +7,9 @@ its verification.
 ## Per-host identity declaration
 
 A device presents only the identity material it holds, and it states that
-material in one place: the host user module declares the private key of its
-personal identity (`myHome.ssh.personalIdentityFile`) and the manually
+material in one place: the host user module declares the file-backed personal
+identity (`myHome.ssh.personalIdentityFile`), the optional ordered token
+handles (`myHome.ssh.tokenIdentityFiles`, daily then backup), and the manually
 maintained `ssh_config` files it keeps (`myHome.ssh.includedConfigs`) —
 `modules/home-manager/ssh/options.nix`.
 
@@ -34,6 +35,39 @@ evaluation time in `tests/assertions/thiniel-invariants.nix` and
 `tests/assertions/J6G6Y9JK7L-invariants.nix`, and the end-to-end behaviour is
 proven by the QEMU VM check
 `tests/integration/ssh-identity-selection-test.nix`.
+
+## Security-key identity and the named fallback
+
+The personal identity on `thiniel` may be represented by a FIDO2 security key.
+The key holds the device key; the **non-resident** handle file stays on the
+device. The daily Swissbit and the backup Solo 2 each have their own handle
+file. Normal `ssh` and `git` connections offer the token identities only; the
+file-backed identity is available only through the named
+`ssh-file-fallback`/`git-file-fallback` wrappers.
+
+Rationale: a resident handle is stored in the token, so a stolen token carries
+its own handle; a non-resident handle makes the token alone insufficient. The
+owner's threat is theft of the token alone, and portability to foreign machines
+is not required. `verify-required` is not used in this stage: the Solo 2's
+reported verification failure and daily PIN friction are not justified. A
+stolen token plus its handle file is protected by touch only; the file-backed
+identity remains, so the stage does not claim stolen-laptop resistance.
+
+Failure modes: a lost or unreadable handle file makes that token unusable even
+when the token is present; the other token and the encrypted handle-file backup
+are the recovery. A lost token is not the same as an absent one: its public
+identity must be revoked at every declared host that authorized it, and a
+failed, unreachable, or unverified revocation is not success. The file-backed
+identity stays available throughout.
+
+Verification: `tests/assertions/thiniel-security-key-invariants.nix` asserts the
+declared configuration; `unit-security-key-identity` covers the declaration,
+selection, and revocation-plan rules; `security-key-fleet-authorizations`
+checks every declared host's authorized keys; the VM e2e checks
+`integration-security-key-authentication` and
+`integration-security-key-revocation` exercise a virtual FIDO2 authenticator
+(P-256). The real-token, backup-token and restore gates are operator-run and
+recorded in `backup-drill.md`; they are not in CI.
 
 ## Operational-data separation
 

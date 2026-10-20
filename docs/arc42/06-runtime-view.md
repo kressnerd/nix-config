@@ -169,23 +169,79 @@ sequenceDiagram
 
 **Steps:**
 
-1. `home/dan/<host>.nix` declares `myHome.ssh.personalIdentityFile` (and
-   optional `includedConfigs`).
+1. `home/dan/<host>.nix` declares `myHome.ssh.personalIdentityFile` (the
+   file-backed identity) and, where the device carries a security key, the
+   ordered `myHome.ssh.tokenIdentityFiles`.
 2. `home/dan/features/cli/ssh.nix` renders `~/.ssh/config` from that
-   declaration plus one host block per declared work identity
+   declaration: the token list on the normal entries when declared, otherwise
+   the file identity; plus one host block per declared work identity
    (`config.sops.secrets ? "git/<identity>/name"`).
 3. `home/dan/features/cli/git.nix` points each identity profile's
-   `core.sshCommand` at the same declared personal key.
-4. At use time, SSH presents only that key (`IdentitiesOnly=yes`).
+   `core.sshCommand` at the token list when declared, otherwise the file
+   identity. The named `git-file-fallback` wrapper overrides with the file
+   identity.
+4. At use time, SSH presents only the declared identities
+   (`IdentitiesOnly=yes`); the file key is not offered on a token entry.
 
-**Notes / verified behaviour:** this is the one end-to-end verified flow of the
-repository: `tests/integration/ssh-identity-selection-test.nix` boots a QEMU VM,
-asserts `github-personal` resolves to `~/.ssh/id_ed25519`, and asserts that no
-work-identity block and no `config.d/*` include are rendered. The failure mode
-is fail-closed because nothing guarantees that a declared key file exists — the
-declaration is proven on the device, not at evaluation time. Which identities a
-device holds is a per-host declaration; the choice and its rejected alternative
-are recorded in `givn/changes/host-specific-ssh-identities/design.md`.
+**Notes / verified behaviour:** `tests/integration/ssh-identity-selection-test.nix` boots a QEMU VM with a token-less file-key device, asserts `github-personal` resolves to `~/.ssh/id_ed25519`, and asserts that no work-identity block and no `config.d/*` include are rendered. The work MacBook keeps that path. The `thiniel` token-list path is asserted by `thiniel-security-key-invariants` and exercised by the security-key VM e2e; it is not the same fixture. The failure mode is fail-closed because nothing guarantees that a declared key file exists — the declaration is proven on the device, not at evaluation time. Which identities a device holds is a per-host declaration; the choice and its rejected alternative are recorded in `givn/changes/host-specific-ssh-identities/design.md`.
+
+## Scenario: Security-key authentication and the named fallback
+
+**Trigger:** a Git operation or `ssh <declared-host>` on `thiniel` while the personal identity is represented by a non-resident security-key handle.
+
+```mermaid
+sequenceDiagram
+  participant U as "Owner"
+  participant S as "thiniel ssh"
+  participant H as "non-resident handle file"
+  participant K as "security key"
+  participant R as "remote host"
+
+  U->>S: git push / ssh declared-host
+  S->>H: read the daily handle file
+  S->>K: request signature
+  K-->>U: touch prompt
+  U->>K: touch
+  K-->>S: signature
+  S->>R: present token public identity
+  alt public identity authorized
+    R-->>S: accept
+  else rejected or revoked
+    R-->>S: reject; the file-backed identity is not tried
+  end
+```
+
+**Steps:**
+
+1. `thiniel` declares the daily Swissbit and the backup Solo 2 as token identities, each with its own non-resident handle file.
+2. The normal SSH entries (`github-personal`, the declared hosts) offer the token identities only, daily first and backup second.
+3. A token-held signature requires a touch; `verify-required` is not used, so no PIN is requested for daily use.
+4. If the daily key is absent, the backup token is offered. The file-backed identity is not offered automatically; it is reachable only through `ssh-file-fallback` / `git-file-fallback`.
+5. A rejected daily credential is not retried with the file-backed identity; the backup token may be offered.
+
+**Notes / verification:** the configuration and selection rules are asserted by `tests/assertions/thiniel-security-key-invariants.nix`, the unit check `unit-security-key-identity`, and the fleet check `security-key-fleet-authorizations`. The VM e2e `integration-security-key-authentication` uses a virtual FIDO2 authenticator (P-256) and a controlled pinentry approval; the real-token path and the backup-token path are operator-run gates recorded in `backup-drill.md`. A stolen token alone cannot authenticate without its handle file; token plus handle file is protected by touch only, and the file-backed identity remains, so this flow does not claim stolen-laptop resistance.
+
+## Scenario: Revocation after a lost security key
+
+**Trigger:** the owner determines that a daily or backup security key is lost.
+
+```mermaid
+sequenceDiagram
+  participant U as "Owner"
+  participant S as "thiniel ssh"
+  participant R as "remote host"
+
+  U->>S: ssh with the remaining credential
+  S->>R: authenticate
+  U->>R: revoke the lost public identity
+  alt remote confirms removal
+    R-->>U: no longer authorized
+  else failure or unreachable
+    R-->>U: still authorized; reported, not success
+  end
+```
+
+The owner revokes the lost public identity at every declared host that authorized it. A failed, unreachable, or unverified revocation is reported and is not treated as removed. The remaining credential and the file-backed identity stay available. The unit check `unit-security-key-identity` covers the plan and per-remote result; the VM e2e `integration-security-key-revocation` confirms the success path; the real remote revocation is an operator-run gate recorded in the change review.
 
 ## Scenario: Secret materialisation at activation
 

@@ -23,21 +23,21 @@ The Device owner opens a connection to the selected remote host.
 1. Actor Device owner opens a connection to the selected remote host; System identifies the personal identity and the credentials the device holds.
 2. System selects the daily security key when it is present and usable and its non-resident handle file is readable; Actor Device owner confirms presence on the security key.
 3. System presents the daily token-held public identity to the remote host; the remote host checks whether that public identity is authorized.
-4. System establishes the authenticated session after the remote accepts; System reports which credential authenticated.
-5. Actor Device owner obtains the session; System reports the remote and the credential used.
+4. System establishes the authenticated session after the remote accepts.
+5. Actor Device owner obtains the session; System reports the remote.
 
 ## Extensions
-- 2a: The daily security key is absent or unavailable → Actor Device owner may select the backup security key or the retained file-backed personal identity; System uses the selected credential; protects the access outcome. The device never substitutes a credential silently.
+- 2a: The daily security key is absent or unavailable → System uses the backup security key when it is available; the retained file-backed personal identity is used only through the named fallback; protects the access outcome. The file-backed identity is never substituted silently.
 - 2b: The Device owner does not confirm presence → System reports that no token-held authentication occurred and establishes no session; protects the authentication guarantee.
 - 2c: Both security keys are unavailable → System offers the retained file-backed personal identity when it is present and authorized; if it is also unavailable, System reports that no first-stage credential can authenticate; protects the access outcome.
 - 2d: The Device owner determines that the daily or backup security key is lost rather than temporarily absent → System does not treat the loss as a normal fallback; the owner continues with the remaining credential and hands off to `recover-lost-security-key` for revocation; protects the recovery boundary.
 - 2e: The non-resident handle file for the selected security key is missing or unreadable → System reports that credential as unusable even when the token is present; the owner selects another credential or re-enrolls; protects the authentication guarantee.
-- 3a: The remote host rejects the presented public identity, or the credential is revoked there → System reports the rejection and establishes no session; it does not silently try another credential; protects the authentication guarantee.
+- 3a: The remote host rejects the presented daily public identity, or the credential is revoked there → System reports the rejection and does not silently try the file-backed identity; the backup token may be offered; protects the authentication guarantee.
 - 1a: No credential is enrolled or authorized at the remote → System reports the unmet setup prerequisite and establishes no session; protects the authentication guarantee.
 
 ## Rules
-- When the daily security key is present and usable, the device uses it for the personal identity's remote connections. The file-backed personal identity is used only when the token is unavailable or the owner explicitly selects it.
-- The device never substitutes one credential for another silently. The credential used is reported.
+- When the daily security key is present and usable, the device uses it for the personal identity's remote connections. When the daily token is absent, the backup token is used. The file-backed personal identity is used only through the named fallback command.
+- The device never substitutes the file-backed identity for a token silently. The backup token may be used when the daily token is absent.
 - The handle is non-resident: the token holds the device key and the device holds the handle file. The handle file is required; a token without it establishes no session. No `verify-required` is used; daily authentication is touch-only.
 - A token-held authentication requires user presence on the security key; a declined or missed presence prompt establishes no session. `ssh-keygen -K` with either token must return no keys.
 - A stolen token alone cannot authenticate without its handle file. A stolen token plus its handle file is protected by touch only. The file-backed personal identity remains on `thiniel`, so the stage still does not claim stolen-laptop resistance.
@@ -49,11 +49,11 @@ The Device owner opens a connection to the selected remote host.
 - A failed, unconfirmed, or rejected attempt is not an authenticated session, even if the device can reach the remote.
 
 ## Examples
-- The daily Swissbit is present and authorized at the personal GitHub account. The owner runs `git push`; the device selects the Swissbit, the owner touches it, GitHub accepts the public identity, and the session reports the daily security key as the credential used.
-- The daily Swissbit is absent. The owner retrieves the Solo 2, selects the backup security key, and touches it; the remote accepts the backup public identity, and the session reports the backup security key.
-- Both security keys are unavailable, but `~/.ssh/id_ed25519` is present and authorized. The owner selects the file-backed personal identity; the remote accepts it, and the session reports the file-backed personal identity. This is the first-stage fallback, not theft resistance.
+- The daily Swissbit is present and authorized at the personal GitHub account. The owner runs `git push`; the device selects the Swissbit, the owner touches it, and GitHub accepts the public identity.
+- The daily Swissbit is absent. The device uses the backup Solo 2; the owner touches it, and the remote accepts the backup public identity.
+- Both security keys are unavailable, but `~/.ssh/id_ed25519` is present and authorized. The owner uses the named fallback; the remote accepts the file-backed personal identity. This is the first-stage fallback, not theft resistance.
 - The owner opens a connection and declines the presence prompt. No session is established; the device reports that token-held authentication did not occur.
-- The remote has revoked the daily public identity. The owner touches the Swissbit; the remote rejects the connection, and the device does not silently fall back to the file-backed personal identity.
+- The remote has revoked the daily public identity. The owner touches the Swissbit; the remote rejects the connection. The device does not silently fall back to the file-backed identity; the backup token may be offered.
 - The owner realizes the Swissbit is lost rather than merely absent. The owner authenticates with the Solo 2 to reach the remotes; the loss is handled by `recover-lost-security-key`, not by treating the loss as a normal fallback.
 - The Swissbit is present but its handle file is missing on this machine. The token alone does not authenticate; the owner uses the Solo 2 or restores the handle file from the encrypted backup.
 - `ssh-keygen -K` is run with either token and returns no keys, confirming the credentials are non-resident.
@@ -93,11 +93,11 @@ The remote host accepts the connection that presents the personal identity throu
 See the rendered canvases in the [Event Storming](../eventstorming.md): [authorize the public identities at the remote](../eventstorming.md#canvas-authorize-the-public-identities-at-the-remote), [authenticate with the daily security key](../eventstorming.md#canvas-authenticate-with-the-daily-security-key), [authenticate with the retained file-backed identity](../eventstorming.md#canvas-authenticate-with-the-retained-file-backed-identity), [authenticate with the backup security key](../eventstorming.md#canvas-authenticate-with-the-backup-security-key), and [both security keys unavailable](../eventstorming.md#canvas-both-security-keys-unavailable). These show proposed relationships, not an enrollment or authentication run.
 
 ## Scenario skeletons
-- Given the daily security key is present and its public identity is authorized at the remote, When the Device owner opens a connection and confirms presence, Then the remote accepts the connection and the daily security key is reported as the credential used.
-- Given the daily security key is absent and the backup security key's public identity is authorized, When the Device owner selects the backup and confirms presence, Then the remote accepts the connection and the backup security key is reported.
-- Given both security keys are unavailable and the file-backed personal identity is present and authorized, When the Device owner selects the fallback, Then the remote accepts the connection and the file-backed personal identity is reported.
+- Given the daily security key is present and its public identity is authorized at the remote, When the Device owner opens a connection and confirms presence, Then the remote accepts the connection.
+- Given the daily security key is absent and the backup security key's public identity is authorized, When the Device owner confirms presence on the backup, Then the remote accepts the connection.
+- Given both security keys are unavailable and the file-backed personal identity is present and authorized, When the Device owner uses the named fallback, Then the remote accepts the connection.
 - Given the owner declines the presence prompt, When the connection is attempted, Then no session is established.
-- Given the remote has revoked the presented public identity, When the owner attempts the connection, Then the remote rejects it and the device does not silently substitute another credential.
+- Given the remote has revoked the presented public identity, When the owner attempts the connection, Then the remote rejects it and the device does not silently substitute the file-backed identity; the backup token may be offered.
 - Given no credential is enrolled or authorized at the remote, When the owner attempts the connection, Then the unmet setup prerequisite is reported and no session is established.
 - Given the daily security key is lost rather than temporarily absent, When the owner continues with the remaining credential, Then the loss is handed to `recover-lost-security-key` and is not treated as a normal fallback.
 - Given the token is present but its non-resident handle file is missing on this machine, When the owner attempts the connection, Then no session is established and the token alone does not authenticate.
