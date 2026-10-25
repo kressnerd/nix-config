@@ -29,15 +29,12 @@
       efi.canTouchEfiVariables = true;
     };
 
-    # Impermanence: wipe the btrfs root subvolume on every boot. Since nixpkgs
-    # 26.05 the systemd-based stage 1 is the default and the scripted stage 1
-    # (which provided postDeviceCommands) is removed in 26.11, so the wipe runs
-    # as a systemd oneshot: after the LVM root device is available and before the
-    # root file system is mounted. Guarded by
-    # tests/assertions/thiniel-boot-invariants.nix.
+    # Impermanence: wipe the btrfs root subvolume on every boot. The systemd
+    # stage 1 is the only stage 1 left (the scripted one, which provided
+    # postDeviceCommands, was removed), so the wipe runs as a systemd oneshot:
+    # after the LVM root device is available and before the root file system is
+    # mounted. Guarded by tests/assertions/thiniel-boot-invariants.nix.
     initrd.systemd = {
-      enable = true;
-
       # Tools used by the rollback script that are not already in the initrd.
       # mkdir/date/stat/mv/cut come from the default coreutils; mount/umount from
       # util-linux.

@@ -88,10 +88,7 @@
     boot = {
       # Disable TPM2/LUKS and impermanence rollback in VM — no encrypted disk
       initrd = {
-        systemd = {
-          enable = lib.mkForce false;
-          services.rollback = lib.mkForce { };
-        };
+        systemd.services.rollback = lib.mkForce { };
         luks.devices = lib.mkForce { };
         availableKernelModules = lib.mkForce [
           "virtio_pci"
@@ -106,9 +103,6 @@
     };
 
     # Disable SOPS secret decryption in VM — no age key available
-    sops.age = {
-      sshKeyPaths = lib.mkForce [ ];
-      keyFiles = lib.mkForce [ ];
-    };
+    sops.age.sshKeyPaths = lib.mkForce [ ];
   };
 }

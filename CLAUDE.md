@@ -340,7 +340,7 @@ Categories: common, dev, privacy, productivity, convenience.
 ### Impermanence Pattern (NixOS Hosts)
 Used on thiniel, pronix, cupix001. Root filesystem is wiped on boot via btrfs subvolume reset. Persistent state is mounted from `/persist`. Feature module at `features/linux/impermanence.nix` defines user-level persistent directories (.ssh, .mozilla, dev, Projects, etc.).
 
-**thiniel — scripted stage 1 (since nixpkgs 26.05):** thiniel performs the btrfs root wipe in `boot.initrd.postDeviceCommands`, which only exists in the scripted stage 1. 26.05 made the systemd stage 1 the default, so `boot.initrd.systemd.enable = false` is set explicitly. Guarded by `tests/assertions/thiniel-boot-invariants.nix`. The scripted implementation is removed in **26.11** — migrate the wipe to `boot.initrd.systemd.services.<name>` (`before = [ "sysroot.mount" ]`) before then.
+**thiniel — systemd stage 1:** the btrfs root wipe runs as `boot.initrd.systemd.services.rollback` (`requiredBy = [ "initrd.target" ]`, `before = [ "sysroot.mount" ]`). The scripted stage 1 is gone from nixpkgs: `boot.initrd.postDeviceCommands` no longer exists, and `boot.initrd.systemd.enable` is a removed option because the systemd stage 1 is always used. Guarded by `tests/assertions/thiniel-boot-invariants.nix`.
 
 ## Secrets Setup
 
