@@ -13,7 +13,7 @@
 # ============================================================================
 
 # Managed by givn. Do not delete the next line.
-givn_config_version: "0.9.1"
+givn_config_version: "0.9.2"
 
 # --- Test runner -------------------------------------------------------------
 # The command givn invokes to run your test suite. Configured in
@@ -33,6 +33,28 @@ givn_config_version: "0.9.1"
 
 # --- E2E test runner ----------------------------------------------------------
 # Configured in givn/commands.yaml — see verify.e2e_command there.
+#
+
+# --- Development record --------------------------------------------------------
+# Givn records every lifecycle command and its inner steps, plus the activity
+# its agent reporters (omp, opencode, Claude Code, Maki) report, under
+# givn/history/ — an ignored local store, never repository content. See arc42
+# ch.8.25. The mode is a project-owned value (this key survives `givn upgrade`):
+#   off  — writes nothing new: no entry, no pending state, no ignore write.
+#          `off` is absolute; `givn history ingest --with-full-content` is
+#          ignored with one warning and exit 0.
+#   on   — the default when the key is absent or unreadable (one warning):
+#          all available metadata, with the label capped at 120 characters,
+#          text metadata at 240, error text at 1 000, and full question text
+#          at 4 000. No LLM-facing content.
+#   full — `on` plus complete LLM-facing tool input/output, prompts, and
+#          thinking text, capped at 64 KiB per field and 256 KiB per entry.
+# Lowering the mode keeps entries already captured; it never purges them.
+# `givn history settings [--json]` reports the resolved mode and its source
+# (`config` or `default`). The intake enforces the mode and every bound.
+#
+# record:
+#   mode: on                # on | off | full
 #
 
 # --- Artifact graph overlay --------------------------------------------------
@@ -117,7 +139,8 @@ givn_config_version: "0.9.1"
 
 # --- Addons ------------------------------------------------------------------
 # Pre-packaged artifact sets. See arc42 ch.8.11.
-# `givn init` enables ALL addons by default (opt-out via `givn init --no-addons`).
+# `givn init` enables the default-on addons (opt-out via `givn init --no-addons`);
+# default-off addons such as `outline` are listed but stay disabled.
 # This project's actual settings are below, written by `givn init`/`givn addons`:
 #
 # addons:
@@ -129,8 +152,10 @@ givn_config_version: "0.9.1"
 #   coverage: true          # set to false to disable the coverage lifecycle artifact
 #   domain_modeling: true   # project-level skill; see below
 #   dev_principles: true    # project-level skill; see below
+#   architecture_principles: false # opt-in architecture guidance; see below
 #   grill_me: true          # project-level command; see below
 #   grill_with_docs: true   # project-level command; see below
+#   outline: false      # opt-in outline report; default off
 #                          # Toggle with: givn addons enable|disable <name>, or
 #                          # `givn addons list` to see all known addons.
 
@@ -154,6 +179,14 @@ givn_config_version: "0.9.1"
 # Skill — apply the team's engineering principles during implementation.
 # Generates the givn-dev-principles skill file on `givn skills sync`.
 # Toggle with: givn addons enable|disable dev_principles.
+#
+
+# --- Addon: architecture_principles -------------------------------------------
+# Opt-in architecture-principles experiment: answer questions at their last
+# responsible moment; design the consumer's contract now, defer the component
+# split. Gates the `architecture-principles` instruction and its proposal,
+# design, design-review, dialog, review, and tasks references.
+# Toggle with: givn addons enable|disable architecture_principles.
 #
 
 # --- Addon: grill_me ----------------------------------------------------------
@@ -190,10 +223,10 @@ givn_config_version: "0.9.1"
 # missing or unknown-only selection is refused.
 # `givn skills sync` installs to exactly the persisted targets, falling back
 # to opencode when no skills block exists. Toggle by editing the list below
-# (allowed values: opencode, agents, claude, omp).
+# (allowed values: opencode, agents, claude, omp, maki).
 #
 # skills:
-#   targets: [opencode]      # set to e.g. [opencode, agents, claude, omp] for all
+#   targets: [opencode]      # set to e.g. [opencode, agents, claude, omp, maki] for all
 
 # --- Instruction extensions ---------------------------------------------------
 # Project-owned rules that extend any served instruction

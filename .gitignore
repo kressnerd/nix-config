@@ -23,8 +23,15 @@ docs/plans/private-data-remediation-plan.md
 .omp/commands/givn-*.md
 .omp/commands/grill-*.md
 .opencode/plugins/givn-attribution.js
+.opencode/plugins/givn-timeline.js
 .claude/hooks/givn-attribution.sh
+.claude/hooks/givn-timeline.sh
 .claude/settings.local.json
 .omp/hooks/pre/givn-attribution.js
+.omp/hooks/pre/givn-timeline.js
+.maki/lua/givn-timeline.lua
+.maki/skills/givn-*/
+.maki/commands/givn-*.md
+.maki/commands/grill-*.md
 .githooks/commit-msg
 # givn:end:rules
