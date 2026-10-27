@@ -9,6 +9,7 @@
   sops-nix,
   ompPackage,
   opencodePackage ? null,
+  rustToolchain,
   ...
 }:
 {
@@ -43,6 +44,7 @@
   integration-rust-toolchain = import ./rust-toolchain-test.nix {
     pkgs = unstablePkgs;
     home-manager = home-manager-unstable;
+    inherit rustToolchain;
   };
   integration-infrastructure-tooling = import ./infrastructure-tooling-test.nix {
     pkgs = unstablePkgs;

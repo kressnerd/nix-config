@@ -11,6 +11,7 @@
   options,
   lib,
   pkgs,
+  rustToolchain,
   ...
 }:
 let
@@ -34,12 +35,11 @@ in
 {
   assertions = [
     {
-      assertion = builtins.any (n: lib.strings.hasInfix "rustc" n) hmPkgNames;
-      message = "thiniel: the Rust compiler (rustc) must be installed for the Rust build toolchain";
-    }
-    {
-      assertion = builtins.any (n: lib.strings.hasInfix "cargo" n) hmPkgNames;
-      message = "thiniel: Cargo must be installed for the Rust build toolchain";
+      # The declared toolchain is the aggregated release derivation (its name
+      # carries no "rustc"/"cargo"), so assert the declaration itself is what
+      # the profile installs. See the change `rust-coverage-toolchain`, F1.
+      assertion = builtins.elem rustToolchain config.home.packages;
+      message = "thiniel: the declared Rust toolchain (compiler, Cargo, formatter, lint driver and coverage tools of one release) must be installed";
     }
     {
       assertion = builtins.any (n: lib.strings.hasInfix "gcc" n) hmPkgNames;

@@ -1,12 +1,14 @@
 # tests/integration/rust-toolchain-test.nix
 # Integration test: a booted device that declares the Rust build toolchain
-# creates, builds, runs and lints a dependency-free Rust project.
+# creates, builds, runs, lints and formats a dependency-free Rust project, and
+# measures its coverage with the toolchain's own profiler.
 #
 # Run: nix build .#checks.<linux-system>.integration-rust-toolchain
 # Interactive: nix build .#checks.<linux-system>.integration-rust-toolchain.driverInteractive && result/bin/nixos-test-driver
 {
   pkgs,
   home-manager,
+  rustToolchain,
   ...
 }:
 pkgs.testers.runNixOSTest {
@@ -25,6 +27,9 @@ pkgs.testers.runNixOSTest {
       home-manager = {
         useGlobalPkgs = true;
         useUserPackages = true;
+        # The device's declared toolchain, so the guest installs exactly the
+        # derivation `thiniel` declares rather than a second approximation.
+        extraSpecialArgs = { inherit rustToolchain; };
         sharedModules = [
           # The module reads myHome.persistence.enable; the option default is
           # off, so the guest does not need the impermanence module.
@@ -74,5 +79,12 @@ pkgs.testers.runNixOSTest {
     assert "Hello, world!" in produced, produced
 
     machine.succeed(f"{as_test} cargo clippy --offline --manifest-path /home/test/hello/Cargo.toml")
+
+    # The formatter and lint driver are the compiler's own components, and the
+    # formatter is used rather than merely present.
+    sysroot = machine.succeed(f"{as_test} rustc --print sysroot").strip()
+    machine.succeed(f"test -x {sysroot}/bin/rustfmt")
+    machine.succeed(f"test -x {sysroot}/bin/clippy-driver")
+    machine.succeed(f"{as_test} cargo fmt --check --manifest-path /home/test/hello/Cargo.toml")
   '';
 }

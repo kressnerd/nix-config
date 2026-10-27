@@ -10,7 +10,6 @@
 
       # Language-specific formatters
       black # Python formatter
-      rustfmt # Rust formatter
       prettier # JavaScript/TypeScript/CSS/HTML formatter
       shfmt # Shell script formatter
       stylua # Lua formatter

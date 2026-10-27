@@ -9,6 +9,20 @@
       config.allowUnfree = true;
     };
 
+  # One released Rust toolchain, with the tools that must come from the same
+  # release as the compiler. `pkgs` must carry the repository's pinned
+  # `rust-overlay`; the caller decides the extension set, because the change
+  # `rust-coverage-toolchain` lands the coverage tools separately from the
+  # formatter and lint driver.
+  mkRustToolchain =
+    { pkgs }:
+    pkgs.rust-bin.stable.latest.minimal.override {
+      extensions = [
+        "rustfmt-preview"
+        "clippy-preview"
+      ];
+    };
+
   # A program on a device may rewrite a file the home profile renders (the
   # browser rewrites its profile registry and search state). Home Manager refuses
   # to replace a foreign file and aborts the activation, so this is wired as

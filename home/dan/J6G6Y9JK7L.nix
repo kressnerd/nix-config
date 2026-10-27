@@ -98,6 +98,11 @@
     username = "daniel.kressner";
     homeDirectory = "/Users/daniel.kressner";
     sessionPath = [ "$HOME/.cargo/bin" ];
+    # The Rust formatter is no longer in the shared formatter module: the
+    # laptop takes it from its declared Rust toolchain, and this host has no
+    # such toolchain, so it declares the standalone package. See the change
+    # `rust-coverage-toolchain`.
+    packages = [ pkgs.rustfmt ];
   };
 
   # Host-specific shell aliases

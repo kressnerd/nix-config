@@ -16,6 +16,19 @@
 
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # One released Rust toolchain for `thiniel`, taken whole from rust-overlay.
+    # The compiler's coverage runtime writes a raw profile that only the
+    # `llvm-tools-preview` component of the same release reads; the channel
+    # packages the compiler and its LLVM tools from different builds (measured:
+    # LLVM 21.1.8/22.1.8 reject the profile version, 23.1.3 reports zero
+    # counters). The revision is pinned in the URL so the design-time evidence
+    # stays valid; refreshing it is a deliberate change. See the change
+    # `rust-coverage-toolchain`, design D1.
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay/c7e9d512653a35ef4d5879c3df4d44d7b78d0e6d";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # The coding agent's own pin. `nixpkgs-unstable` trails the agent's upstream
     # releases by days (18.8.4 on that branch against 18.10.0 on master, checked
     # 2026-10-13), and each device that carries the agent asserts a minimum
@@ -145,6 +158,23 @@
           inherit system;
           config.allowUnfree = true;
         };
+
+      # The one Rust toolchain `thiniel` declares. It is built once per system
+      # from the `nixpkgs-unstable` pin with the pinned rust-overlay and passed
+      # to both the host's Home Manager arguments and the booted check, so the
+      # check proves the derivation the device installs. The extensions start
+      # with the formatter and lint driver; the coverage tools are the
+      # measurement scenario's green. See the change
+      # `rust-coverage-toolchain`, design D1/F3.
+      rustToolchainFor =
+        system:
+        (import ./lib/helpers.nix).mkRustToolchain {
+          pkgs = import nixpkgs-unstable {
+            inherit system;
+            config.allowUnfree = true;
+            overlays = [ inputs.rust-overlay.overlays.default ];
+          };
+        };
     in
     {
       overlays.default = import ./overlays;
@@ -233,6 +263,10 @@
                     inherit nixpkgs-unstable;
                     system = "x86_64-linux";
                   };
+                  # The one released Rust toolchain the laptop installs; the
+                  # same derivation is passed to the booted check. See the
+                  # change `rust-coverage-toolchain`, design D1.
+                  rustToolchain = rustToolchainFor "x86_64-linux";
                   # The agent's package comes from its own pin (`nixpkgs-agent`),
                   # not from the unstable set the rest of the userland follows:
                   # that branch carries 18.8.4 against the pin's 18.10.0 (checked
@@ -691,6 +725,10 @@
                   # The booted check carries the agent from its own pin, so the
                   # guest proves the version floor the devices assert.
                   ompPackage = (agentPkgsFor system).omp;
+                  # The same Rust toolchain derivation the laptop's Home Manager
+                  # module receives, so the coverage check proves the device's
+                  # declaration. See the change `rust-coverage-toolchain`.
+                  rustToolchain = rustToolchainFor system;
                 };
               in
               integrationTests
