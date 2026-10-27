@@ -127,27 +127,62 @@ wiring. `hardware.nix` untouched; `stateVersion` untouched.
       `chown: invalid group: 'test:test'` — while the test user's group is
       `users`; the fixture now changes only the file's owner and the RED is the
       missing coverage command.)
-- [ ] GREEN: add `"llvm-tools-preview"` to the toolchain extensions and pass
+- [x] GREEN: added `"llvm-tools-preview"` to the toolchain extensions and passed
       the stable channel's `cargo-llvm-cov` (0.8.7, as `cargoLlvmCov`) into the
       module — the `nixpkgs-unstable` 0.9.0 package does not build at the pin
-      (its own test suite segfaults in the sandbox). Re-run and paste the
-      passing output:
+      (its own test suite segfaults in the sandbox, observed while building the
+      first green). Re-run:
       ```
       $ nix build --no-link .#checks.x86_64-linux.integration-rust-toolchain
+      exit 0
+      /nix/store/ma4q0qgaj8qc4wl0zx0kj59bq51vns28-vm-test-run-rust-toolchain
       ```
-- [ ] REFACTOR: no behaviour change; re-run the command.
-- [ ] Update the arc42 chapters named in `arc42.md` (02, 03, 04, 05, 07, 08, 11,
-      12) with the measured outcome.
-- [ ] COMMIT: `givn commit -m "<release note>" -m "<scenario title>"`; record
-      the revision in this task.
+      The VM log shows the instrumented run and the report:
+      ```
+      machine: must succeed: … CARGO_NET_OFFLINE=true cargo llvm-cov --offline --cobertura --output-path /home/test/covered/coverage.xml --manifest-path /home/test/covered/Cargo.toml
+      machine # info: cargo-llvm-cov currently setting cfg(coverage); …
+      machine #      Running unittests src/lib.rs (/home/test/covered/target/llvm-cov-target/debug/deps/covered-…)
+      machine #     Finished report saved to /home/test/covered/coverage.xml
+      machine: must succeed: cat /home/test/covered/coverage.xml
+      ```
+      The driver-side parse asserted `lines-covered > 0` and `src/lib.rs` in the
+      report.
+- [x] REFACTOR: `nix fmt` on the touched Nix files (no behaviour change); the
+      booted check was re-run and exits 0 with the same output path
+      `ma4q0qga…-vm-test-run-rust-toolchain`. The arc42 chapters named in
+      `arc42.md` were updated (02, 03, 04, 05, 07, 08, 11, 12).
+- [x] COMMIT: `98a686142396fe1844853870006e67d83304bbf9` — release note as
+      subject, scenario title in the body.
 
 ---
 
 ## Verification close-out
 
-- [ ] `./scripts/givn-verify.sh` (non-e2e scope) passes.
-- [ ] `./scripts/givn-verify-e2e.sh` (e2e scope) passes.
+- [ ] `./scripts/givn-verify.sh` (non-e2e scope) passes. **Blocked externally:**
+      its first step fails on 21 unresolved bindings owned by the two other
+      active changes (`provision-storage-host`, `security-key-remote-identity`).
+      Its remaining steps were run individually and pass: `nix flake check
+      --no-build` (all checks evaluated), the eight non-VM checks build
+      (exit 0), every host's assertions pass, `pytest scripts/tests` →
+      256 passed.
+- [ ] `./scripts/givn-verify-e2e.sh` (e2e scope) passes. Not run as a whole:
+      the receipt step needs the archive gate, which is externally blocked. The
+      change's own `@e2e` target, `integration-rust-toolchain`, was built and
+      booted at RED and GREEN.
 - [ ] Local operator smoke on `thiniel` after applying the generation: the
       shim quarantine and the `cargo llvm-cov` report described in
       `design.md` "Deployment & Rollback"; and the same check on the project
-      that reported the failure (`duty2cal`).
+      that reported the failure (`duty2cal`). Evidence gathered so far, using
+      the exact toolchain and coverage command the profile declares (store
+      paths, without switching the host):
+      ```
+      $ PATH=<rust-minimal-1.99.1>/bin:<cargo-llvm-cov-0.8.7>/bin:$PATH \
+          cargo llvm-cov -p duty2cal --test golden --cobertura --output-path /tmp/duty2cal-golden-cov.xml
+      test result: ok. 1 passed; 0 failed
+      Finished report saved to /tmp/duty2cal-golden-cov.xml
+      lines-covered="43"  line-rate="0.36134453781512604"
+      ```
+      The report is produced where the same project previously failed with
+      "raw profile version mismatch"/"number of counters is zero". Switching the
+      generation and quarantining `~/.cargo/bin` shims remain the operator's
+      steps; they need `nrs` (sudo) and are not performed by this change.

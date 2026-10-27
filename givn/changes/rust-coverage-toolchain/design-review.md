@@ -25,7 +25,13 @@
 | F10 | Wording inaccuracies: format-version framing, `import inputs.rust-overlay` vs `.overlays.default`, the `nixpkgs.follows` rationale, the all-systems claim, a placeholder local command, chapter 2 lacking the no-floor reason. | MINOR | **Fixed.** The design now cites the 1.99.0/1.99.1 cross-test as the decisive evidence, uses `inputs.rust-overlay.overlays.default`, describes `follows` as avoiding an unused input evaluation, scopes `nix flake check` to the current system, carries a concrete local command, and records the no-floor reason. |
 | F11 | The VM test shape was under-specified: template reliance, no formatter invocation, report capture unstated, no offline belt-and-braces. | MINOR | **Fixed.** Local Runnability names the explicit `--lib` source with a test that calls the covered function, `CARGO_NET_OFFLINE=true`, the Cobertura output file, and host-side parsing of `lines-covered` plus the file's own hits. |
 | F12 | "Out of scope: Rust tooling on other devices" read as contradicting the macOS `rustfmt` relocation. | MINOR | **Fixed.** The proposal states the Mac keeps the same presence, declared directly instead of through the shared module. |
-| F13 | The aggregated profile propagates `stdenv.cc`; a differing `pkgs.gcc` could collide in the Home Manager profile. | MINOR (watch) | **Recorded as a watch item in tasks.** The first profile build proves it; if it collides, the linker package stays and the collision is resolved in the module, with the outcome recorded in `tasks.md`. |
+| F13 | The aggregated profile propagates `stdenv.cc`; a differing `pkgs.gcc` could collide in the Home Manager profile. | MINOR (watch) | **Recorded as a watch item in tasks.** The first profile build proved it: no collision occurred with `pkgs.gcc` in the same profile. |
+
+### Re-review after implementation (2026-10-27)
+
+| # | Finding | Severity | Disposition |
+|---|---|---|---|
+| F14 | The reviewed design named `cargo-llvm-cov` from the host package set (`nixpkgs-unstable`, 0.9.0). During GREEN that package failed to build: its own test suite segfaults in the sandbox at the pin (observed building `c5c558jc…-cargo-llvm-cov-0.9.0.drv`). The implementation instead takes 0.8.7 from the stable channel and passes it as `cargoLlvmCov`, and the VM test receives it the same way as the toolchain. | MAJOR | **Fixed by updating the design, not silently.** `design.md` now records the stable release, the build failure and why the command's own version is not the pairing that matters; `arc42.md`'s affected-chapter list was unchanged (chapter 5/11 wording updated to the new argument and channel). The alternative was rejected because pinning a `doCheck = false` override would hide a genuine package failure. |
 
 ## Phase 2 — branch verdicts
 

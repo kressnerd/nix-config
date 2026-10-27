@@ -81,10 +81,10 @@ comparing derivation names.
 ## Architecture Impact
 
 - New: `rust-overlay` flake input; `mkRustToolchain` helper in
-  `lib/helpers.nix`; `rustToolchain` argument in the Rust feature module and in
-  the VM test.
-- Changed: `flake.nix` (input, shared toolchain derivation, thiniel Home
-  Manager arguments, checks' toolchain argument),
+  `lib/helpers.nix`; `rustToolchain` and `cargoLlvmCov` arguments in the Rust
+  feature module and in the VM test.
+- Changed: `flake.nix` (input, shared toolchain and coverage-command
+  derivations, thiniel Home Manager arguments, checks' arguments),
   `home/dan/features/development/rust.nix` (toolchain argument, coverage tool
   package, no standalone `clippy`),
   `home/dan/features/development/formatters.nix` (no `rustfmt`),
