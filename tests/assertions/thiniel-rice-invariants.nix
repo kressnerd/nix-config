@@ -50,13 +50,13 @@
       }
       {
         assertion = builtins.any (
-          m: builtins.match ".*eDP-1.*" m != null
+          m: (m.output or "") == "eDP-1"
         ) config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
         message = "thiniel: Hyprland monitor rules must include eDP-1 internal display";
       }
       {
         assertion = builtins.any (
-          m: builtins.match ",.*" m != null
+          m: (m.output or null) == ""
         ) config.home-manager.users.dan.wayland.windowManager.hyprland.settings.monitor;
         message = "thiniel: Hyprland monitor rules must include a catch-all rule for unknown monitors";
       }
@@ -71,18 +71,25 @@
           let
             hmHyprSettings = config.home-manager.users.dan.wayland.windowManager.hyprland.settings;
           in
-          (hmHyprSettings ? env) && builtins.any (e: e == "AQ_NO_MODIFIERS,1") hmHyprSettings.env;
+          (hmHyprSettings ? env)
+          && builtins.any (
+            e:
+            (e._args or [ ]) == [
+              "AQ_NO_MODIFIERS"
+              "1"
+            ]
+          ) hmHyprSettings.env;
         message = "thiniel: Hyprland env must include AQ_NO_MODIFIERS,1 to fix DRM modifier negotiation";
       }
       {
         assertion =
           let
             hmHyprSettings = config.home-manager.users.dan.wayland.windowManager.hyprland.settings;
-            execOnce = lib.toList (hmHyprSettings.exec-once or [ ]);
           in
-          (hmHyprSettings ? exec-once)
-          && builtins.any (cmd: builtins.match ".*assign-workspaces.*" cmd != null) execOnce;
-        message = "thiniel: Hyprland exec-once must include assign-workspaces daemon for dynamic workspace distribution";
+          builtins.any (entry: lib.hasInfix "assign-workspaces" (builtins.toJSON entry)) (
+            hmHyprSettings.on or [ ]
+          );
+        message = "thiniel: Hyprland start hook must include assign-workspaces daemon for dynamic workspace distribution";
       }
       {
         assertion = lib.hasPrefix "Bibata" config.stylix.cursor.name;

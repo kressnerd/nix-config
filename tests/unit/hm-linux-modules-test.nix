@@ -63,6 +63,22 @@ let
         hyprlockModule = import ../../home/dan/features/linux/hyprlock.nix { inherit lib; };
         gtkQtModule = import ../../home/dan/features/linux/gtk-qt.nix { inherit pkgs; };
         hyprSettings = hyprlandModule.wayland.windowManager.hyprland.settings;
+        bindArgs = b: b._args or [ ];
+        bindHasKey =
+          key: builtins.any (b: bindArgs b != [ ] && builtins.head (bindArgs b) == key) hyprSettings.bind;
+        bindHasText =
+          text: builtins.any (b: lib.strings.hasInfix text (builtins.toJSON b)) hyprSettings.bind;
+        bindIsRepeating =
+          key:
+          builtins.any (
+            b:
+            let
+              args = bindArgs b;
+            in
+            builtins.length args >= 3
+            && builtins.head args == key
+            && ((builtins.elemAt args 2).repeating or false)
+          ) hyprSettings.bind;
         hyprPkgNames = builtins.map (p: p.pname or p.name or "") hyprlandModule.home.packages;
         waybarPkgNames = builtins.map (p: p.pname or p.name or "") waybarModule.home.packages;
       in
@@ -75,43 +91,43 @@ let
           expected = true;
         };
 
-        testHyprlandMainMod = {
-          expr = hyprSettings."$mainMod";
-          expected = "SUPER";
+        testHyprlandConfigTypeIsLua = {
+          expr = hyprlandModule.wayland.windowManager.hyprland.configType;
+          expected = "lua";
         };
 
         testHyprlandHasEdpMonitor = {
-          expr = builtins.any (m: builtins.match ".*eDP-1.*" m != null) hyprSettings.monitor;
+          expr = builtins.any (m: (m.output or "") == "eDP-1") hyprSettings.monitor;
           expected = true;
         };
 
         testHyprlandHasCatchAllMonitor = {
-          expr = builtins.any (m: lib.strings.hasPrefix "," m) hyprSettings.monitor;
+          expr = builtins.any (m: (m.output or null) == "") hyprSettings.monitor;
           expected = true;
         };
 
         testHyprlandHasWorkspaceBind = {
-          expr = builtins.any (b: lib.strings.hasInfix "$mainMod, 1, workspace" b) hyprSettings.bind;
+          expr = bindHasKey "SUPER + 1";
           expected = true;
         };
 
         testHyprlandHasTerminalBind = {
-          expr = builtins.any (b: lib.strings.hasInfix "kitty" b) hyprSettings.bind;
+          expr = bindHasText "kitty";
           expected = true;
         };
 
         testHyprlandHasScreenshotBind = {
-          expr = builtins.any (b: lib.strings.hasInfix "grim" b) hyprSettings.bind;
+          expr = bindHasText "grim";
           expected = true;
         };
 
-        testHyprlandHasVolumeDownBinde = {
-          expr = builtins.any (b: lib.strings.hasInfix "XF86AudioLowerVolume" b) hyprSettings.binde;
+        testHyprlandHasVolumeDownRepeatingBind = {
+          expr = bindIsRepeating "XF86AudioLowerVolume";
           expected = true;
         };
 
-        testHyprlandHasBrightnessDownBinde = {
-          expr = builtins.any (b: lib.strings.hasInfix "XF86MonBrightnessDown" b) hyprSettings.binde;
+        testHyprlandHasBrightnessDownRepeatingBind = {
+          expr = bindIsRepeating "XF86MonBrightnessDown";
           expected = true;
         };
 
@@ -121,32 +137,32 @@ let
         };
 
         testHyprlandHasFloatDialogWindowrule = {
-          expr = builtins.any (r: r.name == "float-dialog") hyprSettings.windowrule;
+          expr = builtins.any (r: r.name == "float-dialog") hyprSettings.window_rule;
           expected = true;
         };
 
         testHyprlandHasPinPipWindowrule = {
-          expr = builtins.any (r: r.name == "pin-pip") hyprSettings.windowrule;
+          expr = builtins.any (r: r.name == "pin-pip") hyprSettings.window_rule;
           expected = true;
         };
 
         testHyprlandHasIdleinhibitFullWindowrule = {
-          expr = builtins.any (r: r.name == "idleinhibit-full") hyprSettings.windowrule;
+          expr = builtins.any (r: r.name == "idleinhibit-full") hyprSettings.window_rule;
           expected = true;
         };
 
         testHyprlandNoDeprecatedIdleinhibit = {
-          expr = builtins.any (rule: rule ? idleinhibit) hyprSettings.windowrule;
+          expr = builtins.any (rule: rule ? idleinhibit) hyprSettings.window_rule;
           expected = false;
         };
 
         testHyprlandGapsIn = {
-          expr = hyprSettings.general.gaps_in;
+          expr = hyprSettings.config.general.gaps_in;
           expected = 2;
         };
 
         testHyprlandRounding = {
-          expr = hyprSettings.decoration.rounding;
+          expr = hyprSettings.config.decoration.rounding;
           expected = 8;
         };
 
@@ -309,7 +325,7 @@ let
         # ── hyprland: power keybinding ───────────────────────────────────────
 
         testHyprlandHasPowerKeybinding = {
-          expr = builtins.any (b: lib.strings.hasInfix "rofi-power-menu" b) hyprSettings.bind;
+          expr = bindHasText "rofi-power-menu";
           expected = true;
         };
 
@@ -322,11 +338,15 @@ let
 
         testHyprlandGestureIsSet = {
           expr = hyprSettings.gesture or null;
-          expected = "3, horizontal, workspace";
+          expected = {
+            fingers = 3;
+            direction = "horizontal";
+            action = "workspace";
+          };
         };
 
-        testHyprlandExecOnceIsList = {
-          expr = builtins.isList hyprSettings.exec-once;
+        testHyprlandStartHookIsList = {
+          expr = builtins.isList hyprSettings.on;
           expected = true;
         };
       }

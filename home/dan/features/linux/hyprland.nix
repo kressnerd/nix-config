@@ -65,6 +65,32 @@ let
       '⏻ Shutdown') ${pkgs.systemd}/bin/systemctl poweroff ;;
     esac
   '';
+
+  mainMod = "SUPER";
+
+  luaInline = lib.generators.mkLuaInline;
+
+  luaBind = key: dispatcher: {
+    _args = [
+      key
+      (luaInline dispatcher)
+    ];
+  };
+
+  luaRepeatBind = key: dispatcher: {
+    _args = [
+      key
+      (luaInline dispatcher)
+      { repeating = true; }
+    ];
+  };
+
+  luaStart = command: {
+    _args = [
+      "hyprland.start"
+      (luaInline "function() hl.exec_cmd(${builtins.toJSON command}) end")
+    ];
+  };
 in
 lib.mkMerge [
   {
@@ -88,213 +114,247 @@ lib.mkMerge [
       package = pkgs-unstable.hyprland;
       systemd.enable = true;
 
-      # Home Manager 26.05 changed the default from "hyprlang" to "lua", but keeps
-      # the legacy default while home.stateVersion < 26.05 and then reports a
-      # migration warning. The state version is fixed at install time, so the
-      # device states the format it uses: the conf-based configuration below is
-      # the one this profile's settings are written for, and moving to the Lua
-      # call form is a desktop change of its own (change
-      # `quiet-configuration-evaluation`, design D2).
-      configType = "hyprlang";
+      # Hyprland 0.56 deprecates the hyprlang `.conf` format, and 0.57 removes
+      # it. configType "lua" makes Home Manager generate hyprland.lua, so the
+      # settings below use Hyprland's Lua call form (hl.config, hl.bind, ...).
+      configType = "lua";
 
       settings = {
         env = [
-          "AQ_NO_MODIFIERS,1"
+          {
+            _args = [
+              "AQ_NO_MODIFIERS"
+              "1"
+            ];
+          }
         ];
 
-        general = {
-          gaps_in = 2;
-          gaps_out = 2;
-          border_size = 2;
-          layout = "dwindle";
-        };
+        config = {
+          general = {
+            gaps_in = 2;
+            gaps_out = 2;
+            border_size = 2;
+            layout = "dwindle";
+          };
 
-        decoration = {
-          rounding = 8;
-          blur.enabled = false;
-          shadow.enabled = false;
-        };
+          decoration = {
+            rounding = 8;
+            blur.enabled = false;
+            shadow.enabled = false;
+          };
 
-        animations = {
-          enabled = true;
-          animation = [
-            "windows, 1, 3, default, slide"
-            "windowsOut, 1, 3, default, slide"
-            "fade, 1, 3, default"
-            "workspaces, 1, 3, default, slide"
-          ];
-        };
+          animations.enabled = true;
 
-        input = {
-          kb_layout = "us";
-          kb_variant = "altgr-intl";
-          kb_model = "pc105";
-          kb_options = "terminate:ctrl_alt_bksp";
-          touchpad = {
-            natural_scroll = true;
-            tap-to-click = true;
+          input = {
+            kb_layout = "us";
+            kb_variant = "altgr-intl";
+            kb_model = "pc105";
+            kb_options = "terminate:ctrl_alt_bksp";
+            touchpad = {
+              natural_scroll = true;
+              tap_to_click = true;
+            };
           };
         };
 
-        gesture = "3, horizontal, workspace";
-
-        exec-once = [
-          "${startupScript}/bin/start"
-          "${assign-workspaces}/bin/assign-workspaces"
+        animation = [
+          {
+            leaf = "windows";
+            enabled = true;
+            speed = 3;
+            bezier = "default";
+            style = "slide";
+          }
+          {
+            leaf = "windowsOut";
+            enabled = true;
+            speed = 3;
+            bezier = "default";
+            style = "slide";
+          }
+          {
+            leaf = "fade";
+            enabled = true;
+            speed = 3;
+            bezier = "default";
+          }
+          {
+            leaf = "workspaces";
+            enabled = true;
+            speed = 3;
+            bezier = "default";
+            style = "slide";
+          }
         ];
+
+        gesture = {
+          fingers = 3;
+          direction = "horizontal";
+          action = "workspace";
+        };
 
         monitor = [
-          ", preferred, auto, 1"
-          "eDP-1, preferred, 0x0, 1"
+          {
+            output = "";
+            mode = "preferred";
+            position = "auto";
+            scale = 1;
+          }
+          {
+            output = "eDP-1";
+            mode = "preferred";
+            position = "0x0";
+            scale = 1;
+          }
         ];
 
-        windowrule = [
+        window_rule = [
           {
             name = "float-dialog";
             float = true;
-            "match:class" = "^(dialog)$";
+            match.class = "^(dialog)$";
           }
           {
             name = "float-open-file";
             float = true;
-            "match:title" = "^(Open File)(.*)$";
+            match.title = "^(Open File)(.*)$";
           }
           {
             name = "float-select-file";
             float = true;
-            "match:title" = "^(Select a File)(.*)$";
+            match.title = "^(Select a File)(.*)$";
           }
           {
             name = "float-wallpaper";
             float = true;
-            "match:title" = "^(Choose wallpaper)(.*)$";
+            match.title = "^(Choose wallpaper)(.*)$";
           }
           {
             name = "float-open-folder";
             float = true;
-            "match:title" = "^(Open Folder)(.*)$";
+            match.title = "^(Open Folder)(.*)$";
           }
           {
             name = "float-save-as";
             float = true;
-            "match:title" = "^(Save As)(.*)$";
+            match.title = "^(Save As)(.*)$";
           }
           {
             name = "pin-pip";
             pin = true;
-            "match:title" = "^(Picture-in-Picture)$";
+            match.title = "^(Picture-in-Picture)$";
           }
           {
             name = "idleinhibit-full";
             idle_inhibit = "fullscreen";
-            "match:class" = ".*";
+            match.class = ".*";
           }
           {
             name = "opacity-zathura";
             opacity = "1.0 override 1.0 override";
-            "match:class" = "^(org.pwmt.zathura)$";
+            match.class = "^(org.pwmt.zathura)$";
           }
           {
             name = "opacity-mpv";
             opacity = "1.0 override 1.0 override";
-            "match:class" = "^(mpv)$";
+            match.class = "^(mpv)$";
           }
         ];
 
-        "$mainMod" = "SUPER";
+        on = [
+          (luaStart "${startupScript}/bin/start")
+          (luaStart "${assign-workspaces}/bin/assign-workspaces")
+        ];
 
         bind = [
           # Terminal
-          "$mainMod, Return, exec, kitty"
+          (luaBind "${mainMod} + Return" ''hl.dsp.exec_cmd("kitty")'')
 
           # Window management
-          "$mainMod, C, killactive,"
-          "$mainMod, F, fullscreen, 1"
-          "$mainMod SHIFT, F, fullscreen, 0"
-          "$mainMod, V, togglefloating,"
-          "$mainMod, G, pseudo,"
-          "$mainMod, semicolon, layoutmsg, togglesplit"
+          (luaBind "${mainMod} + C" "hl.dsp.window.close()")
+          (luaBind "${mainMod} + F" ''hl.dsp.window.fullscreen({ mode = "maximized" })'')
+          (luaBind "${mainMod} + SHIFT + F" ''hl.dsp.window.fullscreen({ mode = "fullscreen" })'')
+          (luaBind "${mainMod} + V" ''hl.dsp.window.float({ action = "toggle" })'')
+          (luaBind "${mainMod} + G" "hl.dsp.window.pseudo()")
+          (luaBind "${mainMod} + semicolon" ''hl.dsp.layout("togglesplit")'')
 
           # Launcher
-          "$mainMod, D, exec, fuzzel"
+          (luaBind "${mainMod} + D" ''hl.dsp.exec_cmd("fuzzel")'')
 
           # Clipboard history
-          "$mainMod SHIFT, V, exec, cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"
+          (luaBind "${mainMod} + SHIFT + V" ''hl.dsp.exec_cmd("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy")'')
 
           # Focus: vim-style
-          "$mainMod, h, movefocus, l"
-          "$mainMod, l, movefocus, r"
-          "$mainMod, k, movefocus, u"
-          "$mainMod, j, movefocus, d"
+          (luaBind "${mainMod} + h" ''hl.dsp.focus({ direction = "left" })'')
+          (luaBind "${mainMod} + l" ''hl.dsp.focus({ direction = "right" })'')
+          (luaBind "${mainMod} + k" ''hl.dsp.focus({ direction = "up" })'')
+          (luaBind "${mainMod} + j" ''hl.dsp.focus({ direction = "down" })'')
 
           # Move windows: vim-style with Shift
-          "$mainMod SHIFT, h, movewindow, l"
-          "$mainMod SHIFT, l, movewindow, r"
-          "$mainMod SHIFT, k, movewindow, u"
-          "$mainMod SHIFT, j, movewindow, d"
+          (luaBind "${mainMod} + SHIFT + h" ''hl.dsp.window.move({ direction = "left" })'')
+          (luaBind "${mainMod} + SHIFT + l" ''hl.dsp.window.move({ direction = "right" })'')
+          (luaBind "${mainMod} + SHIFT + k" ''hl.dsp.window.move({ direction = "up" })'')
+          (luaBind "${mainMod} + SHIFT + j" ''hl.dsp.window.move({ direction = "down" })'')
 
           # Workspace switching
-          "$mainMod, 1, workspace, 1"
-          "$mainMod, 2, workspace, 2"
-          "$mainMod, 3, workspace, 3"
-          "$mainMod, 4, workspace, 4"
-          "$mainMod, 5, workspace, 5"
-          "$mainMod, 6, workspace, 6"
-          "$mainMod, 7, workspace, 7"
-          "$mainMod, 8, workspace, 8"
-          "$mainMod, 9, workspace, 9"
-          "$mainMod, 0, workspace, 10"
+          (luaBind "${mainMod} + 1" "hl.dsp.focus({ workspace = 1 })")
+          (luaBind "${mainMod} + 2" "hl.dsp.focus({ workspace = 2 })")
+          (luaBind "${mainMod} + 3" "hl.dsp.focus({ workspace = 3 })")
+          (luaBind "${mainMod} + 4" "hl.dsp.focus({ workspace = 4 })")
+          (luaBind "${mainMod} + 5" "hl.dsp.focus({ workspace = 5 })")
+          (luaBind "${mainMod} + 6" "hl.dsp.focus({ workspace = 6 })")
+          (luaBind "${mainMod} + 7" "hl.dsp.focus({ workspace = 7 })")
+          (luaBind "${mainMod} + 8" "hl.dsp.focus({ workspace = 8 })")
+          (luaBind "${mainMod} + 9" "hl.dsp.focus({ workspace = 9 })")
+          (luaBind "${mainMod} + 0" "hl.dsp.focus({ workspace = 10 })")
 
           # Move window to workspace
-          "$mainMod SHIFT, 1, movetoworkspace, 1"
-          "$mainMod SHIFT, 2, movetoworkspace, 2"
-          "$mainMod SHIFT, 3, movetoworkspace, 3"
-          "$mainMod SHIFT, 4, movetoworkspace, 4"
-          "$mainMod SHIFT, 5, movetoworkspace, 5"
-          "$mainMod SHIFT, 6, movetoworkspace, 6"
-          "$mainMod SHIFT, 7, movetoworkspace, 7"
-          "$mainMod SHIFT, 8, movetoworkspace, 8"
-          "$mainMod SHIFT, 9, movetoworkspace, 9"
-          "$mainMod SHIFT, 0, movetoworkspace, 10"
+          (luaBind "${mainMod} + SHIFT + 1" "hl.dsp.window.move({ workspace = 1 })")
+          (luaBind "${mainMod} + SHIFT + 2" "hl.dsp.window.move({ workspace = 2 })")
+          (luaBind "${mainMod} + SHIFT + 3" "hl.dsp.window.move({ workspace = 3 })")
+          (luaBind "${mainMod} + SHIFT + 4" "hl.dsp.window.move({ workspace = 4 })")
+          (luaBind "${mainMod} + SHIFT + 5" "hl.dsp.window.move({ workspace = 5 })")
+          (luaBind "${mainMod} + SHIFT + 6" "hl.dsp.window.move({ workspace = 6 })")
+          (luaBind "${mainMod} + SHIFT + 7" "hl.dsp.window.move({ workspace = 7 })")
+          (luaBind "${mainMod} + SHIFT + 8" "hl.dsp.window.move({ workspace = 8 })")
+          (luaBind "${mainMod} + SHIFT + 9" "hl.dsp.window.move({ workspace = 9 })")
+          (luaBind "${mainMod} + SHIFT + 0" "hl.dsp.window.move({ workspace = 10 })")
 
           # Monitor focus cycling
-          "$mainMod, Tab, focusmonitor, +1"
-          "$mainMod SHIFT, Tab, focusmonitor, -1"
+          (luaBind "${mainMod} + Tab" ''hl.dsp.focus({ monitor = "+1" })'')
+          (luaBind "${mainMod} + SHIFT + Tab" ''hl.dsp.focus({ monitor = "-1" })'')
 
           # Move workspace to monitor
-          "$mainMod CTRL, l, movecurrentworkspacetomonitor, +1"
-          "$mainMod CTRL, h, movecurrentworkspacetomonitor, -1"
+          (luaBind "${mainMod} + CTRL + l" ''hl.dsp.workspace.move({ monitor = "+1" })'')
+          (luaBind "${mainMod} + CTRL + h" ''hl.dsp.workspace.move({ monitor = "-1" })'')
 
           # Screenshot: region selection → clipboard
-          "$mainMod, Print, exec, grim -g \"$(slurp)\" - | wl-copy"
+          (luaBind "${mainMod} + Print" ''hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | wl-copy")'')
 
           # Screenshot annotation with satty
-          "$mainMod SHIFT, Print, exec, grim -g \"$(slurp)\" - | satty -f -"
-          "$mainMod ALT, Print, exec, grim - | satty -f -"
+          (luaBind "${mainMod} + SHIFT + Print" ''hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | satty -f -")'')
+          (luaBind "${mainMod} + ALT + Print" ''hl.dsp.exec_cmd("grim - | satty -f -")'')
 
           # Screen recording with wf-recorder (toggle: stop if running, else start)
-          "$mainMod, F9, exec, pkill wf-recorder || wf-recorder -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
-          "$mainMod SHIFT, F9, exec, pkill wf-recorder || wf-recorder -g \"$(slurp)\" -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
+          (luaBind "${mainMod} + F9" ''hl.dsp.exec_cmd("pkill wf-recorder || wf-recorder -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4")'')
+          (luaBind "${mainMod} + SHIFT + F9" ''hl.dsp.exec_cmd("pkill wf-recorder || wf-recorder -g \"$(slurp)\" -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4")'')
 
           # Lock screen
-          "$mainMod, backspace, exec, hyprlock"
+          (luaBind "${mainMod} + backspace" ''hl.dsp.exec_cmd("hyprlock")'')
 
           # Power menu
-          "$mainMod, Escape, exec, ${rofiPowerMenu}/bin/rofi-power-menu"
+          (luaBind "${mainMod} + Escape" ''hl.dsp.exec_cmd("${rofiPowerMenu}/bin/rofi-power-menu")'')
 
           # Audio
-          ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-          ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+          (luaBind "XF86AudioMute" ''hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")'')
+          (luaBind "XF86AudioMicMute" ''hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle")'')
+
+          # Repeating volume/brightness keys
+          (luaRepeatBind "XF86AudioLowerVolume" ''hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-")'')
+          (luaRepeatBind "XF86AudioRaiseVolume" ''hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+")'')
+          (luaRepeatBind "XF86MonBrightnessDown" ''hl.dsp.exec_cmd("brightnessctl set 5%-")'')
+          (luaRepeatBind "XF86MonBrightnessUp" ''hl.dsp.exec_cmd("brightnessctl set 5%+")'')
         ];
-
-        binde = [
-          ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
-          ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"
-
-          ", XF86MonBrightnessDown, exec, brightnessctl set 5%-"
-          ", XF86MonBrightnessUp, exec, brightnessctl set 5%+"
-        ];
-
       };
     };
 
