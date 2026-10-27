@@ -167,13 +167,18 @@ auto-maintained by `givn init` / `givn skills sync` — do not edit it by hand.
 - Tick off each task in `tasks.md` immediately after completing it —
   an unchecked box means that scenario is not done. Never batch-check
   boxes at the end.
-- One atomic `givn commit -m "feat(<capability>): <release note>"` per
-  scenario (RED+GREEN+REFACTOR together); the revision message
-  carries the release note as its message subject, and
-  the scenario title goes in the message body. It works on Git and Fossil. A
-  raw Git commit is stamped by the hook, a raw Fossil check-in is not. No
-  commit, or a commit touching only the spec, means the work is not done.
-  Record the revision identifier in tasks.md.
+- One atomic `givn commit` per scenario (RED+GREEN+REFACTOR together).
+  The revision message carries the release note as its message subject, and the
+  scenario title goes in the message body. It works on Git and Fossil. A
+  raw Git commit is stamped by the hook, a raw Fossil check-in is not.
+- A checked scenario records exactly one `COMMIT:` revision in `tasks.md`.
+  Allowed: a real revision that exists, is reachable from `HEAD`, names the
+  scenario in its message body, and contains the scenario's implementation
+  or its regression test. Not allowed: a revision shared by two scenarios,
+  a placeholder or invented hash, an unreachable revision, a missing
+  `COMMIT:` line, a message that does not name the scenario, or a commit
+  that only edits `tasks.md` or the `.feature` scenario text. No commit
+  means the scenario is not done.
 - The full workflow, available commands, and skills are documented in the
   output of these commands — this block is intentionally just a pointer.
 <!-- givn:end:givn-project -->
