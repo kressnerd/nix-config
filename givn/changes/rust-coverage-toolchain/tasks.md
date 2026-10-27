@@ -169,20 +169,35 @@ wiring. `hardware.nix` untouched; `stateVersion` untouched.
       the receipt step needs the archive gate, which is externally blocked. The
       change's own `@e2e` target, `integration-rust-toolchain`, was built and
       booted at RED and GREEN.
-- [ ] Local operator smoke on `thiniel` after applying the generation: the
-      shim quarantine and the `cargo llvm-cov` report described in
-      `design.md` "Deployment & Rollback"; and the same check on the project
-      that reported the failure (`duty2cal`). Evidence gathered so far, using
-      the exact toolchain and coverage command the profile declares (store
-      paths, without switching the host):
+- [x] Local operator smoke on `thiniel` after applying the generation: the
+      generation was switched by the operator (`nixos-rebuild switch`), the
+      rustup shims were quarantined into `~/.cargo/bin.pre-toolchain/`
+      (reversible; the `cargo install` binaries stay in `~/.cargo/bin`), and the
+      live session now resolves the declared toolchain:
       ```
-      $ PATH=<rust-minimal-1.99.1>/bin:<cargo-llvm-cov-0.8.7>/bin:$PATH \
-          cargo llvm-cov -p duty2cal --test golden --cobertura --output-path /tmp/duty2cal-golden-cov.xml
+      $ command -v rustc cargo cargo-llvm-cov rustfmt
+      /etc/profiles/per-user/dan/bin/rustc
+      /etc/profiles/per-user/dan/bin/cargo
+      /etc/profiles/per-user/dan/bin/cargo-llvm-cov
+      /etc/profiles/per-user/dan/bin/rustfmt
+      $ rustc -vV
+      rustc 1.99.1 (58cf8f9c3 2026-10-13) … LLVM version: 23.1.1
+      $ rustc --print sysroot
+      /nix/store/…-rust-minimal-1.99.1        # bin/rustfmt, bin/clippy-driver,
+                                              # lib/rustlib/<target>/bin/{llvm-profdata,llvm-cov}
+      $ cargo fmt --version
+      rustfmt 1.10.0-stable (58cf8f9c35 2026-10-13)
+      $ cargo clippy --version
+      clippy 0.1.99 (58cf8f9c35 2026-10-13)
+      ```
+      Same commit hash for compiler, formatter and lint driver. Coverage on the
+      project that reported the failure, with the default PATH:
+      ```
+      $ cargo llvm-cov -p duty2cal --test golden --cobertura --output-path /tmp/duty2cal-live-cov.xml
       test result: ok. 1 passed; 0 failed
-      Finished report saved to /tmp/duty2cal-golden-cov.xml
+      Finished report saved to /tmp/duty2cal-live-cov.xml
       lines-covered="43"  line-rate="0.36134453781512604"
       ```
       The report is produced where the same project previously failed with
-      "raw profile version mismatch"/"number of counters is zero". Switching the
-      generation and quarantining `~/.cargo/bin` shims remain the operator's
-      steps; they need `nrs` (sudo) and are not performed by this change.
+      "raw profile version mismatch"/"number of counters is zero". `~/.rustup`
+      is kept as the quarantine backup and can be deleted later.
