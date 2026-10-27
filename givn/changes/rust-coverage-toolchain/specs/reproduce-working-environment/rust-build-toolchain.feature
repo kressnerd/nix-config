@@ -10,7 +10,7 @@ Feature: Rust build toolchain on the personal laptop
     And   the device formats the project's sources without changes
     And   the formatter and lint driver are the compiler's own components
 
-  @givn.added @wip @e2e @check:integration-rust-toolchain
+  @givn.added @e2e @check:integration-rust-toolchain
   Scenario: A booted device measures coverage of a Rust project
     Given a device that declares the Rust build toolchain
     When  the device boots and builds a Rust project with coverage instrumentation

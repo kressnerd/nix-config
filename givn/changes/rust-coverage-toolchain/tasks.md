@@ -77,27 +77,38 @@ wiring. `hardware.nix` untouched; `stateVersion` untouched.
       ```
       and the host target fails its new assertion (exit 1, pasted in the setup
       task).
-- [ ] GREEN: `home/dan/features/development/rust.nix` takes `rustToolchain`
+- [x] GREEN: `home/dan/features/development/rust.nix` takes `rustToolchain`
       and installs `[ rustToolchain pkgs.gcc pkgs.pkg-config ]` (no standalone
       `cargo`, `rustc`, `clippy`); `formatters.nix` drops `rustfmt`;
       `home/dan/J6G6Y9JK7L.nix` declares `pkgs.rustfmt` directly. Re-run:
       ```
       $ nix eval --raw .#nixosConfigurations.thiniel.config.system.build.toplevel.drvPath
-      $ nix build .#checks.x86_64-linux.integration-rust-toolchain
+      /nix/store/z4198i381w6bi36hxb1wzri75jibcr67-nixos-system-thiniel-26.11.20261024.d3b13ad.drv
+      exit 0
+      $ nix build --no-link .#checks.x86_64-linux.integration-rust-toolchain
+      exit 0
       ```
-      Watch item (design review F13): if the Home Manager profile reports a
-      `bin/gcc`/`bin/cc` collision because the toolchain propagates
-      `stdenv.cc`, record the resolution here.
-- [ ] REFACTOR: formatting/comment cleanup only; re-run the second command and
-      confirm it still passes.
-- [ ] COMMIT: `givn commit -m "<release note>" -m "<scenario title>"`; record
-      the revision in this task.
+      The VM log shows the toolchain's own components:
+      ```
+      machine: must succeed: rustc --print sysroot
+      machine: must succeed: test -x /nix/store/b29gb961bmp0bjdyr8anm438zckpqvhc-rust-minimal-1.99.1/bin/rustfmt
+      machine: must succeed: test -x /nix/store/b29gb961bmp0bjdyr8anm438zckpqvhc-rust-minimal-1.99.1/bin/clippy-driver
+      machine: must succeed: cargo fmt --check --manifest-path /home/test/hello/Cargo.toml
+      ```
+      Watch item (design review F13): no profile collision occurred — the Home
+      Manager profile built with both the toolchain and `pkgs.gcc`.
+- [x] REFACTOR: `nix fmt` on every touched Nix file; the targeted host
+      evaluation and booted check were re-run afterwards and both exit 0 with
+      the same derivations (`z4198i38…-nixos-system-thiniel`,
+      `iaj7ncja…-vm-test-run-rust-toolchain`).
+- [x] COMMIT: `a32a4e8a5d18a6c8913feaaf9f89cfed835957bf` — release note as
+      subject, scenario title in the body.
 
 ---
 
 ## Task 2 — Scenario: `A booted device measures coverage of a Rust project` (`@e2e @check:integration-rust-toolchain`)
 
-- [ ] RED: remove `@wip` from this scenario; extend the test script with the
+- [x] RED: remove `@wip` from this scenario; extend the test script with the
       measurement steps: create a `--lib` project whose explicit `src/lib.rs`
       has a function and a `#[test]` that calls it, run
       `cargo llvm-cov --offline --cobertura --output-path <file>` with
@@ -105,13 +116,24 @@ wiring. `hardware.nix` untouched; `stateVersion` untouched.
       (`lines-covered > 0`). Re-run and paste the non-zero output (missing
       `cargo llvm-cov` or missing sysroot `llvm-profdata`):
       ```
-      $ nix build .#checks.x86_64-linux.integration-rust-toolchain
+      $ nix build --no-link .#checks.x86_64-linux.integration-rust-toolchain
+      machine: must succeed: … CARGO_NET_OFFLINE=true cargo llvm-cov --offline --cobertura --output-path /home/test/covered/coverage.xml --manifest-path /home/test/covered/Cargo.toml
+      machine # error: no such command: `llvm-cov`
+      machine # help: find a package to install `llvm-cov` with `cargo search cargo-llvm-cov`
+      !!! RequestedAssertionFailed: command `… cargo llvm-cov …` failed (exit code 101)
+      exit 1
       ```
-- [ ] GREEN: add `"llvm-tools-preview"` to the toolchain extensions and
-      `pkgs.cargo-llvm-cov` to the module's packages. Re-run and paste the
+      (A first RED run failed earlier at the fixture's ownership step —
+      `chown: invalid group: 'test:test'` — while the test user's group is
+      `users`; the fixture now changes only the file's owner and the RED is the
+      missing coverage command.)
+- [ ] GREEN: add `"llvm-tools-preview"` to the toolchain extensions and pass
+      the stable channel's `cargo-llvm-cov` (0.8.7, as `cargoLlvmCov`) into the
+      module — the `nixpkgs-unstable` 0.9.0 package does not build at the pin
+      (its own test suite segfaults in the sandbox). Re-run and paste the
       passing output:
       ```
-      $ nix build .#checks.x86_64-linux.integration-rust-toolchain
+      $ nix build --no-link .#checks.x86_64-linux.integration-rust-toolchain
       ```
 - [ ] REFACTOR: no behaviour change; re-run the command.
 - [ ] Update the arc42 chapters named in `arc42.md` (02, 03, 04, 05, 07, 08, 11,

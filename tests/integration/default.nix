@@ -10,6 +10,7 @@
   ompPackage,
   opencodePackage ? null,
   rustToolchain,
+  cargoLlvmCov,
   ...
 }:
 {
@@ -44,7 +45,7 @@
   integration-rust-toolchain = import ./rust-toolchain-test.nix {
     pkgs = unstablePkgs;
     home-manager = home-manager-unstable;
-    inherit rustToolchain;
+    inherit rustToolchain cargoLlvmCov;
   };
   integration-infrastructure-tooling = import ./infrastructure-tooling-test.nix {
     pkgs = unstablePkgs;

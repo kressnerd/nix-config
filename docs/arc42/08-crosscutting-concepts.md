@@ -263,6 +263,17 @@ each device that carries it asserts the same floor. Failure mode: nothing in the
 repository signals that a newer release exists, so currency depends on the
 operator noticing (chapter 11 R-022).
 
+A fifth source is one whole toolchain rather than a package: `thiniel`'s Rust
+compiler, Cargo, formatter, lint driver and coverage tools come from the pinned
+`rust-overlay` input as a single release. The channel builds the compiler and
+its LLVM tools separately, and the profiler the compiler writes is not readable
+by the channel's tools (measured 2026-10-27: LLVM 21.1.8/22.1.8 reject the
+profile version, 23.1.3 reports zero counters). The overlay is not applied to a
+host's package set: `flake.nix` builds one derivation (`rustToolchainFor`) and
+passes it to the module and to the booted check, so the check proves the same
+store path the device installs. No version floor is declared — a floor cannot
+detect a cross-release instrumentation mismatch (chapter 2; chapter 11 R-035).
+
 ## Platform conditionals
 
 A single module serves both platforms where the difference is small, using

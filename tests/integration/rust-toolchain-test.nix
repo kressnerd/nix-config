@@ -9,6 +9,7 @@
   pkgs,
   home-manager,
   rustToolchain,
+  cargoLlvmCov,
   ...
 }:
 pkgs.testers.runNixOSTest {
@@ -29,7 +30,7 @@ pkgs.testers.runNixOSTest {
         useUserPackages = true;
         # The device's declared toolchain, so the guest installs exactly the
         # derivation `thiniel` declares rather than a second approximation.
-        extraSpecialArgs = { inherit rustToolchain; };
+        extraSpecialArgs = { inherit rustToolchain cargoLlvmCov; };
         sharedModules = [
           # The module reads myHome.persistence.enable; the option default is
           # off, so the guest does not need the impermanence module.
@@ -86,5 +87,40 @@ pkgs.testers.runNixOSTest {
     machine.succeed(f"test -x {sysroot}/bin/rustfmt")
     machine.succeed(f"test -x {sysroot}/bin/clippy-driver")
     machine.succeed(f"{as_test} cargo fmt --check --manifest-path /home/test/hello/Cargo.toml")
+
+    # Coverage: the project's test calls the covered function, so the report
+    # must count the lines the test executed. The profiler and report tools are
+    # the toolchain's own components, found through the compiler's sysroot.
+    machine.succeed(f"{as_test} cargo new --vcs none --offline /home/test/covered --lib")
+    machine.succeed(
+        "cat > /home/test/covered/src/lib.rs <<'EOF'\n"
+        "pub fn double(value: i32) -> i32 {\n"
+        "    value * 2\n"
+        "}\n"
+        "\n"
+        "#[cfg(test)]\n"
+        "mod tests {\n"
+        "    use super::*;\n"
+        "\n"
+        "    #[test]\n"
+        "    fn doubles_a_value() {\n"
+        "        assert_eq!(double(2), 4);\n"
+        "    }\n"
+        "}\n"
+        "EOF\n"
+    )
+    machine.succeed("chown test /home/test/covered/src/lib.rs")
+    machine.succeed(
+        f"{as_test} CARGO_NET_OFFLINE=true cargo llvm-cov --offline --cobertura "
+        "--output-path /home/test/covered/coverage.xml "
+        "--manifest-path /home/test/covered/Cargo.toml"
+    )
+    report = machine.succeed("cat /home/test/covered/coverage.xml")
+    import re
+
+    match = re.search(r'lines-covered="(\d+)"', report)
+    assert match, report
+    assert int(match.group(1)) > 0, report
+    assert "src/lib.rs" in report, report
   '';
 }

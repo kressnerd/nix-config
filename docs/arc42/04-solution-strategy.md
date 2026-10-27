@@ -91,6 +91,7 @@ evidence. One choice here — operational-data separation — qualifies as an AD
 | Edge DNS filtering | AdGuard Home (adlerkopf) | **Declared** on one host only; `hosts/adlerkopf/services/adguard.nix` |
 | Edge firewall management | netcup SCP external firewall via Python CLI | The VPS firewall is managed account-side, not on the host; `scripts/netcup_firewall.py` |
 | Specification workflow | `givn` with native bindings | Specs stay executable without a step runner; `givn/`, `docs/GIVN-VERIFICATION.md` |
+| Rust build and coverage toolchain | `rust-overlay` release: compiler, Cargo, formatter, lint driver and `llvm-tools-preview` | One release for the compiler and the programs that read its coverage profiles; the channel builds the compiler and its LLVM tools separately and they disagree (change `rust-coverage-toolchain`; `flake.nix`, `lib/helpers.nix`) |
 | Private operational values | Overridable `private` flake input with an in-tree stub default | The `git+file://` source rule forbids a gitignored file; the input is visible and overridable; [ADR-0001](adr/ADR-0001-private-data-strategy.md) |
 
 ## Approach to quality goals

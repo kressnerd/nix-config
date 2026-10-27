@@ -11,15 +11,16 @@
 
   # One released Rust toolchain, with the tools that must come from the same
   # release as the compiler. `pkgs` must carry the repository's pinned
-  # `rust-overlay`; the caller decides the extension set, because the change
-  # `rust-coverage-toolchain` lands the coverage tools separately from the
-  # formatter and lint driver.
+  # `rust-overlay`. The coverage extension is what makes a profile the compiler
+  # writes readable: the channel's LLVM tools come from a different build. See
+  # the change `rust-coverage-toolchain`.
   mkRustToolchain =
     { pkgs }:
     pkgs.rust-bin.stable.latest.minimal.override {
       extensions = [
         "rustfmt-preview"
         "clippy-preview"
+        "llvm-tools-preview"
       ];
     };
 

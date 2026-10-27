@@ -29,7 +29,7 @@ covered Rust project.
 | Toolchain instantiation | One derivation per system, built in `flake.nix` from `import nixpkgs-unstable { overlays = [ inputs.rust-overlay.overlays.default ]; }`, passed as `rustToolchain` to the host's Home Manager arguments and to the check | `flake.nix` outputs `let` block; helper `mkRustToolchain` in `lib/helpers.nix` | The host and the booted check consume the same store path, so the check proves the device's declaration rather than a second approximation. The overlay is **not** added to any host's `nixpkgs.overlays`: nothing else needs the `rust-bin` namespace, and the host's `pkgs` stays free of a package-set instance whose only consumer is one argument. |
 | Alternative distribution: `fenix` | Rejected for this change | — | It offers the same component-extension model, but this repository already verified the exact `rust-overlay` revision's 1.99.1 derivation and its `llvm-tools` pair at design time; switching distribution would re-run that evidence for no behavioural gain. Revisit only if `rust-overlay` stops packaging a needed release. |
 | Version floor | None | — | The contract is "the tools that read a profile come from the release that wrote it", not currency. A floor cannot detect a cross-release mismatch (1.99.0 and 1.99.1 both emit format 11 and still fail), so it would add a signal that does not protect the invariant. |
-| Coverage tool availability | `cargo-llvm-cov` from the host package set; it resolves `llvm-cov`/`llvm-profdata` from `rustc --print target-libdir`'s sibling `bin` directory | `nixpkgs-unstable` (`cargo-llvm-cov` 0.9.0, checked with `nix eval` on 2026-10-27) | Verified on 2026-10-27 against the 1.99.1 toolchain: `cargo llvm-cov --cobertura --output-path` produced a report without `--llvm-path`. No wrapper or environment variable is introduced. |
+| Coverage tool availability | `cargo-llvm-cov` 0.8.7 from the stable channel, passed to the module as `cargoLlvmCov`; it resolves `llvm-cov`/`llvm-profdata` from `rustc --print target-libdir`'s sibling `bin` directory | `nixpkgs-26.05` (stable) | Verified on 2026-10-27 against the 1.99.1 toolchain: `cargo llvm-cov --cobertura --output-path` produced a report with 6 counted lines and `src/lib.rs` present, without `--llvm-path`. The 0.9.0 package on the `nixpkgs-unstable` pin does not build (its own test suite segfaults in the sandbox, observed on the same day), so the stable release is used; the command's own version is not the pairing that matters because the profiler and report tools come from the compiler sysroot. |
 | Formatter ownership on `thiniel` | The toolchain supplies `rustfmt`; `formatters.nix` no longer declares it, and the macOS host declares it directly | rust-overlay `rustfmt-preview`; `nixpkgs-unstable` `rustfmt` for macOS | Two `rustfmt` derivations in one profile collide in the Home Manager profile build. `thiniel` gets the toolchain's release; `J6G6Y9JK7L` has no Rust toolchain of its own, so it keeps a standalone formatter. |
 | Lint driver | The toolchain supplies `clippy`/`cargo-clippy`/`clippy-driver`; the standalone `clippy` package is removed | rust-overlay `clippy-preview` | Same collision and same-release reason as the formatter. |
 | Toolchain profile | `minimal` + three extensions, not `default` | rust-overlay | `default` adds `rust-docs` (hundreds of MiB) that a build device does not need; the extensions are exactly the tools the rules name. |
@@ -39,8 +39,9 @@ covered Rust project.
 Version freshness: `rust-overlay` is pinned to the revision
 `c7e9d512653a35ef4d5879c3df4d44d7b78d0e6d` that produced the design-time
 evidence (fetched and built 2026-10-27); its `stable.latest` resolves Rust
-1.99.1 at that revision. `cargo-llvm-cov` 0.9.0 comes from the
-`nixpkgs-unstable` pin. No other version is asserted.
+1.99.1 at that revision. `cargo-llvm-cov` 0.8.7 comes from the
+`nixpkgs-26.05` stable pin, because the unstable pin's 0.9.0 does not build.
+No other version is asserted.
 
 ## Decisions
 

@@ -175,6 +175,19 @@
             overlays = [ inputs.rust-overlay.overlays.default ];
           };
         };
+
+      # The coverage command. `cargo-llvm-cov` 0.9.0 on the `nixpkgs-unstable`
+      # pin does not build (its own test suite segfaults in the sandbox), so it
+      # comes from the stable channel (0.8.7); the command invokes the
+      # toolchain's own `llvm-cov`/`llvm-profdata` through the compiler sysroot,
+      # so its own release is not the pairing that matters. See the change
+      # `rust-coverage-toolchain`, design D1 and risk R-035.
+      cargoLlvmCovFor =
+        system:
+        (import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        }).cargo-llvm-cov;
     in
     {
       overlays.default = import ./overlays;
@@ -267,6 +280,7 @@
                   # same derivation is passed to the booted check. See the
                   # change `rust-coverage-toolchain`, design D1.
                   rustToolchain = rustToolchainFor "x86_64-linux";
+                  cargoLlvmCov = cargoLlvmCovFor "x86_64-linux";
                   # The agent's package comes from its own pin (`nixpkgs-agent`),
                   # not from the unstable set the rest of the userland follows:
                   # that branch carries 18.8.4 against the pin's 18.10.0 (checked
@@ -729,6 +743,7 @@
                   # module receives, so the coverage check proves the device's
                   # declaration. See the change `rust-coverage-toolchain`.
                   rustToolchain = rustToolchainFor system;
+                  cargoLlvmCov = cargoLlvmCovFor system;
                 };
               in
               integrationTests

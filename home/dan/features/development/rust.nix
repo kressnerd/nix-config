@@ -3,16 +3,18 @@
   lib,
   pkgs,
   rustToolchain,
+  cargoLlvmCov,
   ...
 }:
 {
   home = {
-    # One released Rust toolchain: compiler, Cargo, formatter and lint driver
-    # (the coverage tools are added by the change `rust-coverage-toolchain`).
+    # One released Rust toolchain: compiler, Cargo, formatter, lint driver and
+    # the coverage tools of that release, plus the command that reads them.
     # The derivation is declared once in `flake.nix` and passed in, so the
     # booted check proves exactly what the device installs.
     packages = [
       rustToolchain
+      cargoLlvmCov
       pkgs.gcc
       pkgs.pkg-config
     ];

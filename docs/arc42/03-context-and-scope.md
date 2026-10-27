@@ -77,7 +77,7 @@ flowchart TB
 
 | Interface | Technology / Protocol | Direction | Status |
 |---|---|---|---|
-| Flake inputs (`nixpkgs` 26.05, `nixpkgs-unstable`, `nixpkgs-agent`, `home-manager`, `stylix`, `sops-nix`, `impermanence`, `disko`, `lanzaboote`, `nix-homebrew`, `nur`, `nixos-anywhere`, `givn`, `mcp-nixos`, `mac-app-util`, Homebrew taps) | Nix flakes, immutable pinned revisions (`flake.lock`) | In | Declared |
+| Flake inputs (`nixpkgs` 26.05, `nixpkgs-unstable`, `nixpkgs-agent`, `rust-overlay`, `home-manager`, `stylix`, `sops-nix`, `impermanence`, `disko`, `lanzaboote`, `nix-homebrew`, `nur`, `nixos-anywhere`, `givn`, `mcp-nixos`, `mac-app-util`, Homebrew taps) | Nix flakes, immutable pinned revisions (`flake.lock`); the Rust distribution's component tarballs are hash-pinned fixed-output downloads | In | Declared |
 | Model servers (`context7`, `kagi-search`) | HTTP MCP endpoint and a stdio MCP command; the key is read from the host's sops material at connect time | Out (agent → service) | Declared on `thiniel` and `J6G6Y9JK7L`; a key-less device still starts the agent (observed by `integration-agent-tooling`); an actual server connection is not exercised |
 | Git remote access from devices | SSH with an explicit per-identity key (`github-personal`, `github-company`, `github-client001`, `bitbucket-client002`) | Out | Verified in a VM (`integration-ssh-identity-selection`) |
 | Security-key SSH authentication from `thiniel` | FIDO2 security key with non-resident handle files; token-only normal connections; named file-key fallback | Out (device → GitHub/declared hosts) | Declared; the VM e2e is planned, and the real-token/backup gates are operator-run |
