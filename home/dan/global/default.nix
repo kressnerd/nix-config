@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  home.stateVersion = "25.11";
+  home.stateVersion = "26.05";
 
   # Suppress options.json generation to avoid nixpkgs store path context warning
   # (upstream nixosOptionsDoc issue with flakes-based setups)

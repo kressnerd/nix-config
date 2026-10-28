@@ -165,7 +165,7 @@ Test-first is NOT required for:
 
 ### Immutable Values
 
-- **NEVER** change `system.stateVersion` or `home.stateVersion` — set at install time, must not change during routine updates
+- **NEVER** change `system.stateVersion` or `home.stateVersion` during routine work — they record the release epoch the fleet runs (`26.05` system and home on every host, `7` on Darwin). Raising an epoch is an explicit, audited upgrade with its own plan (see `docs/plans/state-version-26.05.md`), never a side effect of another change
 - `hardware-configuration.nix` / `hardware.nix` is **READ-ONLY** — modify only when explicitly changing kernel modules, filesystems, or hardware settings
 
 ### Secrets

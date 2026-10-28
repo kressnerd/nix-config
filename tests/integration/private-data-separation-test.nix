@@ -30,7 +30,7 @@ pkgs.testers.runNixOSTest {
       wgListenPort = 51820;
     };
 
-    system.stateVersion = "25.11";
+    system.stateVersion = "26.05";
   };
 
   testScript = ''

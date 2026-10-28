@@ -705,6 +705,66 @@
                         exit 1
                       ''
                   );
+
+              # Every host and every Home Manager profile records the release
+              # epoch the fleet runs. A lower value keeps a release default the
+              # repository once relied on; a higher one gates on an unreleased
+              # release. Raising the channel fails this check until the epoch is
+              # raised deliberately. nix-darwin uses its own integer scale: its
+              # current epoch is `system.maxStateVersion`, which moves only when
+              # nix-darwin does.
+              state-version-epoch =
+                let
+                  lib' = nixpkgs.lib;
+                  epoch = nixpkgs.lib.trivial.release;
+                  nixosHosts = builtins.attrNames self.nixosConfigurations;
+                  homeEpochs =
+                    host: users:
+                    map (user: {
+                      name = "${host}/home-manager/${user}";
+                      expected = epoch;
+                      value = users.${user}.home.stateVersion;
+                    }) (builtins.attrNames users);
+                  entries =
+                    map (host: {
+                      name = "${host}/system";
+                      expected = epoch;
+                      value = self.nixosConfigurations.${host}.config.system.stateVersion;
+                    }) nixosHosts
+                    ++ lib'.concatMap (
+                      host: homeEpochs host self.nixosConfigurations.${host}.config.home-manager.users
+                    ) nixosHosts
+                    ++ [
+                      {
+                        name = "J6G6Y9JK7L/system";
+                        expected = self.darwinConfigurations.J6G6Y9JK7L.config.system.maxStateVersion;
+                        value = self.darwinConfigurations.J6G6Y9JK7L.config.system.stateVersion;
+                      }
+                    ]
+                    ++ homeEpochs "J6G6Y9JK7L" self.darwinConfigurations.J6G6Y9JK7L.config.home-manager.users;
+                  mismatched = lib'.filter (e: e.value != e.expected) entries;
+                  failureText = builtins.concatStringsSep "\n" (
+                    map (e: "${e.name}: ${toString e.value}, expected ${toString e.expected}") mismatched
+                  );
+                in
+                pkgs.runCommand "state-version-epoch"
+                  {
+                    inherit failureText;
+                    passAsFile = [ "failureText" ];
+                  }
+                  (
+                    if mismatched == [ ] then
+                      ''
+                        echo "every host and home profile records the current release epoch"
+                        touch $out
+                      ''
+                    else
+                      ''
+                        echo "hosts record a stateVersion other than the current epoch:"
+                        cat $failureTextPath
+                        exit 1
+                      ''
+                  );
             }
           ))
           (

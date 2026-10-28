@@ -31,5 +31,5 @@
     age.sshKeyPaths = [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
   };
 
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

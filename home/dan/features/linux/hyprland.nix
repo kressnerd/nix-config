@@ -114,11 +114,6 @@ lib.mkMerge [
       package = pkgs-unstable.hyprland;
       systemd.enable = true;
 
-      # Hyprland 0.56 deprecates the hyprlang `.conf` format, and 0.57 removes
-      # it. configType "lua" makes Home Manager generate hyprland.lua, so the
-      # settings below use Hyprland's Lua call form (hl.config, hl.bind, ...).
-      configType = "lua";
-
       settings = {
         env = [
           {

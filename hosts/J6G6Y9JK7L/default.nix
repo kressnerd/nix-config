@@ -33,7 +33,7 @@
     configurationRevision = null;
 
     # Used for backwards compatibility
-    stateVersion = 6;
+    stateVersion = 7;
 
     # PRIMARY USER - Required for Homebrew
     primaryUser = "daniel.kressner";

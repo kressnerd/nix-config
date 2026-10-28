@@ -91,11 +91,6 @@ let
           expected = true;
         };
 
-        testHyprlandConfigTypeIsLua = {
-          expr = hyprlandModule.wayland.windowManager.hyprland.configType;
-          expected = "lua";
-        };
-
         testHyprlandHasEdpMonitor = {
           expr = builtins.any (m: (m.output or "") == "eDP-1") hyprSettings.monitor;
           expected = true;

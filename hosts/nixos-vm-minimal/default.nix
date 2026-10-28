@@ -10,7 +10,7 @@
   ];
 
   # System Configuration
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
   nixpkgs.hostPlatform = "aarch64-linux";
 
   # Nix configuration (host-specific: gc and store optimisation)

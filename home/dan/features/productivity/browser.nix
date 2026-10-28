@@ -61,14 +61,13 @@
     };
   }
   // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    # Home Manager 26.05 changed this default from ".mozilla/firefox" to the XDG
-    # config directory, but keeps the legacy default while home.stateVersion is
-    # below 26.05 and then reports a migration warning. The state version is
-    # fixed at install time, so the device states the location it uses: the
-    # profile data was moved to the XDG path (change
-    # `quiet-configuration-evaluation`, design D1). On darwin the browser keeps
-    # the platform default, which is why this setting is stated for Linux only —
-    # the module is shared with the work MacBook.
+    # Home Manager 26.05 resolves `configPath` to the relative XDG path, but its
+    # wrapper exports `MOZ_APP_DATA` only when `configPath` differs from that
+    # resolved default. The device therefore states the absolute path: the
+    # profile data lives there (change `quiet-configuration-evaluation`), and
+    # the persisted set follows it. On darwin the browser keeps the platform
+    # default, which is why this setting is stated for Linux only — the module
+    # is shared with the work MacBook.
     configPath = "${config.xdg.configHome}/mozilla/firefox";
   };
 

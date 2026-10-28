@@ -62,7 +62,7 @@ pkgs.testers.runNixOSTest {
           home = {
             username = "test";
             homeDirectory = "/home/test";
-            stateVersion = "25.11";
+            stateVersion = "26.05";
           };
         };
       };

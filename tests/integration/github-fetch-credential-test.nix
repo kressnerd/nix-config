@@ -87,7 +87,7 @@ pkgs.testers.runNixOSTest {
     users.users.owner.isNormalUser = true;
     users.users.other.isNormalUser = true;
 
-    system.stateVersion = "25.11";
+    system.stateVersion = "26.05";
   };
 
   testScript = ''

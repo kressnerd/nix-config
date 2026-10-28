@@ -2,6 +2,10 @@
 
 Status: **durchgeführt** (2026-09-29). Alle non-adlerkopf-Hosts evaluieren auf 26.05.
 
+Nachtrag 2026-10-28: Die `stateVersion`-Epoche wurde nachträglich auf `26.05`
+(Home Manager und NixOS) bzw. Darwin `7` gehoben — siehe
+[`state-version-26.05.md`](state-version-26.05.md).
+
 ## Channel-Bump
 
 | Input | von | nach |

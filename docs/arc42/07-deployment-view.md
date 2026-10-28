@@ -132,7 +132,7 @@ repository.
 | Property | Value (declared) |
 |---|---|
 | Hardware | Apple Silicon Mac (`aarch64-darwin`) |
-| Boot / base | Determinate Nix assumed (`nix.enable = false` disables nix-darwin's own Nix management); `system.stateVersion = 6` |
+| Boot / base | Determinate Nix assumed (`nix.enable = false` disables nix-darwin's own Nix management); `system.stateVersion = 7` |
 | System management | `nix-homebrew` with three pinned taps and `mutableTaps = false`; `homebrew.onActivation.cleanup = "zap"`, `autoUpdate = false`, `upgrade = true`; brews `[score-compose]`, casks `[cameracontroller claude claude-code crossover kitty marta]` |
 | App linking | `mac-app-util` (system + Home Manager module); `targets.darwin.copyApps.enableChecks = false` because an MDM resets the App Management permission |
 | Desktop | `aerospace` tiling window manager, macOS defaults via `targets.darwin.defaults`, `stylix` One Light |
