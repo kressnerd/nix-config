@@ -254,6 +254,13 @@ lib.mkMerge [
             opacity = "1.0 override 1.0 override";
             match.class = "^(mpv)$";
           }
+          {
+            name = "float-audio-mixer";
+            float = true;
+            center = true;
+            size = "760 520";
+            match.class = "^(audio-mixer)$";
+          }
         ];
 
         on = [
@@ -324,13 +331,16 @@ lib.mkMerge [
           (luaBind "${mainMod} + CTRL + h" ''hl.dsp.workspace.move({ monitor = "-1" })'')
 
           # Rotate the focused monitor 90° clockwise (transform 0→1→2→3→0).
-          # Hyprland reflows neighbours; waybar keeps stale layer geometry, so reload it.
+          # Hyprland reflows neighbours, but the bars of the other outputs keep
+          # their old position, so waybar is reloaded to re-anchor them. Reload
+          # is SIGUSR2; SIGUSR1 toggles bar visibility in waybar 0.15.0, and
+          # sending it hid the whole bar until the next rotate.
           (luaBind "${mainMod} + CTRL + r" ''
             function()
               local m = hl.get_active_monitor()
               if m == nil then return end
               hl.monitor({ output = m.name, transform = (m.transform + 1) % 4 })
-              hl.exec_cmd("sleep 0.3; pkill -USR1 waybar")
+              hl.exec_cmd("sleep 0.3; pkill -USR2 waybar")
             end
           '')
 
