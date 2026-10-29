@@ -115,8 +115,12 @@ in
           message = "thiniel: Hyprland must bind ${mainMod} CTRL+r to rotate the active monitor 90°";
         }
         {
-          assertion = hasBind "${mainMod} + CTRL + r" "pkill -USR1 waybar";
+          assertion = hasBind "${mainMod} + CTRL + r" "pkill -USR2 waybar";
           message = "thiniel: ${mainMod} CTRL+r must reload waybar — its layer surfaces keep stale geometry when rotated monitors reflow neighbours";
+        }
+        {
+          assertion = !(hasBind "${mainMod} + CTRL + r" "pkill -USR1 waybar");
+          message = "thiniel: ${mainMod} CTRL+r must not signal waybar with SIGUSR1 — waybar 0.15.0 toggles bar visibility on SIGUSR1 (reload is SIGUSR2), so that signal hides every bar until the next rotate";
         }
 
         # ── Layout toggle migration ──────────────────────────────────────────────
