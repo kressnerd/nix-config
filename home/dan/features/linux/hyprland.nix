@@ -323,6 +323,17 @@ lib.mkMerge [
           (luaBind "${mainMod} + CTRL + l" ''hl.dsp.workspace.move({ monitor = "+1" })'')
           (luaBind "${mainMod} + CTRL + h" ''hl.dsp.workspace.move({ monitor = "-1" })'')
 
+          # Rotate the focused monitor 90° clockwise (transform 0→1→2→3→0).
+          # Hyprland reflows neighbours; waybar keeps stale layer geometry, so reload it.
+          (luaBind "${mainMod} + CTRL + r" ''
+            function()
+              local m = hl.get_active_monitor()
+              if m == nil then return end
+              hl.monitor({ output = m.name, transform = (m.transform + 1) % 4 })
+              hl.exec_cmd("sleep 0.3; pkill -USR1 waybar")
+            end
+          '')
+
           # Screenshot: region selection → clipboard
           (luaBind "${mainMod} + Print" ''hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | wl-copy")'')
 

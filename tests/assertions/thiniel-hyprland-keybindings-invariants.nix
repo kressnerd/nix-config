@@ -109,6 +109,16 @@ in
           message = "thiniel: Hyprland must bind ${mainMod} CTRL+h to move workspace to monitor -1";
         }
 
+        # ── Monitor rotation ─────────────────────────────────────────────────────
+        {
+          assertion = hasBind "${mainMod} + CTRL + r" "hl.get_active_monitor";
+          message = "thiniel: Hyprland must bind ${mainMod} CTRL+r to rotate the active monitor 90°";
+        }
+        {
+          assertion = hasBind "${mainMod} + CTRL + r" "pkill -USR1 waybar";
+          message = "thiniel: ${mainMod} CTRL+r must reload waybar — its layer surfaces keep stale geometry when rotated monitors reflow neighbours";
+        }
+
         # ── Layout toggle migration ──────────────────────────────────────────────
         {
           assertion = hasBind "${mainMod} + semicolon" ''hl.dsp.layout("togglesplit")'';
