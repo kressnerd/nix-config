@@ -32,10 +32,10 @@ let
       for ws in $(seq 1 10); do
         idx=$(( (ws - 1) % count ))
         monitor="''${monitors[$idx]}"
-        hyprctl dispatch moveworkspacetomonitor "$ws" "$monitor"
+        hyprctl dispatch "hl.dsp.workspace.move({ workspace = $ws, monitor = \"$monitor\" })"
       done
 
-      hyprctl dispatch workspace 1
+      hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })'
     }
 
     sleep 2
@@ -60,7 +60,7 @@ let
     choice=$(printf ' Logout\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
     case "$choice" in
-      ' Logout')   ${pkgs-unstable.hyprland}/bin/hyprctl dispatch exit ;;
+      ' Logout')   ${pkgs-unstable.hyprland}/bin/hyprctl dispatch 'hl.dsp.exit()' ;;
       ' Reboot')   ${pkgs.systemd}/bin/systemctl reboot ;;
       '⏻ Shutdown') ${pkgs.systemd}/bin/systemctl poweroff ;;
     esac

@@ -1,0 +1,57 @@
+--- a/src/modules/hyprland/workspace.cpp
++++ b/src/modules/hyprland/workspace.cpp
+@@ -11,6 +11,26 @@
+ 
+ namespace waybar::modules::hyprland {
+ 
++namespace {
++
++// Hyprland parses every dispatch request as Lua (`hl.dispatch(<args>)`) under the
++// Lua config manager, so the text dispatchers ("dispatch workspace 3") fail to
++// parse and publish nothing. These build the documented Lua dispatcher forms:
++// https://wiki.hypr.land/configuring/core/dispatchers
++std::string focusWorkspace(const std::string& workspace, bool onCurrentMonitor) {
++  return "dispatch hl.dsp.focus({ workspace = \"" + workspace + "\"" +
++         (onCurrentMonitor ? ", on_current_monitor = true" : "") + " })";
++}
++
++std::string toggleSpecial(const std::string& name) {
++  if (name.empty()) {
++    return "dispatch hl.dsp.workspace.toggle_special()";
++  }
++  return "dispatch hl.dsp.workspace.toggle_special(\"" + name + "\")";
++}
++
++}  // namespace
++
+ Workspace::Workspace(const Json::Value& workspace_data, Workspaces& workspace_manager,
+                      const Json::Value& clients_data)
+     : m_workspaceManager(workspace_manager),
+@@ -70,21 +90,15 @@
+   if (bt->type == GDK_BUTTON_PRESS) {
+     try {
+       if (id() > 0) {  // normal
+-        if (m_workspaceManager.moveToMonitor()) {
+-          m_ipc.getSocket1Reply("dispatch focusworkspaceoncurrentmonitor " + std::to_string(id()));
+-        } else {
+-          m_ipc.getSocket1Reply("dispatch workspace " + std::to_string(id()));
+-        }
++        m_ipc.getSocket1Reply(focusWorkspace(std::to_string(id()),
++                                             m_workspaceManager.moveToMonitor()));
+       } else if (!isSpecial()) {  // named (this includes persistent)
+-        if (m_workspaceManager.moveToMonitor()) {
+-          m_ipc.getSocket1Reply("dispatch focusworkspaceoncurrentmonitor name:" + name());
+-        } else {
+-          m_ipc.getSocket1Reply("dispatch workspace name:" + name());
+-        }
++        m_ipc.getSocket1Reply(
++            focusWorkspace("name:" + name(), m_workspaceManager.moveToMonitor()));
+       } else if (id() != -99) {  // named special
+-        m_ipc.getSocket1Reply("dispatch togglespecialworkspace " + name());
++        m_ipc.getSocket1Reply(toggleSpecial(name()));
+       } else {  // special
+-        m_ipc.getSocket1Reply("dispatch togglespecialworkspace");
++        m_ipc.getSocket1Reply(toggleSpecial(""));
+       }
+       return true;
+     } catch (const std::exception& e) {

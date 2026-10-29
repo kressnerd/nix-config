@@ -1,10 +1,19 @@
 { pkgs, pkgs-unstable, ... }:
 let
+  # Hyprland reads every dispatch request as Lua (`hl.dispatch(<args>)`), so the
+  # text dispatchers waybar 0.15.0 sends ("dispatch workspace 3") are parse
+  # errors: a click on a workspace number reaches the module and then does
+  # nothing. Upstream fixed that on master only (e17c0d9f0a..0f12de9319,
+  # unreleased as of 0.15.0, 2026-02-06); carry the port until a release has it.
+  waybar = pkgs.waybar.overrideAttrs (old: {
+    patches = (old.patches or [ ]) ++ [ ./patches/waybar-hyprland-lua-dispatch.patch ];
+  });
+
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n Reboot\n⏻ Shutdown' \
       | ${pkgs.fuzzel}/bin/fuzzel --dmenu --prompt="Power ")
     case "$choice" in
-      ' Logout')   ${pkgs-unstable.hyprland}/bin/hyprctl dispatch exit ;;
+      ' Logout')   ${pkgs-unstable.hyprland}/bin/hyprctl dispatch 'hl.dsp.exit()' ;;
       ' Reboot')   ${pkgs.systemd}/bin/systemctl reboot ;;
       '⏻ Shutdown') ${pkgs.systemd}/bin/systemctl poweroff ;;
     esac
@@ -17,6 +26,7 @@ in
 
   programs.waybar = {
     enable = true;
+    package = waybar;
     systemd = {
       enable = true;
       targets = [ "hyprland-session.target" ];
