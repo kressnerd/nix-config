@@ -63,5 +63,17 @@ in
       ];
       message = "thiniel: the fleet deployment aliases (cs/ct/cb/cda/call) must stay declared although the hive output is withdrawn";
     }
+    {
+      assertion = builtins.elem "nh" hmPkgNames && builtins.elem "nix-tree" hmPkgNames;
+      message = "thiniel: the rebuild helpers (nh, nix-tree) must be installed";
+    }
+    {
+      assertion = builtins.all (a: builtins.hasAttr a config.programs.fish.shellAliases) [
+        "nrs"
+        "nrt"
+        "nrb"
+      ];
+      message = "thiniel: the rebuild aliases (nrs/nrt/nrb) must stay declared";
+    }
   ];
 }

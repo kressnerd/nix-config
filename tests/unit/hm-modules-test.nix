@@ -12,10 +12,11 @@
 # VSCode FHS RED — vscode-fhs must be in home/dan/features/productivity/vscode-fhs.nix
 { lib, pkgs }:
 let
-  # Import the thiniel HM profile — call with {} since signature is { ... }:
-  # Returns the raw attrset { imports, home, sops, programs, ... } without
-  # invoking the module system, so programs.fish.shellAliases is a plain attrset.
-  thinielModule = import ../../home/dan/thiniel.nix { };
+  # Import the thiniel HM profile with the real pkgs (it installs host-specific
+  # packages). Returns the raw attrset { imports, home, sops, programs, ... }
+  # without invoking the module system, so programs.fish.shellAliases is a
+  # plain attrset.
+  thinielModule = import ../../home/dan/thiniel.nix { inherit pkgs; };
 
   thinielAliases = thinielModule.programs.fish.shellAliases;
 

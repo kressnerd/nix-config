@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./global/default.nix
@@ -53,6 +53,12 @@
     username = "dan";
     homeDirectory = "/home/dan";
     sessionPath = [ "$HOME/.cargo/bin" ];
+    # nh wraps nixos-rebuild with a closure diff and cleanup; nix-tree inspects
+    # what a closure actually pulls in.
+    packages = [
+      pkgs.nh
+      pkgs.nix-tree
+    ];
   };
 
   # SOPS configuration for thiniel - only personal secrets for security
@@ -70,9 +76,10 @@
 
   # Host-specific shell aliases
   programs.fish.shellAliases = {
-    nrs = "sudo nixos-rebuild switch --flake ~/Projects/nix-config --override-input givn github:kressnerd/givn";
-    nrt = "sudo nixos-rebuild test --flake ~/Projects/nix-config --override-input givn github:kressnerd/givn";
-    nrb = "sudo nixos-rebuild boot --flake ~/Projects/nix-config --override-input givn github:kressnerd/givn";
+    # nh handles elevation itself and prints the package diff before activating.
+    nrs = "nh os switch ~/dev/PRIVATE/nix-config -- --override-input givn github:kressnerd/givn";
+    nrt = "nh os test ~/dev/PRIVATE/nix-config -- --override-input givn github:kressnerd/givn";
+    nrb = "nh os boot ~/dev/PRIVATE/nix-config -- --override-input givn github:kressnerd/givn";
     # Colmena fleet deployment
     cs = "colmena apply --on";
     ct = "colmena apply --goal test --on";
