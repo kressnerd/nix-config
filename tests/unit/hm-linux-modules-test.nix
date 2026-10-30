@@ -289,8 +289,11 @@ let
         };
 
         testHypridleHasDpmsOffListener = {
+          # Hyprland 0.56 evaluates dispatches as Lua, so the screen-off
+          # listener calls hl.dsp.dpms({ action = "off" }) rather than the
+          # legacy `dispatch dpms off` text.
           expr = builtins.any (
-            l: lib.strings.hasInfix "dpms off" l."on-timeout"
+            l: (l.timeout or 0) == 900 && lib.strings.hasInfix "dpms({ action = \"off\" })" l."on-timeout"
           ) hyprideModule.services.hypridle.settings.listener;
           expected = true;
         };
