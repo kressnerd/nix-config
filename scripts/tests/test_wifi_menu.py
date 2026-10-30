@@ -73,10 +73,17 @@ class TestParseScan:
         output = "IN-USE:\nSSID:Last\nSIGNAL:12\nSECURITY:WPA2"
         assert [n.ssid for n in parse_scan(output)] == ["Last"]
 
+    def test_ssid_keeps_leading_and_trailing_spaces(self) -> None:
+        output = "IN-USE:\nSSID: Padded \nSIGNAL:12\nSECURITY:WPA2\n"
+        assert parse_scan(output)[0].ssid == " Padded "
+
 
 class TestUnescapeTerse:
     def test_unescapes_colon_and_backslash(self) -> None:
         assert unescape_terse(r"My\:Net\\2") == r"My:Net\2"
+
+    def test_leaves_other_backslash_sequences_alone(self) -> None:
+        assert unescape_terse(r"Name\nwith") == r"Name\nwith"
 
 
 class TestMergeNetworks:
@@ -155,10 +162,12 @@ def menu(monkeypatch: pytest.MonkeyPatch) -> Any:
             self.answers: list[str | None] = []
             self.connected: list[tuple[str, str | None]] = []
             self.scan_error: Exception | None = None
+            self.saved_error: Exception | None = None
             self.connect_error: Exception | None = None
+            self.fuzzel_error: Exception | None = None
 
             monkeypatch.setattr(wifi_menu, "scan", self.scan)
-            monkeypatch.setattr(wifi_menu, "saved_connection_names", lambda: self.saved)
+            monkeypatch.setattr(wifi_menu, "saved_connection_names", self.saved_connections)
             monkeypatch.setattr(wifi_menu, "notify", self.record_notification)
             monkeypatch.setattr(wifi_menu, "fuzzel", self.fuzzel)
             monkeypatch.setattr(wifi_menu, "connect", self.connect)
@@ -168,11 +177,18 @@ def menu(monkeypatch: pytest.MonkeyPatch) -> Any:
                 raise self.scan_error
             return self.networks
 
+        def saved_connections(self) -> list[str]:
+            if self.saved_error is not None:
+                raise self.saved_error
+            return self.saved
+
         def record_notification(self, message: str, urgency: str = "normal") -> None:
             self.notifications.append((message, urgency))
 
         def fuzzel(self, entries: list[str], prompt: str, password: bool = False) -> str | None:
             self.fuzzel_calls.append((list(entries), prompt, password))
+            if self.fuzzel_error is not None:
+                raise self.fuzzel_error
             return self.answers.pop(0) if self.answers else None
 
         def connect(self, ssid: str, password: str | None) -> None:
@@ -232,6 +248,20 @@ class TestMain:
         assert wifi_menu.main([]) == 1
         assert menu.connected == []
         assert "enterprise" in menu.notifications[0][0]
+
+    def test_unreadable_profiles_still_ask_for_a_password(self, menu: Any) -> None:
+        menu.answers = ["  Spinnennetz", None]
+        menu.saved_error = RuntimeError("cannot read profiles")
+        assert wifi_menu.main([]) == 0
+        assert menu.fuzzel_calls[1] == ([], "Password for Spinnennetz ", True)
+        assert menu.connected == []
+
+    def test_missing_chooser_is_reported(self, menu: Any) -> None:
+        menu.fuzzel_error = FileNotFoundError("fuzzel not installed")
+        assert wifi_menu.main([]) == 1
+        assert menu.notifications == [
+            ("Wi-Fi chooser failed: fuzzel not installed", "critical")
+        ]
 
     def test_scan_failure_is_reported(self, menu: Any) -> None:
         menu.scan_error = RuntimeError("wlan0 not found")

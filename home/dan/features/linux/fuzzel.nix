@@ -9,7 +9,8 @@ _: {
         lines = 10;
         horizontal-pad = 12;
         vertical-pad = 8;
-        icons-enabled = "no";
+        icons-enabled = "yes";
+        icon-theme = "Papirus-Light";
         anchor = "center";
       };
       border = {

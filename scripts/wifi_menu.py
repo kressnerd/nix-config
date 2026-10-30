@@ -42,17 +42,21 @@ class WifiNetwork:
 
 
 def unescape_terse(value: str) -> str:
-    """Undo nmcli's terse-mode escaping of ``:`` and ``\\``."""
+    """Undo nmcli's terse-mode escaping of ``:`` and ``\\``.
+
+    Other backslash sequences are not escape sequences in terse output and
+    stay as written.
+    """
     out: list[str] = []
-    escaped = False
-    for char in value:
-        if escaped:
-            out.append(char)
-            escaped = False
-        elif char == "\\":
-            escaped = True
-        else:
-            out.append(char)
+    index = 0
+    while index < len(value):
+        char = value[index]
+        if char == "\\" and index + 1 < len(value) and value[index + 1] in ":\\":
+            out.append(value[index + 1])
+            index += 2
+            continue
+        out.append(char)
+        index += 1
     return "".join(out)
 
 
@@ -101,7 +105,9 @@ def parse_scan(output: str) -> list[WifiNetwork]:
         # field; blank lines are optional.
         if key in fields:
             flush()
-        fields[key] = unescape_terse(value.strip())
+        # Leading and trailing spaces are legal in an SSID, so they are kept;
+        # every other field is trimmed.
+        fields[key] = unescape_terse(value if key == "SSID" else value.strip())
     if fields:
         flush()
     return networks
@@ -201,11 +207,15 @@ def notify(message: str, urgency: str = "normal") -> None:
     binary = _notify_bin()
     if binary is None:
         return
-    subprocess.run(
-        [binary, "--app-name=Wi-Fi", f"--urgency={urgency}", message],
-        check=False,
-        capture_output=True,
-    )
+    try:
+        subprocess.run(
+            [binary, "--app-name=Wi-Fi", f"--urgency={urgency}", message],
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        # A missing notification daemon must not turn a dialog into a crash.
+        pass
 
 
 def scan() -> list[WifiNetwork]:
@@ -270,7 +280,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         networks = scan()
-    except (RuntimeError, FileNotFoundError) as error:
+    except (RuntimeError, OSError) as error:
         notify(f"Wi-Fi scan failed: {error}", "critical")
         return 1
 
@@ -282,7 +292,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         notify("No Wi-Fi networks found")
         return 0
 
-    choice = fuzzel(entries, "Wi-Fi ")
+    try:
+        choice = fuzzel(entries, "Wi-Fi ")
+    except OSError as error:
+        notify(f"Wi-Fi chooser failed: {error}", "critical")
+        return 1
     if choice is None:
         return 0
     network = selected_network(choice, networks)
@@ -293,20 +307,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if "802.1X" in network.security:
         notify(
-            f"{network.ssid} needs enterprise credentials; use nm-connection-editor",
+            f"{network.ssid} needs enterprise credentials and cannot be joined from the bar",
             "critical",
         )
         return 1
 
+    try:
+        saved = saved_connection_names()
+    except (RuntimeError, OSError):
+        # Unable to read the profiles; asking for a password is harmless and
+        # keeps a secured network reachable.
+        saved = []
+
     password: str | None = None
-    if needs_password(network, saved_connection_names()):
-        password = fuzzel([], f"Password for {network.ssid} ", password=True)
+    if needs_password(network, saved):
+        try:
+            password = fuzzel([], f"Password for {network.ssid} ", password=True)
+        except OSError as error:
+            notify(f"Wi-Fi chooser failed: {error}", "critical")
+            return 1
         if not password:
             return 0
 
     try:
         connect(network.ssid, password)
-    except (RuntimeError, FileNotFoundError) as error:
+    except (RuntimeError, OSError) as error:
         notify(f"Could not connect to {network.ssid}: {error}", "critical")
         return 1
     notify(f"Connected to {network.ssid}")

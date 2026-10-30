@@ -32,6 +32,7 @@
     ./features/linux/hyprlock.nix
     ./features/linux/gtk-qt.nix
     ./features/linux/mako.nix
+    ./features/linux/swayosd.nix
     ./features/linux/waybar.nix
     ./features/linux/wlsunset.nix
     ./features/productivity/browser.nix

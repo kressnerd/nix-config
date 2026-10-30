@@ -516,7 +516,10 @@
           nativeBuildInputs = [ pkgs.imagemagick ];
         }
         ''
-          magick -size 3840x2160 xc:"#fafafa" $out
+          # base00 → base02, vertical. Flat white looked like an unpainted
+          # surface next to the pill-shaped bars; the gradient keeps the
+          # background light while giving the three monitors some depth.
+          magick -size 3840x2160 gradient:'#fafafa-#e5e5e6' $out
         '';
     fonts = {
       monospace = {

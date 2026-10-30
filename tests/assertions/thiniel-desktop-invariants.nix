@@ -112,6 +112,106 @@
             or false;
         message = "thiniel: KeePassXC must be configured to open previous databases on startup";
       }
+      {
+        assertion =
+          let
+            bar = config.home-manager.users.dan.programs.waybar.settings.mainBar;
+          in
+          lib.hasInfix "audio-mixer" (bar.pulseaudio.on-click or "");
+        message = "thiniel: clicking the waybar volume module must open the audio mixer";
+      }
+      {
+        assertion =
+          let
+            bar = config.home-manager.users.dan.programs.waybar.settings.mainBar;
+          in
+          (bar.pulseaudio.scroll-step or 0) == 5;
+        message = "thiniel: scrolling over the waybar volume module must change the volume in 5% steps";
+      }
+      {
+        assertion =
+          let
+            bar = config.home-manager.users.dan.programs.waybar.settings.mainBar;
+          in
+          lib.hasInfix "wifi-menu" (bar.network.on-click or "");
+        message = "thiniel: clicking the waybar network module must open the Wi-Fi chooser";
+      }
+      {
+        assertion =
+          let
+            rules = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.window_rule or [ ];
+          in
+          builtins.any (r: (r.name or "") == "float-audio-mixer") rules;
+        message = "thiniel: the audio mixer window must be floated by the float-audio-mixer rule";
+      }
+      {
+        assertion =
+          let
+            rules = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.window_rule or [ ];
+          in
+          builtins.any (r: (r.name or "") == "float-audio-mixer" && (r.no_anim or false)) rules;
+        message = "thiniel: the audio mixer window must open without an animation";
+      }
+      {
+        assertion =
+          let
+            rules = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.layer_rule or [ ];
+          in
+          builtins.any (r: (r.match.namespace or "") == "^(launcher)$" && (r.no_anim or false)) rules;
+        message = "thiniel: the fuzzel launcher layer must appear without an animation";
+      }
+      {
+        assertion =
+          let
+            bar = config.home-manager.users.dan.programs.waybar.settings.mainBar;
+            modules = bar."modules-left" ++ bar."modules-center" ++ bar."modules-right";
+          in
+          builtins.all (m: builtins.elem m modules) [
+            "mpris"
+            "bluetooth"
+            "idle_inhibitor"
+            "temperature"
+          ];
+        message = "thiniel: waybar must show media, bluetooth, idle-inhibitor and temperature modules";
+      }
+      {
+        assertion = lib.hasInfix "bluetooth-manager" (
+          config.home-manager.users.dan.programs.waybar.settings.mainBar.bluetooth.on-click or ""
+        );
+        message = "thiniel: clicking the waybar bluetooth module must open the bluetooth manager";
+      }
+      {
+        assertion = builtins.any (r: (r.name or "") == "float-bluetooth-manager" && (r.no_anim or false)) (
+          config.home-manager.users.dan.wayland.windowManager.hyprland.settings.window_rule or [ ]
+        );
+        message = "thiniel: the bluetooth manager must be floated without an animation";
+      }
+      {
+        assertion =
+          let
+            on = config.home-manager.users.dan.wayland.windowManager.hyprland.settings.on or [ ];
+          in
+          builtins.any (e: lib.hasInfix "swaybg" (builtins.toJSON e)) on
+          && builtins.any (e: lib.hasInfix "swayosd-server" (builtins.toJSON e)) on;
+        message = "thiniel: Hyprland must start swaybg (wallpaper) and swayosd-server (OSD)";
+      }
+      {
+        assertion = config.home-manager.users.dan.programs.fuzzel.settings.main.icons-enabled == "yes";
+        message = "thiniel: the fuzzel launcher must render application icons";
+      }
+      {
+        assertion =
+          config.home-manager.users.dan.programs.fuzzel.settings.main.icon-theme == "Papirus-Light";
+        message = "thiniel: fuzzel must use the themed Papirus-Light icon set";
+      }
+      {
+        assertion = config.home-manager.users.dan.services.mako.settings.icons;
+        message = "thiniel: notifications must show application icons";
+      }
+      {
+        assertion = config.home-manager.users.dan.xdg.configFile ? "swayosd/style.css";
+        message = "thiniel: swayosd must carry the One Light overlay stylesheet";
+      }
     ];
   };
 }

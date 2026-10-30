@@ -26,6 +26,12 @@ let
       && builtins.any (value: lib.hasInfix dispatcher (exprOf value)) args
     ) binds;
 
+  # Every chord must be claimed once. Two binds with the same key string make
+  # the later definition dead or, worse, silently shift an established action.
+  boundKeys = builtins.map (entry: builtins.head (argsOf entry)) (
+    builtins.filter (entry: argsOf entry != [ ]) binds
+  );
+
   keys = [
     "1"
     "2"
@@ -136,6 +142,94 @@ in
         {
           assertion = !(hasKey "${mainMod} + S");
           message = "thiniel: old ${mainMod}+S layout toggle bind must be removed (moved to semicolon)";
+        }
+
+        # ── Chord uniqueness ─────────────────────────────────────────────────────
+        {
+          assertion = builtins.length boundKeys == builtins.length (lib.unique boundKeys);
+          message = "thiniel: every Hyprland bind chord must be unique, got duplicates: ${
+            builtins.toJSON (
+              builtins.filter (k: builtins.length (builtins.filter (x: x == k) boundKeys) > 1) (
+                lib.unique boundKeys
+              )
+            )
+          }";
+        }
+
+        # ── Window resize and swap ───────────────────────────────────────────────
+        {
+          assertion = hasBind "${mainMod} + ALT + h" "hl.dsp.window.resize";
+          message = "thiniel: ${mainMod}+ALT+h must shrink the window horizontally";
+        }
+        {
+          assertion = hasBind "${mainMod} + ALT + l" "hl.dsp.window.resize";
+          message = "thiniel: ${mainMod}+ALT+l must grow the window horizontally";
+        }
+        {
+          assertion = hasBind "${mainMod} + ALT + k" "hl.dsp.window.resize";
+          message = "thiniel: ${mainMod}+ALT+k must shrink the window vertically";
+        }
+        {
+          assertion = hasBind "${mainMod} + ALT + j" "hl.dsp.window.resize";
+          message = "thiniel: ${mainMod}+ALT+j must grow the window vertically";
+        }
+        {
+          assertion = hasBind "${mainMod} + SHIFT + ALT + h" "hl.dsp.window.swap";
+          message = "thiniel: ${mainMod}+SHIFT+ALT+h must swap the window left";
+        }
+        {
+          assertion = hasBind "${mainMod} + SHIFT + ALT + l" "hl.dsp.window.swap";
+          message = "thiniel: ${mainMod}+SHIFT+ALT+l must swap the window right";
+        }
+
+        # ── Scratchpad ───────────────────────────────────────────────────────────
+        {
+          assertion = hasBind "${mainMod} + grave" ''hl.dsp.workspace.toggle_special("scratchpad")'';
+          message = "thiniel: ${mainMod}+grave must toggle the scratchpad";
+        }
+        {
+          assertion = hasBind "${mainMod} + SHIFT + grave" "special:scratchpad";
+          message = "thiniel: ${mainMod}+SHIFT+grave must move the focused window to the scratchpad";
+        }
+
+        # ── Window cycling ───────────────────────────────────────────────────────
+        {
+          assertion = hasBind "ALT + Tab" "hl.dsp.window.cycle_next";
+          message = "thiniel: ALT+Tab must cycle windows";
+        }
+        {
+          assertion = hasBind "ALT + SHIFT + Tab" "hl.dsp.window.cycle_next";
+          message = "thiniel: ALT+SHIFT+Tab must cycle windows backwards";
+        }
+
+        # ── Lock, colour picker, OSD ─────────────────────────────────────────────
+        {
+          assertion = hasBind "${mainMod} + ALT + Escape" "hyprlock";
+          message = "thiniel: ${mainMod}+ALT+Escape must lock the screen";
+        }
+        {
+          assertion = hasBind "${mainMod} + SHIFT + C" "hyprpicker";
+          message = "thiniel: ${mainMod}+SHIFT+C must copy the colour under the cursor";
+        }
+        {
+          assertion = hasBind "XF86AudioRaiseVolume" "swayosd-client --output-volume +5";
+          message = "thiniel: volume-up must go through swayosd-client so the OSD appears";
+        }
+        {
+          assertion = hasBind "XF86AudioLowerVolume" "swayosd-client --output-volume -5";
+          message = "thiniel: volume-down must go through swayosd-client so the OSD appears";
+        }
+        {
+          assertion = hasBind "XF86MonBrightnessUp" "swayosd-client --brightness +5";
+          message = "thiniel: brightness-up must go through swayosd-client so the OSD appears";
+        }
+        {
+          assertion = hasBind "XF86MonBrightnessDown" "swayosd-client --brightness -5";
+          message = "thiniel: brightness-down must go through swayosd-client so the OSD appears";
+        }
+        {
+          assertion = hasBind "XF86AudioMute" "swayosd-client --output-volume mute-toggle";
+          message = "thiniel: mute must go through swayosd-client so the OSD appears";
         }
       ];
   };

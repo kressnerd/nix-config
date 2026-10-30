@@ -47,9 +47,12 @@ let
           import ../../home/dan/features/linux/hyprland.nix {
             inherit pkgs lib;
             pkgs-unstable = pkgs;
-            config.myHome.persistence = {
-              enable = false;
-              root = "/persist";
+            config = {
+              myHome.persistence = {
+                enable = false;
+                root = "/persist";
+              };
+              stylix.image = "/nix/store/wallpaper.png";
             };
           }
         );
@@ -57,7 +60,7 @@ let
           inherit pkgs;
           pkgs-unstable = pkgs;
         };
-        makoModule = import ../../home/dan/features/linux/mako.nix { };
+        makoModule = import ../../home/dan/features/linux/mako.nix { inherit pkgs; };
         fuzzelModule = import ../../home/dan/features/linux/fuzzel.nix { };
         hyprideModule = import ../../home/dan/features/linux/hypridle.nix { };
         hyprlockModule = import ../../home/dan/features/linux/hyprlock.nix { inherit lib; };
@@ -247,7 +250,7 @@ let
 
         testFuzzelIconsEnabled = {
           expr = fuzzelModule.programs.fuzzel.settings.main.icons-enabled;
-          expected = "no";
+          expected = "yes";
         };
 
         # ── hyprlock ─────────────────────────────────────────────────────────

@@ -106,6 +106,9 @@ lib.mkMerge [
       slurp
       satty
       wf-recorder
+      hyprpicker
+      playerctl
+      swaybg
       rofiPowerMenu
     ];
 
@@ -259,13 +262,37 @@ lib.mkMerge [
             float = true;
             center = true;
             size = "760 520";
+            no_anim = true;
             match.class = "^(audio-mixer)$";
+          }
+          {
+            name = "float-bluetooth-manager";
+            float = true;
+            center = true;
+            size = "760 520";
+            no_anim = true;
+            match.class = "^(bluetooth-manager)$";
+          }
+        ];
+
+        # The launcher (fuzzel) is a layer surface and would otherwise take the
+        # layers open/close animation; a menu that is asked for should appear
+        # and disappear without sliding or fading.
+        layer_rule = [
+          {
+            name = "no-anim-launcher";
+            no_anim = true;
+            match.namespace = "^(launcher)$";
           }
         ];
 
         on = [
           (luaStart "${startupScript}/bin/start")
           (luaStart "${assign-workspaces}/bin/assign-workspaces")
+          # Draw the Stylix image on every output; nothing else paints it.
+          (luaStart "${pkgs.swaybg}/bin/swaybg -i ${config.stylix.image} -m fill")
+          # Volume and brightness overlays (swayosd-client sends to this).
+          (luaStart "${pkgs.swayosd}/bin/swayosd-server")
         ];
 
         bind = [
@@ -279,6 +306,17 @@ lib.mkMerge [
           (luaBind "${mainMod} + V" ''hl.dsp.window.float({ action = "toggle" })'')
           (luaBind "${mainMod} + G" "hl.dsp.window.pseudo()")
           (luaBind "${mainMod} + semicolon" ''hl.dsp.layout("togglesplit")'')
+
+          # Resize (ALT; CTRL and SHIFT are already used for monitor/workspace
+          # moves) and swap windows in the layout.
+          (luaRepeatBind "${mainMod} + ALT + h" "hl.dsp.window.resize({ x = -40, y = 0, relative = true })")
+          (luaRepeatBind "${mainMod} + ALT + l" "hl.dsp.window.resize({ x = 40, y = 0, relative = true })")
+          (luaRepeatBind "${mainMod} + ALT + k" "hl.dsp.window.resize({ x = 0, y = -40, relative = true })")
+          (luaRepeatBind "${mainMod} + ALT + j" "hl.dsp.window.resize({ x = 0, y = 40, relative = true })")
+          (luaBind "${mainMod} + SHIFT + ALT + h" ''hl.dsp.window.swap({ direction = "left" })'')
+          (luaBind "${mainMod} + SHIFT + ALT + l" ''hl.dsp.window.swap({ direction = "right" })'')
+          (luaBind "${mainMod} + SHIFT + ALT + k" ''hl.dsp.window.swap({ direction = "up" })'')
+          (luaBind "${mainMod} + SHIFT + ALT + j" ''hl.dsp.window.swap({ direction = "down" })'')
 
           # Launcher
           (luaBind "${mainMod} + D" ''hl.dsp.exec_cmd("fuzzel")'')
@@ -297,6 +335,10 @@ lib.mkMerge [
           (luaBind "${mainMod} + SHIFT + l" ''hl.dsp.window.move({ direction = "right" })'')
           (luaBind "${mainMod} + SHIFT + k" ''hl.dsp.window.move({ direction = "up" })'')
           (luaBind "${mainMod} + SHIFT + j" ''hl.dsp.window.move({ direction = "down" })'')
+
+          # Window cycling (ALT+Tab; the main modifier owns Tab for monitors)
+          (luaBind "ALT + Tab" "hl.dsp.window.cycle_next()")
+          (luaBind "ALT + SHIFT + Tab" "hl.dsp.window.cycle_next({ next = false })")
 
           # Workspace switching
           (luaBind "${mainMod} + 1" "hl.dsp.focus({ workspace = 1 })")
@@ -321,6 +363,10 @@ lib.mkMerge [
           (luaBind "${mainMod} + SHIFT + 8" "hl.dsp.window.move({ workspace = 8 })")
           (luaBind "${mainMod} + SHIFT + 9" "hl.dsp.window.move({ workspace = 9 })")
           (luaBind "${mainMod} + SHIFT + 0" "hl.dsp.window.move({ workspace = 10 })")
+
+          # Scratchpad: park any window on a named special workspace
+          (luaBind "${mainMod} + grave" ''hl.dsp.workspace.toggle_special("scratchpad")'')
+          (luaBind "${mainMod} + SHIFT + grave" ''hl.dsp.window.move({ workspace = "special:scratchpad" })'')
 
           # Monitor focus cycling
           (luaBind "${mainMod} + Tab" ''hl.dsp.focus({ monitor = "+1" })'')
@@ -351,25 +397,32 @@ lib.mkMerge [
           (luaBind "${mainMod} + SHIFT + Print" ''hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | satty -f -")'')
           (luaBind "${mainMod} + ALT + Print" ''hl.dsp.exec_cmd("grim - | satty -f -")'')
 
+          # Colour picker: copy the pixel under the cursor as hex. P would
+          # re-introduce the withdrawn SHIFT+P move-to-workspace chord.
+          (luaBind "${mainMod} + SHIFT + C" ''hl.dsp.exec_cmd("hyprpicker -a")'')
+
           # Screen recording with wf-recorder (toggle: stop if running, else start)
           (luaBind "${mainMod} + F9" ''hl.dsp.exec_cmd("pkill wf-recorder || wf-recorder -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4")'')
           (luaBind "${mainMod} + SHIFT + F9" ''hl.dsp.exec_cmd("pkill wf-recorder || wf-recorder -g \"$(slurp)\" -f ~/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4")'')
 
-          # Lock screen
+          # Lock screen. SUPER+L cannot be used: SUPER+l is focus right and
+          # SUPER+SHIFT+l moves the window right.
           (luaBind "${mainMod} + backspace" ''hl.dsp.exec_cmd("hyprlock")'')
+          (luaBind "${mainMod} + ALT + Escape" ''hl.dsp.exec_cmd("hyprlock")'')
 
           # Power menu
           (luaBind "${mainMod} + Escape" ''hl.dsp.exec_cmd("${rofiPowerMenu}/bin/rofi-power-menu")'')
 
-          # Audio
-          (luaBind "XF86AudioMute" ''hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle")'')
-          (luaBind "XF86AudioMicMute" ''hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle")'')
+          # Audio and brightness go through swayosd-client so every change is
+          # also drawn as an OSD by the swayosd-server started above.
+          (luaBind "XF86AudioMute" ''hl.dsp.exec_cmd("${pkgs.swayosd}/bin/swayosd-client --output-volume mute-toggle")'')
+          (luaBind "XF86AudioMicMute" ''hl.dsp.exec_cmd("${pkgs.swayosd}/bin/swayosd-client --input-volume mute-toggle")'')
 
           # Repeating volume/brightness keys
-          (luaRepeatBind "XF86AudioLowerVolume" ''hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-")'')
-          (luaRepeatBind "XF86AudioRaiseVolume" ''hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+")'')
-          (luaRepeatBind "XF86MonBrightnessDown" ''hl.dsp.exec_cmd("brightnessctl set 5%-")'')
-          (luaRepeatBind "XF86MonBrightnessUp" ''hl.dsp.exec_cmd("brightnessctl set 5%+")'')
+          (luaRepeatBind "XF86AudioLowerVolume" ''hl.dsp.exec_cmd("${pkgs.swayosd}/bin/swayosd-client --output-volume -5")'')
+          (luaRepeatBind "XF86AudioRaiseVolume" ''hl.dsp.exec_cmd("${pkgs.swayosd}/bin/swayosd-client --output-volume +5")'')
+          (luaRepeatBind "XF86MonBrightnessDown" ''hl.dsp.exec_cmd("${pkgs.swayosd}/bin/swayosd-client --brightness -5")'')
+          (luaRepeatBind "XF86MonBrightnessUp" ''hl.dsp.exec_cmd("${pkgs.swayosd}/bin/swayosd-client --brightness +5")'')
         ];
       };
     };
