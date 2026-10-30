@@ -19,6 +19,7 @@ in
         ".config/sops/age"
         ".config/netcup-scp"
         ".local/share/netcup-scp"
+        ".local/share/fish"
         ".local/share/opencode"
         ".cache/opencode"
         ".omp"
