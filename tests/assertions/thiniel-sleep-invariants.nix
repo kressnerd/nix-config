@@ -6,19 +6,19 @@
 {
   config = lib.mkIf (config.networking.hostName == "thiniel") {
     assertions = [
-      # logind — lid switch must not suspend
+      # logind — lid switch must lock, never suspend
       {
-        assertion = (config.services.logind.settings.Login.HandleLidSwitch or "suspend") == "ignore";
-        message = "Thiniel invariant violated: HandleLidSwitch must be ignore — OPAL SED loses encryption key on suspend";
+        assertion = (config.services.logind.settings.Login.HandleLidSwitch or "suspend") == "lock";
+        message = "Thiniel invariant violated: HandleLidSwitch must be lock — suspending loses the OPAL SED key, and ignoring leaves the session open";
       }
       {
-        assertion = (config.services.logind.settings.Login.HandleLidSwitchDocked or "suspend") == "ignore";
-        message = "Thiniel invariant violated: HandleLidSwitchDocked must be ignore — OPAL SED loses encryption key on suspend";
+        assertion = (config.services.logind.settings.Login.HandleLidSwitchDocked or "suspend") == "lock";
+        message = "Thiniel invariant violated: HandleLidSwitchDocked must be lock — suspending loses the OPAL SED key, and ignoring leaves the session open";
       }
       {
         assertion =
-          (config.services.logind.settings.Login.HandleLidSwitchExternalPower or "suspend") == "ignore";
-        message = "Thiniel invariant violated: HandleLidSwitchExternalPower must be ignore — OPAL SED loses encryption key on suspend";
+          (config.services.logind.settings.Login.HandleLidSwitchExternalPower or "suspend") == "lock";
+        message = "Thiniel invariant violated: HandleLidSwitchExternalPower must be lock — suspending loses the OPAL SED key, and ignoring leaves the session open";
       }
       # systemd.sleep — block all sleep states
       {

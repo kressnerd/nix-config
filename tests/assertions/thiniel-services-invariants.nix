@@ -54,8 +54,28 @@
         message = "Hyprland systemd integration must be enabled for session-target-dependent services (waybar)";
       }
       {
-        assertion = config.virtualisation.oci-containers.containers ? qdrant_roo;
-        message = "thiniel: qdrant_roo OCI container must be defined for roo-code vector database";
+        assertion = config.services.smartd.enable;
+        message = "thiniel: smartd must monitor the NVMe that carries root, /nix and /persist";
+      }
+      {
+        assertion = !config.services.openssh.settings.PasswordAuthentication;
+        message = "thiniel: SSH password authentication must stay disabled";
+      }
+      {
+        assertion = !config.services.openssh.settings.KbdInteractiveAuthentication;
+        message = "thiniel: SSH keyboard-interactive authentication must stay disabled";
+      }
+      {
+        assertion = config.services.openssh.settings.PermitRootLogin == "no";
+        message = "thiniel: root SSH login must stay disabled";
+      }
+      {
+        assertion = builtins.length config.users.users.dan.openssh.authorizedKeys.keys > 0;
+        message = "thiniel: dan needs at least one authorized SSH key because password authentication is disabled";
+      }
+      {
+        assertion = !(config.virtualisation.oci-containers.containers ? qdrant_roo);
+        message = "thiniel: the qdrant_roo OCI container was withdrawn and must not come back";
       }
       {
         assertion = config.services.gvfs.enable;

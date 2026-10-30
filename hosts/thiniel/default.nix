@@ -22,6 +22,19 @@
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
+  # /nix persists across the boot-time root wipe, so old generations accumulate
+  # unless collected. Keep a 30-day window for rollback, and hardlink identical
+  # files so the store grows more slowly between collections.
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 30d";
+    };
+    optimise.automatic = true;
+    settings.auto-optimise-store = true;
+  };
+
   # Boot configuration
   boot = {
     loader = {
@@ -124,6 +137,14 @@
       description = "Me Myself and Billie";
       shell = pkgs.fish;
       initialHashedPassword = "$6$.tIb37hYTPJeB13w$RSDaCkfYIEcxNn7Isct6XxeIS8mENfhx15XjDCuSlA4xrsCwAjZZuP7vp0xTmGBOAAZoGESsG4GT8eecpTASn/";
+      # SSH is key-only. These are the public halves of the personal identity
+      # this laptop carries and of the MacBook's identity (declared for the
+      # other machines in docs/plans/adlerkopf/01-base-os.md and
+      # hosts/nixos-vm-minimal/default.nix).
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFnzrOhWy7kCWs/MhcYTEID/TQ78jhRAFfy8NWC1Cgh9 thiniel"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEWvGgnlCq6l+ObGMVLLs34CP0vEX+Edf7sx6/3BvDpQ J6G6Y9JK7L"
+      ];
     };
     test = {
       isNormalUser = true;
@@ -276,10 +297,22 @@
     # Enable touchpad support (enabled default in most desktopManager).
     # libinput.enable = true;
 
-    openssh.enable = true;
+    # Key-only SSH: the port stays reachable on every network this laptop
+    # joins, so a password must not be the login path.
+    openssh = {
+      enable = true;
+      settings = {
+        PasswordAuthentication = false;
+        KbdInteractiveAuthentication = false;
+        PermitRootLogin = "no";
+      };
+    };
 
     # Firmware updates via LVFS (ThinkPad X270 supports fwupd)
     fwupd.enable = true;
+
+    # NVMe health: smartd records failing attributes in the journal.
+    smartd.enable = true;
 
     # D-Bus Secret Service for credential storage (VS Code, etc.)
     gnome.gnome-keyring.enable = true;
@@ -347,11 +380,13 @@
       # ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="XXXX", ATTR{idProduct}=="YYYY", ATTR{power/autosuspend}="-1"
     '';
 
-  # OPAL SED FDE: lid close must not suspend — encryption key is lost on sleep/hibernate
+  # OPAL SED FDE: lid close must not suspend — encryption key is lost on
+  # sleep/hibernate. Locking is safe and keeps the session from staying open
+  # until hypridle's 10-minute timeout.
   services.logind.settings.Login = {
-    HandleLidSwitch = "ignore";
-    HandleLidSwitchDocked = "ignore";
-    HandleLidSwitchExternalPower = "ignore";
+    HandleLidSwitch = "lock";
+    HandleLidSwitchDocked = "lock";
+    HandleLidSwitchExternalPower = "lock";
   };
 
   # OPAL SED FDE: disable all sleep states — encryption key is lost on sleep/hibernate
@@ -462,17 +497,6 @@
     enable = true;
     dockerCompat = false; # HM aliases handle docker → podman mapping
     defaultNetwork.settings.dns_enabled = true;
-  };
-
-  # OCI containers (Podman backend)
-  virtualisation.oci-containers = {
-    backend = "podman";
-    containers.qdrant_roo = {
-      image = "docker.io/qdrant/qdrant:latest";
-      ports = [ "6333:6333" ];
-      volumes = [ "qdrant_storage:/qdrant/storage" ];
-      autoStart = true;
-    };
   };
 
   # Open ports in the firewall.

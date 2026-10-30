@@ -202,6 +202,27 @@
           assertion = lib.hasInfix "!include /run/secrets/rendered/nix-github-access-tokens" config.nix.extraOptions;
           message = "thiniel: the nix configuration must include the rendered credential fragment";
         }
+        # --- store maintenance ---
+        {
+          assertion = config.nix.gc.automatic;
+          message = "thiniel: automatic store collection must be enabled — /nix persists across the root wipe";
+        }
+        {
+          assertion = config.nix.gc.dates == [ "weekly" ];
+          message = "thiniel: store collection must run weekly";
+        }
+        {
+          assertion = config.nix.gc.options == "--delete-older-than 30d";
+          message = "thiniel: store collection must keep a 30-day rollback window";
+        }
+        {
+          assertion = config.nix.optimise.automatic;
+          message = "thiniel: the weekly store optimisation must be enabled";
+        }
+        {
+          assertion = config.nix.settings.auto-optimise-store;
+          message = "thiniel: new store paths must be hardlinked as they are added";
+        }
       ];
   };
 }
