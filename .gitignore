@@ -13,6 +13,10 @@ ROTATION-TODO.md
 
 docs/plans/private-data-remediation-plan.md
 
+
+# givn commit-attribution wrapper keeps the displaced hook beside it.
+.githooks/commit-msg.givn-original
+
 # givn:begin:rules
 .opencode/skills/givn-*/
 .agents/skills/givn-*/
@@ -29,6 +33,3 @@ docs/plans/private-data-remediation-plan.md
 .maki/skills/givn-*/
 .githooks/commit-msg
 # givn:end:rules
-
-# givn commit-attribution wrapper keeps the displaced hook beside it.
-.githooks/commit-msg.givn-original
