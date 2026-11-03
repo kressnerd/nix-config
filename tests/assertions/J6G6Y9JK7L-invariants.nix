@@ -238,6 +238,19 @@
       assertion = config.programs.firefox.profiles ? "company";
       message = "firefox-company: company Firefox profile must be configured";
     }
+    {
+      assertion =
+        let
+          allCompanyExts =
+            (config.programs.firefox.profiles.company.extensions.packages or [ ])
+            ++ (config.programs.firefox.profiles.client001.extensions.packages or [ ])
+            ++ (config.programs.firefox.profiles.client002.extensions.packages or [ ]);
+        in
+        !(builtins.any (
+          p: (lib.getName p) == "keepassxc-browser" || (p.pname or p.name or "") == "keepassxc-browser"
+        ) allCompanyExts);
+      message = "firefox-company: keepassxc-browser must not be present in company or customer profiles";
+    }
     # --- productivity/mac-tools ---
     {
       assertion = builtins.any (p: lib.getName p == "utm") config.home.packages;

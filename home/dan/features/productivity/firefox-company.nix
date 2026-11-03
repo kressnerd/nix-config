@@ -1,7 +1,14 @@
 { pkgs, ... }:
 let
   addons = pkgs.nur.repos.rycee.firefox-addons;
-  exts = (import ../../../../lib/helpers.nix).mkFirefoxExtensions { inherit addons; };
+  exts =
+    let
+      base = (import ../../../../lib/helpers.nix).mkFirefoxExtensions { inherit addons; };
+    in
+    base
+    // {
+      common = builtins.filter (ext: ext != (addons.keepassxc-browser or null)) base.common;
+    };
 
   kagiSearch = {
     force = true;

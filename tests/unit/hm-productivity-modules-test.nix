@@ -334,4 +334,28 @@ lib.debug.runTests {
     expected = true;
   };
 
+  # ── firefox-company: keepassxc-browser excluded ──────────────────────────
+
+  testCompanyProfileNoKeepassxcBrowser = {
+    expr = builtins.elem "keepassxc-browser" firefoxCompanyModule.programs.firefox.profiles.company.extensions.packages;
+    expected = false;
+  };
+
+  testClient001ProfileNoKeepassxcBrowser = {
+    expr = builtins.elem "keepassxc-browser" firefoxCompanyModule.programs.firefox.profiles.client001.extensions.packages;
+    expected = false;
+  };
+
+  testClient002ProfileNoKeepassxcBrowser = {
+    expr = builtins.elem "keepassxc-browser" firefoxCompanyModule.programs.firefox.profiles.client002.extensions.packages;
+    expected = false;
+  };
+
+  # ── firefox-personal: keepassxc-browser retained (e.g. thiniel) ──────────
+
+  testPersonalProfileHasKeepassxcBrowser = {
+    expr = builtins.elem "keepassxc-browser" firefoxPersonalModule.programs.firefox.profiles.user.extensions.packages;
+    expected = true;
+  };
+
 }
