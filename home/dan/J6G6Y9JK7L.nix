@@ -27,6 +27,7 @@
     ./features/development/nodejs.nix
     ./features/development/fnm.nix
     ./features/development/omp.nix
+    ./features/development/maki.nix
     ./features/development/opencode.nix
     ./features/development/givn.nix
     ./features/macos/defaults.nix

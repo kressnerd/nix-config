@@ -38,6 +38,12 @@
           message = "thiniel: the agent's secret-access guard must be declared for installation";
         }
         {
+          assertion = builtins.any (
+            p: lib.getName p == "maki" && lib.versionAtLeast (lib.getVersion p) "0.7.0"
+          ) config.home-manager.users.dan.home.packages;
+          message = "thiniel: Maki must be at version 0.7.0 or newer";
+        }
+        {
           assertion = hmHasPkg "opentofu";
           message = "thiniel: the OpenTofu engine (opentofu) must be installed for infrastructure authoring";
         }

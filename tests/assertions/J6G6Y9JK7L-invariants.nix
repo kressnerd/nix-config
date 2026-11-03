@@ -216,6 +216,13 @@
       ) config.home.packages;
       message = "opencode: OpenCode must be at version 2.0.28 or newer";
     }
+    # --- development/maki ---
+    {
+      assertion = builtins.any (
+        p: lib.getName p == "maki" && lib.versionAtLeast (lib.getVersion p) "0.7.0"
+      ) config.home.packages;
+      message = "maki: Maki must be at version 0.7.0 or newer";
+    }
     # --- development/givn ---
     {
       assertion = !givnAvailable || builtins.any (p: lib.getName p == "givn") config.home.packages;

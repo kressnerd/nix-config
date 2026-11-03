@@ -71,6 +71,12 @@ evidence. One choice here — operational-data separation — qualifies as an AD
    Rationale and the rejected alternative (upstream's own Nix packaging, which
    builds from source with no advertised cache):
    `givn/changes/current-opencode-release/design.md` (D1).
+12. **A repository-owned package for a third coding agent.** Maki is not in
+   nixpkgs; its per-platform release binaries are packaged here
+   (`overlays/maki`), pinned by version and checksum, and both devices that
+   carry it assert the same version floor. Upstream's own flake builds from
+   source with crane and advertises no binary cache, so the prebuilt release is
+   the only source that costs no compile on either machine.
 
 ## Technology choices
 

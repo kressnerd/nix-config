@@ -9,6 +9,7 @@
   sops-nix,
   ompPackage,
   opencodePackage ? null,
+  makiPackage ? null,
   rustToolchain,
   cargoLlvmCov,
   ...
@@ -34,7 +35,7 @@
   };
   integration-agent-tooling = import ./agent-tooling-test.nix {
     pkgs = unstablePkgs;
-    inherit ompPackage opencodePackage;
+    inherit ompPackage opencodePackage makiPackage;
     home-manager = home-manager-unstable;
   };
   integration-managed-file-displacement = import ./managed-file-displacement-test.nix {

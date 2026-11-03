@@ -1,0 +1,25 @@
+# Givn development-timeline reporter permissions.
+#
+# Maki grants every permission a self-written manifest does not name, so the
+# grant is stated here rather than left to that default. The reporter reads
+# Maki's state directory and the session transcript (fs_read, session_read),
+# writes one payload file per flush and removes it (fs_write), and starts the
+# awaitable `givn history ingest` job that delivers it (run). It never writes
+# session content, changes how a session runs, changes the chat input, reaches
+# the network, reads the environment, or starts a model turn — those keys are
+# named false so the file states the whole grant.
+#
+# The manifest governs every Lua file in `.maki/`, including a hand-written
+# `init.lua`: remove a false key the user's own code needs rather than
+# widening the reporter's grant.
+[permissions]
+fs_read = true
+fs_write = true
+run = true
+session_read = true
+net = false
+env = false
+agent = false
+session_write = false
+session_settings = false
+input = false

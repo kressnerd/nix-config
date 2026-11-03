@@ -85,7 +85,7 @@ The Darwin host does not import `hosts/common` at all.
 | Module | Options declared | Default behaviour |
 |---|---|---|
 | `nixos/persistence` | `mySystem.persistence.{enable,root}` | When enabled, binds `/etc/nixos`, `/var/log`, `/var/lib/nixos`, `/var/lib/systemd/coredump` and the files `/etc/machine-id`, `/var/lib/sops-nix/key.txt` from `root` (default `/persist/system`). |
-| `home-manager/persistence` | `myHome.persistence.{enable,root}` | When enabled, persists user directories (`dev`, `Projects`, caches, `.config/sops/age`, `.config/netcup-scp`, opencode/omp state) and `.bash_history` from `root` (default `/persist`). |
+| `home-manager/persistence` | `myHome.persistence.{enable,root}` | When enabled, persists user directories (`dev`, `Projects`, caches, `.config/sops/age`, `.config/netcup-scp`, opencode/omp/maki state) and `.bash_history` from `root` (default `/persist`). |
 | `home-manager/ssh` | `myHome.ssh.{personalIdentityFile,tokenIdentityFiles,includedConfigs}` | `personalIdentityFile` has no default and remains the file-backed identity; `tokenIdentityFiles` defaults to `[]` and, when declared, is the ordered daily/backup token list for normal entries. A host with no token list keeps its file identity. |
 | `nixos/github-fetch-credential` | `mySystem.githubFetchCredential.{enable,user}` | Default off. When enabled, declares the `github/access-token` secret, renders `access-tokens = github.com=<value>` (mode `0400`, owner = the named account) through **system** activation, and appends its include to the generated `nix.conf`, so root's and the owner's nix clients both read it without a login. The work MacBook declares the same pieces in its host module and home profile instead, because nix-darwin does not manage `nix.conf` on that machine ([chapter 8](08-crosscutting-concepts.md)). |
 
@@ -94,7 +94,7 @@ The Darwin host does not import `hosts/common` at all.
 | Category | Modules | Notes |
 |---|---|---|
 | `cli/` (15) | ansible, cloud-tools, deploy-tools, fish, git, infrastructure-tooling, kitty, shell-utils, sops, sops-age-key, ssh, starship, vim, yazi, zsh | `git` and `ssh` render identity surfaces from `myHome.ssh` and sops secret presence. `infrastructure-tooling` installs the OpenTofu engine and the GitHub CLI on thiniel without registering the GitHub client as a git credential helper. |
-| `development/` (17) | claude-code, containers (+5 submodules), fnm, formatters, givn, go, jdk, nodejs, omp, opencode, python-tools, rust | `containers.nix` is an orchestrator over 5 submodules. `rust` installs the default Rust build toolchain and persists the Cargo home. |
+| `development/` (18) | claude-code, containers (+5 submodules), fnm, formatters, givn, go, jdk, maki, nodejs, omp, opencode, python-tools, rust | `containers.nix` is an orchestrator over 5 submodules. `rust` installs the default Rust build toolchain and persists the Cargo home. |
 | `linux/` (11) | fonts, fuzzel, gnome-keyring, gtk-qt, hypridle, hyprland, hyprlock, kanshi, mako, waybar, wlsunset | Imported only by thiniel. |
 | `macos/` (2) | aerospace, defaults | Imported only by the Darwin host. |
 | `productivity/` (16) | browser, emacs, emacs-doom, firefox-company, firefox-personal, keepassxc, libreoffice, mac-tools, maestral, messaging, mpv, owncloud, sweethome3d, vscode, vscode-fhs, zathura | Several guard their persistence block with `lib.mkIf config.myHome.persistence.enable`. |
@@ -105,8 +105,8 @@ Two modules are **not** reachable from any host profile: `features/productivity/
 
 | Profile | Feature imports | `sops.secrets` | `myHome` declarations |
 |---|---|---|---|
-| `home/dan/J6G6Y9JK7L.nix` | 28 | 15 (`git/{personal,company,client001,client002}/{name,email,folder}`, `context7/api-key`, `kagi/api-key`, `github/access-token`) | `myHome.ssh` (personal key + 3 included configs); this profile declares the GitHub fetch credential (`sops.secrets` + `sops.templates` — the render layer is home-manager on this machine, which has no nix-darwin sops module) and its `nix/nix.conf` include; the host module adds only the activation script that writes root's user configuration |
-| `home/dan/thiniel.nix` | 43 | 5 (`git/personal/*`, `context7/api-key`, `kagi/api-key`) | `myHome.ssh.personalIdentityFile`; `myHome.persistence.enable = true`; the system side opts in through `mySystem.githubFetchCredential` in `hosts/thiniel/default.nix` (the credential's `secrets.yaml` entry is a host-level declaration, like adlerkopf's AdGuard secret) |
+| `home/dan/J6G6Y9JK7L.nix` | 29 | 15 (`git/{personal,company,client001,client002}/{name,email,folder}`, `context7/api-key`, `kagi/api-key`, `github/access-token`) | `myHome.ssh` (personal key + 3 included configs); this profile declares the GitHub fetch credential (`sops.secrets` + `sops.templates` — the render layer is home-manager on this machine, which has no nix-darwin sops module) and its `nix/nix.conf` include; the host module adds only the activation script that writes root's user configuration |
+| `home/dan/thiniel.nix` | 44 | 5 (`git/personal/*`, `context7/api-key`, `kagi/api-key`) | `myHome.ssh.personalIdentityFile`; `myHome.persistence.enable = true`; the system side opts in through `mySystem.githubFetchCredential` in `hosts/thiniel/default.nix` (the credential's `secrets.yaml` entry is a host-level declaration, like adlerkopf's AdGuard secret) |
 | `home/dan/adlerkopf.nix` | 1 (global only) | none | none |
 | `home/dan/cupix001.nix` | 1 (global only) | none | none |
 | `home/dan/nixos-vm-minimal.nix` | 0 (standalone) | none | none |
@@ -158,6 +158,16 @@ user-level MCP servers, and export the server keys from the decrypted secrets.
 | `xdg.configFile."opencode/opencode.json"` | The global config: `context7` (remote) and `kagi-search` (local) servers, the `opencode-plugin-litellm` plugin, and the LiteLLM provider entry. |
 | `programs.fish.shellInit` | Exports `CONTEXT7_API_KEY` / `KAGI_API_KEY` from the decrypted sops-nix secrets when present. |
 | Imported by | `home/dan/thiniel.nix`, `home/dan/J6G6Y9JK7L.nix`. |
+
+### `home/dan/features/development/maki.nix`
+
+**Responsibility:** install Maki on a device that carries it.
+
+| Element | Responsibility |
+|---|---|
+| `makiPackage` argument | The package from the repository's own overlay (`overlays/maki`), which pins an upstream prebuilt release per platform by version and checksum. Required, because nixpkgs carries no package; each host passes its own `pkgs.maki`, and the booted check passes the overlay's package because its package set carries no overlay. |
+| `home.packages` | `maki`. Maki keeps its config, auth, sessions and logs in the XDG directories under `~/.config/maki`, `~/.local/{share,state,logs}/maki`; the repository supplies no user-level config, so the agent reads the project's `AGENTS.md` and the givn-generated `.maki/skills/` directly. |
+| Imported by | `home/dan/thiniel.nix`, `home/dan/J6G6Y9JK7L.nix`; the booted check imports it directly. |
 
 ### `home/dan/features/development/rust.nix`
 

@@ -290,6 +290,10 @@
                   # applies the repository's overlay (`overlays/opencode`). See the
                   # change `current-opencode-release`.
                   opencodePackage = pkgs.opencode;
+                  # Maki's package comes from the same package set and the
+                  # repository's overlay (`overlays/maki`): nixpkgs carries no
+                  # package, so the pin lives in this repository.
+                  makiPackage = pkgs.maki;
                   # The public stub has no overlay, so the package is absent.
                   givnAvailable = inputs.givn ? overlays;
                 };
@@ -428,6 +432,9 @@
                   # OpenCode's package, from this host's own package set (the
                   # repository's overlay). See the change `current-opencode-release`.
                   opencodePackage = pkgs.opencode;
+                  # Maki's package, from the same package set and the repository's
+                  # overlay (`overlays/maki`). See `home/dan/features/development/maki.nix`.
+                  makiPackage = pkgs.maki;
                   # The public stub has no overlay, so the package is absent.
                   givnAvailable = inputs.givn ? overlays;
                 };
@@ -781,12 +788,19 @@
                 opencodePkgs = (import ./overlays/opencode) pkgs pkgs;
                 opencodePackage =
                   if builtins.elem system opencodePkgs.opencode.meta.platforms then opencodePkgs.opencode else null;
+                # The repository's own Maki package (overlays/maki), with the
+                # same per-system gating. Upstream publishes a release for every
+                # system here; the gate keeps a future platform gap from
+                # breaking evaluation instead of assuming one.
+                makiPkgs = (import ./overlays/maki) pkgs pkgs;
+                makiPackage = if builtins.elem system makiPkgs.maki.meta.platforms then makiPkgs.maki else null;
                 integrationTests = import ./tests/integration/default.nix {
                   inherit
                     pkgs
                     sops-nix
                     home-manager-unstable
                     opencodePackage
+                    makiPackage
                     ;
                   # The two checks that load the devices' Home Manager modules
                   # take their guest package set from the pin those modules

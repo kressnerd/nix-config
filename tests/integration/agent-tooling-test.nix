@@ -4,9 +4,10 @@
 # the agent discovers hooks, and starts each agent while holding none of its
 # servers' key material.
 #
-# The repository's own OpenCode package is passed only where the overlay supports
-# the system (x86_64-linux, aarch64-darwin); where it is absent the check proves
-# the guarded agent's half alone.
+# The repository's own OpenCode and Maki packages are passed only where their
+# overlays support the system (OpenCode: x86_64-linux, aarch64-darwin; Maki:
+# also aarch64-linux); where a package is absent the check proves the other
+# agents' halves alone.
 #
 # Run: nix build .#checks.<linux-system>.integration-agent-tooling
 # Interactive: nix build .#checks.<linux-system>.integration-agent-tooling.driverInteractive && result/bin/nixos-test-driver
@@ -15,6 +16,7 @@
   home-manager,
   ompPackage,
   opencodePackage ? null,
+  makiPackage ? null,
   ...
 }:
 let
@@ -30,6 +32,9 @@ let
 
   withOpencode = opencodePackage != null;
   opencodeBin = if withOpencode then "${opencodePackage}/bin/opencode" else "";
+
+  withMaki = makiPackage != null;
+  makiBin = if withMaki then "${makiPackage}/bin/maki" else "";
 in
 pkgs.testers.runNixOSTest {
   name = "agent-tooling";
@@ -52,12 +57,14 @@ pkgs.testers.runNixOSTest {
         extraSpecialArgs = {
           inherit ompPackage;
         }
-        // lib.optionalAttrs withOpencode { inherit opencodePackage; };
+        // lib.optionalAttrs withOpencode { inherit opencodePackage; }
+        // lib.optionalAttrs withMaki { inherit makiPackage; };
         users.test = {
           imports = [
             ../../home/dan/features/development/omp.nix
           ]
-          ++ lib.optional withOpencode ../../home/dan/features/development/opencode.nix;
+          ++ lib.optional withOpencode ../../home/dan/features/development/opencode.nix
+          ++ lib.optional withMaki ../../home/dan/features/development/maki.nix;
 
           home = {
             username = "test";
@@ -114,5 +121,13 @@ pkgs.testers.runNixOSTest {
     assert opencode_match, f"no version in {opencode_version!r}"
     opencode_triple = tuple(int(part) for part in opencode_match.groups())
     assert opencode_triple >= (2, 0, 28), f"OpenCode reports {opencode_version!r}, below the floor 2.0.28"
+  ''
+  + lib.optionalString withMaki ''
+    # The third coding agent the device carries starts and reports its version.
+    maki_version = machine.succeed("sudo -u test env HOME=/home/test ${makiBin} --version").strip()
+    maki_match = re.search(r"(\d+)\.(\d+)\.(\d+)", maki_version)
+    assert maki_match, f"no version in {maki_version!r}"
+    maki_triple = tuple(int(part) for part in maki_match.groups())
+    assert maki_triple >= (0, 7, 0), f"Maki reports {maki_version!r}, below the floor 0.7.0"
   '';
 }

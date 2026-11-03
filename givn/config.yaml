@@ -253,7 +253,7 @@ addons:
   dev_principles: true
   challenge: true
 skills:
-  targets: [opencode, agents, claude, omp]
+  targets: [opencode, agents, claude, omp, maki]
 rules: local-only
 artifacts:
   - id: tasks

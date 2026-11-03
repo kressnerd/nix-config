@@ -16,6 +16,7 @@
     ./features/development/claude-code.nix
     ./features/development/opencode.nix
     ./features/development/omp.nix
+    ./features/development/maki.nix
     ./features/development/givn.nix
     ./features/development/containers.nix
     ./features/development/formatters.nix

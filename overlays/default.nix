@@ -17,3 +17,4 @@ final: prev:
 }
 // (import ./vscode-extensions final prev)
 // (import ./opencode final prev)
+// (import ./maki final prev)

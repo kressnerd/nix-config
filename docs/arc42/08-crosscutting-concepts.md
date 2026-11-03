@@ -142,7 +142,7 @@ one of two layers:
 | Layer | Option | Base paths | Examples |
 |---|---|---|---|
 | System | `mySystem.persistence` | `/etc/nixos`, `/var/log`, `/var/lib/nixos`, coredumps, `/etc/machine-id`, `/var/lib/sops-nix/key.txt` | service data, host identity |
-| User (Home Manager) | `myHome.persistence` | `dev`, `Projects`, caches, `.config/sops/age`, opencode/omp state, `.bash_history` | working data, agent state |
+| User (Home Manager) | `myHome.persistence` | `dev`, `Projects`, caches, `.config/sops/age`, opencode/omp/maki state, `.bash_history` | working data, agent state |
 
 Feature modules attach their own persistent paths to the user layer conditionally
 (`lib.mkIf config.myHome.persistence.enable`), e.g. `.ssh`, `.config/mozilla`
@@ -256,10 +256,11 @@ carries the agent asserts a version floor at evaluation time. Refreshing it is a
 deliberate `nix flake update nixpkgs-agent`.
 
 A fourth source is not a channel at all: OpenCode's 2.x line is distributed only
-as prebuilt per-platform binaries and is not in nixpkgs (which carries 1.x), so
-the repository packages it itself (`overlays/opencode`), pinning a version and a
-checksum per platform. A refresh is a deliberate version-and-checksum edit, and
-each device that carries it asserts the same floor. Failure mode: nothing in the
+as prebuilt per-platform binaries and is not in nixpkgs (which carries 1.x), and
+Maki is not in nixpkgs at all, so the repository packages both itself
+(`overlays/opencode`, `overlays/maki`), pinning a version and a checksum per
+platform. A refresh is a deliberate version-and-checksum edit, and each device
+that carries the package asserts the same floor. Failure mode: nothing in the
 repository signals that a newer release exists, so currency depends on the
 operator noticing (chapter 11 R-022).
 

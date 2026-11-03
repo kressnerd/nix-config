@@ -23,6 +23,13 @@ in
         ".local/share/opencode"
         ".cache/opencode"
         ".omp"
+        # Maki keeps config, auth, sessions, logs and its cache under XDG paths;
+        # the root wipe would otherwise discard every session on thiniel.
+        ".config/maki"
+        ".local/share/maki"
+        ".local/state/maki"
+        ".local/logs/maki"
+        ".cache/maki"
       ];
       files = [
         ".bash_history"

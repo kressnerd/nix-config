@@ -9,6 +9,8 @@ overlays/
 ├── default.nix              # Main overlay aggregator
 ├── opencode/                 # OpenCode 2.x package (prebuilt npm binary)
 │   └── default.nix
+├── maki/                     # Maki package (prebuilt release binary)
+│   └── default.nix
 └── vscode-extensions/        # VSCode extension overlays
     ├── default.nix          # VSCode extensions overlay
     └── roo-cline.nix        # Roo Cline extension package
@@ -102,6 +104,29 @@ update:
 3. Build both platforms again with the real hashes.
 
 Each device that carries OpenCode asserts a version floor
+(`tests/assertions/*-invariants.nix`); raise that floor with the version so a
+regression fails evaluation.
+
+## Maki Overlay
+
+The [`maki`](./maki/default.nix) overlay packages Maki, a terminal coding agent
+written in Rust that nixpkgs does not carry. The package is upstream's prebuilt
+release binary, pinned by version and one sha256 per platform (`aarch64-darwin`,
+`x86_64-linux`). Upstream's own flake builds from source with crane and
+advertises no binary cache, so a source build would compile on both machines.
+
+**Refreshing it is a deliberate, manual bump** — there is no lock entry to
+update:
+
+1. Set `version` to the new upstream release tag (drop the leading `v` in the
+   URL pattern the overlay builds).
+2. Read the new checksums from the release's `sha256sums.txt` (`nix hash
+   convert --hash-algo sha256 --to sri <hex>`), or set both hashes to
+   `lib.fakeHash`, build once per platform, and copy the hashes out of the
+   errors.
+3. Build both platforms again with the real hashes.
+
+Each device that carries Maki asserts a version floor
 (`tests/assertions/*-invariants.nix`); raise that floor with the version so a
 regression fails evaluation.
 
