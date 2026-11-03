@@ -250,13 +250,12 @@ givn_config_version: "0.9.2"
 # --- User overrides preserved from previous version ---
 addons:
   arc42: true
-  absolute_mode: true
+  communication_policy: true
   readme: false
   coverage: false
   domain_modeling: true
   dev_principles: true
-  grill_me: true
-  grill_with_docs: true
+  challenge: true
 skills:
   targets: [opencode, agents, claude, omp]
 rules: local-only
