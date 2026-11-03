@@ -1,0 +1,6 @@
+[bash]
+allow = [
+    "nix *",
+    "deadnix *",
+    "statix *",
+]
