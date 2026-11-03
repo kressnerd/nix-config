@@ -86,6 +86,7 @@ in
           multi-account-containers
           link-cleaner
           bitwarden
+          onepassword-password-manager
         ]);
 
       settings = workSettings // {

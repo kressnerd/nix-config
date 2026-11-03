@@ -329,4 +329,9 @@ lib.debug.runTests {
     expected = true;
   };
 
+  testCompanyProfileHasOnePassword = {
+    expr = builtins.elem "onepassword-password-manager" firefoxCompanyModule.programs.firefox.profiles.company.extensions.packages;
+    expected = true;
+  };
+
 }
