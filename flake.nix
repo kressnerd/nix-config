@@ -550,6 +550,38 @@
             {
               unit-helpers = import ./tests/unit/default.nix { inherit pkgs; };
 
+              # The six project skills are committed twice: once for OpenCode
+              # under `.opencode/skills/`, once for Maki under `.maki/skills/`.
+              # `givn skills sync` owns only the `givn-*` subtree of the second,
+              # so the copies are hand-maintained and can drift. This compares
+              # the bytes; which names must be present is
+              # `tests/unit/maki-skill-parity-test.nix`.
+              unit-maki-skills =
+                let
+                  names = [
+                    "home-manager-config"
+                    "network-security"
+                    "nix-module-dev"
+                    "nixos-server"
+                    "nix-testing"
+                    "sops-secrets"
+                  ];
+                in
+                pkgs.runCommand "unit-maki-skills"
+                  {
+                    opencode = ./.opencode/skills;
+                    maki = ./.maki/skills;
+                  }
+                  ''
+                    for name in ${pkgs.lib.escapeShellArgs names}; do
+                      cmp "$opencode/$name/SKILL.md" "$maki/$name/SKILL.md" || {
+                        echo "$name: .maki/skills and .opencode/skills differ" >&2
+                        exit 1
+                      }
+                    done
+                    touch $out
+                  '';
+
               # The public defaults must stay non-operational: with the stub
               # `private` input (no override) every host's declared network
               # values must be documentation-range placeholders or empty.
@@ -636,6 +668,86 @@
                     # no real one for the build user
                     export HOME="$TMPDIR"
                     bun "$driver" "$hook"
+                    touch $out
+                  '';
+
+              # Maki's guard declares its rules as data for
+              # `maki.api.register_permission_rule`; only a running Maki can
+              # apply them, so this checks the declaration instead: every
+              # decryption command is denied, the write surfaces cover the four
+              # secret trees, no scope begins with a wildcard (Maki accepts one
+              # and never matches it), and no read, grep or allow rule appears.
+              # The unenforced read surface is R-036.
+              # Maki's `task_role` reads a role's prompt from
+              # `.opencode/agent/<role>.md` at call time, splitting the body off
+              # at the second `---`. These assertions pin what that parser needs,
+              # so a role file rewritten for OpenCode alone fails here instead of
+              # silently handing Maki an empty or permission-only prompt.
+              unit-maki-role-files =
+                let
+                  roles = [
+                    "architect"
+                    "researcher"
+                    "reviewer"
+                    "user-story-writer"
+                  ];
+                  preambles = {
+                    architect = "You are an architect for this nix-config repository.";
+                    researcher = "You are a project researcher for this nix-config repository.";
+                    reviewer = "You are a read-only code reviewer for this nix-config repository.";
+                    "user-story-writer" = "You write user stories following BDD principles.";
+                  };
+                in
+                pkgs.runCommand "unit-maki-role-files"
+                  {
+                    agents = ./.opencode/agent;
+                    preambles = builtins.toJSON preambles;
+                  }
+                  ''
+                    for role in ${pkgs.lib.escapeShellArgs roles}; do
+                      file="$agents/$role.md"
+                      test -f "$file" || { echo "$role: no role file" >&2; exit 1; }
+
+                      head -1 "$file" | grep -qx -- '---' || {
+                        echo "$role: does not open with a frontmatter block" >&2
+                        exit 1
+                      }
+                      sed -n '1,/^---$/p' "$file" | grep -q '^description: ".' || {
+                        echo "$role: frontmatter carries no description" >&2
+                        exit 1
+                      }
+
+                      # The body is everything after the closing `---`; its first
+                      # non-empty line is the sentence the role is recognised by.
+                      body=$(awk 'BEGIN{n=0} /^---$/{n++; next} n>=2' "$file")
+                      first=$(printf '%s\n' "$body" | sed -n '/./p' | head -1)
+                      want=$(printf '%s' "$preambles" | ${pkgs.jq}/bin/jq -r --arg r "$role" '.[$r]')
+                      case "$first" in
+                        "$want"*) ;;
+                        *)
+                          echo "$role: body does not open with the pinned preamble" >&2
+                          echo "  got:  $first" >&2
+                          echo "  want: $want" >&2
+                          exit 1
+                          ;;
+                      esac
+                    done
+                    touch $out
+                  '';
+
+              unit-maki-secret-guard =
+                let
+                  agentPkgs = agentPkgsFor system;
+                in
+                pkgs.runCommand "unit-maki-secret-guard"
+                  {
+                    nativeBuildInputs = [ agentPkgs.bun ];
+                    driver = ./tests/unit/maki-secret-guard.mjs;
+                    guard = ./.maki/lua/secret-guard.lua;
+                  }
+                  ''
+                    export HOME="$TMPDIR"
+                    bun "$driver" "$guard"
                     touch $out
                   '';
 

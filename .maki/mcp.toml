@@ -1,0 +1,45 @@
+# MCP servers for Maki, project-scoped. Maki has no declarative Home Manager
+# module for this file, so it is hand-maintained and git-tracked; `/mcp` writes
+# back to it, so a toggle made in the picker arrives as a diff like any other.
+# Nothing in `maki.nix` renders this path, by design: a user-level `home.file`
+# entry here would shadow the project file — do not add one.
+#
+# Project scope is deliberate. The servers serve this repository (nixpkgs/NixOS
+# lookups, library docs, web search); a user-level file would also start a
+# network `nix run` in every unrelated directory. Cost: another repository needs
+# its own file, and servers here start only once this folder is trusted.
+#
+# `nixos` works on any clone. `context7` and `kagi-search` need a device key, and
+# mcp.toml expands only `${VAR}` out of Maki's own environment — there is no
+# command substitution and no exec-time decode, so a `$(...)` value would be sent
+# literally. Both variables must therefore be exported in the shell that starts
+# Maki. `opencode.nix` exports them only under fish (`set -gx`), so a bash user
+# needs:
+#   export CONTEXT7_API_KEY=$(cat ~/.config/sops-nix/secrets/context7/api-key)
+#   export KAGI_API_KEY=$(cat ~/.config/sops-nix/secrets/kagi/api-key)
+# An unset variable fails that one server and names it; the others still start.
+# Re-run Maki from a shell that ran the two commands above.
+# That shell-side read of the sops tree is not blocked by secret-guard (it guards
+# write/edit and decryption commands only, R-036) and is the exposure already
+# accepted as R-021. The value never enters the store, this file, or a tool result
+# unless the agent itself runs the `cat`.
+
+[mcp.nixos]
+# The repository's pinned package, as in `.mcp.json`, not the moving
+# `github:utensils/mcp-nixos` ref that `.roo/mcp.json` uses. `nix run` from this
+# checkout resolves `.#mcp-nixos`; started from another directory it fails
+# loudly rather than silently running a newer server. The 60 s timeout covers a
+# cold realisation of the flake.
+command = ["nix", "run", ".#mcp-nixos", "--"]
+timeout = 60000
+
+[mcp.context7]
+# The key is a rate limit, not an auth gate: the endpoint answers with tools and
+# runs them without it. Dropping the header keeps working, at the shared limit.
+url = "https://mcp.context7.com/mcp"
+headers = { CONTEXT7_API_KEY = "${CONTEXT7_API_KEY}" }
+
+[mcp.kagi-search]
+# No keyless mode, so the export above is a hard prerequisite.
+command = ["uvx", "kagimcp"]
+environment = { KAGI_API_KEY = "${KAGI_API_KEY}" }

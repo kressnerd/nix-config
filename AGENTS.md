@@ -16,6 +16,27 @@ For Nix/Python conventions, safety rules, TDD workflow, repository structure, an
 | User Story Creator | `user-story-writer` subagent | `.opencode/agent/user-story-writer.md` |
 | Ask / Debug | Built-in `general` / `explore` subagents | No dedicated subagent needed |
 
+### Harness equivalents
+
+Every row above has a Maki counterpart, so the workflow below is not OpenCode-only:
+
+| Role | OpenCode | Maki |
+|---|---|---|
+| Architect / Reviewer / Researcher / User Story Creator | `task(subagent_type=...)` | `task_role(role=...)` |
+| The role prompt | `.opencode/agent/<role>.md` | the same file, read at call time by `.maki/lua/subagents.lua` |
+| The role's tool set | the file's `permission:` block | an `except` list plus a write-tool sweep in `subagents.lua` |
+
+`coder` exists only for OpenCode, and `create-python-cli-tool` is the one skill
+that does not reach Maki.
+
+**Maki's limits, so no one relies on them:** a role with no write path is not
+given a write tool at all; the architect keeps them but has no approver, so its
+writes are refused and it cannot produce a plan file. No role can ask the user a
+question.
+Maki's secret guard (`.maki/lua/secret-guard.lua`) denies the decryption tools
+and refuses writes to the secret trees, but it cannot deny a `read` or `grep` of
+a decrypted secret — see R-036 in `docs/arc42/11-risks-and-technical-debt.md`.
+
 ## Orchestration Workflow (Build Agent)
 
 Build is the single primary agent for this repo. It never implements blindly — for any non-trivial change it follows this sequence, invoking subagents via the `task` tool:

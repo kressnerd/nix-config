@@ -12,6 +12,19 @@
 # The manifest governs every Lua file in `.maki/`, including a hand-written
 # `init.lua`: remove a false key the user's own code needs rather than
 # widening the reporter's grant.
+#
+# The reporter is not the only reason for a grant here:
+#
+#   * `agent` — the `task_role` tool in `lua/subagents.lua` opens a subagent
+#     session per call.
+#   * every remaining key — `task_role` declares no capability, because it opens
+#     a session rather than reaching a resource itself, and Maki charges a tool
+#     that declares none the whole permission set. The role session is then
+#     handed the reduced tool list this plugin builds, so the Maki tool name the
+#     role can dispatch is bounded there. What the outer agent reaches with the
+#     same names is still governed by Maki's own permissions, not by this file.
+#
+# `secret-guard.lua` adds nothing: deny rules need no permission.
 [permissions]
 fs_read = true
 fs_write = true
@@ -19,7 +32,7 @@ run = true
 session_read = true
 net = false
 env = false
-agent = false
+agent = true
 session_write = false
 session_settings = false
 input = false

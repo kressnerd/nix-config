@@ -30,6 +30,8 @@ let
     inherit pkgs;
   };
   nixfmtAliasTests = import ./nixfmt-alias-test.nix { inherit (pkgs) lib; };
+  makiSkillParityTests = import ./maki-skill-parity-test.nix { inherit (pkgs) lib; };
+  makiSubagentRoleTests = import ./maki-subagent-roles-test.nix { inherit (pkgs) lib; };
   hostTemplateTests = import ./host-template-test.nix {
     inherit (pkgs) lib;
     inherit pkgs;
@@ -45,6 +47,8 @@ let
     ++ j6HomebrewTests
     ++ flakeChannelTests
     ++ nixfmtAliasTests
+    ++ makiSkillParityTests
+    ++ makiSubagentRoleTests
     ++ hostTemplateTests;
 in
 # lib.debug.runTests returns [] on success — the branch is selected at eval time

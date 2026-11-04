@@ -275,6 +275,37 @@ passes it to the module and to the booted check, so the check proves the same
 store path the device installs. No version floor is declared — a floor cannot
 detect a cross-release instrumentation mismatch (chapter 2; chapter 11 R-035).
 
+## Coding-agent harness parity
+
+Four harnesses read this repository: OpenCode (`.opencode/`), Claude Code
+(`.claude/`), omp (`.omp/`) and Maki (`.maki/`). Three things are shared rather
+than duplicated:
+
+- **Skills.** `givn skills sync` writes the `givn-*` skills into every target
+  (`givn/config.yaml`). The six project skills are committed copies in
+  `.opencode/skills/` and `.maki/skills/`, compared byte-for-byte by the
+  `unit-maki-skills` check. `create-python-cli-tool` stays OpenCode-only.
+- **Role prompts.** `.opencode/agent/*.md` is the single source. Maki's
+  `.maki/lua/subagents.lua` reads a role file at call time and hands its body to
+  `maki.agent.session`, so editing the OpenCode role changes both. The
+  frontmatter's `permission:` map is OpenCode schema and does not cross; each
+  role's tool filter is a hand-translation in `subagents.lua`. The
+  `unit-maki-role-files` check pins the frontmatter and the opening sentence of
+  each role file, which are the two things that parser relies on.
+  `.maki/plugin.toml` grants every permission because `task_role` opens a
+  session and declares no capability of its own.
+- **Secret guards.** omp and Maki each carry one. Maki's
+  (`.maki/lua/secret-guard.lua`) declares deny rules through
+  `maki.api.register_permission_rule`: the decryption commands, and writes to the
+  four plaintext trees. It cannot deny a `read` or `grep`, because Maki's own
+  handlers are session-owned Lua tools that a repository rule never reaches
+  (chapter 11 R-036).
+
+A role session opened by `task_role` has no approver, so Maki refuses every call
+that would prompt — a role cannot write or ask the user a question, which is why
+the researcher and reviewer roles are genuinely read-only rather than
+read-only by instruction.
+
 ## Platform conditionals
 
 A single module serves both platforms where the difference is small, using

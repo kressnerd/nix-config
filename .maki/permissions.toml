@@ -1,6 +1,30 @@
 [bash]
 allow = [
-    "nix *",
-    "deadnix *",
+# These are agent-facing and pre-approve without a prompt. `head *` reaches
+# `~/.config/sops-nix/secrets/*` directly, which is the R-021 exposure: the
+# boundary is stated in the header of `.maki/mcp.toml`.
+allow = [
+    "givn *",
+    "head *",
+    "echo *",
+    "nixfmt *",
     "statix *",
+    "deadnix *",
+]
+
+# MCP tools from `.maki/mcp.toml`. Maki names a tool `<server>__<tool>`; the
+# `[mcp.<server>]` table supplies the prefix, so an `allow` entry is the bare
+# tool name. The five nixos reads are pre-approved for the same reason
+# `.roo/mcp.json` and `.claude/settings.json` pre-approve them: they answer from
+# public indexes and are the most frequent calls.
+# context7 and kagi-search stay unlisted, so each call prompts. For kagi that is
+# the point: a query leaves the machine, and CLAUDE.md's search etiquette
+# (no internal hostnames, IPs, or key paths) cannot be enforced mechanically.
+[mcp.nixos]
+allow = [
+    "home_manager_search",
+    "darwin_search",
+    "nixos_search",
+    "nixos_info",
+    "nix",
 ]

@@ -1,0 +1,12 @@
+version: 1
+addons:
+  arc42: true
+  architecture_principles: true
+  challenge: true
+  communication_policy: true
+  coverage: false
+  dev_principles: true
+  domain_modeling: true
+  outline: true
+  readme: false
+overrides: []
