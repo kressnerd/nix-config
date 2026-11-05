@@ -29,6 +29,10 @@ in
       message = "thiniel: a C linker (gcc) must be installed so a Rust build can link its program";
     }
     {
+      assertion = builtins.any (n: lib.strings.hasInfix "ouch" n) hmPkgNames;
+      message = "thiniel: ouch must be installed so .zip archives can be extracted";
+    }
+    {
       assertion = builtins.any (n: lib.strings.hasInfix "pkg-config" n) hmPkgNames;
       message = "thiniel: pkg-config must be installed so Rust crates can discover system libraries";
     }

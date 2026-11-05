@@ -24,6 +24,7 @@
       tldr # man alternative — simplified community-maintained docs
       tree # directory tree — recursive directory listing
       ncdu # disk usage analyzer — interactive ncurses du
+      ouch # archive extractor — unzip/tar/gz/bz2/xz/zst in one command
 
       # TUI apps
       lazydocker # TUI for Docker and docker-compose management

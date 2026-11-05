@@ -145,6 +145,10 @@
       assertion = builtins.any (p: lib.getName p == "bats-with-libraries") config.home.packages;
       message = "shell-utils: bats (with bats-support + bats-assert) must be installed";
     }
+    {
+      assertion = builtins.any (p: lib.getName p == "ouch") config.home.packages;
+      message = "shell-utils: ouch must be installed so .zip archives can be extracted";
+    }
     # --- cli/sops ---
     {
       assertion = builtins.any (p: lib.getName p == "age") config.home.packages;
