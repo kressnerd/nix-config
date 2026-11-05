@@ -573,7 +573,7 @@
   };
 
   # TODO(2026-04): Backup solution — evaluate restic or borgbackup for automated backups
-  # ownCloud provides sync but not versioned backup
+  # Nextcloud provides sync but not versioned backup
   # Priority: important but deferred — create tracking issue when ready
 
   system.stateVersion = "26.05";

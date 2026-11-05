@@ -1,7 +1,7 @@
 # tests/unit/hm-productivity-modules-test.nix
 # Characterization unit tests for Home Manager productivity feature modules.
 # Captures existing behaviour as-is so any regression is immediately visible.
-# Covers: browser.nix, keepassxc.nix, maestral.nix, firefox-personal.nix
+# Covers: browser.nix, keepassxc.nix, maestral.nix, nextcloud.nix, firefox-personal.nix
 { lib, pkgs }:
 let
   normalizeModule =
@@ -120,6 +120,36 @@ let
       };
     }
   );
+
+  # nextcloud.nix — signature is `{ config, lib, pkgs, ... }:`
+  nextcloudModule = normalizeModule (
+    import ../../home/dan/features/productivity/nextcloud.nix {
+      pkgs = mockPkgsLinux;
+      inherit lib;
+      config = {
+        myHome.persistence = {
+          enable = false;
+          root = "/persist";
+        };
+      };
+    }
+  );
+  nextcloudPkgNames = builtins.map (p: p.pname or p.name or "") nextcloudModule.home.packages;
+
+  # Persistence dirs need `enable = true`; the module above mocks it to false.
+  nextcloudPersistDirs =
+    (normalizeModule (
+      import ../../home/dan/features/productivity/nextcloud.nix {
+        pkgs = mockPkgsLinux;
+        inherit lib;
+        config = {
+          myHome.persistence = {
+            enable = true;
+            root = "/persist";
+          };
+        };
+      }
+    )).home.persistence."/persist".directories;
 in
 lib.debug.runTests {
 
@@ -265,6 +295,33 @@ lib.debug.runTests {
   testMaestralServiceRestart = {
     expr = maestralModule.systemd.user.services.maestral.Service.Restart;
     expected = "on-failure";
+  };
+
+  # ── nextcloud ─────────────────────────────────────────────────────────────
+
+  testNextcloudPackagePresent = {
+    expr = builtins.elem "nextcloud-client" nextcloudPkgNames;
+    expected = true;
+  };
+
+  testNextcloudNoOwncloudPackage = {
+    expr = builtins.elem "owncloud-client" nextcloudPkgNames;
+    expected = false;
+  };
+
+  # D2: the Qt client owns its autostart; the module must not add a unit.
+  testNextcloudNoSystemdService = {
+    expr = nextcloudModule ? systemd;
+    expected = false;
+  };
+
+  testNextcloudPersistDirs = {
+    expr = nextcloudPersistDirs;
+    expected = [
+      ".config/Nextcloud"
+      ".local/share/Nextcloud"
+      "owncl"
+    ];
   };
 
   # ── firefox-personal: no-tracking profile ────────────────────────────────

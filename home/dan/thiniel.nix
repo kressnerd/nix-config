@@ -41,7 +41,7 @@
     ./features/productivity/keepassxc.nix
     ./features/productivity/libreoffice.nix
     ./features/productivity/maestral.nix
-    ./features/productivity/owncloud.nix
+    ./features/productivity/nextcloud.nix
     ./features/productivity/sweethome3d.nix
     ./features/productivity/vscode-fhs.nix
     ./features/productivity/messaging.nix

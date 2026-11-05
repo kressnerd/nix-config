@@ -119,6 +119,19 @@
           assertion = hmHasDir ".local/share/maestral";
           message = "thiniel: .local/share/maestral must be persisted for Maestral state and index";
         }
+        # Nextcloud desktop client persistence
+        {
+          assertion = hmHasDir ".config/Nextcloud";
+          message = "thiniel: .config/Nextcloud must be persisted for Nextcloud account and sync config";
+        }
+        {
+          assertion = hmHasDir ".local/share/Nextcloud";
+          message = "thiniel: .local/share/Nextcloud must be persisted for the Nextcloud sync journal";
+        }
+        {
+          assertion = hmHasDir "owncl";
+          message = "thiniel: the ~/owncl sync folder must be persisted";
+        }
         {
           assertion =
             let

@@ -120,6 +120,14 @@
           message = "thiniel: Maestral must be installed via Home Manager for Dropbox sync";
         }
         {
+          assertion = hmHasPkg "nextcloud-client";
+          message = "thiniel: the Nextcloud desktop client must be installed via Home Manager";
+        }
+        {
+          assertion = !(hmHasPkg "owncloud-client");
+          message = "thiniel: the ownCloud client must be gone; it is replaced by nextcloud-client";
+        }
+        {
           assertion = hmHasPkg "iotop";
           message = "thiniel: iotop must be installed via Home Manager for per-process I/O monitoring";
         }

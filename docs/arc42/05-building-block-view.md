@@ -97,7 +97,7 @@ The Darwin host does not import `hosts/common` at all.
 | `development/` (18) | claude-code, containers (+5 submodules), fnm, formatters, givn, go, jdk, maki, nodejs, omp, opencode, python-tools, rust | `containers.nix` is an orchestrator over 5 submodules. `rust` installs the default Rust build toolchain and persists the Cargo home. |
 | `linux/` (11) | fonts, fuzzel, gnome-keyring, gtk-qt, hypridle, hyprland, hyprlock, kanshi, mako, waybar, wlsunset | Imported only by thiniel. |
 | `macos/` (2) | aerospace, defaults | Imported only by the Darwin host. |
-| `productivity/` (16) | browser, emacs, emacs-doom, firefox-company, firefox-personal, keepassxc, libreoffice, mac-tools, maestral, messaging, mpv, owncloud, sweethome3d, vscode, vscode-fhs, zathura | Several guard their persistence block with `lib.mkIf config.myHome.persistence.enable`. |
+| `productivity/` (16) | browser, emacs, emacs-doom, firefox-company, firefox-personal, keepassxc, libreoffice, mac-tools, maestral, messaging, mpv, nextcloud, sweethome3d, vscode, vscode-fhs, zathura | Several guard their persistence block with `lib.mkIf config.myHome.persistence.enable`. |
 
 Two modules are **not** reachable from any host profile: `features/productivity/emacs.nix` (the Doom variant is used instead) and `features/productivity/vscode.nix` (commented out on the Mac; `vscode-fhs` is used on thiniel). `features/linux/impermanence.nix` referenced by `CLAUDE.md` does not exist in the current tree.
 

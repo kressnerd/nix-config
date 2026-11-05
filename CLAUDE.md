@@ -243,7 +243,7 @@ flake.nix
 |---|---|
 | `cli/` | cloud-tools, fish, git, kitty, shell-utils, ssh, starship, vim, zsh |
 | `development/` | containers (5 submodules), fnm, formatters, jdk, nodejs |
-| `productivity/` | browser, emacs-doom, emacs, firefox-company, firefox-personal, keepassxc, mac-tools, owncloud, sweethome3d, vscode |
+| `productivity/` | browser, emacs-doom, emacs, firefox-company, firefox-personal, keepassxc, mac-tools, nextcloud, sweethome3d, vscode |
 | `macos/` | defaults (system preferences automation via `targets.darwin`) |
 | `linux/` | fonts, hyprland, impermanence |
 
