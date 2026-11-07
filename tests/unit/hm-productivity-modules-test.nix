@@ -309,10 +309,36 @@ lib.debug.runTests {
     expected = false;
   };
 
-  # D2: the Qt client owns its autostart; the module must not add a unit.
-  testNextcloudNoSystemdService = {
-    expr = nextcloudModule ? systemd;
-    expected = false;
+  # Nothing on this system executes XDG autostart entries (Hyprland has no
+  # implementation and graphical-session.target is the only session target),
+  # so the module must own the service.
+  testNextcloudServiceDefined = {
+    expr =
+      nextcloudModule ? systemd
+      && nextcloudModule.systemd ? user
+      && nextcloudModule.systemd.user ? services
+      && nextcloudModule.systemd.user.services ? nextcloud;
+    expected = true;
+  };
+
+  testNextcloudServiceExecStart = {
+    expr =
+      let
+        svc = nextcloudModule.systemd.user.services.nextcloud;
+      in
+      builtins.isString svc.Service.ExecStart
+      && builtins.match ".*nextcloud.*--background.*" svc.Service.ExecStart != null;
+    expected = true;
+  };
+
+  testNextcloudServiceWantedBy = {
+    expr = nextcloudModule.systemd.user.services.nextcloud.Install.WantedBy;
+    expected = [ "graphical-session.target" ];
+  };
+
+  testNextcloudServiceRestart = {
+    expr = nextcloudModule.systemd.user.services.nextcloud.Service.Restart;
+    expected = "on-failure";
   };
 
   testNextcloudPersistDirs = {

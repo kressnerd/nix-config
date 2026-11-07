@@ -128,6 +128,14 @@
           message = "thiniel: the ownCloud client must be gone; it is replaced by nextcloud-client";
         }
         {
+          assertion =
+            config.home-manager.users.dan.systemd.user.services ? nextcloud
+            &&
+              config.home-manager.users.dan.systemd.user.services.nextcloud.Install.WantedBy
+              == [ "graphical-session.target" ];
+          message = "thiniel: the Nextcloud client must start at login via a systemd user unit, because nothing here executes XDG autostart entries";
+        }
+        {
           assertion = hmHasPkg "iotop";
           message = "thiniel: iotop must be installed via Home Manager for per-process I/O monitoring";
         }
