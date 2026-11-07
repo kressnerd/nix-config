@@ -8,7 +8,6 @@
 # Colmena Phase 2 RED — Colmena fleet deployment aliases (cs, ct, cb, cda, call)
 # Colmena Phase 3 RED — J6G6Y9JK7L Colmena aliases (cs, ct, cb, cda, call)
 # Colmena Review F-004 — alias value assertions for canonical Colmena aliases
-# Claude Code RED — claude-code must be in home/dan/features/development/claude-code.nix
 # VSCode FHS RED — vscode-fhs must be in home/dan/features/productivity/vscode-fhs.nix
 { lib, pkgs }:
 let
@@ -19,6 +18,8 @@ let
   thinielModule = import ../../home/dan/thiniel.nix { inherit pkgs; };
 
   thinielAliases = thinielModule.programs.fish.shellAliases;
+
+  thinielPkgNames = builtins.map (p: p.pname or p.name or "") thinielModule.home.packages;
 
   # Keep backward-compat binding used by existing alias existence tests
   aliases = thinielAliases;
@@ -32,16 +33,6 @@ let
   deployToolsModule = import ../../home/dan/features/cli/deploy-tools.nix { inherit pkgs; };
   deployToolsPackageNames = builtins.map (p: p.pname or p.name or "") deployToolsModule.home.packages;
 
-  # Import claude-code feature module — pass config mock so persistence block is a no-op.
-  claudeCodeModule = import ../../home/dan/features/development/claude-code.nix {
-    inherit lib;
-    pkgs-unstable = pkgs;
-    config.myHome.persistence = {
-      enable = false;
-      root = "/persist";
-    };
-  };
-
   # Modules imported directly in tests can be plain attrsets or lib.mkMerge wrappers.
   getHomePackages =
     module:
@@ -53,8 +44,6 @@ let
       )
     else
       [ ];
-
-  claudeCodePkgNames = builtins.map (p: p.pname or p.name or "") (getHomePackages claudeCodeModule);
 
   # Import vscode-fhs feature module — pass config mock so persistence block is a no-op.
   vscodeFhsModule = import ../../home/dan/features/productivity/vscode-fhs.nix {
@@ -385,13 +374,11 @@ lib.debug.runTests {
     expected = "colmena apply";
   };
 
-  # ── Claude Code RED: claude-code must be in home.packages ────────────────
-
-  # RED: home/dan/features/development/claude-code.nix does not exist yet →
-  # import fails at eval time → nix flake check FAILS as expected.
-  testClaudeCodeInPackages = {
-    expr = builtins.elem "claude-code" claudeCodePkgNames;
-    expected = true;
+  # thiniel must not install Claude Code — `claude`/`claude-code` are macOS casks
+  # (hosts/J6G6Y9JK7L) and Maki/OpenCode replaced it on Linux.
+  testClaudeCodeNotInThiniel = {
+    expr = builtins.any (n: builtins.match ".*claude.*" n != null) thinielPkgNames;
+    expected = false;
   };
 
   # ── VSCode FHS RED: vscode-fhs must expose home.packages ────────────────

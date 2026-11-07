@@ -13,7 +13,6 @@
     ./features/cli/starship.nix
     ./features/cli/vim.nix
     ./features/cli/yazi.nix
-    ./features/development/claude-code.nix
     ./features/development/opencode.nix
     ./features/development/omp.nix
     ./features/development/maki.nix
