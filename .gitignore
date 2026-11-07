@@ -29,7 +29,12 @@ docs/plans/private-data-remediation-plan.md
 .claude/settings.local.json
 .omp/hooks/pre/givn-attribution.js
 .omp/hooks/pre/givn-timeline.js
+.maki/lua/givn-attribution.lua
 .maki/lua/givn-timeline.lua
 .maki/skills/givn-*/
 .githooks/commit-msg
 # givn:end:rules
+
+# givn:begin:history
+givn/history/
+# givn:end:history
