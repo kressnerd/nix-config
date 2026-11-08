@@ -54,6 +54,29 @@ let
       --override remember_window_size=no \
       -e ${pkgs.bluetuith}/bin/bluetuith
   '';
+
+  # Waybar's native battery module resolves one BAT* device and falls back to
+  # the aggregate class device, which only exists when a single driver owns
+  # every pack. thiniel has two packs from different drivers, so the native
+  # module reported one of them as the whole machine. This one reads both.
+  batteryStatusPy = pkgs.writers.writePython3Bin "battery-status" {
+    flakeIgnore = [
+      "E265"
+      "E501"
+    ];
+  } (builtins.readFile ../../../../scripts/battery_status.py);
+  batteryStatus = pkgs.writeShellScriptBin "battery-status" ''
+    BATTERY_STATUS_POLICY="''${BATTERY_STATUS_POLICY:-${../../../../scripts/settings/battery-status.json}}"
+    export BATTERY_STATUS_POLICY
+    exec ${batteryStatusPy}/bin/battery-status "$@"
+  '';
+
+  # A click shows the plain report in a notification: the tooltip covers the
+  # hovering case, this covers "tell me now, with only the keyboard".
+  batteryReport = pkgs.writeShellScriptBin "battery-report" ''
+    exec ${pkgs.libnotify}/bin/notify-send --app-name=Battery \
+      "$(${batteryStatus}/bin/battery-status --plain)"
+  '';
 in
 {
   home.packages = [
@@ -61,6 +84,8 @@ in
     audioMixer
     wifiMenu
     bluetoothManager
+    batteryStatus
+    batteryReport
   ];
 
   stylix.targets.waybar.enable = true;
@@ -88,7 +113,7 @@ in
           "pulseaudio"
           "network"
           "bluetooth"
-          "battery"
+          "custom/battery"
           "idle_inhibitor"
           "temperature"
           "tray"
@@ -178,26 +203,17 @@ in
           critical-threshold = 85;
         };
 
-        battery = {
-          format = "{icon} {capacity}%";
-          format-icons = [
-            "󰂎"
-            "󰁺"
-            "󰁻"
-            "󰁼"
-            "󰁽"
-            "󰁾"
-            "󰁿"
-            "󰂀"
-            "󰂁"
-            "󰂂"
-            "󰁹"
-          ];
-          format-charging = "󰂄 {capacity}%";
-          states = {
-            warning = 30;
-            critical = 15;
-          };
+        # Two packs, one icon: the combined charge, with each pack spelled out
+        # in the tooltip. See batteryStatus above for why the native module
+        # cannot do this.
+        "custom/battery" = {
+          exec = "${batteryStatus}/bin/battery-status";
+          exec-if = "test -e /sys/class/power_supply/BAT0 -o -e /sys/class/power_supply/BAT1";
+          interval = 30;
+          tooltip = true;
+          format = "{}";
+          return-type = "json";
+          on-click = "${batteryReport}/bin/battery-report";
         };
 
         tray = {
@@ -249,7 +265,7 @@ in
       #mpris,
       #idle_inhibitor,
       #temperature,
-      #battery,
+      #custom-battery,
       #tray,
       #custom-power {
         padding: 0 8px;
@@ -278,15 +294,15 @@ in
         color: @base08;
       }
 
-      #battery.charging {
+      #custom-battery.charging {
         color: @base0B;
       }
 
-      #battery.warning:not(.charging) {
+      #custom-battery.warning {
         color: @base09;
       }
 
-      #battery.critical:not(.charging) {
+      #custom-battery.critical {
         color: @base08;
       }
 

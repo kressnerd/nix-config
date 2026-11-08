@@ -212,6 +212,29 @@
         assertion = config.home-manager.users.dan.xdg.configFile ? "swayosd/style.css";
         message = "thiniel: swayosd must carry the One Light overlay stylesheet";
       }
+      {
+        assertion =
+          let
+            bar = config.home-manager.users.dan.programs.waybar.settings.mainBar;
+            modules = bar.modules-left ++ bar.modules-center ++ bar.modules-right;
+          in
+          builtins.elem "custom/battery" modules && !(builtins.elem "battery" modules);
+        message = "thiniel: the waybar battery module must be custom/battery, not the native battery module — the native one reports a single pack, and thiniel has two";
+      }
+      {
+        assertion = lib.hasInfix "battery_status.py" (
+          builtins.readFile ../../home/dan/features/linux/waybar.nix
+        );
+        message = "thiniel: the waybar battery module must be fed by scripts/battery_status.py";
+      }
+      {
+        assertion =
+          let
+            battery = config.home-manager.users.dan.programs.waybar.settings.mainBar."custom/battery";
+          in
+          lib.hasInfix "battery-report" (battery."on-click" or "");
+        message = "thiniel: clicking the waybar battery module must show the per-pack report — its tooltip alone is easy to miss";
+      }
     ];
   };
 }
