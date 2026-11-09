@@ -13,7 +13,7 @@
 # ============================================================================
 
 # Managed by givn. Do not delete the next line.
-givn_config_version: "0.9.18"
+givn_config_version: "0.9.19"
 
 # --- Test runner -------------------------------------------------------------
 # The command givn invokes to run your test suite. Configured in
