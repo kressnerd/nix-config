@@ -235,6 +235,14 @@
           lib.hasInfix "battery-report" (battery."on-click" or "");
         message = "thiniel: clicking the waybar battery module must show the per-pack report — its tooltip alone is easy to miss";
       }
+      {
+        assertion =
+          let
+            waybar = config.home-manager.users.dan.programs.waybar.package;
+          in
+          lib.versionAtLeast waybar.version "0.16.0" && waybar.patches == [ ];
+        message = "thiniel: waybar must be 0.16.0 or newer, which speaks Hyprland's Lua dispatchers itself; anything older needs a patched source, and the packaged patches are a plain diff that breaks on every bump";
+      }
     ];
   };
 }

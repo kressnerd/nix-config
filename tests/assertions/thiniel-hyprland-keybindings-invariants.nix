@@ -126,7 +126,7 @@ in
         }
         {
           assertion = !(hasBind "${mainMod} + CTRL + r" "pkill -USR1 waybar");
-          message = "thiniel: ${mainMod} CTRL+r must not signal waybar with SIGUSR1 — waybar 0.15.0 toggles bar visibility on SIGUSR1 (reload is SIGUSR2), so that signal hides every bar until the next rotate";
+          message = "thiniel: ${mainMod} CTRL+r must not signal waybar with SIGUSR1 — waybar defaults `on-sigusr1` to toggle, so it hides every bar until the next rotate (reload is SIGUSR2)";
         }
 
         # ── Layout toggle migration ──────────────────────────────────────────────

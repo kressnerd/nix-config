@@ -379,8 +379,9 @@ lib.mkMerge [
           # Rotate the focused monitor 90° clockwise (transform 0→1→2→3→0).
           # Hyprland reflows neighbours, but the bars of the other outputs keep
           # their old position, so waybar is reloaded to re-anchor them. Reload
-          # is SIGUSR2; SIGUSR1 toggles bar visibility in waybar 0.15.0, and
-          # sending it hid the whole bar until the next rotate.
+          # is SIGUSR2; SIGUSR1 toggles bar visibility (waybar 0.16.0 still
+          # defaults `on-sigusr1` to toggle), and sending it hid the whole bar
+          # until the next rotate.
           (luaBind "${mainMod} + CTRL + r" ''
             function()
               local m = hl.get_active_monitor()

@@ -1,13 +1,11 @@
 { pkgs, pkgs-unstable, ... }:
 let
   # Hyprland reads every dispatch request as Lua (`hl.dispatch(<args>)`), so the
-  # text dispatchers waybar 0.15.0 sends ("dispatch workspace 3") are parse
-  # errors: a click on a workspace number reaches the module and then does
-  # nothing. Upstream fixed that on master only (e17c0d9f0a..0f12de9319,
-  # unreleased as of 0.15.0, 2026-02-06); carry the port until a release has it.
-  waybar = pkgs.waybar.overrideAttrs (old: {
-    patches = (old.patches or [ ]) ++ [ ./patches/waybar-hyprland-lua-dispatch.patch ];
-  });
+  # text dispatchers waybar 0.15.0 sent ("dispatch workspace 3") were parse
+  # errors: a click on a workspace number reached the module and did nothing.
+  # waybar 0.16.0 (nixpkgs-unstable) translates them itself (`IPC::dispatch`),
+  # so the patch that used to carry the fix is gone.
+  inherit (pkgs-unstable) waybar;
 
   rofiPowerMenu = pkgs.writeShellScriptBin "rofi-power-menu" ''
     choice=$(printf ' Logout\n Reboot\n⏻ Shutdown' \
