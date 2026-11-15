@@ -78,9 +78,9 @@
   # Host-specific shell aliases
   programs.fish.shellAliases = {
     # nh handles elevation itself and prints the package diff before activating.
-    nrs = "nh os switch ~/dev/PRIVATE/nix-config -- --override-input givn github:kressnerd/givn";
-    nrt = "nh os test ~/dev/PRIVATE/nix-config -- --override-input givn github:kressnerd/givn";
-    nrb = "nh os boot ~/dev/PRIVATE/nix-config -- --override-input givn github:kressnerd/givn";
+    nrs = "nh os switch ~/dev/PRIVATE/nix-config";
+    nrt = "nh os test ~/dev/PRIVATE/nix-config";
+    nrb = "nh os boot ~/dev/PRIVATE/nix-config";
     # Colmena fleet deployment
     cs = "colmena apply --on";
     ct = "colmena apply --goal test --on";

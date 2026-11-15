@@ -108,7 +108,7 @@
 
   # Host-specific shell aliases
   programs.fish.shellAliases = {
-    drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config --override-input givn github:kressnerd/givn";
+    drs = "sudo darwin-rebuild switch --flake ~/dev/PRIVATE/nix-config";
     # Colmena fleet deployment
     cs = "colmena apply --on";
     ct = "colmena apply --goal test --on";

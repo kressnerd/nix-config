@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  givnAvailable,
   ...
 }:
 {
@@ -229,8 +228,8 @@
     }
     # --- development/givn ---
     {
-      assertion = !givnAvailable || builtins.any (p: lib.getName p == "givn") config.home.packages;
-      message = "givn: givn must be installed when the private givn input is supplied";
+      assertion = builtins.any (p: lib.getName p == "givn") config.home.packages;
+      message = "givn: givn must be installed";
     }
     # --- productivity/browser ---
     {
