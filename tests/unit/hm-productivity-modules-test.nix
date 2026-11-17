@@ -122,9 +122,13 @@ let
   );
 
   # nextcloud.nix — signature is `{ config, lib, pkgs, ... }:`
+  # nextcloud-client is Linux-only: the module forces the real package, so a
+  # mocked hostPlatform on the host's pkgs is not enough on aarch64-darwin.
+  # Evaluating (never building) a Linux package set keeps the check host-independent.
+  nextcloudPkgs = import pkgs.path { system = "x86_64-linux"; };
   nextcloudModule = normalizeModule (
     import ../../home/dan/features/productivity/nextcloud.nix {
-      pkgs = mockPkgsLinux;
+      pkgs = nextcloudPkgs;
       inherit lib;
       config = {
         myHome.persistence = {
@@ -140,7 +144,7 @@ let
   nextcloudPersistDirs =
     (normalizeModule (
       import ../../home/dan/features/productivity/nextcloud.nix {
-        pkgs = mockPkgsLinux;
+        pkgs = nextcloudPkgs;
         inherit lib;
         config = {
           myHome.persistence = {
