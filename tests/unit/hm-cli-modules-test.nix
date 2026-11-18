@@ -125,6 +125,11 @@ let
     pkgs = mockPkgsDarwin;
     inherit lib;
   };
+  sshModuleWithSecrets = import ../../home/dan/features/cli/ssh.nix {
+    config = mockConfigWithSecrets;
+    pkgs = mockPkgsDarwin;
+    inherit lib;
+  };
 
   # ── cloud-tools.nix ─────────────────────────────────────────────────────────
   cloudToolsModule = import ../../home/dan/features/cli/cloud-tools.nix { inherit pkgs; };
@@ -434,6 +439,12 @@ lib.debug.runTests {
   testSshDarwinWildcardIdentitiesOnly = {
     expr = sshModuleDarwin.programs.ssh.settings."*".IdentitiesOnly or null;
     expected = true;
+  };
+
+  # Bitbucket moved its SSH endpoint to ssh.bitbucket.org.
+  testSshBitbucketClient002HostName = {
+    expr = sshModuleWithSecrets.programs.ssh.settings."bitbucket-client002".HostName;
+    expected = "ssh.bitbucket.org";
   };
 
   # ── ssh: the declared device identity drives the connection ────────────────

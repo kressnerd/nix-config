@@ -58,7 +58,7 @@ in
     }
     // lib.optionalAttrs (holdsIdentity "client002") {
       "bitbucket-client002" = {
-        HostName = "bitbucket.org";
+        HostName = "ssh.bitbucket.org";
         User = "git";
         IdentityFile = "~/.ssh/id_ed25519_client002_2026-01-13";
         IdentitiesOnly = true;
